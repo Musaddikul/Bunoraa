@@ -1,0 +1,52 @@
+# Node.js dependencies
+node_modules/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Virtual environments
+venv/
+
+# IDE settings (e.g., VSCode, PyCharm)
+.idea/
+.vscode/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Environment variables file
+.env
+
+# Build directories (e.g., for production or testing)
+dist/
+build/
+
+# Log files
+*.log
+
+# Python-specific files
+__pycache__/
+*.py[cod]
+db.sqlite3
+
+# Tailwind CSS configuration (can be ignored if not needed in version control)
+tailwind.config.js
+tailwindcss.config.js
+
+# SQLite database (if used)
+*.sqlite3
+*.db
+
+# Database backups
+*.sql
+*.db-shm
+*.db-wal
+
+# Cache files
+*.pyc
+
+# Miscellaneous config files
+*.sh
+*.exe
+*.onnx
