@@ -1,0 +1,87 @@
+<!-- products/category_list -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Product Categories | {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="bg-white">
+  <!-- Hero Section -->
+  <div class="bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto text-center">
+      <h1 class="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+        Our Product Categories
+      </h1>
+      <p class="mt-4 max-w-2xl text-xl text-gray-500 mx-auto">
+        Browse through our wide range of high-quality products
+      </p>
+    </div>
+  </div>
+
+  <!-- Main Category Grid -->
+  <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+    {% if categories %}
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {% for category in categories %}
+          <div class="group relative bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+            <a href="{{ category.get_absolute_url }}" class="block">
+              <div class="aspect-w-3 aspect-h-2 bg-gray-200 group-hover:opacity-75">
+                <!-- Placeholder for category image - you can add image field to Category model if needed -->
+                <div class="w-full h-48 bg-gradient-to-r from-blue-50 to-indigo-50 flex items-center justify-center">
+
+                </div>
+              </div>
+              <div class="p-4">
+                <h3 class="text-lg font-medium text-gray-900">
+                  {{ category.name }}
+                </h3>
+                {% if category.children.all %}
+                  <div class="mt-2">
+                    <p class="text-sm text-gray-500">Subcategories:</p>
+                    <ul class="mt-1 space-y-1">
+                      {% for child in category.children.all|slice:":3" %}
+                        <li>
+                          <a href="{{ child.get_absolute_url }}" class="text-sm text-indigo-600 hover:text-indigo-800 hover:underline">
+                            {{ child.name }}
+                          </a>
+                        </li>
+                      {% endfor %}
+                      {% if category.children.count > 3 %}
+                        <li class="text-sm text-gray-500">+ {{ category.children.count|add:"-3" }} more</li>
+                      {% endif %}
+                    </ul>
+                  </div>
+                {% endif %}
+              </div>
+              <div class="absolute inset-0 z-10" aria-hidden="true"></div>
+            </a>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-12">
+
+        <h3 class="mt-2 text-lg font-medium text-gray-900">No categories found</h3>
+        <p class="mt-1 text-sm text-gray-500">Check back later for our product categories.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- CTA Section -->
+  <div class="bg-indigo-50 mt-12 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto text-center">
+      <h2 class="text-2xl font-extrabold tracking-tight text-gray-900 sm:text-3xl">
+        <span class="block">Can't find what you're looking for?</span>
+      </h2>
+      <p class="mt-4 max-w-2xl text-xl text-gray-500 mx-auto">
+        Browse our full product catalog or contact our support team
+      </p>
+      <div class="mt-6">
+        <a href="{% url 'products:all_products' %}" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+          View All Products
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+<div class="flex items-center justify-center mb-10">
+  <template x-for="(step, index) in steps" :key="index">
+    <div class="flex items-center">
+      <div class="relative">
+        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-white font-bold"
+          :class="{
+            'bg-blue-600': activeStep >= index,
+            'bg-gray-300 dark:bg-gray-600': activeStep < index
+          }">
+          <span x-text="index + 1"></span>
+        </div>
+        <div class="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs sm:text-sm text-center mt-1 text-gray-600 dark:text-gray-300" x-text="step"></div>
+      </div>
+      <div class="w-8 sm:w-12 h-1 bg-gray-300 dark:bg-gray-600 mx-2" x-show="index < steps.length - 1"
+        :class="{ 'bg-blue-600': activeStep > index }"></div>
+    </div>
+  </template>
+</div>

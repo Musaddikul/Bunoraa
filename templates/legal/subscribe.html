@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="container py-5 my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 text-center">
+            <div class="card border-0 shadow-lg">
+                <div class="card-header bg-primary bg-gradient text-white py-4">
+                    <i class="fas fa-check-circle fa-4x mb-3"></i>
+                    <h1 class="display-5 fw-bold mb-0">Subscription Confirmed!</h1>
+                </div>
+                <div class="card-body p-5 bg-body">
+                    <p class="lead mb-4">You have successfully subscribed to <span class="fw-bold text-primary">BunonMart</span> newsletter.</p>
+                    <p class="text-body-secondary mb-4">Look forward to receiving exclusive offers, product updates, and more directly to your inbox.</p>
+                    <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
+                        <a href="{% url 'products:all_products' %}" class="btn btn-primary btn-lg px-4">
+                            <i class="fas fa-shopping-bag me-2"></i>Start Shopping
+                        </a>
+                        <a href="{% url 'home' %}" class="btn btn-outline-secondary btn-lg px-4">
+                            <i class="fas fa-home me-2"></i>Return Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

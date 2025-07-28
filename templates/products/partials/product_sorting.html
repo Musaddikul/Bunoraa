@@ -1,0 +1,45 @@
+<!-- Sorting & Count + Filters Button -->
+<div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+
+  <!-- Results Count + Filter Toggle -->
+  <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+    <p class="text-gray-600 dark:text-gray-300 font-medium">
+      {{ page_obj.paginator.count }} Results
+    </p>
+
+    <!-- Premium Filters Toggle Button -->
+    <button @click="sidebarOpen = true"
+            type="button"
+            class="inline-flex items-center gap-2
+                bg-gray-200 dark:bg-gray-800 from-indigo-500 via-purple-600 to-pink-500
+                hover:from-indigo-600 hover:via-purple-700 hover:to-pink-600
+                text-gray-800 dark:text-gray-200 font-semibold px-4 py-1 rounded-full shadow-md
+                transition duration-300 ease-in-out
+                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-400
+                dark:focus:ring-offset-gray-900 hover:shadow-lg">
+    <i class="fas fa-sliders-h"></i>
+    <span>Filters</span>
+    </button>
+</div>
+
+  <!-- Sort Select -->
+  <form method="get" class="flex items-center gap-2 w-full sm:w-auto justify-end">
+    {% for key, value in current_filters.items %}
+      {% if key != 'sort_by' %}
+        <input type="hidden" name="{{ key }}" value="{{ value }}">
+      {% endif %}
+    {% endfor %}
+    <label for="sortSelect" class="sr-only">Sort By</label>
+    <select name="sort_by" id="sortSelect"
+            onchange="this.form.submit()"
+            class="rounded border border-gray-300 dark:border-gray-600 px-3 py-2 bg-gray-200 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-indigo-500">
+      <option value="" {% if not current_filters.sort_by %}selected{% endif %}>Default Sorting</option>
+      <option value="price_asc" {% if current_filters.sort_by == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+      <option value="price_desc" {% if current_filters.sort_by == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+      <option value="newest" {% if current_filters.sort_by == 'newest' %}selected{% endif %}>Newest</option>
+      <option value="popular" {% if current_filters.sort_by == 'popular' %}selected{% endif %}>Popularity</option>
+      <option value="rating" {% if current_filters.sort_by == 'rating' %}selected{% endif %}>Rating</option>
+    </select>
+  </form>
+
+</div>

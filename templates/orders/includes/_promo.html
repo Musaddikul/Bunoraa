@@ -1,0 +1,18 @@
+<div class="mt-6 max-w-7xl mx-auto">
+  <label for="promo_code" class="sr-only">Promo Code</label>
+  <div class="flex">
+    <input type="text" id="promo_code" name="promo_code"
+      class="block w-full rounded-l-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+      placeholder="প্রোমো কোড লিখুন" x-model="promoCode" @input.debounce.700ms="applyPromoCode">
+    <span class="inline-flex items-center px-4 py-2 border border-l-0 border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-white rounded-r-lg">
+      <svg x-show="!promoValid" class="h-5 w-5 text-yellow-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m0 4v1m0 4v1m0 4v1m-4-4h1m4 0h1m-4-4h1m4 0h1"/>
+      </svg>
+      <svg x-show="promoValid" class="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+      </svg>
+    </span>
+  </div>
+  <p x-show="promoMessage" class="text-sm mt-2" :class="promoValid ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'" x-text="promoMessage"></p>
+</div>
+<!-- Removed the promoCodeHandler script as it's now handled by checkoutApp in checkout.html -->

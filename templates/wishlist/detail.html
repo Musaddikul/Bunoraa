@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Your Wishlist{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-6 md:p-12 xl:max-w-7xl">
+    <h1 class="text-5xl font-extrabold text-center text-primary-700 dark:text-primary-300 font-display tracking-tight mb-12">
+        Your Wishlist
+    </h1>
+
+    <div x-data="{ wishlistCount: {{ products|length }} }" {# Removed toast data, as it's global now #}
+         x-init="
+            // The window.updateWishlistCount function is now defined in base.html and called globally.
+            // We still need to listen for the event here to update the local wishlistCount for this page,
+            // though for the detail page, the initial products|length is often sufficient.
+            $root.addEventListener('wishlist-count-updated', (event) => {
+                wishlistCount = event.detail.count;
+            });
+
+            // No need for local toast listeners or data here, as base.html handles it.
+         "
+         class="relative">
+
+        {% if products|length > 0 %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 animate-fadeIn" id="wishlist-products-grid">
+                {% for product in products %}
+                    {% include 'Wishlist/partials/product_card.html' with product=product csrf_token=csrf_token %}
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="bg-white dark:bg-dark/80 rounded-3xl shadow-2xl border border-light dark:border-dark/50 py-20 px-6 text-center animate-fadeIn">
+                <svg class="mx-auto h-28 w-28 text-gray-300 dark:text-gray-600 mb-6" fill="none" stroke="currentColor" stroke-width="2"
+                     viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 22.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                <h3 class="text-3xl font-semibold text-dark dark:text-light font-display">Your Wishlist is Empty</h3>
+                <p class="mt-2 text-lg text-gray-600 dark:text-gray-400">Add your favorite pieces and revisit them anytime.</p>
+                <div class="mt-8">
+                    <a href="{% url 'products:all_products' %}"
+                       class="inline-flex items-center px-6 py-3 rounded-full text-white bg-primary-600 hover:bg-primary-700 transition-all shadow-lg font-semibold tracking-wide">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                  d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7a1 1 0 011.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" />
+                        </svg>
+                        Start Browsing Products
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- No additional JS needed -->
+{% endblock %}

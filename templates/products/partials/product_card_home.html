@@ -1,0 +1,75 @@
+{% load static %}
+<div class="group relative bg-white dark:bg-gray-900 rounded-xl shadow hover:shadow-lg overflow-hidden transition-all duration-300 border border-gray-100 dark:border-gray-800">
+  
+  <!-- Image & Badges -->
+  <a href="{{ product.get_absolute_url }}">
+    <div class="relative aspect-[7/10] overflow-hidden bg-gray-100 dark:bg-gray-800">
+        <img src="{{ product.image.url }}" alt="{{ product.name }}"
+        class="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105">
+
+        <!-- Wishlist -->
+        <div x-data="{
+            is_wished: {{ product.is_wished|yesno:'true,false' }},
+            toggle() {
+            fetch('{% url 'wishlist:toggle' product.id %}', {
+                method: 'POST',
+                headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(res => {
+                // Crucial: Check if response is OK before parsing JSON
+                if (!res.ok) {
+                    // Attempt to parse JSON error message, or use generic error
+                    return res.json().then(err => { 
+                        throw new Error(err.error || `HTTP error! status: ${res.status}`); 
+                    }).catch(() => {
+                        // Fallback if response is not JSON or parsing fails
+                        throw new Error(`HTTP error! status: ${res.status} - ${res.statusText}`);
+                    });
+                }
+                return res.json();
+            })
+            .then(data => {
+                this.is_wished = data.added;
+                
+                // Dispatch the 'wishlist-count-updated' event with all necessary details
+                const message = data.message || 
+                                (data.added ? 'Product added to wishlist!' : 'Product removed from wishlist!');
+
+                document.dispatchEvent(new CustomEvent('wishlist-count-updated', {
+                    bubbles: true,
+                    detail: {
+                        count: data.wishlist_count,
+                        productId: {{ product.id }},
+                        added: data.added,
+                        message: message
+                    }
+                }));
+                showToast(message, 'success');
+            })
+            .catch(error => {
+                console.error('Product Grid: Error toggling wishlist:', error);
+                showToast(error.message || 'Failed to update wishlist.', 'error');
+            });
+            }
+        }" 
+        x-init="is_wished = {{ product.is_wished|yesno:'true,false' }}"
+        class="absolute top-2 right-2 z-20">
+        <button type="button" aria-label="Add to wishlist" x-on:click.prevent.stop="toggle()">
+            <i :class="is_wished ? 'fas fa-heart text-red-600' : 'far fa-heart text-gray-400 dark:text-gray-500'" class="text-lg transition"></i>
+        </button>
+        </div>
+    </div>
+  </a>
+
+  <!-- Product Info -->
+  <div class="p-4 space-y-2 text-sm">
+    <div class="flex justify-between items-center">
+      {% if product.category %}
+      <p class="text-xs text-center uppercase tracking-wide text-gray-400 dark:text-gray-500">{{ product.category.name }}</p>
+      {% endif %}
+    </div>
+  </div>
+</div>

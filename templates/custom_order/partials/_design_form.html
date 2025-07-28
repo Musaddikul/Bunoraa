@@ -1,0 +1,149 @@
+<div class="shadow rounded-lg p-6 mb-6 fade-in" 
+     x-show="currentStep === 2 && orderType === 'OWN_DESIGN'"
+     x-transition
+     id="design-form"> {# Added ID for JavaScript to target #}
+    <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Design Details</h2>
+    
+    {# IMPORTANT: Render the management form for the design_formset #}
+    {{ design_formset.management_form }} 
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Left Column -->
+        <div>
+            <!-- Category Selection -->
+            <div class="mb-4">
+                <label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Category</label>
+                <select id="category" name="category"
+                        x-model="formData.category"
+                        @change="loadSubcategories($event.target.value)"
+                        class="mt-1 block w-full pl-3 pr-10 py-2 text-gray-700 dark:text-gray-300 bg-gray-300 dark:bg-gray-700 border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                        required>
+                    <option value="">Select a category</option>
+                    <template x-for="category in categories" :key="category.id">
+                        <option :value="category.id" x-text="category.name"></option>
+                    </template>
+                </select>
+            </div>
+
+            <!-- Subcategory Selection -->
+            <div class="mb-4">
+                <label for="subcategory" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Subcategory</label>
+                <select id="subcategory" name="subcategory"
+                        x-model="formData.subcategory"
+                        @change="loadSizes($event.target.value); calculatePrice()" {# Trigger loadSizes and calculatePrice on subcategory change #}
+                        class="mt-1 block w-full pl-3 pr-10 py-2 text-gray-700 dark:text-gray-300 bg-gray-300 dark:bg-gray-700 border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                        required>
+                    <option value="">Select a subcategory</option>
+                    <template x-for="subcategory in subcategories" :key="subcategory.id">
+                        <option :value="subcategory.id" x-text="subcategory.name"></option>
+                    </template>
+                </select>
+            </div>
+
+            <!-- Fabric Type Selection -->
+            <div class="mb-4">
+                <label for="fabric-type" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Fabric Type</label>
+                <select id="fabric-type" name="fabric_type"
+                        x-model="formData.fabric_type"
+                        @change="loadColors($event.target.value); calculatePrice()" {# Trigger loadColors and calculatePrice on fabric type change #}
+                        class="mt-1 block w-full pl-3 pr-10 py-2 text-gray-700 dark:text-gray-300 bg-gray-300 dark:bg-gray-700 border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                        required>
+                    <option value="">Select a fabric type</option>
+                    <template x-for="fabric in fabrics" :key="fabric.id">
+                        <option :value="fabric.id" x-text="fabric.name"></option>
+                    </template>
+                </select>
+                <p x-show="selectedFabric" class="mt-2 text-sm text-gray-600 dark:text-gray-400">Base Price: <span x-text="`৳${selectedFabric ? selectedFabric.base_price : '0.00'}`"></span></p>
+            </div>
+
+            <!-- Color Option Selection -->
+            <div class="mb-4">
+                <label for="color-option" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Color Option</label>
+                <select id="color-option" name="color_option"
+                        x-model="formData.color_option"
+                        class="mt-1 block w-full pl-3 pr-10 py-2 text-gray-700 dark:text-gray-300 bg-gray-300 dark:bg-gray-700 border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                        required>
+                    <option value="">Select a color</option>
+                    <template x-for="color in colors" :key="color.id">
+                        <option :value="color.id" x-text="color.name"></option>
+                    </template>
+                </select>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div>
+            <!-- Quantity -->
+            <div class="mb-4">
+                <label for="quantity" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Quantity</label>
+                <input type="number" id="quantity" name="quantity"
+                       x-model.number="formData.quantity"
+                       @input="calculatePrice()" {# Trigger calculatePrice on quantity change #}
+                       min="1"
+                       class="mt-1 block w-full text-gray-700 dark:text-gray-300 bg-gray-300 dark:bg-gray-700 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                       required>
+            </div>
+
+            <!-- Size Option Selection -->
+            <div class="mb-4">
+                <label for="size-option" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Size Option</label>
+                <select id="size-option" name="size_option"
+                        x-model="formData.size_option"
+                        class="mt-1 block w-full pl-3 pr-10 py-2 text-gray-700 dark:text-gray-300 bg-gray-300 dark:bg-gray-700 border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                        required>
+                    <option value="">Select a size</option>
+                    <template x-for="size in sizes" :key="size.id">
+                        <option :value="size.id" x-text="size.name"></option>
+                    </template>
+                </select>
+            </div>
+
+            <!-- Custom Size Info (JSON Field) -->
+            <div class="mb-4" x-show="formData.size_option && sizes.find(s => s.id == formData.size_option && s.name.toLowerCase().includes('custom'))">
+                <label for="size-info" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Custom Size Information (JSON)</label>
+                <textarea id="size-info" name="size_info" rows="4"
+                          :value="JSON.stringify(formData.size_info, null, 2)"
+                          @input="parseSizeInfo($event.target.value)" {# Call a method to parse JSON #}
+                          class="mt-1 block w-full text-gray-700 dark:text-gray-300 bg-gray-300 dark:bg-gray-700 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                          placeholder='{"chest": 40, "waist": 32}'></textarea>
+                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Enter custom measurements as a JSON object.</p>
+            </div>
+
+            <!-- Expected Completion Date -->
+            <div class="mb-4">
+                <label for="expected-date" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Expected Completion Date</label>
+                <input type="date" id="expected-date" name="expected_date"
+                       x-model="formData.expected_date"
+                       class="mt-1 block w-full text-gray-700 dark:text-gray-300 bg-gray-300 dark:bg-gray-700 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </div>
+        </div>
+    </div>
+
+    <!-- Design Description -->
+    <div class="mb-6">
+        <label for="design-description" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Design Description</label>
+        <textarea id="design-description" name="design_description" rows="4"
+                  x-model="formData.design_description"
+                  class="mt-1 block w-full text-gray-700 dark:text-gray-300 bg-gray-300 dark:bg-gray-700 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder="Describe your design in detail..."
+                  required></textarea>
+    </div>
+
+    <!-- Image Upload -->
+    {# Pass formsetType as 'design' to the image upload partial #}
+    {% include 'custom_order/partials/_image_upload.html' with formsetType='design' %}
+
+    <!-- Navigation Buttons -->
+    <div class="mt-8 flex justify-between">
+        <button type="button" 
+                @click="currentStep--;" {# Ensure it's a function call #}
+                class="inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
+            Back
+        </button>
+        <button type="button" 
+                @click="nextStep()" {# Ensure it's a function call #}
+                class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
+            Next
+        </button>
+    </div>
+</div>

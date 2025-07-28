@@ -1,0 +1,4 @@
+{# custom_order/templates/custom_order/emails/confirmation.txt #}
+Thank you for your custom order {{ order.order_id }}!
+
+We have received your request and will be in touch shortly to confirm the details.

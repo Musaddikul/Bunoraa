@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block head_title %}{% endblock %}
+
+{% block content %}
+<div class="flex h-screen bg-background-light dark:bg-background-dark transition-colors duration-300">
+    <!-- Sidebar -->
+    <div class="w-64 bg-card-light dark:bg-card-dark shadow-md transition-colors duration-300">
+        <div class="p-6">
+            <a href="/" class="inline-block">
+                <img src="{% static 'images/logo.png' %}" alt="{{ site_name }} Logo" class="h-10 w-auto">
+            </a>
+        </div>
+        <nav class="mt-10">
+            <a href="{% url 'account_email' %}" class="flex items-center px-6 py-3 text-text-DEFAULT hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-primary dark:hover:text-primary-dark transition-colors duration-200">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                <span class="ml-3">{% trans "Email Addresses" %}</span>
+            </a>
+            <a href="{% url 'account_change_password' %}" class="flex items-center px-6 py-3 text-text-DEFAULT hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-primary dark:hover:text-primary-dark transition-colors duration-200">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                <span class="ml-3">{% trans "Change Password" %}</span>
+            </a>
+            <a href="{% url 'account_logout' %}" class="flex items-center px-6 py-3 text-text-DEFAULT hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-primary dark:hover:text-primary-dark transition-colors duration-200">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                <span class="ml-3">{% trans "Sign Out" %}</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Header -->
+        <header class="flex justify-between items-center p-6 bg-card-light dark:bg-card-dark border-b-2 border-gray-200 dark:border-gray-700 transition-colors duration-300">
+            <h1 class="text-2xl font-bold text-text-DEFAULT">{% block page_title %}{% endblock %}</h1>
+            <div class="flex items-center">
+                <span class="mr-4 text-text-DEFAULT">{% trans "Hello," %} {{ user.username }}</span>
+                <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h1M3 12H2m8.003-8.003l.707-.707M10.003 20.003l.707.707M3.707 3.707l-.707-.707m17.486 0l-.707.707M12 12a5 5 0 110 0 5 5 0 010 0z"></path></svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Page content -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-background-light dark:bg-background-dark p-6 transition-colors duration-300">
+            <div class="bg-card-light dark:bg-card-dark p-8 rounded-xl shadow-premium dark:shadow-premium-dark transition-colors duration-300">
+                {% block manage_content %}
+                {% endblock %}
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_body %}
+    {{ block.super }}
+    <script>
+        // Dark mode toggle script
+        const htmlTag = document.documentElement;
+        const themeToggleBtn = document.getElementById('theme-toggle');
+
+        const toggleDarkMode = () => {
+            if (htmlTag.classList.contains('dark')) {
+                htmlTag.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                htmlTag.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        };
+
+        // Apply theme on load
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            htmlTag.classList.add('dark');
+        } else {
+            htmlTag.classList.remove('dark');
+        }
+
+        themeToggleBtn?.addEventListener('click', toggleDarkMode);
+    </script>
+{% endblock %}

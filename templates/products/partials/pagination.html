@@ -1,0 +1,57 @@
+{% if page_obj.has_other_pages %}
+<nav class="flex justify-center mt-10" aria-label="Pagination Navigation">
+  <ul class="inline-flex items-center space-x-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+
+    <!-- Previous Page -->
+    {% if page_obj.has_previous %}
+    <li>
+      <a href="?page={{ page_obj.previous_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+         class="flex items-center px-3 py-2 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-800 transition text-indigo-600 dark:text-indigo-300 border border-gray-300 dark:border-gray-700"
+         aria-label="Previous Page">
+        <i class="fas fa-angle-left"></i>
+      </a>
+    </li>
+    {% else %}
+    <li>
+      <span class="flex items-center px-3 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 cursor-not-allowed text-gray-400 dark:text-gray-500">
+        <i class="fas fa-angle-left"></i>
+      </span>
+    </li>
+    {% endif %}
+
+    <!-- Page Numbers with Ellipsis -->
+    {% for i in page_obj.paginator.page_range %}
+      {% if i == page_obj.number %}
+      <li>
+        <span class="px-3 py-2 rounded-lg bg-indigo-600 text-white dark:bg-indigo-500 dark:text-white">{{ i }}</span>
+      </li>
+      {% elif i == 1 or i == page_obj.paginator.num_pages or i >= page_obj.number|add:'-1' and i <= page_obj.number|add:'1' %}
+      <li>
+        <a href="?page={{ i }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+           class="px-3 py-2 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-800 transition border border-transparent hover:text-indigo-700 dark:hover:text-indigo-300">{{ i }}</a>
+      </li>
+      {% elif i == page_obj.number|add:'-2' or i == page_obj.number|add:'2' %}
+      <li><span class="px-2">…</span></li>
+      {% endif %}
+    {% endfor %}
+
+    <!-- Next Page -->
+    {% if page_obj.has_next %}
+    <li>
+      <a href="?page={{ page_obj.next_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+         class="flex items-center px-3 py-2 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-800 transition text-indigo-600 dark:text-indigo-300 border border-gray-300 dark:border-gray-700"
+         aria-label="Next Page">
+        <i class="fas fa-angle-right"></i>
+      </a>
+    </li>
+    {% else %}
+    <li>
+      <span class="flex items-center px-3 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 cursor-not-allowed text-gray-400 dark:text-gray-500">
+        <i class="fas fa-angle-right"></i>
+      </span>
+    </li>
+    {% endif %}
+
+  </ul>
+</nav>
+{% endif %}

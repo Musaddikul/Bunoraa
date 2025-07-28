@@ -1,0 +1,8 @@
+Hi {{ user.get_full_name|default:user.username }},
+You left some items in your cart at {{ site_name }}.
+{% for item in items %}
+- {{ item.product.name }} ({{ item.quantity }}) = {{ item.total_price }}
+{% endfor %}
+Your total: {{ total }}
+
+Resume your order here: {{ cart_link }}

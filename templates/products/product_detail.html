@@ -1,0 +1,398 @@
+<!-- product_detail.html -->
+{% extends "base.html" %}
+{% load product_tags %}
+{% load static %}
+
+{% block meta %}
+<title>{{ product.name }} | {{ site_name }}</title>
+<meta name="description" content="{{ product.short_description }}">
+<meta property="og:title" content="{{ product.name }}">
+<meta property="og:description" content="{{ product.short_description }}">
+<meta property="og:image" content="{{ product.images.first.image.url }}">
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="{{ request.build_absolute_uri }}">
+<script type="application/ld+json">
+    {{ structured_data|safe }}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-2 md:px-4 py-8">
+  <!-- Animated Breadcrumbs -->
+  <nav class="mb-6 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2 animate-fade-in">
+    <a href="{% url 'home' %}" class="hover:text-primary transition flex items-center gap-1"><i
+        class="fas fa-home"></i>Home</a>
+    <span>/</span>
+    <a href="{% url 'products:all_products' %}" class="hover:text-primary transition">Products</a>
+    <span>/</span>
+    <a href="{{ product.category.get_absolute_url }}" class="hover:text-primary transition">{{ product.category.name
+      }}</a>
+    <span>/</span>
+    <span class="font-semibold text-gray-900 dark:text-white">{{ product.name }}</span>
+  </nav>
+
+  <div class="flex flex-col lg:flex-row gap-10">
+    <!-- Gallery -->
+    <div class="lg:w-1/2 flex flex-col gap-4">
+      <div
+        class="relative rounded-xl overflow-hidden shadow-lg bg-gray-100 dark:bg-gray-800 aspect-[4/5] flex items-center justify-center group"
+        x-data="{ zoom: false }">
+        <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}"
+          class="object-contain w-full h-full transition-transform duration-500 group-hover:scale-105 cursor-zoom-in"
+          id="mainImage" loading="eager" x-on:mouseenter="zoom = true" x-on:mouseleave="zoom = false"
+          :class="{ 'scale-125': zoom }">
+        <!-- Animated Badges -->
+        {% if product.is_discounted %}
+        <span
+          class="absolute top-4 left-4 bg-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow animate-bounce">Sale</span>
+        {% endif %}
+        {% if product.stock == 0 %}
+        <span
+          class="absolute top-4 right-4 bg-gray-700 text-white text-xs font-bold px-3 py-1 rounded-full shadow animate-pulse">Out
+          of Stock</span>
+        {% endif %}
+        <!-- Wishlist Button -->
+        <button type="button" aria-label="Add to wishlist"
+          class="absolute bottom-4 right-4 z-20 p-2 rounded-full bg-white dark:bg-gray-800 shadow hover:bg-red-100 dark:hover:bg-red-900 transition-colors"
+          data-product-id="{{ product.id }}" data-action="toggle-wishlist" aria-pressed="false"
+          x-data="{ wished: {{ product.is_wished|yesno:'true,false' }},
+                    toggle() {
+                      console.log('Product Detail: Toggling wishlist for product ID:', {{ product.id }});
+                      fetch('{% url 'wishlist:toggle' product.id %}', {
+                        method: 'POST',
+                        headers: {
+                          'X-CSRFToken': '{{ csrf_token }}',
+                          'X-Requested-With': 'XMLHttpRequest'
+                        }
+                      })
+                      .then(res => {
+                          if (!res.ok) {
+                              // If response is not OK, parse error message from body if available
+                              return res.json().then(err => { throw new Error(err.error || `HTTP error! status: ${res.status}`); });
+                          }
+                          return res.json();
+                      })
+                      .then(data => {
+                        console.log('Product Detail: Wishlist toggle response data:', data);
+                        this.wished = data.added; // Update Alpine.js local state
+                        
+                        // Dispatch a custom event for the navbar to update the wishlist count
+                        const message = data.message || 
+                                        (data.added ? 'Product added to wishlist!' : 'Product removed from wishlist!');
+
+                        document.dispatchEvent(new CustomEvent('wishlist-count-updated', {
+                            bubbles: true, // Ensure event bubbles up
+                            detail: {
+                                count: data.wishlist_count,
+                                productId: {{ product.id }}, // Pass the product ID
+                                added: data.added, // Pass the new wished status
+                                message: message // Pass the message for the toast
+                            }
+                        }));
+                        console.log('Product Detail: Dispatched wishlist-count-updated event with count:', data.wishlist_count);
+                        showToast(message, 'success'); // Use showToast for feedback
+                      })
+                      .catch(error => {
+                          console.error('Product Detail: Error toggling wishlist:', error);
+                          showToast(error.message || 'Failed to update wishlist.', 'error');
+                      });
+                    }
+                  }" x-on:click="toggle()" :aria-pressed="wished">
+          <svg class="w-7 h-7 transition-colors" :class="wished ? 'text-red-600' : 'text-gray-400'" fill="none"
+            stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 21.364l-7.682-7.682a4.5 4.5 0 010-6.364z" />
+          </svg>
+        </button>
+      </div>
+      <!-- Thumbnails Carousel -->
+      {% if product.images.all|length > 1 %}
+      <div class="flex gap-2 mt-2 overflow-x-auto scrollbar-thin scrollbar-thumb-primary-400"> {# Updated scrollbar color #}
+        {% for image in product.images.all %}
+        <button type="button" class="focus:outline-none ring-2 ring-primary-500/50 rounded transition" {# Updated ring color #}
+          onclick="document.getElementById('mainImage').src='{{ image.image.url }}'"
+          aria-label="Show image {{ forloop.counter }}">
+          <img src="{{ image.image.url }}" alt="Thumb"
+            class="w-16 h-16 object-cover rounded border border-gray-200 dark:border-gray-700 hover:ring-2 hover:ring-primary-500 transition"> {# Updated ring color #}
+        </button>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Product Info (Sticky) -->
+    <div class="lg:w-1/2 flex flex-col gap-6 lg:sticky top-24 self-start animate-fade-in">
+      <div>
+        <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-2">{{ product.name }}</h1>
+        <div class="flex flex-wrap items-center gap-3 mb-2">
+          {% if product.reviews.exists %}
+          <div class="flex items-center gap-0.5" aria-label="Average rating: {{ product.average_rating }}">
+            {% for i in "12345" %}
+            <svg
+              class="w-5 h-5 {% if i|add:0 <= product.average_rating %}text-yellow-400{% else %}text-gray-300 dark:text-gray-600{% endif %} transition-colors"
+              fill="currentColor" viewBox="0 0 20 20">
+              <polygon
+                points="9.9,1.1 7.6,6.6 1.6,7.6 6,11.9 4.9,17.9 9.9,14.9 14.9,17.9 13.8,11.9 18.2,7.6 12.2,6.6 " />
+            </svg>
+            {% endfor %}
+          </div>
+          <span class="text-gray-500 text-sm">({{ product.reviews.count }})</span>
+          {% endif %}
+          <span
+            class="px-2 py-0.5 rounded-full text-xs font-semibold {% if product.stock > 10 %}bg-green-100 text-green-700{% else %}bg-yellow-100 text-yellow-700{% endif %}">
+            {% if product.stock > 10 %}In Stock{% else %}Limited Stock{% endif %}
+          </span>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-end gap-3">
+        {% if product.is_discounted %}
+        <span class="text-3xl font-bold text-pink-600 animate-fade-in">৳{{ product.discounted_price|floatformat:2 }}</span>
+        <span class="text-lg line-through text-gray-400 self-end">৳{{ product.price|floatformat:2 }}</span>
+        <span
+          class="bg-pink-100 text-pink-700 px-2 py-0.5 rounded text-xs font-semibold flex items-center h-7 self-end">
+          Save {{ product.discount_percentage|floatformat:0 }}%
+        </span>
+        {% else %}
+        <span class="text-3xl font-bold text-gray-900 dark:text-white">৳{{ product.price|floatformat:2 }}</span>
+        {% endif %}
+      </div>
+      <div class="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-200">
+        {{ product.description|safe }}
+      </div>
+      <!-- Dynamic Color/Size Selectors Example -->
+      {% if product.colors.exists %}
+      <div>
+        <label class="block text-sm font-medium mb-1 text-gray-800 dark:text-gray-200">Color</label>
+        <div class="flex gap-2">
+          {% for color in product.colors.all %}
+          <button type="button" aria-label="{{ color.name }}"
+            class="w-7 h-7 rounded-full border-2 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:outline-none transition-all duration-200"
+            style="background-color: {{ color.hex|default:color.name|lower }};"></button> {# Changed to background-color #}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      {% if product.sizes.exists %}
+      <div>
+        <label class="block text-sm font-medium mb-1 text-gray-800 dark:text-gray-200">Size</label>
+        <div class="flex gap-2">
+          {% for size in product.sizes.all %}
+          <button type="button"
+            class="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-primary-600 hover:text-white transition focus:ring-2 focus:ring-primary-500 focus:outline-none">{{
+            size.name }}</button> {# Updated hover color #}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      <!-- Add to Cart Form -->
+      <form id="add-to-cart-form-detail" data-product-id="{{ product.id }}" class="add-to-cart-form flex flex-col sm:flex-row items-center gap-4 mt-4">
+        {% csrf_token %}
+        <div class="flex flex-col sm:flex-row items-end gap-4 w-full">
+          <div>
+            <label for="quantity" class="block text-sm font-medium mb-1 text-gray-800 dark:text-gray-200">Quantity</label>
+            <input type="number" id="quantity" name="quantity" min="1" max="{{ product.stock }}" value="1"
+              class="w-24 rounded border border-gray-300 dark:border-gray-700 px-3 py-2 focus:ring-2 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-100">
+          </div>
+          <button type="submit"
+            class="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-8 py-3 rounded-lg shadow transition disabled:opacity-50 disabled:cursor-not-allowed mt-4 sm:mt-0 flex items-center justify-center" {# Updated button color #}
+            {% if product.stock == 0 %}disabled{% endif %}>
+            {% if product.stock == 0 %}Out of Stock{% else %}
+              <span id="add-to-cart-text">Add to Cart</span>
+              <i id="add-to-cart-spinner" class="fas fa-spinner fa-spin ml-2" style="display: none;"></i>
+            {% endif %}
+          </button>
+        </div>
+        {# Hidden fields for add_product_to_cart service #}
+        <input type="hidden" name="override" value="false">
+        <input type="hidden" name="saved_for_later" value="false">
+      </form>
+      <!-- Floating Add-to-Cart for Mobile -->
+      <div
+        class="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-900 shadow-lg p-4 flex justify-between items-center lg:hidden transition-transform duration-300"
+        x-data="{ show: false }" x-show="show" x-transition style="display: none;" id="mobileAddToCartBar">
+        <span class="font-bold text-lg text-gray-900 dark:text-white">৳{{ product.discounted_price|default:product.price|floatformat:2 }}</span>
+        <form id="mobile-add-to-cart-form" data-product-id="{{ product.id }}" class="add-to-cart-form">
+          {% csrf_token %}
+          <input type="hidden" name="quantity" value="1">
+          <input type="hidden" name="override" value="false">
+          <input type="hidden" name="saved_for_later" value="false">
+          <button type="submit"
+            class="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-6 py-2 rounded shadow transition flex items-center justify-center" {# Updated button color #}
+            {% if product.stock == 0 %}disabled{% endif %}>
+            {% if product.stock == 0 %}Out of Stock{% else %}
+              <span id="mobile-add-to-cart-text">Add to Cart</span>
+              <i id="mobile-add-to-cart-spinner" class="fas fa-spinner fa-spin ml-2" style="display: none;"></i>
+            {% endif %}
+          </button>
+        </form>
+      </div>
+      <!-- Trust Badges -->
+      <div class="flex gap-4 mt-6">
+        <div class="flex items-center gap-2">
+          <i class="fas fa-shield-alt text-green-500"></i>
+          <span class="text-xs text-gray-600 dark:text-gray-300">Secure Checkout</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <i class="fas fa-truck text-blue-500"></i>
+          <span class="text-xs text-gray-600 dark:text-gray-300">Fast Shipping</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <i class="fas fa-undo text-yellow-500"></i>
+          <span class="text-xs text-gray-600 dark:text-gray-300">Easy Returns</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Include the reviews partial here -->
+  {% include 'products/partials/reviews.html' with product=product %}
+
+  <!-- Similar Products Carousel -->
+  <div class="mt-16">
+    <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">You May Also Like</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 overflow-x-auto scrollbar-thin scrollbar-thumb-primary-400"> {# Updated scrollbar color #}
+      {% for product in similar_products %}
+      <div>
+        {% include 'products/partials/product_card.html' with product=product %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Skeleton Loader Example (for images/reviews, show while loading) -->
+<div id="skeleton-loader"
+  class="fixed inset-0 bg-white/80 dark:bg-gray-900/80 z-50 flex items-center justify-center hidden">
+  <div class="animate-pulse flex flex-col gap-4">
+    <div class="w-80 h-96 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+    <div class="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded"></div>
+    <div class="h-4 w-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Floating Add-to-Cart bar on mobile
+  document.addEventListener('scroll', function () {
+    const addToCartForm = document.querySelector('form.add-to-cart-form'); // Target by class
+    const mobileBar = document.getElementById('mobileAddToCartBar');
+    if (!addToCartForm || !mobileBar) return;
+    const rect = addToCartForm.getBoundingClientRect();
+    // Show the mobile bar if the main add-to-cart form is out of view (scrolled past)
+    if (rect.bottom < 0) {
+      mobileBar.style.display = 'flex';
+    } else {
+      mobileBar.style.display = 'none';
+    }
+  });
+
+  // This `showToast` function is now defined in `static/js/utils.js`
+  // and is globally available. Remove local definition if it exists here.
+  // The wishlistUpdated and cartCountUpdate events are handled by `app.js` or `cart_js_interactions.js`.
+
+  // Function to open quick view modal (placeholder, actual implementation might be in a separate JS file)
+  function showQuickView(productId) {
+    console.log('Quick view triggered for product ID:', productId);
+    // This would typically trigger a modal to load product details via API.
+    // Example: You would have a modal element and then load content into it.
+    // const modal = document.getElementById('product-quick-view-modal');
+    // const contentDiv = document.getElementById('product-quick-view-content');
+    // contentDiv.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-4xl text-primary-500"></i><p class="mt-4 text-gray-600 dark:text-gray-300">Loading product details...</p></div>';
+    // modal.style.display = 'flex';
+    // fetch(`/products/api/${productId}/`)
+    //   .then(response => response.json())
+    //   .then(data => {
+    //     // Render product data into contentDiv
+    //   })
+    //   .catch(error => {
+    //     console.error('Error loading quick view:', error);
+    //     showToast('Failed to load quick view.', 'error');
+    //   });
+    showToast(`Quick view for product ${productId} would open here!`, 'info');
+  }
+
+  // The quantity increment/decrement functions are now handled by cart_js_interactions.js
+  // and should not be duplicated here.
+
+  // New event listener for add to cart forms
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('form.add-to-cart-form').forEach(form => {
+      form.addEventListener('submit', async function(event) {
+        event.preventDefault(); // Prevent default form submission
+
+        const productId = this.dataset.productId;
+        const quantityInput = this.querySelector('input[name="quantity"]');
+        const quantity = parseInt(quantityInput ? quantityInput.value : '1');
+        const csrfToken = this.querySelector('input[name="csrfmiddlewaretoken"]').value;
+        const override = this.querySelector('input[name="override"]').value === 'true';
+        const savedForLater = this.querySelector('input[name="saved_for_later"]').value === 'true';
+
+        const spinner = this.querySelector('.fas.fa-spinner');
+        const buttonText = this.querySelector('#add-to-cart-text') || this.querySelector('#mobile-add-to-cart-text');
+
+        if (spinner) spinner.style.display = 'inline-block';
+        if (buttonText) buttonText.textContent = 'Adding...';
+        this.querySelector('button[type="submit"]').disabled = true;
+
+        try {
+          const response = await fetch('/cart/api/items/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify({
+              product_id: productId,
+              quantity: quantity,
+              override_quantity: override,
+              saved_for_later: savedForLater,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Failed to add product to cart.');
+          }
+
+          showToast(data.message, 'success');
+          // Dispatch custom event to update cart count in navbar/sidebar
+          document.dispatchEvent(new CustomEvent('cartCountUpdate', { detail: data.cart.total_items }));
+          // Optionally, open the cart sidebar after adding
+          openCartSidebar();
+
+        } catch (error) {
+          console.error('Error adding product to cart:', error);
+          showToast(error.message || 'Failed to add product to cart.', 'error');
+        } finally {
+          if (spinner) spinner.style.display = 'none';
+          if (buttonText) buttonText.textContent = 'Add to Cart';
+          this.querySelector('button[type="submit"]').disabled = false;
+        }
+      });
+    });
+  });
+</script>
+
+<!-- Pass Django context variables to reviews.js -->
+<script>
+    const PRODUCT_ID = {{ product.id }};
+    const CSRF_TOKEN = "{{ csrf_token }}";
+    const API_ENDPOINTS = {
+        listReviews: "{% url 'reviews:api_list' product_id=product.id %}",
+        createReview: "{% url 'reviews:api_create' product_id=product.id %}",
+        voteReview: "{% url 'reviews:api_vote' pk=0 %}", // Placeholder for PK
+        flagReview: "{% url 'reviews:api_flag' pk=0 %}", // Placeholder for PK
+        summary: "{% url 'reviews:api_summary' product_id=product.id %}"
+    };
+    // Remove the placeholder '0' from voteReview and flagReview URLs
+    API_ENDPOINTS.voteReview = API_ENDPOINTS.voteReview.replace('0/', '');
+    API_ENDPOINTS.flagReview = API_ENDPOINTS.flagReview.replace('0/', '');
+
+    const USER_AUTHENTICATED = {{ user.is_authenticated|yesno:"true,false" }};
+    const CURRENT_USER_ID = {{ user.id|default:'null' }}; // Pass current user ID for vote/flag checks
+</script>
+<script src="{% static 'js/reviews.js' %}"></script>
+{% endblock %}

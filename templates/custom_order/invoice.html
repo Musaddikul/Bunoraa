@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: sans-serif; font-size: 14px; padding: 30px; }
+    h1 { font-size: 20px; }
+    .section { margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; }
+    td, th { padding: 6px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>Custom Order Invoice</h1>
+  <p><strong>Order #{{ order.id }}</strong></p>
+  <p>Date: {{ order.date_submitted|date:"Y-m-d" }}</p>
+
+  <div class="section">
+    <h3>Customer</h3>
+    <p>Name: {{ order.customer_name }}</p>
+    <p>Email: {{ order.email }}</p>
+    <p>Phone: {{ order.phone }}</p>
+  </div>
+
+  <div class="section">
+    <h3>Order Summary</h3>
+    <table>
+      <tr><th>Category</th><td>{{ order.category }}</td></tr>
+      <tr><th>Subcategory</th><td>{{ order.subcategory }}</td></tr>
+      <tr><th>Delivery</th><td>{{ order.delivery_type }}</td></tr>
+      <tr><th>Delivery Address</th><td>{{ order.get_delivery_address }}</td></tr>
+      <tr><th>Amount</th><td>৳{{ order.amount }}</td></tr>
+      <tr><th>Shipping</th><td>৳{{ order.shipping_rate }}</td></tr>
+      <tr><th>Status</th><td>{{ order.status }}</td></tr>
+      <tr><th>Payment</th><td>{{ order.payment_status }}</td></tr>
+    </table>
+  </div>
+
+  {% if order.design_images.all %}
+  <div class="section">
+    <h3>Design Preview</h3>
+    <img src="{{ order.design_images.all.0.image.url }}" width="300">
+  </div>
+  {% endif %}
+</body>
+</html>

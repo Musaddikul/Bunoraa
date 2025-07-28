@@ -1,0 +1,9 @@
+<!-- templates/orders/checkout.html (HTMX-enabled partial) -->
+<div id="shipping-methods" class="mt-4">
+  <label class="font-medium block mb-2">Delivery Method</label>
+  <div hx-get="/shipping/api/methods/" hx-trigger="load" hx-target="#shipping-options" class="space-y-2">
+    <div id="shipping-options">
+      <p class="text-gray-400 text-sm">Loading methods...</p>
+    </div>
+  </div>
+</div>

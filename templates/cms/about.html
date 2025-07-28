@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card border-0 shadow-lg">
+                <div class="card-header bg-primary text-white py-4">
+                    <h1 class="display-5 fw-bold mb-0 text-center">About Us</h1>
+                </div>
+                <div class="card-body p-5">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <img src="https://via.placeholder.com/600x400" alt="About Us" class="img-fluid rounded-3 shadow">
+                        </div>
+                        <div class="col-md-6">
+                            <h2 class="fw-bold mb-4">Our Story</h2>
+                            <p class="lead">Welcome to BunonMart, where quality meets convenience.</p>
+                            <p>Founded in 2025, we've been committed to providing exceptional products and customer service. Our team of experts carefully selects each item in our inventory to ensure the highest standards.</p>
+                            <p>We believe in sustainable business practices and building long-term relationships with our customers.</p>
+                            <div class="mt-4">
+                                <a href="{% url 'contacts:contact' %}" class="btn btn-primary btn-lg px-4 me-2">
+                                    <i class="fas fa-envelope me-2"></i>Contact Us
+                                </a>
+                                <a href="{% url 'products:all_products' %}" class="btn btn-outline-primary btn-lg px-4">
+                                    <i class="fas fa-shopping-bag me-2"></i>Shop Now
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

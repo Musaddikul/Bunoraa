@@ -1,0 +1,13 @@
+<!-- templates/shipping/partials/shipping_methods.html -->
+{% for method in methods %}
+<div class="flex items-center gap-3">
+  <input type="radio" name="shipping_method_id" value="{{ method.id }}" id="method-{{ method.id }}"
+         class="form-radio text-indigo-600 border-gray-300" required>
+  <label for="method-{{ method.id }}" class="block">
+    <strong>{{ method.name }}</strong><br>
+    <span class="text-sm text-gray-500">Zone: {{ method.zone.name }} • Est: {{ method.estimated_days }}</span>
+  </label>
+</div>
+{% empty %}
+<p class="text-sm text-gray-400">No shipping methods available.</p>
+{% endfor %}

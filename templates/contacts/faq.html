@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="faq-header bg-primary bg-gradient text-white p-5 rounded-4 mb-5 text-center shadow">
+        <h1 class="display-4 fw-bold">Frequently Asked Questions</h1>
+        <p class="lead mb-0">Find quick answers to common questions</p>
+    </div>
+
+    <div class="row g-4">
+        <!-- Categories Navigation -->
+        <div class="col-lg-3">
+            <div class="card border-0 shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-header bg-body-secondary">
+                    <h5 class="card-title mb-0 fw-bold">Categories</h5>
+                </div>
+                <div class="card-body bg-body">
+                    <div class="nav flex-column nav-pills" id="faq-categories">
+                        {% for category in categories %}
+                        <a class="nav-link hover-underline-animation {% if forloop.first %}active{% endif %}" 
+                           href="#category-{{ category|slugify }}"
+                           data-bs-toggle="pill">
+                            <i class="fas fa-folder-open me-2"></i>{{ category }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ Content -->
+        <div class="col-lg-9">
+            <div class="tab-content" id="faq-content">
+                {% for category in categories %}
+                <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" 
+                     id="category-{{ category|slugify }}">
+                    <div class="accordion" id="accordion-{{ category|slugify }}">
+                        {% for faq in faqs %}
+                        {% if faq.category == category %}
+                        <div class="accordion-item border-0 shadow-sm mb-3">
+                            <h2 class="accordion-header" id="heading-{{ faq.id }}">
+                                <button class="accordion-button collapsed fw-bold bg-body" 
+                                        type="button" 
+                                        data-bs-toggle="collapse" 
+                                        data-bs-target="#collapse-{{ faq.id }}" 
+                                        aria-expanded="false" 
+                                        aria-controls="collapse-{{ faq.id }}">
+                                    <i class="fas fa-question-circle text-primary me-2"></i>
+                                    {{ faq.question }}
+                                </button>
+                            </h2>
+                            <div id="collapse-{{ faq.id }}" 
+                                 class="accordion-collapse collapse bg-body" 
+                                 aria-labelledby="heading-{{ faq.id }}" 
+                                 data-bs-parent="#accordion-{{ category|slugify }}">
+                                <div class="accordion-body ck-content">
+                                    {{ faq.answer|safe }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

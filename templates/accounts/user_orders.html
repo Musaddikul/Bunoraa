@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Orders - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 md:p-10">
+        <h1 class="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-8 text-center">
+            My Orders
+        </h1>
+
+        {% if orders %}
+            <div class="space-y-6">
+                {% for order in orders %}
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Order #{{ order.order_number }}</h2>
+                        <span class="text-sm font-medium {% if order.status.name == 'Pending' %}text-yellow-600{% elif order.status.name == 'Processing' %}text-blue-600{% elif order.status.name == 'Shipped' %}text-indigo-600{% elif order.status.name == 'Delivered' %}text-green-600{% elif order.status.name == 'Cancelled' %}text-red-600{% else %}text-gray-600{% endif %}">
+                            {{ order.status.name }}
+                        </span>
+                    </div>
+                    <p class="text-gray-700 dark:text-gray-300 mb-2"><strong>Order Date:</strong> {{ order.created_at|date:"F j, Y, P" }}</p>
+                    <p class="text-gray-700 dark:text-gray-300 mb-4"><strong>Total:</strong> ৳{{ order.grand_total|floatformat:2 }}</p>
+                    
+                    <div class="text-right">
+                        <a href="{% url 'orders:order_detail' order_id=order.id %}"
+                           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-10">
+                <p class="text-lg text-gray-700 dark:text-gray-300">You haven't placed any orders yet.</p>
+                <a href="{% url 'products:all_products' %}" class="mt-6 inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    Start Shopping
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

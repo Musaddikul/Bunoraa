@@ -1,0 +1,34 @@
+{% extends "account/base_entrance.html" %}
+{% load i18n allauth account widget_tweaks %}
+{% load static %}
+
+{% block head_title %}{% trans "Sign Out" %}{% endblock %}
+
+{% block entrance_content %}
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-light dark:bg-dark">
+    <div class="max-w-3xl w-full space-y-8 p-8 sm:p-10 bg-background-light dark:bg-background-dark rounded-3xl shadow-2xl border border-light dark:border-dark/50 transform transition-all duration-300 hover:shadow-3xl">
+        <div class="text-center">
+            <h2 class="mt-6 text-4xl font-extrabold text-dark dark:text-light leading-tight">
+                {% trans "Sign Out" %}
+            </h2>
+            <p class="mt-2 text-lg text-dark/70 dark:text-light/70">
+                {% trans "Are you sure you want to sign out of your account?" %}
+            </p>
+        </div>
+
+        {% url 'account_logout' as action_url %}
+        <form class="mt-8 space-y-6" method="post" action="{{ action_url }}">
+            {% csrf_token %}
+            {{ redirect_field }}
+            <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+                <button type="submit" class="w-full sm:w-auto flex justify-center py-3 px-6 border border-transparent rounded-lg shadow-lg text-base font-semibold text-white bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transform hover:-translate-y-0.5 transition-all duration-300">
+                    {% trans 'Sign Out' %}
+                </button>
+                <a href="{% url 'account_login' %}" class="w-full sm:w-auto flex justify-center py-3 px-6 border border-gray-300 dark:border-gray-700 rounded-lg shadow-sm bg-background-light dark:bg-background-dark text-dark/70 dark:text-light/70 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-300">
+                    {% trans 'Cancel' %}
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock entrance_content %}

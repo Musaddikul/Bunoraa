@@ -1,0 +1,40 @@
+{# support/contact.html #}
+{% extends "base.html" %}
+
+{% block title %}Contact Us{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-10">
+  <h1 class="text-3xl font-bold mb-6 text-center text-indigo-700">Get in Touch</h1>
+
+  <form method="post" class="bg-white dark:bg-gray-800 shadow-md rounded px-8 pt-6 pb-8 mb-4">
+    {% csrf_token %}
+    {% if form.errors %}
+      <div class="text-red-500 mb-4">
+        <ul class="list-disc ml-5">
+          {% for field in form %}
+            {% for error in field.errors %}
+              <li>{{ field.label }}: {{ error }}</li>
+            {% endfor %}
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    {% for field in form %}
+      <div class="mb-4">
+        <label class="block text-gray-700 dark:text-gray-200 text-sm font-bold mb-2">
+          {{ field.label }}
+        </label>
+        {{ field }}
+      </div>
+    {% endfor %}
+
+    <div class="flex items-center justify-between">
+      <button class="bg-gradient-to-r from-indigo-600 to-pink-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
+        Send Message
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

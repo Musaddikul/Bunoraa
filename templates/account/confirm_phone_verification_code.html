@@ -1,0 +1,16 @@
+{% extends "account/base_confirm_code.html" %}
+{% load i18n allauth account widget_tweaks %}
+
+{% block head_title %}{% trans "Phone Verification" %}{% endblock %}
+
+{% block title %}
+    {% trans "Enter Phone Verification Code" %}
+{% endblock %}
+{% block recipient %}<a href="tel:{{ phone }}" class="font-medium text-primary hover:text-primary-dark">{{ phone }}</a>{% endblock %}
+{% block action_url %}
+    {% url 'account_verify_phone' %}
+{% endblock %}
+{% block change_title %}
+    {% trans "Use a different phone number" %}
+{% endblock %}
+{% block extra_tags %}phone,verification{% endblock %}

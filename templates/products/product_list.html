@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load product_tags %}
+{% load static %}
+
+{% block extra_head %}
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  html, body { font-family: 'Poppins', sans-serif; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-2 py-8">
+  <div x-data="{ sidebarOpen: false }" x-init="$watch('sidebarOpen', val => document.body.classList.toggle('overflow-hidden', val))" class="relative">
+
+    <!-- Overlay -->
+    <div x-show="sidebarOpen" x-cloak @click="sidebarOpen = false"
+         class="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300">
+    </div>
+
+    <!-- Sidebar Panel -->
+    <aside x-show="sidebarOpen" x-cloak
+           class="fixed inset-y-0 left-0 z-50 w-80 max-w-full bg-white dark:bg-gray-900 shadow-xl transform transition-transform duration-300"
+           :class="{ '-translate-x-full': !sidebarOpen, 'translate-x-0': sidebarOpen }">
+      <div class="flex justify-between items-center p-4 border-b dark:border-gray-700">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Filters</h2>
+        <button @click="sidebarOpen = false" class="text-gray-500 hover:text-red-600 dark:text-gray-300">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="p-4 overflow-y-auto h-[calc(100%-60px)]">
+        {% include "products/partials/_filter_form.html" %}
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main>
+      {% include "products/partials/product_sorting.html" %}
+      {% include "products/partials/product_grid.html" %}
+      {% include "products/partials/pagination.html" %}
+    </main>
+  </div>
+</div>
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById("filter-form");
+    form.querySelectorAll('input').forEach(input => {
+      input.addEventListener('change', () => {
+        htmx.trigger(form, 'submit', {});
+      });
+    });
+  });
+</script>
+{% endblock %}
+{% endblock %}

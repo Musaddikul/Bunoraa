@@ -1,0 +1,45 @@
+{% extends "account/base_entrance.html" %}
+{% load i18n allauth account widget_tweaks %}
+{% load static %}
+
+{% block head_title %}{% trans "Reauthenticate" %}{% endblock %}
+
+{% block entrance_content %}
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-light dark:bg-dark">
+    <div class="max-w-3xl w-full space-y-8 p-8 sm:p-10 bg-background-light dark:bg-background-dark rounded-3xl shadow-2xl border border-light dark:border-dark/50 transform transition-all duration-300 hover:shadow-3xl">
+        <div class="text-center">
+            <h2 class="mt-6 text-4xl font-extrabold text-dark dark:text-light leading-tight">
+                {% trans "Reauthenticate" %}
+            </h2>
+            <p class="mt-2 text-lg text-dark/70 dark:text-light/70">
+                {% trans "Enter your password to confirm access:" %}
+            </p>
+        </div>
+
+        {% url 'account_reauthenticate' as action_url %}
+        <form class="mt-8 space-y-6" method="post" action="{{ action_url }}">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="relative z-0 w-full mb-6 group">
+                    {% render_field field class="peer block w-full px-4 py-3 rounded-lg bg-light/50 dark:bg-dark/50 border border-light/50 dark:border-dark/50 text-dark dark:text-light focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 placeholder-transparent" placeholder=" " %}
+                    <label for="{{ field.id_for_label }}" class="absolute text-sm text-dark/70 dark:text-light/70 duration-300 transform -translate-y-6 scale-75 top-3 left-3 z-10 origin-[0] bg-background-light dark:bg-background-dark px-2 peer-focus:px-2 peer-focus:text-primary-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-3 peer-focus:scale-75 peer-focus:-translate-y-6">
+                        {{ field.label }}
+                    </label>
+                    {% if field.help_text %}
+                        <p class="mt-2 text-xs text-dark/70 dark:text-light/70">{{ field.help_text }}</p>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <p class="mt-2 text-xs text-red-600 dark:text-red-400">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            {{ redirect_field }}
+            <div>
+                <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-lg text-base font-semibold text-white bg-gradient-to-r from-primary-500 to-primary-700 hover:from-primary-600 hover:to-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transform hover:-translate-y-0.5 transition-all duration-300">
+                    {% trans "Confirm" %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock entrance_content %}

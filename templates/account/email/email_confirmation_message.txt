@@ -1,0 +1,14 @@
+{% load account %}
+{% user_display user as user_display %}
+
+Hello from {{ current_site.name }}!
+
+Please confirm your email address by clicking the following link:
+
+{{ activate_url }}
+
+If you did not create an account with us, please ignore this email.
+
+Thank you for using {{ current_site.name }}!
+
+The {{ current_site.name }} Team

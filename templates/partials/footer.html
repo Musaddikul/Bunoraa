@@ -1,0 +1,136 @@
+<!-- footer.html -->
+ {% load static %}
+<footer class="bg-gray-800 text-gray-300 pt-12 transition-colors duration-300">
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <!-- About Column -->
+            <div>
+                <h5 class="text-white text-lg font-semibold pb-4 mb-4 relative after:absolute after:left-0 after:bottom-0 after:w-10 after:h-0.5 after:bg-pink-600">
+                    About BunonMart
+                </h5>
+                <p class="mb-4">BunonMart is a premier e-commerce platform showcasing the finest Bangladeshi products, from traditional crafts to contemporary designs.</p>
+                <div class="flex space-x-3">
+                    <a href="{{ site_settings.social_media.facebook }}" class="w-9 h-9 rounded-full bg-gray-700 hover:bg-pink-600 flex items-center justify-center transition-colors duration-300">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="{{ site_settings.social_media.instagram }}" class="w-9 h-9 rounded-full bg-gray-700 hover:bg-pink-600 flex items-center justify-center transition-colors duration-300">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="{{ site_settings.social_media.twitter }}" class="w-9 h-9 rounded-full bg-gray-700 hover:bg-pink-600 flex items-center justify-center transition-colors duration-300">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="https://www.youtube.com/bunonmart" class="w-9 h-9 rounded-full bg-gray-700 hover:bg-pink-600 flex items-center justify-center transition-colors duration-300">
+                        <i class="fab fa-youtube"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Links Column -->
+            <div>
+                <h5 class="text-white text-lg font-semibold pb-4 mb-4 relative after:absolute after:left-0 after:bottom-0 after:w-10 after:h-0.5 after:bg-pink-600">
+                    Quick Links
+                </h5>
+                <ul class="space-y-2">
+                    <li>
+                        <a href="{% url 'home' %}" class="flex items-center text-gray-300 hover:text-white transition-colors duration-300">
+                            <i class="fas fa-home mr-2"></i>Home
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'products:all_products' %}" class="flex items-center text-gray-300 hover:text-white transition-colors duration-300">
+                            <i class="fas fa-shop mr-2"></i>Shop
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'custom_order:create' %}" class="flex items-center text-gray-300 hover:text-white transition-colors duration-300">
+                            <i class="fas fa-tools mr-2"></i>Custom Order
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'cms:about' %}" class="flex items-center text-gray-300 hover:text-white transition-colors duration-300">
+                            <i class="fas fa-info-circle mr-2"></i>About Us
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'contacts:contact' %}" class="flex items-center text-gray-300 hover:text-white transition-colors duration-300">
+                            <i class="fas fa-envelope mr-2"></i>Contact Us
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Customer Service Column -->
+            <div>
+                <h5 class="text-white text-lg font-semibold pb-4 mb-4 relative after:absolute after:left-0 after:bottom-0 after:w-10 after:h-0.5 after:bg-pink-600">
+                    Customer Service
+                </h5>
+                <ul class="space-y-2">
+                    <li>
+                        <a href="{% url 'faq:list' %}" class="flex items-center text-gray-300 hover:text-white transition-colors duration-300">
+                            <i class="fas fa-question-circle mr-2"></i>FAQ
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'legal:policy' 'shipping' %}" class="flex items-center text-gray-300 hover:text-white transition-colors duration-300">
+                            <i class="fas fa-truck mr-2"></i>Shipping Policy
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'legal:policy' 'returns' %}" class="flex items-center text-gray-300 hover:text-white transition-colors duration-300">
+                            <i class="fas fa-exchange-alt mr-2"></i>Return Policy
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'legal:policy' 'privacy' %}" class="flex items-center text-gray-300 hover:text-white transition-colors duration-300">
+                            <i class="fas fa-lock mr-2"></i>Privacy Policy
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'legal:policy' 'terms' %}" class="nav-link">
+                            <i class="fas fa-file-contract mr-2"></i>Terms & Conditions
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Contact Info Column -->
+            <div>
+                <h5 class="text-white text-lg font-semibold pb-4 mb-4 relative after:absolute after:left-0 after:bottom-0 after:w-10 after:h-0.5 after:bg-pink-600">
+                    Contact Info
+                </h5>
+                <ul class="space-y-3">
+                    <li class="flex items-start">
+                        <i class="fas fa-map-marker-alt mt-1 mr-3 text-pink-600"></i>
+                        <span>{{ site_settings.address|default:"Kurigram-5621, Rangpur, Bangladesh" }}</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-phone mr-3 text-pink-600"></i>
+                        <span>{{ site_settings.phone_number|default:"+880 1701 922629" }}</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-envelope mr-3 text-pink-600"></i>
+                        <span>{{ site_settings.contact_email|default:"info@bunoraa.com" }}</span>
+                    </li>
+                </ul>
+                <div class="mt-4">
+                    <h6 class="text-white mb-2">Payment Methods</h6>
+                    <div class="flex flex-wrap gap-2">
+                        <img src="{% static 'images/payments/visa.png' %}" alt="Visa" class="h-6 opacity-80 hover:opacity-100 transition-opacity duration-300">
+                        <img src="{% static 'images/payments/mastercard.png' %}" alt="Mastercard" class="h-6 opacity-80 hover:opacity-100 transition-opacity duration-300">
+                        <img src="{% static 'images/payments/bkash.png' %}" alt="bKash" class="h-6 opacity-80 hover:opacity-100 transition-opacity duration-300">
+                        <img src="{% static 'images/payments/nagad.png' %}" alt="Nagad" class="h-6 opacity-80 hover:opacity-100 transition-opacity duration-300">
+                        <img src="{% static 'images/payments/rocket.png' %}" alt="Rocket" class="h-6 opacity-80 hover:opacity-100 transition-opacity duration-300">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Bottom -->
+        <div class="border-t border-gray-700 mt-8 pt-6 pb-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <p>&copy; {% now "Y" %} {{ site_name }}. All Rights Reserved.</p>
+                <p class="mt-2 md:mt-0">Developed by Musaddikul Islam</p>
+            </div>
+        </div>
+    </div>
+</footer>

@@ -1,0 +1,304 @@
+{% load static %}
+<header
+    class="sticky top-0 z-50 bg-gray-100 bg-opacity-80 backdrop-blur-md dark:bg-gray-800 dark:bg-opacity-80 shadow-md transition-colors duration-300">
+    <div class="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="flex items-center justify-between h-16">
+            <!-- Logo -->
+            <div class="flex-shrink-0">
+                <a href="{% url 'home' %}" aria-label="BunonMart Home">
+                    <img src="{{ site_logo.url }}" alt="{{ site_name }}" class="w-24 h-16" loading="lazy">
+                </a>
+            </div>
+
+            <!-- Desktop Menu -->
+            <div class="hidden md:block">
+                <div class="ml-10 flex items-center space-x-4">
+                    <!-- Categories -->
+                    <div class="flex space-x-8" role="menubar" aria-label="Primary Navigation">
+                        {% for category in all_categories %}
+                        {% if category.children.all.count %}
+                        <div class="relative group" role="none">
+                            <a href="{{ category.get_absolute_url }}"
+                                class="text-gray-700 dark:text-gray-300 hover:text-pink-600 dark:hover:text-pink-400 px-3 py-2 text-sm font-medium flex items-center"
+                                role="menuitem" tabindex="0" aria-haspopup="true" aria-expanded="false">
+                                {{ category.name }}
+                            </a>
+
+                            <!-- Submenu: full fix applied -->
+                            <div
+                                class="absolute top-full left-0 pt-2 w-48 invisible group-hover:visible group-hover:pointer-events-auto opacity-0 group-hover:opacity-100 transition-all duration-200 z-50">
+                                <div class="bg-white dark:bg-gray-700 rounded-md shadow-lg ring-1 ring-black ring-opacity-5"
+                                    role="menu" aria-label="{{ category.name }} submenu">
+                                    <div class="py-1">
+                                        {% for child in category.children.all %}
+                                        <a href="{{ child.get_absolute_url }}"
+                                            class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                                            role="menuitem" tabindex="-1">
+                                            {{ child.name }}
+                                        </a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <a href="{{ category.get_absolute_url }}"
+                            class="text-gray-700 dark:text-gray-300 hover:text-pink-600 dark:hover:text-pink-400 px-3 py-2 text-sm font-medium"
+                            role="menuitem" tabindex="0">
+                            {{ category.name }}
+                        </a>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+
+                    <!-- Custom Order Button -->
+                    <a href="{% url 'custom_order:create' %}"
+                        class="relative inline-flex items-center px-4 py-2 rounded-full text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-blue-500 shadow-lg hover:shadow-xl transition-all duration-300 ml-4"
+                        aria-label="Place a custom order">
+                        <i class="fas fa-tools mr-2" aria-hidden="true"></i>
+                        <span class="hidden sm:inline">Custom Order</span>
+                        <span class="inline sm:hidden">Custom</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Right Side Icons -->
+            <div class="hidden md:block">
+                <div class="ml-4 flex items-center md:ml-4 space-x-8">
+                    <!-- Search Form -->
+                    <form id="searchForm" class="flex" action="{% url 'products:search' %}" method="GET" role="search"
+                        aria-label="Search products">
+                        <div class="relative rounded-md shadow-sm">
+                            <input type="search" name="q" placeholder="Search products..."
+                                class="block w-full pl-4 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
+                                aria-label="Search products">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                <button type="submit" class="text-gray-400 hover:text-gray-500"
+                                    aria-label="Submit search">
+                                    <i class="fas fa-search" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Theme Toggle -->
+                    <button id="themeToggle" class="btn header-icon" aria-label="Toggle theme">
+                        <i class="fas fa-sun"></i>
+                    </button>
+
+                    <!-- Accounts Dropdown -->
+                    <div class="relative ml-3" tabindex="0">
+                        <button id="user-menu-button"
+                            class="p-2 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none"
+                            aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-user-circle" aria-hidden="true"></i>
+                        </button>
+                        <div id="user-menu"
+                            class="absolute top-full left-0 pt-2 w-40 hidden z-50 bg-white dark:bg-gray-700 rounded-md shadow-lg ring-1 ring-black ring-opacity-5"
+                            role="menu">
+                            {% if request.user.is_authenticated %}
+                            <a href="{% url 'accounts:profile' %}"
+                                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                                role="menuitem" tabindex="-1">
+                                <i class="fas fa-user mr-2" aria-hidden="true"></i>Profile
+                            </a>
+                            <div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+                            <a href="{% url 'account_logout' %}"
+                                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                                role="menuitem" tabindex="-1">
+                                <i class="fas fa-sign-out-alt mr-2" aria-hidden="true"></i>Logout
+                            </a>
+                            {% else %}
+                            <a href="{% url 'account_login' %}"
+                                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                                role="menuitem" tabindex="-1">
+                                <i class="fas fa-sign-in-alt mr-2" aria-hidden="true"></i>Login
+                            </a>
+                            <a href="{% url 'account_signup' %}"
+                                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                                role="menuitem" tabindex="-1">
+                                <i class="fas fa-user-plus mr-2" aria-hidden="true"></i>Signup
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Wishlist -->
+                    <a href="{% url 'wishlist:detail' %}"
+                        class="p-1 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 relative"
+                        aria-label="Wishlist">
+                        <i class="far fa-heart" aria-hidden="true"></i>
+                        <span id="wishlist-count-navbar"
+                            x-data="{ count: {{ request.user.wishlist.products.count|default:0 }} }"
+                            x-init="
+                                // Listen for the custom event dispatched from wishlist/detail.html or product cards
+                                window.addEventListener('wishlist-count-updated', (event) => {
+                                    count = event.detail.count;
+                                });
+                            "
+                            class="absolute -top-2 -right-2 inline-block w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center"
+                            aria-live="polite"
+                            x-text="count"
+                            :class="{ 'hidden': count === 0 }">
+                        </span>
+                    </a>
+
+                    <!-- Cart -->
+                    <button id="desktop-cart-trigger"
+                        class="p-1 rounded-full text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 relative navbar-cart-trigger"
+                        hx-get="{% url 'cart:sidebar' %}"
+                        hx-target="#quick-cart-content"
+                        hx-swap="innerHTML"
+                        hx-trigger="click, refreshCartSidebar from body" {# 'refreshCartSidebar' is a custom event #}
+                    >
+                        <i class="fas fa-shopping-cart text-xl"></i>
+                        <span class="absolute -top-2 -right-2 inline-block w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center"
+                            id="cart-item-count">
+                        {{ request.user_cart.total_items|default:"0" }}
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile menu button -->
+            <div class="md:hidden flex items-center">
+                <button id="mobile-menu-button"
+                    class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
+                    aria-label="Toggle mobile menu" aria-expanded="false">
+                    <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="md:hidden hidden bg-white dark:bg-gray-800 shadow-lg">
+        <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            {% for category in all_categories %}
+            {% if category.children.all.count %}
+            <div class="relative">
+                <button
+                    class="mobile-category-toggle text-gray-700 dark:text-gray-300 hover:text-pink-600 dark:hover:text-pink-400 block px-3 py-2 rounded-md text-base font-medium w-full text-left flex justify-between items-center"
+                    aria-expanded="false" aria-controls="submenu-{{ forloop.counter }}">
+                    {{ category.name }}
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+                <div id="submenu-{{ forloop.counter }}" class="mobile-submenu hidden pl-4" role="region"
+                    aria-label="{{ category.name }} submenu">
+                    {% for child in category.children.all %}
+                    <a href="{{ child.get_absolute_url }}"
+                        class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 dark:text-gray-400 hover:text-pink-600 dark:hover:text-pink-400">
+                        {{ child.name }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <a href="{{ category.get_absolute_url }}"
+                class="text-gray-700 dark:text-gray-300 hover:text-pink-600 dark:hover:text-pink-400 block px-3 py-2 rounded-md text-base font-medium">
+                {{ category.name }}
+            </a>
+            {% endif %}
+            {% endfor %}
+
+            <a href="{% url 'custom_order:create' %}"
+                class="block px-3 py-2 rounded-md text-base font-medium text-white bg-gradient-to-r from-purple-600 to-blue-500 mt-2 text-center"
+                aria-label="Place a custom order">
+                <i class="fas fa-tools mr-2" aria-hidden="true"></i>Custom Order
+            </a>
+        </div>
+
+        <div class="pt-4 pb-3 border-t border-gray-200 dark:border-gray-700 px-4 flex flex-col space-y-3">
+            <!-- Search Form -->
+            <form id="mobile-search" class="flex-1" action="{% url 'products:search' %}" method="GET" role="search"
+                aria-label="Search products">
+                <div class="relative rounded-md shadow-sm">
+                    <input type="search" name="q" placeholder="Search products..."
+                        class="block w-full pl-4 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
+                        aria-label="Search products">
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <button type="submit" class="text-gray-400 hover:text-gray-500" aria-label="Submit search">
+                            <i class="fas fa-search" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="flex items-center justify-between">
+                <!-- Theme Toggle -->
+                <button id="mobile-theme-toggle"
+                    class="p-2 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none"
+                    aria-label="Toggle theme">
+                    <i class="fas fa-sun dark:hidden" aria-hidden="true"></i>
+                    <i class="fas fa-moon hidden dark:inline" aria-hidden="true"></i>
+                </button>
+
+                <!-- Accounts -->
+                <div class="flex space-x-3">
+                    {% if request.user.is_authenticated %}
+                    <a href="{% url 'accounts:profile' %}"
+                        class="p-2 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                        aria-label="Profile">
+                        <i class="fas fa-user-circle" aria-hidden="true"></i>
+                    </a>
+                    <a href="{% url 'account_logout' %}"
+                        class="p-2 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                        aria-label="Logout">
+                        <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+                    </a>
+                    {% else %}
+                    <a href="{% url 'account_login' %}"
+                        class="p-2 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                        aria-label="Login">
+                        <i class="fas fa-sign-in-alt" aria-hidden="true"></i>
+                    </a>
+                    <a href="{% url 'account_signup'}"
+                        class="p-2 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                        aria-label="Signup">
+                        <i class="fas fa-user-plus" aria-hidden="true"></i>
+                    </a>
+                    {% endif %}
+                </div>
+
+                <!-- Wishlist -->
+                <a href="{% url 'wishlist:detail' %}"
+                    class="p-2 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 relative"
+                    aria-label="Wishlist">
+                    <i class="far fa-heart" aria-hidden="true"></i>
+                    <span
+                        x-data="{ count: {{ request.user.wishlist.products.count|default:0 }} }"
+                        x-init="
+                            // Listen for the custom event dispatched from wishlist/detail.html or product cards
+                            window.addEventListener('wishlist-count-updated', (event) => {
+                                count = event.detail.count;
+                            });
+                        "
+                        class="absolute top-0 right-0 inline-block w-5 h-5 transform translate-x-1/2 -translate-y-1/2 bg-red-500 text-white text-xs rounded-full flex items-center justify-center"
+                        aria-live="polite"
+                        x-text="count"
+                        :class="{ 'hidden': count === 0 }">
+                    </span>
+                </a>
+
+                <!-- Cart -->
+                <button id="mobile-cart-trigger"
+                    class="p-2 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 relative navbar-cart-trigger"
+                    aria-label="Shopping cart">
+                    <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+                    <span
+                        id="mobile-cart-count"
+                        class="absolute top-0 right-0 inline-block w-5 h-5 transform translate-x-1/2 -translate-y-1/2 bg-red-500 text-white text-xs rounded-full flex items-center justify-center"
+                        aria-live="polite">
+                        {{ cart_count|default:0 }}
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+</header>

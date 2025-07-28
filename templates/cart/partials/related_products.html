@@ -1,0 +1,24 @@
+{# cart/templates/cart/partials/related_products.html #}
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"> {# Added lg:grid-cols-4 for more products #}
+  {% if related_products %}
+    {% for prod in related_products %}
+    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+         onclick="showQuickView({{ prod.id }})"> {# Added quick view on click #}
+      <a href="{{ prod.get_absolute_url }}">
+        <img src="{{ prod.image.url }}" class="w-full h-32 object-cover rounded-md mb-2"> {# Used prod.image.url #}
+        <div class="font-semibold text-sm text-gray-900 dark:text-white truncate">{{ prod.name }}</div>
+        <div class="text-xs text-gray-600 dark:text-gray-400">
+          {% if prod.is_discounted %}
+            <span class="line-through mr-1">৳{{ prod.price|floatformat:2 }}</span>
+            <span class="text-green-700 dark:text-green-400">৳{{ prod.discounted_price|floatformat:2 }}</span>
+          {% else %}
+            ৳{{ prod.price|floatformat:2 }}
+          {% endif %}
+        </div>
+      </a>
+    </div>
+    {% endfor %}
+  {% else %}
+    <p class="text-center text-gray-500 col-span-full py-5">No related products found at the moment.</p>
+  {% endif %}
+</div>

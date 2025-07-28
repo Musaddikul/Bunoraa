@@ -1,0 +1,25 @@
+{# notifications/list.html #}
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-10">
+  <h1 class="text-2xl font-bold mb-6">Your Notifications</h1>
+  <ul class="space-y-4">
+    {% for n in notifications %}
+    <li class="p-4 rounded-lg bg-white dark:bg-gray-900 shadow {{ 'opacity-70' if n.is_read else '' }}">
+      <div class="flex justify-between items-center">
+        <p class="text-gray-800 dark:text-gray-200">{{ n.message }}</p>
+        {% if not n.is_read %}
+        <form method="post" action="{% url 'notifications:mark_read' n.pk %}">
+          {% csrf_token %}
+          <button class="text-sm text-blue-600">Mark as read</button>
+        </form>
+        {% endif %}
+      </div>
+    </li>
+    {% empty %}
+    <p>No notifications yet.</p>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Order Cancelled</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f9f9f9;
+        padding: 20px;
+      }
+      .email-container {
+        background: white;
+        padding: 30px;
+        border-radius: 6px;
+        max-width: 600px;
+        margin: auto;
+      }
+      .header {
+        font-size: 20px;
+        font-weight: bold;
+        color: #c0392b;
+      }
+      .details {
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-container">
+      <p class="header">Order #{{ order.order_number }} has been cancelled.</p>
+
+      <p>Hi {{ order.user.first_name }},</p>
+
+      <p>
+        Your order placed on {{ order.created_at|date:"F j, Y" }} has been successfully cancelled.
+        If you have any questions, feel free to contact us.
+      </p>
+
+      <div class="details">
+        <h3>Order Summary:</h3>
+        <ul>
+          {% for item in order.items.all %}
+          <li>{{ item.quantity }} × {{ item.product.name }} — ৳{{ item.subtotal|floatformat:2 }}</li>
+          {% endfor %}
+        </ul>
+
+        <p><strong>Total Refunded:</strong> ৳{{ order.grand_total|floatformat:2 }}</p>
+      </div>
+
+      <p>Thanks for choosing Bunoraa.</p>
+    </div>
+  </body>
+</html>

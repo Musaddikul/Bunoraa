@@ -1,0 +1,730 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Checkout - {{ site_name }}{% endblock %}
+
+
+{% block content %}
+<!-- Safe embedded JSON data -->
+<script type="application/json" id="selected-shipping-method-id">{{ selected_shipping_method_id|default_if_none:"null"|safe }}</script>
+<script type="application/json" id="initial-discount-data">{{ discount|default:"0.0"|safe }}</script>
+<script type="application/json" id="tax-rate-data">{{ tax_rate|default:"0.0"|safe }}</script>
+<script type="application/json" id="divisions-data">{{ divisions_json|safe }}</script>
+<script type="application/json" id="districts-data">{{ districts_json|safe }}</script>
+<script type="application/json" id="upazilas-data">{{ upazilas_json|safe }}</script>
+<script type="application/json" id="cart-items-json">{{ cart_items_json|safe }}</script>
+
+<div class="bg-gray-50 dark:bg-gray-900 min-h-screen py-12 px-4 sm:px-6 lg:px-8"
+     x-data="checkoutApp()" x-init="init()" @cart-updated.window="updateCart" @payment-method-selected.window="selectedPayment = $event.detail.id"> {# Listen for the new event #}
+
+  {% include "orders/includes/_steps.html" %}
+
+  <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="lg:col-span-2 space-y-6">
+      {% include "orders/includes/_shipping.html" %}
+      {% include "orders/includes/_payment.html" %}
+      {% include "orders/includes/_review.html" %}
+    </div>
+    {% include "orders/includes/_summary.html" %}
+  </div>
+
+  {% include "orders/includes/_promo.html" %}
+  {% include "orders/includes/_payment-logos.html" %}
+
+  <!-- Toast Notification Component -->
+  <div x-data="toast()" x-cloak
+       @show-toast.window="show($event.detail.message, $event.detail.type)"
+       x-show="visible" x-transition.opacity.duration.500ms
+       class="fixed bottom-5 right-5 z-50 w-full max-w-xs">
+      <div class="rounded-lg shadow-lg p-4 text-white"
+           :class="{
+               'bg-green-500': type === 'success',
+               'bg-red-500': type === 'error',
+               'bg-blue-500': type === 'info',
+               'bg-yellow-500': type === 'warning',
+           }">
+          <div class="flex items-center">
+              <template x-if="type === 'success'"><i class="fas fa-check-circle mr-2"></i></template>
+              <template x-if="type === 'error'"><i class="fas fa-times-circle mr-2"></i></template>
+              <template x-if="type === 'info'"><i class="fas fa-info-circle mr-2"></i></template>
+              <template x-if="type === 'warning'"><i class="fas fa-exclamation-triangle mr-2"></i></template>
+              <span x-text="message" class="font-semibold"></span>
+          </div>
+      </div>
+  </div>
+</div>
+
+<!-- Mobile Sticky Footer -->
+<div class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-4 lg:hidden z-50 shadow">
+  <div class="flex justify-between items-center text-sm">
+    <span class="text-gray-700 dark:text-gray-300">Total:</span>
+    <span class="text-lg font-semibold text-gray-900 dark:text-white">
+      ৳<span x-text="(parseFloat(subtotal || 0) + parseFloat(shipping || 0) + parseFloat(vat || 0) - parseFloat(discount || 0)).toFixed(2)"></span>
+    </span>
+    <button @click="nextStep" class="ml-4 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700">Next</button>
+  </div>
+</div>
+
+<!-- Alpine Component -->
+<script>
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('checkoutApp', () => {
+      /**
+       * Helper function to safely parse JSON with fallback.
+       * @param {string} elementId - The ID of the HTML element containing the JSON.
+       * @param {Array} fallback - The fallback value if parsing fails or element is not found.
+       * @returns {Array} Parsed JSON data or fallback.
+       */
+      const parseJSON = (elementId, defaultVal = null) => {
+        try {
+          const element = document.getElementById(elementId);
+          if (!element) {
+            console.warn(`Element with ID '${elementId}' not found.`);
+            return defaultVal;
+          }
+          const textContent = element.textContent.trim();
+          if (!textContent || textContent === 'null') { // Handle explicit 'null' string
+            return defaultVal; 
+          }
+          const data = JSON.parse(textContent);
+          return data;
+        } catch (e) {
+          console.error(`Error parsing ${elementId}:`, e);
+          return defaultVal;
+        }
+      };
+
+      // Parse initial data with empty array fallbacks
+      const divisions = parseJSON('divisions-data');
+      const districts = parseJSON('districts-data');
+      const upazilas = parseJSON('upazilas-data');
+      const cartItems = parseJSON('cart-items-json', []);
+      const initialTaxRate = parseFloat(parseJSON('tax-rate-data', 0));
+      const initialDiscount = parseFloat(parseJSON('initial-discount-data', 0.0));
+      const initialSelectedShippingMethodId = parseJSON('selected-shipping-method-id', null);
+
+      /**
+       * Builds a hierarchical location data structure for divisions, districts, and upazilas.
+       * @returns {Object} A nested object representing location data.
+       */
+      const buildLocationData = () => {
+        const result = {};
+        
+        if (!Array.isArray(divisions)) return result;
+        
+        divisions.forEach(div => {
+          if (!div || !div.name || !div.id) return;
+          
+          result[div.name] = {};
+          
+          districts
+            .filter(d => d && d.division_id === div.id)
+            .forEach(d => {
+              if (!d || !d.name || !d.id) return;
+              
+              result[div.name][d.name] = upazilas
+                .filter(u => u && u.district_id === d.id)
+                .map(u => u.name)
+                .filter(Boolean);
+            });
+        });
+        
+        return result;
+      };
+
+      const locationData = buildLocationData();
+
+      return {
+        // Step management
+        activeStep: 0,
+        steps: ['Shipping', 'Payment', 'Review'],
+        
+        // Shipping information
+        shippingInfo: {
+          full_name: '',
+          phone: '',
+          email: '',
+          address: '',
+          district: '',
+          thana: '',
+          postal_code: '',
+          division: '',
+          country: 'Bangladesh'
+        },
+        validationErrors: {},
+
+        // Delivery and payment
+        selectedShippingAddress: null, // Stores the ID of the selected address
+        selectedShippingMethod: initialSelectedShippingMethodId, // Stores the ID of the selected shipping method
+        selectedPayment: null, // Stores the ID of the selected payment method
+        userAddresses: [],
+        shippingMethods: [],
+        paymentMethods: [],
+        showNewAddressForm: false,
+        isLoadingPaymentMethods: true, // New loading state for payment methods
+        isCalculatingShipping: false, // New loading state for shipping calculation
+        
+        // Credit card fields (no longer directly used for manual input, but kept for potential backend compatibility if needed)
+        cardNumber: '',
+        cardExpiry: '',
+        cardCVC: '',
+        cardHolder: '',
+        
+        // Promo code handling
+        promoCode: localStorage.getItem('promoCode') || '',
+        promoMessage: '',
+        promoValid: false,
+        discount: initialDiscount, // Initialize discount from Django context
+        
+        // Cart information
+        subtotal: cartItems.reduce((sum, item) => sum + (item.quantity * (item.discounted_price || item.price)), 0),
+        cartItems: cartItems || [],
+        locationData,
+        shipping: 0, // Initialize shipping cost
+        tax: parseFloat((cartItems.reduce((sum, item) => sum + (parseFloat(item.price) * (parseFloat(item.quantity) || 0)), 0) * initialTaxRate).toFixed(2)), // Initialize tax
+        taxRate: initialTaxRate, // Initialize tax rate
+
+        // Computed properties with safety checks
+        get availableDivisions() {
+          try {
+            return Object.keys(this.locationData);
+          } catch {
+            return [];
+          }
+        },
+        
+        get availableDistricts() {
+          try {
+            if (!this.shippingInfo.division) return [];
+            return Object.keys(this.locationData[this.shippingInfo.division] || {});
+          } catch {
+            return [];
+          }
+        },
+        
+        get availableUpazilas() {
+          try {
+            if (!this.shippingInfo.division || !this.shippingInfo.district) return [];
+            const divisionData = this.locationData[this.shippingInfo.division] || {};
+            return divisionData[this.shippingInfo.district] || [];
+          } catch {
+            return [];
+          }
+        },
+
+        /**
+         * Computed property to get the selected payment method object.
+         * This ensures consistent data access and reactivity.
+         * @returns {Object|undefined} The selected payment method object or undefined if not found.
+         */
+        get selectedPaymentMethodObject() {
+            return this.paymentMethods.find(pm => pm.id === this.selectedPayment);
+        },
+
+        // Methods
+        /**
+         * Navigates to a specific checkout step.
+         * @param {number} index - The index of the step to navigate to.
+         */
+        goToStep(index) {
+          if (index >= 0 && index < this.steps.length) {
+            this.activeStep = index;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        },
+        
+        /**
+         * Proceeds to the next checkout step after validation.
+         */
+        nextStep() {
+          if (this.activeStep === 0 && !this.validateShipping()) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+          }
+          if (this.activeStep < this.steps.length - 1) {
+            this.activeStep++;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        },
+        
+        /**
+         * Returns to the previous checkout step.
+         */
+        prevStep() {
+          if (this.activeStep > 0) {
+            this.activeStep--;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        },
+        
+        /**
+         * Validates the shipping information.
+         * @returns {boolean} True if shipping information is valid, false otherwise.
+         */
+        validateShipping() {
+          this.validationErrors = {};
+          if (!this.selectedShippingAddress && !this.showNewAddressForm) {
+            this.validationErrors.addressSelection = 'Please select an address or add a new one.';
+            return false;
+          }
+
+          if (this.showNewAddressForm || this.userAddresses.length === 0) {
+            const { full_name, email, phone, address, district, thana, postal_code, division, country } = this.shippingInfo;
+
+            if (!full_name) this.validationErrors.full_name = 'Required';
+            if (!email || !/^\S+@\S+\.\S+$/.test(email)) this.validationErrors.email = 'Invalid email';
+            this.normalizePhone();
+            if (!/^\+8801[3-9]\d{8}$/.test(this.shippingInfo.phone)) this.validationErrors.phone = 'Invalid Bangladeshi number (+8801XXXXXXXXX)';
+            if (!address) this.validationErrors.address = 'Required';
+            if (!district) this.validationErrors.district = 'Required';
+            if (!thana) this.validationErrors.thana = 'Required';
+            if (!postal_code) this.validationErrors.postal_code = 'Required';
+            if (!division) this.validationErrors.division = 'Required';
+            if (!country) this.validationErrors.country = 'Required';
+          }
+
+          if (!this.selectedShippingMethod) {
+            this.validationErrors.shippingMethod = 'Please select a shipping method.';
+          }
+
+          return Object.keys(this.validationErrors).length === 0;
+        },
+        
+        /**
+         * Normalizes the phone number to a standard Bangladeshi format.
+         */
+        normalizePhone() {
+          const digits = this.shippingInfo.phone.replace(/\D/g, '');
+          if (digits.startsWith('8801') && digits.length === 13) {
+            this.shippingInfo.phone = `+${digits}`;
+          } else if (digits.startsWith('01') && digits.length === 11) {
+            this.shippingInfo.phone = `+880${digits.slice(1)}`;
+          } else {
+            this.shippingInfo.phone = `+8801${digits.slice(-9)}`;
+          }
+        },
+        
+        /**
+         * Updates the cart items and order summary based on an event.
+         * @param {Event} event - The custom event containing updated cart items.
+         */
+        updateCart(event) {
+          this.cartItems = event.detail.items || [];
+          this.updateOrderSummary();
+        },
+
+        /**
+         * Recalculates the order subtotal and total.
+         * If a promo code is active, it will re-apply it to get the correct discount.
+         * @param {boolean} fromPromoApply - Flag to prevent infinite recursion.
+         */
+        updateOrderSummary(fromPromoApply = false) {
+            this.subtotal = this.cartItems.reduce((sum, item) => sum + (item.quantity * (item.discounted_price || item.price)), 0);
+            this.tax = this.subtotal * this.taxRate;
+
+            // If a valid promo code is applied and the subtotal changes, re-apply it
+            if (this.promoValid && this.promoCode && !fromPromoApply) {
+                this.applyPromoCode();
+            } else {
+                // Calculate the final total
+                this.total = (parseFloat(this.subtotal || 0) + parseFloat(this.shipping || 0) + parseFloat(this.tax || 0) - parseFloat(this.discount || 0)).toFixed(2);
+            }
+        },
+        
+        /**
+         * Removes an item from the cart.
+         * @param {number} index - The index of the item to remove.
+         */
+        removeItem(index) {
+          if (index >= 0 && index < this.cartItems.length) {
+            this.cartItems.splice(index, 1);
+            this.updateOrderSummary();
+          }
+        },
+        
+        /**
+         * Applies a promo code by sending a request to the backend API.
+         */
+        applyPromoCode() {
+          if (!this.promoCode) {
+            this.promoMessage = '';
+            this.promoValid = false;
+            this.discount = 0;
+            this.updateOrderSummary(true); // Recalculate if promo code is cleared
+            return;
+          }
+          fetch("/promotions/api/coupons/apply/", {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': document.querySelector('meta[name=csrf-token]').content
+            },
+            body: JSON.stringify({ code: this.promoCode, target_amount: this.subtotal })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === "success") {
+              this.promoValid = true;
+              this.promoMessage = data.message || 'Coupon applied successfully!';
+              this.discount = parseFloat(data.discount_amount) || 0; // Update discount from response
+              localStorage.setItem('promoCode', this.promoCode);
+            } else {
+              this.promoValid = false;
+              this.promoMessage = data.detail || 'Invalid coupon code.';
+              this.discount = 0; // Reset discount if invalid
+            }
+          })
+          .catch(err => {
+            console.error("Promo Code Error:", err);
+            this.promoMessage = 'Promo validation failed';
+            this.promoValid = false;
+            this.discount = 0; // Reset discount on error
+          })
+          .finally(() => {
+              this.updateOrderSummary(true); // Always recalculate summary after an attempt
+          });
+        },
+        
+        /**
+         * Submits the order to the backend.
+         */
+        submitOrder() {
+          if (this.activeStep !== this.steps.length - 1) {
+            alert("Please complete all steps before submitting.");
+            return;
+          }
+
+          if (!this.selectedShippingMethod) {
+            alert("Please select a shipping method.");
+            return;
+          }
+
+          const selectedMethodObject = this.shippingMethods.find(method => Number(method.id) === Number(this.selectedShippingMethod));
+
+          if (!selectedMethodObject || !selectedMethodObject.carrier || !selectedMethodObject.carrier.id) {
+            alert("Shipping method details are incomplete. Please select a valid shipping method.");
+            return;
+          }
+
+          const orderData = {
+            user_id: parseInt('{{ request.user.id }}'),
+            address_id: this.selectedShippingAddress,
+            shipping_carrier_id: selectedMethodObject.carrier.id, // Get carrier ID from selected method
+            shipping_method_id: this.selectedShippingMethod, // Corrected field name
+            payment_method_id: this.selectedPayment, // Corrected field name
+            items: this.cartItems.map(item => ({ // Map cartItems to match OrderItemSerializer's expected fields
+                product_id: item.product_id, // Assuming product_id is available in cartItem
+                quantity: item.quantity,
+                price: item.price,
+                discount: item.discount || 0 // Ensure discount is included
+            })),
+            total: parseFloat(this.total), // Pass calculated total
+            tax: parseFloat(this.tax), // Pass calculated tax, ensure it's a number
+            discount: parseFloat(this.discount || 0), // Pass calculated discount, ensure it's a number
+            order_note: '', // Add any order notes if you have them in the UI
+            promo_code: this.promoCode, // Pass promo_code if needed by service
+          };
+
+          fetch("/api/checkout/", { // Corrected URL to match urls.py
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": document.querySelector('meta[name=csrf-token]').content
+            },
+            body: JSON.stringify(orderData)
+          })
+          .then(res => {
+            // Check if the response is JSON before parsing
+            const contentType = res.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                return res.json();
+            } else {
+                // If not JSON, it's likely an HTML error page
+                return res.text().then(text => {
+                    console.error("Server returned non-JSON response:", text);
+                    throw new Error("Server returned non-JSON response. Check server logs for details.");
+                });
+            }
+          })
+          .then(data => {
+            if (data.status === "success") {
+              alert("Order confirmed! A confirmation email has been sent.");
+              localStorage.clear();
+              window.location.href = `/checkout/success/${data.order_id}/`;
+            } else {
+              let errorMessage = data.message || "Failed to place order. Try again.";
+              if (data.errors) {
+                  for (const field in data.errors) {
+                      errorMessage += `\n${field}: ${data.errors[field].join(', ')}`;
+                  }
+              }
+              this.$dispatch('show-toast', { message: errorMessage, type: 'error' });
+            }
+          })
+          .catch(err => {
+            console.error("Submit Order Error:", err);
+            alert("Something went wrong. Please try again. Details: " + err.message);
+          });
+        },
+        
+        /**
+         * Fetches user addresses from the API.
+         */
+        fetchUserAddresses() {
+          return fetch('/accounts/api/addresses/')
+            .then(response => response.json())
+            .then(data => {
+              this.userAddresses = data.results;
+              if (this.userAddresses.length > 0) {
+                this.selectedShippingAddress = this.userAddresses[0].id;
+                this.selectAddress(this.userAddresses[0]);
+              }
+            })
+            .catch(error => console.error('Error fetching user addresses:', error));
+        },
+
+        /**
+         * Fetches available shipping methods from the API.
+         */
+        fetchShippingMethods() {
+          return fetch('/shipping/api/methods/')
+            .then(response => response.json())
+            .then(data => {
+              this.shippingMethods = data.results;
+              if (this.shippingMethods.length > 0) {
+                // Use the initialSelectedShippingMethodId from Django context if available
+                if (this.initialSelectedShippingMethodId) {
+                  this.selectedShippingMethod = this.initialSelectedShippingMethodId;
+                } else {
+                  this.selectedShippingMethod = this.shippingMethods[0].id; // Select the first method by default
+                }
+                this.updateShippingCost(this.shippingMethods.find(method => method.id === this.selectedShippingMethod)?.base_charge || 0);
+              }
+            })
+            .catch(error => console.error('Error fetching shipping methods:', error));
+        },
+
+        /**
+         * Fetches available payment methods from the API.
+         */
+        fetchPaymentMethods() {
+          this.isLoadingPaymentMethods = true;
+          return fetch('/payments/api/methods/')
+            .then(response => response.json())
+            .then(data => {
+              // Ensure IDs are numbers for consistent comparison
+              this.paymentMethods = data.results.map(method => ({
+                ...method,
+                id: method.id // Keep ID as string (UUID)
+              }));
+
+              // Set selectedPayment AFTER paymentMethods are loaded and parsed
+              const preselectedPayment = localStorage.getItem('selectedPayment');
+              if (preselectedPayment) {
+                this.selectedPayment = preselectedPayment; // Keep as string (UUID)
+              } else if (this.paymentMethods.length > 0 && !this.selectedPayment) {
+                this.selectedPayment = this.paymentMethods[0].id;  // Default to the first one if none is selected
+              }
+            })
+            .catch(error => {
+              console.error('Error fetching payment methods:', error);
+            })
+            .finally(() => {
+              this.isLoadingPaymentMethods = false;
+            });
+        },
+
+        /**
+         * Selects a user address and populates the shipping information.
+         * @param {Object} address - The selected address object.
+         */
+        selectAddress(address) {
+          this.shippingInfo = {
+            ...this.shippingInfo, // Keep existing properties
+            full_name: address.full_name,
+            phone: address.phone_number,
+            email: address.user_email,
+            address: address.address_line_1,
+            district: address.city,
+            thana: address.upazila,
+            postal_code: address.postal_code,
+            division: address.state,
+            country: address.country
+          };
+          this.showNewAddressForm = false;
+        },
+
+        /**
+         * Updates the shipping cost.
+         * @param {number} price - The base charge for shipping.
+         */
+        updateShippingCost(price) {
+          this.shipping = price;
+          this.updateOrderSummary();
+        },
+        
+        /**
+         * Calculates the shipping cost dynamically based on selected address and method.
+         */
+        async calculateDynamicShippingCost() {
+          if (!this.selectedShippingAddress || !this.selectedShippingMethod || this.cartItems.length === 0) {
+            this.shipping = 0;
+            this.updateOrderSummary();
+            return;
+          }
+
+          this.isCalculatingShipping = true;
+          try {
+            const totalWeightKg = this.cartItems.reduce((sum, item) => {
+              // Assuming product object is available in cartItem and has a 'weight' property
+              return sum + (item.product && item.product.weight ? parseFloat(item.product.weight) * item.quantity : 0);
+            }, 0);
+
+            const response = await fetch("/shipping/api/calculate-cost/", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": document.querySelector('meta[name=csrf-token]').content,
+              },
+              body: JSON.stringify({
+                shipping_method_id: this.selectedShippingMethod,
+                shipping_address_id: this.selectedShippingAddress,
+                weight_kg: totalWeightKg,
+                order_total: this.subtotal, // Use the cart's subtotal
+                // dims_cm: { l: 10, w: 10, h: 10 } // Add if you have dynamic dimensions
+              }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+              this.shipping = parseFloat(data.shipping_cost);
+            } else {
+              console.error("Error calculating dynamic shipping cost:", data.error);
+              this.shipping = 0; // Reset shipping on error
+            }
+          } catch (error) {
+            console.error("Network error calculating dynamic shipping cost:", error);
+            this.shipping = 0; // Reset shipping on network error
+          } finally {
+            this.isCalculatingShipping = false;
+            this.updateOrderSummary(); // Always update summary after calculation attempt
+          }
+        },
+
+        /**
+         * Initializes the checkout application, fetching data and setting up watchers.
+         */
+        async init() { // Made init function asynchronous
+          await this.fetchUserAddresses();
+          await this.fetchShippingMethods(); // Await this call
+          await this.fetchPaymentMethods();
+
+          // Only load from localStorage if no address has been selected yet by fetchUserAddresses
+          if (!this.selectedShippingAddress) {
+            try {
+              const storedShipping = localStorage.getItem('shippingInfo');
+              if (storedShipping) {
+                this.shippingInfo = { 
+                  ...this.shippingInfo, 
+                  ...JSON.parse(storedShipping) 
+                };
+              }
+            } catch (e) {
+              console.error("Error parsing shipping info from localStorage:", e);
+            }
+          }
+
+          // Only load from window.authUserShipping if no address has been selected yet
+          if (!this.selectedShippingAddress && window.authUserShipping) {
+            this.shippingInfo = { 
+              ...this.shippingInfo, 
+              ...window.authUserShipping 
+            };
+          }
+          
+          // Initialize credit card fields from localStorage if needed (these are no longer for manual input)
+          try {
+            const storedCard = localStorage.getItem('cardDetails');
+            if (storedCard) {
+              const cardDetails = JSON.parse(storedCard);
+              this.cardNumber = cardDetails.number || '';
+              this.cardExpiry = cardDetails.expiry || '';
+              this.cardCVC = cardDetails.cvc || '';
+              this.cardHolder = cardDetails.holder || '';
+            }
+          } catch (e) {
+            console.error("Error parsing card details:", e);
+          }
+
+          // Re-apply promo code if stored in localStorage AND not already applied to cart
+          if (this.promoCode && !this.discount) {
+            this.applyPromoCode();
+          }
+          
+          // Set up watchers
+          this.$watch('shippingInfo', val => {
+            localStorage.setItem('shippingInfo', JSON.stringify(val));
+          }, { deep: true });
+          
+          this.$watch('selectedPayment', val => localStorage.setItem('selectedPayment', val));
+          this.$watch('promoCode', val => localStorage.setItem('promoCode', val));
+          
+          // Watch card details if you want to persist them (even if not manually input, for backend consistency if needed)
+          this.$watch('cardNumber', val => {
+            const cardDetails = {
+              number: this.cardNumber,
+              expiry: this.cardExpiry,
+              cvc: this.cardCVC,
+              holder: this.cardHolder
+            };
+            localStorage.setItem('cardDetails', JSON.stringify(cardDetails));
+          });
+          
+          // Reset dependent fields when parent changes
+          this.$watch('shippingInfo.division', (newVal) => {
+            if (newVal) {
+              this.shippingInfo.district = '';
+              this.shippingInfo.thana = '';
+            }
+          });
+          
+          this.$watch('shippingInfo.district', (newVal) => {
+            if (newVal) {
+              this.shippingInfo.thana = '';
+            }
+          });
+
+          // Watch for changes in selectedShippingAddress or selectedShippingMethod
+          this.$watch('selectedShippingAddress', () => this.calculateDynamicShippingCost());
+          this.$watch('selectedShippingMethod', () => this.calculateDynamicShippingCost());
+
+          // Initial calculation after all data is loaded
+          this.calculateDynamicShippingCost();
+        }
+      };
+    });
+
+    Alpine.data('toast', () => ({
+        visible: false,
+        message: '',
+        type: 'info',
+        timeout: null,
+
+        show(message, type = 'info') {
+            this.message = message;
+            this.type = type;
+            this.visible = true;
+
+            if (this.timeout) {
+                clearTimeout(this.timeout);
+            }
+            this.timeout = setTimeout(() => {
+                this.visible = false;
+            }, 5000); // Hide after 5 seconds
+        },
+    }));
+  });
+</script>
+{% endblock %}

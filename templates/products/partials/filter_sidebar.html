@@ -1,0 +1,174 @@
+<aside
+  class="md:w-1/4 bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-xl sticky top-20 max-h-[calc(100vh-5rem)] overflow-auto text-sm font-medium"
+  x-data="{ open: { category: true, color: false, fabric: false, size: false, fit: false, price: false } }"
+>
+  <form method="get" id="filter-form" class="space-y-8">
+
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-2xl font-bold text-gray-900 dark:text-white">Filters</h3>
+      <a href="{{ request.path }}"
+         class="text-sm text-red-600 hover:text-red-800 font-semibold transition">
+        Clear All
+      </a>
+    </div>
+
+    <!-- CATEGORY FILTER -->
+    <section>
+      <button type="button"
+              @click="open.category = !open.category"
+              class="w-full flex justify-between items-center py-2 text-left text-gray-800 dark:text-white font-semibold text-lg hover:text-indigo-600 transition">
+        <span>Categories</span>
+        <svg x-show="!open.category" x-cloak class="w-5 h-5 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+        </svg>
+        <svg x-show="open.category" x-cloak class="w-5 h-5 transform rotate-180 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+        </svg>
+      </button>
+
+      <div x-show="open.category" x-cloak class="space-y-2 mt-2">
+        <ul class="space-y-1 max-h-64 overflow-y-auto pr-1">
+          {% for category in categories_list %}
+          <li>
+            <label
+              class="flex items-center space-x-2 cursor-pointer
+              {% if not category.parent %}
+                font-semibold text-white text-base
+              {% else %}
+                pl-6 text-sm text-gray-300
+              {% endif %}">
+              <input type="checkbox"
+                     name="category"
+                     value="{{ category.slug }}"
+                     class="form-checkbox accent-indigo-600 border-gray-400 dark:border-gray-600"
+                     {% if category.slug in current_filters.category %}checked{% endif %}>
+              <span>{{ category.name }}</span>
+            </label>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+
+    <!-- COLOR FILTER -->
+    <section>
+      <button type="button"
+              @click="open.color = !open.color"
+              class="w-full flex justify-between items-center py-2 text-left text-gray-800 dark:text-white font-semibold text-lg hover:text-indigo-600 transition">
+        <span>Color</span>
+        <svg x-show="!open.color" x-cloak class="w-5 h-5 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+        </svg>
+        <svg x-show="open.color" x-cloak class="w-5 h-5 transform rotate-180 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+        </svg>
+      </button>
+
+      <div x-show="open.color" x-cloak class="mt-3 space-y-2">
+        {% for color in filter_options.color %}
+        <label class="flex items-center space-x-2 text-gray-700 dark:text-gray-200">
+          <input type="checkbox" name="color" value="{{ color.id }}"
+                 class="accent-indigo-600 border-gray-300 dark:border-gray-600"
+                 {% if color.id|stringformat:'s' in current_filters.color %}checked{% endif %}>
+          <span class="text-sm">{{ color.name }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- FABRIC FILTER -->
+    <section>
+      <button type="button"
+              @click="open.fabric = !open.fabric"
+              class="w-full flex justify-between items-center py-2 text-left text-gray-800 dark:text-white font-semibold text-lg hover:text-indigo-600 transition">
+        <span>Fabric</span>
+        <svg x-show="!open.fabric" x-cloak class="w-5 h-5"><path ... /></svg>
+        <svg x-show="open.fabric" x-cloak class="w-5 h-5 transform rotate-180"><path ... /></svg>
+      </button>
+      <div x-show="open.fabric" x-cloak class="mt-3 space-y-2">
+        {% for fabric in filter_options.fabric %}
+        <label class="flex items-center space-x-2 text-gray-700 dark:text-gray-200">
+          <input type="checkbox" name="fabric" value="{{ fabric.id }}"
+                 class="accent-indigo-600 border-gray-300 dark:border-gray-600"
+                 {% if fabric.id|stringformat:'s' in current_filters.fabric %}checked{% endif %}>
+          <span class="text-sm">{{ fabric.name }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- SIZE FILTER -->
+    <section>
+      <button type="button"
+              @click="open.size = !open.size"
+              class="w-full flex justify-between items-center py-2 text-left text-gray-800 dark:text-white font-semibold text-lg hover:text-indigo-600 transition">
+        <span>Size</span>
+        <svg x-show="!open.size" x-cloak class="w-5 h-5"><path ... /></svg>
+        <svg x-show="open.size" x-cloak class="w-5 h-5 transform rotate-180"><path ... /></svg>
+      </button>
+      <div x-show="open.size" x-cloak class="mt-3 space-y-2">
+        {% for size in filter_options.size %}
+        <label class="flex items-center space-x-2 text-gray-700 dark:text-gray-200">
+          <input type="checkbox" name="size" value="{{ size.id }}"
+                 class="accent-indigo-600 border-gray-300 dark:border-gray-600"
+                 {% if size.id|stringformat:'s' in current_filters.size %}checked{% endif %}>
+          <span class="text-sm">{{ size.name }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- FIT FILTER -->
+    <section>
+      <button type="button"
+              @click="open.fit = !open.fit"
+              class="w-full flex justify-between items-center py-2 text-left text-gray-800 dark:text-white font-semibold text-lg hover:text-indigo-600 transition">
+        <span>Cut / Fit</span>
+        <svg x-show="!open.fit" x-cloak class="w-5 h-5"><path ... /></svg>
+        <svg x-show="open.fit" x-cloak class="w-5 h-5 transform rotate-180"><path ... /></svg>
+      </button>
+      <div x-show="open.fit" x-cloak class="mt-3 space-y-2">
+        {% for fit in filter_options.fit %}
+        <label class="flex items-center space-x-2 text-gray-700 dark:text-gray-200">
+          <input type="checkbox" name="fit" value="{{ fit.id }}"
+                 class="accent-indigo-600 border-gray-300 dark:border-gray-600"
+                 {% if fit.id|stringformat:'s' in current_filters.fit %}checked{% endif %}>
+          <span class="text-sm">{{ fit.name }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- PRICE RANGE -->
+    <section>
+      <button type="button"
+              @click="open.price = !open.price"
+              class="w-full flex justify-between items-center py-2 text-left text-gray-800 dark:text-white font-semibold text-lg hover:text-indigo-600 transition">
+        <span>Price Range</span>
+        <svg x-show="!open.price" x-cloak class="w-5 h-5"><path ... /></svg>
+        <svg x-show="open.price" x-cloak class="w-5 h-5 transform rotate-180"><path ... /></svg>
+      </button>
+      <div x-show="open.price" x-cloak class="mt-3 space-y-2">
+        <div class="flex gap-3">
+          <input type="number" name="min_price" placeholder="Min"
+                 value="{{ current_filters.min_price }}"
+                 class="w-1/2 rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:bg-gray-800 dark:text-white focus:ring-indigo-500">
+          <input type="number" name="max_price" placeholder="Max"
+                 value="{{ current_filters.max_price }}"
+                 class="w-1/2 rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm dark:bg-gray-800 dark:text-white focus:ring-indigo-500">
+        </div>
+      </div>
+    </section>
+  </form>
+
+  <!-- Auto-submit script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById("filter-form");
+      form.querySelectorAll('input').forEach(input => {
+        input.addEventListener('change', () => form.submit());
+      });
+    });
+  </script>
+</aside>
