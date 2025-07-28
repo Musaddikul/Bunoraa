@@ -1,0 +1,24 @@
+databases:
+  - name: bunonmart_db
+    databaseName: bunonmart
+    user: bunonmart
+    plan: free
+
+services:
+  - type: web
+    name: bunonmart
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn core.wsgi:application"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bunonmart_db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: WEB_CONCURRENCY
+        value: 4
+      - key: DISABLE_COLLECTSTATIC
+        value: 1
+    plan: free
