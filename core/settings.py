@@ -125,9 +125,22 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/0')],
+            "hosts": [os.environ.get('REDIS_URL', 'redis://red-d24dtc2dbo4c73akdg9g:6379')],
         },
     },
+}
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/0'),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': 100
+            }
+        }
+    }
 }
 
 REST_FRAMEWORK = {
@@ -741,19 +754,6 @@ LOGGING = {
         '': {
             'handlers': ['console'],
             'level': 'WARNING', # Default level for anything not explicitly configured
-        }
-    }
-}
-
-CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/0'),
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'CONNECTION_POOL_KWARGS': {
-                'max_connections': 100
-            }
         }
     }
 }
