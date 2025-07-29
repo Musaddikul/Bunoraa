@@ -45,6 +45,7 @@ urlpatterns = [
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
     path('robots.txt', TemplateView.as_view(template_name="robots.txt", content_type="text/plain")),
     path('ckeditor5/', include('django_ckeditor_5.urls')),
+    path('health/', health_check, name='health_check'),
     
     path('custom-order/', include('custom_order.urls')),
 

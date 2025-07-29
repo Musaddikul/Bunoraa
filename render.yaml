@@ -87,7 +87,7 @@ services:
           name: bunoraa-redis
           property: connectionString
     plan: free
-    healthCheckPath: /health/ # Add a health check path if you have one, e.g., a simple Django view
+    healthCheckPath: /health/
 
   - type: redis
     name: bunoraa-redis

@@ -1,5 +1,4 @@
-# core/views.py
-# from django.views.generic import TemplateView
+from django.http import HttpResponse
 
-# class HomeView(TemplateView):
-#     template_name = 'products/home.html'
+def health_check(request):
+    return HttpResponse("OK", status=200)
