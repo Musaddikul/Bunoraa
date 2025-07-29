@@ -23,7 +23,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env('SECRET_KEY', default='django-insecure-your-default-key-here')
 DEBUG = env('DEBUG')
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
-SITE_URL = "https://www.bunoraa.com"
+SITE_URL = "bunoraa.onrender.com"
 SITE_ID = 1
 
 ROOT_HOSTCONF = 'core.hosts'
@@ -113,7 +113,7 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 CSRF_TRUSTED_ORIGINS = [
-    'https://bunora.com',
+    'https://bunoraa.onrender.com',
     'https://www.bunoraa.com',
     'http://localhost:8000',
     'http://127.0.0.1:8000'
