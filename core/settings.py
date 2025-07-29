@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 import environ
 from django.urls import reverse_lazy
-from sqlalchemy import create_engine
 from decouple import config, Csv, UndefinedValueError
 from django.core.cache import cache
 from logging.handlers import TimedRotatingFileHandler
