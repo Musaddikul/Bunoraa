@@ -21,9 +21,9 @@ env = environ.Env()
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 SECRET_KEY = env('SECRET_KEY', default='django-insecure-your-default-key-here')
-DEBUG = env('DEBUG')
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
-SITE_URL = "bunoraa.onrender.com"
+DEBUG = env.bool('DEBUG', default=False)
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['127.0.0.1', 'localhost'])
+SITE_URL = env('SITE_URL', default="http://localhost:8000")
 SITE_ID = 1
 
 ROOT_HOSTCONF = 'core.hosts'
@@ -112,17 +112,15 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
-CSRF_TRUSTED_ORIGINS = [
-    'https://bunoraa.onrender.com',
-    'https://www.bunoraa.com',
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[
     'http://localhost:8000',
     'http://127.0.0.1:8000'
-]
+])
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
+            "hosts": [os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/0')],
         },
     },
 }
@@ -368,7 +366,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 TAILWIND_APP_NAME = 'theme'
 INTERNAL_IPS = ['127.0.0.1']
-NPM_BIN_PATH = "C:/Program Files/nodejs/npm.cmd"
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -556,8 +553,8 @@ OUR_WAREHOUSE_ADDRESS = {
 } 
 
 # Celery Configuration
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'
+CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL', 'redis://localhost:6379/1')
 
 # Additional Celery settings
 CELERY_ACCEPT_CONTENT = ['json']
@@ -746,7 +743,7 @@ LOGGING = {
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/0', # Use the same Redis DB as Celery broker
+        'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/0'),
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
             'CONNECTION_POOL_KWARGS': {
@@ -756,6 +753,7 @@ CACHES = {
     }
 }
 
+# Security settings for production
 # Security settings for production
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
@@ -770,8 +768,10 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-
-if DEBUG:
+    # Clear cache only in production if needed, or handle differently
+    # from django.core.cache import cache
+    # cache.clear()
+else:
+    # Development settings
     from django.core.cache import cache
     cache.clear()
