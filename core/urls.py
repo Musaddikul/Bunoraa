@@ -10,6 +10,7 @@ from core.sitemaps import StaticViewSitemap
 from accounts.sitemaps import AccountsSitemap
 # from .views import HomeView
 from products.views import HomeView
+from .views import health_check
 
 sitemaps = {
     'products': ProductSitemap,
