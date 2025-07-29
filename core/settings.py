@@ -3,6 +3,8 @@ import os
 from pathlib import Path
 import environ
 from django.urls import reverse_lazy
+from sqlalchemy import create_engine
+from decouple import config, Csv, UndefinedValueError
 from django.core.cache import cache
 from logging.handlers import TimedRotatingFileHandler
 from datetime import timedelta
@@ -20,9 +22,13 @@ os.environ['U2NET_HOME'] = os.path.join(BASE_DIR, '')
 env = environ.Env()
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
-SECRET_KEY = env('SECRET_KEY', default='django-insecure-your-default-key-here')
-DEBUG = env.bool('DEBUG', default=False)
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['127.0.0.1', 'localhost'])
+try:
+    SECRET_KEY = config('SECRET_KEY')
+except UndefinedValueError:
+    from django.core.management.utils import get_random_secret_key
+    SECRET_KEY = get_random_secret_key()
+DEBUG = config('DEBUG', default=False, cast=bool)
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", cast=Csv())
 SITE_URL = env('SITE_URL', default="http://localhost:8000")
 SITE_ID = 1
 
