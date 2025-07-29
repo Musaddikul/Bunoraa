@@ -1,19 +1,19 @@
 databases:
-  - name: bunonmart_db
-    databaseName: bunonmart
-    user: bunonmart
+  - name: bunoraa
+    databaseName: bunoraa
+    user: bunoraa
     plan: free
 
 services:
   - type: web
-    name: bunonmart
+    name: bunoraa
     runtime: python
     buildCommand: "./build.sh"
     startCommand: "gunicorn core.wsgi:application"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: bunonmart_db
+          name: bunoraa
           property: connectionString
       - key: SECRET_KEY
         generateValue: true
