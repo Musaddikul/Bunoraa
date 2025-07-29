@@ -72,6 +72,6 @@ def site_settings(request):
         'site_name': 'Bunonraa',
         'contact_email': 'musaddikul.amin123@gmail.com',
         'phone_number': '+8801701922629',
-        'social_media': {'facebook':www.facebook.com/bunoraa}
+        'social_media': {'facebook':'https://www.facebook.com/bunoraa'}
     }
 
