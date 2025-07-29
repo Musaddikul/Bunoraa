@@ -778,5 +778,4 @@ if not DEBUG:
     # cache.clear()
 else:
     # Development settings
-    from django.core.cache import cache
-    cache.clear()
+    pass # Removed cache.clear()
