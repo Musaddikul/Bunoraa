@@ -137,6 +137,24 @@ class OrderItem(models.Model):
         null=True,
         blank=True
     )
+    color = models.ForeignKey(
+        'products.Color',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    size = models.ForeignKey(
+        'products.Size',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    fabric = models.ForeignKey(
+        'products.Fabric',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
 
     product_name = models.CharField(
         max_length=255,

@@ -7,7 +7,7 @@ from django.utils.translation import gettext_lazy as _
 logger = logging.getLogger(__name__)
 
 from products.models import Product
-from products.api.serializers import ProductSerializer # Assuming you have a ProductSerializer
+from products.api.serializers import ProductSerializer, ColorSerializer, SizeSerializer, FabricSerializer # Assuming you have a ProductSerializer
 from .models import Cart, CartItem
 from promotions.models import Coupon # Import Coupon model
 from shipping.models import ShippingMethod # Import ShippingMethod model
@@ -17,17 +17,31 @@ from accounts.api.serializers import UserAddressSerializer # Assuming this exist
 from promotions.services import CouponService # Import CouponService
 
 class CartItemSerializer(serializers.ModelSerializer):
-    """
-    Serializer for CartItem model.
-    Includes nested ProductSerializer for product details.
-    """
     product = ProductSerializer(read_only=True)
-    total_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True) # From @property
+    color = serializers.SerializerMethodField()
+    size = serializers.SerializerMethodField()
+    fabric = serializers.SerializerMethodField()
+    total_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
         model = CartItem
-        fields = ['id', 'product', 'quantity', 'price', 'total_price', 'saved_for_later', 'added_at', 'updated_at']
+        fields = ['id', 'product', 'color', 'size', 'fabric', 'quantity', 'price', 'total_price', 'saved_for_later', 'added_at', 'updated_at']
         read_only_fields = ['id', 'price', 'total_price', 'added_at', 'updated_at']
+
+    def get_color(self, obj):
+        if obj.color:
+            return ColorSerializer(obj.color).data
+        return None
+
+    def get_size(self, obj):
+        if obj.size:
+            return SizeSerializer(obj.size).data
+        return None
+
+    def get_fabric(self, obj):
+        if obj.fabric:
+            return FabricSerializer(obj.fabric).data
+        return None
 
 class CartItemCreateUpdateSerializer(serializers.Serializer):
     """
@@ -36,6 +50,9 @@ class CartItemCreateUpdateSerializer(serializers.Serializer):
     """
     product_id = serializers.IntegerField(help_text=_("ID of the product to add/update."))
     quantity = serializers.IntegerField(min_value=1, help_text=_("Quantity of the product."))
+    color_id = serializers.IntegerField(required=False, allow_null=True, help_text=_("ID of the selected color."))
+    size_id = serializers.IntegerField(required=False, allow_null=True, help_text=_("ID of the selected size."))
+    fabric_id = serializers.IntegerField(required=False, allow_null=True, help_text=_("ID of the selected fabric."))
     override_quantity = serializers.BooleanField(required=False, default=False, help_text=_("If true, overrides existing quantity; otherwise, adds to it."))
     saved_for_later = serializers.BooleanField(required=False, default=False, help_text=_("If true, adds to 'saved for later' instead of active cart."))
 
@@ -56,6 +73,9 @@ class CartItemUpdateSerializer(serializers.Serializer):
     Serializer for updating just the quantity of a cart item.
     """
     quantity = serializers.IntegerField(min_value=1)
+    color_id = serializers.IntegerField(required=False, allow_null=True)
+    size_id = serializers.IntegerField(required=False, allow_null=True)
+    fabric_id = serializers.IntegerField(required=False, allow_null=True)
 
 class CouponSerializer(serializers.ModelSerializer):
     """
@@ -150,12 +170,9 @@ class CartSerializer(serializers.ModelSerializer):
         Returns serialized active cart items.
         """
         active_items_queryset = obj.items.filter(saved_for_later=False).select_related(
-            'product__category',
-            'product__brand',
-            'product__seller'
-        ).prefetch_related(
-            'product__images'
-        )
+            'product', 'color', 'size', 'fabric',
+            'product__category', 'product__brand', 'product__seller'
+        ).prefetch_related('product__images')
         return CartItemSerializer(active_items_queryset, many=True, context=self.context).data
 
     def get_saved_items(self, obj) -> list:
@@ -163,12 +180,9 @@ class CartSerializer(serializers.ModelSerializer):
         Returns serialized saved cart items.
         """
         saved_items_queryset = obj.items.filter(saved_for_later=True).select_related(
-            'product__category',
-            'product__brand',
-            'product__seller'
-        ).prefetch_related(
-            'product__images'
-        )
+            'product', 'color', 'size', 'fabric',
+            'product__category', 'product__brand', 'product__seller'
+        ).prefetch_related('product__images')
         return CartItemSerializer(saved_items_queryset, many=True, context=self.context).data
 
 class CouponApplySerializer(serializers.Serializer):

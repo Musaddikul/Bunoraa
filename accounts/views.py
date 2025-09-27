@@ -17,7 +17,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.template.loader import render_to_string
 import json
 
-from .models import User, UserAddress
+from .models import User, UserAddress, UserSettings # Import UserSettings
 from locations.models import Division, District, Upazila
 from locations.location_loader import load_json_file
 from .forms import (
@@ -25,7 +25,8 @@ from .forms import (
     UserAddressForm,
     CustomPasswordResetForm,
     CustomSetPasswordForm,
-    CustomSignupForm
+    CustomSignupForm,
+    UserSettingsForm # Import UserSettingsForm
 )
 
 # Reusable context for location data
@@ -102,14 +103,24 @@ class CustomEmailVerificationSentView(EmailVerificationSentView):
 @require_http_methods(["GET", "POST"])
 def profile(request):
     user = request.user
-    form = UserProfileForm(request.POST or None, request.FILES or None, instance=user)
+    profile_form = UserProfileForm(request.POST or None, request.FILES or None, instance=user)
+    user_settings_instance, created = UserSettings.objects.get_or_create(user=user)
+    settings_form = UserSettingsForm(request.POST or None, instance=user_settings_instance)
 
-    if request.method == 'POST' and form.is_valid():
-        form.save()
-        messages.success(request, "Profile updated successfully.")
+    if request.method == 'POST':
+        if 'profile_submit' in request.POST: # Check if profile form was submitted
+            if profile_form.is_valid():
+                profile_form.save()
+                messages.success(request, "Profile updated successfully.")
+        elif 'settings_submit' in request.POST: # Check if settings form was submitted
+            if settings_form.is_valid():
+                settings_form.save()
+                messages.success(request, "Settings updated successfully.")
+        
         if request.htmx:
             response = render(request, 'accounts/partials/profile_section.html', {
-                'form': UserProfileForm(instance=user),
+                'profile_form': UserProfileForm(instance=user),
+                'settings_form': UserSettingsForm(instance=user_settings_instance),
                 'user': user,
                 'addresses': user.addresses.all(),
             })
@@ -119,9 +130,27 @@ def profile(request):
 
     template = 'accounts/partials/profile_section.html' if request.htmx else 'accounts/profile.html'
     return render(request, template, {
-        'form': form,
+        'profile_form': profile_form,
+        'settings_form': settings_form,
         'user': user,
         'addresses': user.addresses.all(),
+    })
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def user_settings(request):
+    user = request.user
+    user_settings_instance, created = UserSettings.objects.get_or_create(user=user)
+    form = UserSettingsForm(request.POST or None, instance=user_settings_instance)
+
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, "Settings updated successfully.")
+        return redirect('accounts:user_settings')
+
+    return render(request, 'accounts/user_settings.html', {
+        'form': form,
+        'user_settings': user_settings_instance,
     })
 
 @login_required
@@ -175,7 +204,8 @@ def edit_address(request, pk):
 
         if request.htmx:
             html = render_to_string("accounts/partials/profile_section.html", {
-                'form': UserProfileForm(instance=request.user),
+                'profile_form': UserProfileForm(instance=request.user),
+                'settings_form': UserSettingsForm(instance=user_settings_instance),
                 'user': request.user,
                 'addresses': request.user.addresses.all(),
             }, request=request)

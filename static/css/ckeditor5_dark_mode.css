@@ -1,0 +1,36 @@
+.ck-editor__editable {
+    background-color: #0d1117 !important;
+    color: #c9d1d9 !important;
+    border: 1px solid #30363d !important;
+}
+
+.ck.ck-toolbar {
+    background: #161b22 !important;
+    border-color: #30363d !important;
+}
+
+.ck.ck-button,
+.ck.ck-button .ck-icon {
+    color: #c9d1d9 !important;
+}
+
+.ck.ck-button:hover,
+.ck.ck-button:hover .ck-icon {
+    background: #30363d !important;
+    color: #fff !important;
+}
+
+.ck.ck-button.ck-on,
+.ck.ck-button.ck-on:hover {
+    background: #0d6efd !important;
+    color: #fff !important;
+}
+
+.ck.ck-dropdown__panel {
+    background: #161b22 !important;
+    border-color: #30363d !important;
+}
+
+.ck-editor__main > .ck-editor__editable a {
+    color: #58a6ff !important;
+}

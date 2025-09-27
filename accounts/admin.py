@@ -1,7 +1,7 @@
 # accounts/admin.py
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, UserAddress
+from .models import User, UserAddress, UserSettings # Import UserSettings
 from .forms import CustomSignupForm
 
 class CustomUserAdmin(UserAdmin):
@@ -62,5 +62,11 @@ class UserAddressAdmin(admin.ModelAdmin):
     list_filter = ('country', 'is_default')
     search_fields = ('user__email', 'full_name', 'city', 'postal_code')
 
+class UserSettingsAdmin(admin.ModelAdmin):
+    list_display = ('user', 'currency', 'language', 'country', 'timezone')
+    list_filter = ('currency', 'language', 'country', 'timezone')
+    search_fields = ('user__username', 'user__email')
+
 admin.site.register(User, CustomUserAdmin)
 admin.site.register(UserAddress, UserAddressAdmin)
+admin.site.register(UserSettings, UserSettingsAdmin) # Register UserSettings

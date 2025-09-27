@@ -23,15 +23,15 @@
 
     <!-- Product Details -->
     <div class="lg:w-1/2 space-y-5">
-        <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 dark:text-white leading-tight">{{ product.name }}</h2>
+        <p class="text-base lg:text-lg font-semibold text-gray-900 dark:text-white leading-tight">{{ product.name }}</p>
         <p class="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ product.category.name }} {% if product.brand %}• {{ product.brand.name }}{% endif %}</p>
 
         <!-- Price Section -->
         <div class="flex items-center gap-4">
             {% if product.is_discounted %}
-                <span class="text-3xl font-bold text-green-600 dark:text-green-400">৳{{ product.discounted_price|floatformat:2 }}</span>
-                <span class="text-lg text-gray-500 dark:text-gray-400 line-through">৳{{ product.price|floatformat:2 }}</span>
-                <span class="text-sm font-semibold text-red-500 bg-red-100 dark:bg-red-900 px-2 py-0.5 rounded-full">Save {{ product.discount_percentage }}%</span>
+                <span class="text-base lg:text-lg font-bold text-green-600 dark:text-green-400">৳{{ product.discounted_price|floatformat:2 }}</span>
+                <span class="text-sm text-gray-500 dark:text-gray-400 line-through">৳{{ product.price|floatformat:2 }}</span>
+                <span class="text-xs font-semibold text-red-500 bg-red-100 px-2 py-0.5 rounded-full">Save {{ product.discount_percentage }}%</span>
             {% else %}
                 <span class="text-3xl font-bold text-gray-900 dark:text-white">৳{{ product.price|floatformat:2 }}</span>
             {% endif %}
@@ -52,11 +52,8 @@
         </div>
 
         <!-- Add to Cart Form -->
-        <form hx-post="/cart/api/items/"
-              hx-target="#product-quick-view-content"
-              hx-swap="innerHTML"
-              class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mt-6"
-              x-data="{ quantity: 1, maxStock: {{ product.stock }} }">
+        <form class="add-to-cart-form flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mt-6"
+              x-data="{ quantity: 1, maxStock: {{ product.stock }} }" data-product-id="{{ product.id }}">
             {% csrf_token %}
             <input type="hidden" name="product_id" value="{{ product.id }}">
             <input type="hidden" name="override" value="false">
@@ -64,20 +61,20 @@
 
             <div class="flex items-center border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden flex-shrink-0">
                 <button type="button" @click="quantity = Math.max(1, quantity - 1)"
-                        class="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 transition-colors duration-200">
+                        class="px-2 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 transition-colors duration-200">
                     <i class="fas fa-minus"></i>
                 </button>
                 <input type="number" name="quantity" x-model="quantity" min="1" :max="maxStock"
-                       class="w-20 text-center border-x border-gray-300 dark:border-gray-700 focus:ring-0 focus:outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-lg py-2">
+                       class="w-auto h-auto font-semibold text-center border-x border-gray-300 dark:border-gray-700 focus:ring-0 focus:outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm py-2">
                 <button type="button" @click="quantity = Math.min(maxStock, quantity + 1)"
-                        class="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 transition-colors duration-200">
+                        class="px-2 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 transition-colors duration-200">
                     <i class="fas fa-plus"></i>
                 </button>
             </div>
 
             <button type="submit"
                     {% if product.stock == 0 %}disabled{% endif %}
-                    class="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-all duration-300 ease-in-out transform hover:scale-105 shadow-lg hover:shadow-xl
+                    class="flex-1 bg-blue-600 text-white py-3 px-2 rounded-lg hover:bg-blue-700 transition-all duration-300 ease-in-out transform hover:scale-105 shadow-lg hover:shadow-xl
                            {% if product.stock == 0 %}opacity-50 cursor-not-allowed{% endif %}">
                 <i class="fas fa-cart-plus mr-2"></i> Add to Cart
             </button>

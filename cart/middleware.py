@@ -46,7 +46,6 @@ class CartMiddleware(MiddlewareMixin):
             request.session.modified = True
             # After merge, ensure request.cart is updated to the user's cart
             request.cart = get_user_cart(request)
-            logger.info(f"Session cart merged for user {request.user.id}.")
 
     def process_response(self, request, response):
         """
@@ -64,8 +63,7 @@ class CartMiddleware(MiddlewareMixin):
             # Only save if the cart is a database cart (not a SessionCart mock)
             # and it hasn't been checked out.
             if isinstance(cart, Cart):
-                cart.save() # Only update timestamp if no other changes
-                logger.debug(f"Cart {cart.id} updated_at timestamp saved.")
+                cart.save()
         return response
 
 class AbandonedCartNotificationMiddleware(MiddlewareMixin):
@@ -100,7 +98,6 @@ class AbandonedCartNotificationMiddleware(MiddlewareMixin):
         # This section is commented out to prevent excessive task queuing.
         # if not cart.checked_out and not cart.abandoned:
         #     send_abandoned_cart_notification.delay(cart.id)
-        #     logger.debug(f"Queued abandoned cart notification check for cart {cart.id}.")
             
         return response
 

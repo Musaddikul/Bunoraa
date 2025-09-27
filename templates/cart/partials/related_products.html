@@ -2,12 +2,21 @@
 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"> {# Added lg:grid-cols-4 for more products #}
   {% if related_products %}
     {% for prod in related_products %}
-    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
-         onclick="showQuickView({{ prod.id }})"> {# Added quick view on click #}
+    <div class="group relative bg-white dark:bg-gray-900 rounded-xl shadow-lg hover:shadow-xl overflow-hidden transition-all duration-300 border border-gray-200 dark:border-gray-700">
       <a href="{{ prod.get_absolute_url }}">
-        <img src="{{ prod.image.url }}" class="w-full h-32 object-cover rounded-md mb-2"> {# Used prod.image.url #}
+        <div class="relative aspect-[1/1] overflow-hidden bg-gray-100 dark:bg-gray-800">
+          <img src="{{ prod.image.url }}" alt="{{ prod.name }}"
+               class="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105">
+          <!-- Quick View Button -->
+          <button type="button" aria-label="Quick View" onclick="event.preventDefault(); window.showQuickView({{ prod.id }});"
+                  class="absolute bottom-2 right-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 p-2 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:text-blue-600 dark:hover:text-blue-400">
+            <i class="fas fa-eye text-lg"></i>
+          </button>
+        </div>
+      </a>
+      <div class="p-3">
         <div class="font-semibold text-sm text-gray-900 dark:text-white truncate">{{ prod.name }}</div>
-        <div class="text-xs text-gray-600 dark:text-gray-400">
+        <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">
           {% if prod.is_discounted %}
             <span class="line-through mr-1">৳{{ prod.price|floatformat:2 }}</span>
             <span class="text-green-700 dark:text-green-400">৳{{ prod.discounted_price|floatformat:2 }}</span>
@@ -15,7 +24,7 @@
             ৳{{ prod.price|floatformat:2 }}
           {% endif %}
         </div>
-      </a>
+      </div>
     </div>
     {% endfor %}
   {% else %}

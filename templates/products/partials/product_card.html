@@ -26,13 +26,10 @@
             }
           })
           .then(res => {
-              // Crucial: Check if response is OK before parsing JSON
               if (!res.ok) {
-                  // Attempt to parse JSON error message, or use generic error
                   return res.json().then(err => { 
                       throw new Error(err.error || `HTTP error! status: ${res.status}`); 
                   }).catch(() => {
-                      // Fallback if response is not JSON or parsing fails
                       throw new Error(`HTTP error! status: ${res.status} - ${res.statusText}`);
                   });
               }
@@ -41,12 +38,11 @@
           .then(data => {
             this.wished = data.added;
             
-            // Dispatch the 'wishlist-count-updated' event with all necessary details
             const message = data.message || 
                             (data.added ? 'Product added to wishlist!' : 'Product removed from wishlist!');
 
             document.dispatchEvent(new CustomEvent('wishlist-count-updated', {
-                bubbles: true, // Ensure event bubbles up
+                bubbles: true,
                 detail: {
                     count: data.wishlist_count,
                     productId: {{ product.id }},
@@ -61,28 +57,12 @@
               showToast(error.message || 'Failed to update wishlist.', 'error');
           });
         }
-      }" 
-      x-init="wished = {{ product.is_wished|yesno:'true,false' }}"
+      }"
       class="absolute top-2 right-2 z-20">
       <button type="button" aria-label="Add to wishlist" x-on:click.prevent.stop="toggle()">
-        <i :class="wished ? 'fas fa-heart text-red-600' : 'far fa-heart text-gray-400 dark:text-gray-500'" class="text-lg transition"></i>
+        <i :class="wished ? 'fas fa-heart text-red-600' : 'far fa-heart text-gray-900 dark:text-gray-800'" class="text-lg transition"></i>
       </button>
     </div>
-
-    <!-- Status Tags
-    {% if product.is_low_stock %}
-    <span class="absolute top-2 right-2 bg-yellow-400 text-black text-xs px-2 py-0.5 rounded shadow z-20">Low Stock</span>
-    {% elif not product.available %}
-    <span class="absolute top-2 right-2 bg-gray-500 text-white text-xs px-2 py-0.5 rounded shadow z-20">Out of Stock</span>
-    {% endif %}
-
-    {% if product.new_collection %}
-    <span class="absolute bottom-2 left-2 bg-blue-600 text-white text-xs px-2 py-0.5 rounded z-20">New</span>
-    {% elif product.festive_collection %}
-    <span class="absolute bottom-2 left-2 bg-green-600 text-white text-xs px-2 py-0.5 rounded z-20">Festive</span>
-    {% elif product.is_featured %}
-    <span class="absolute bottom-2 left-2 bg-indigo-600 text-white text-xs px-2 py-0.5 rounded z-20">Featured</span>
-    {% endif %} -->
   </div>
   </a>
 
@@ -136,6 +116,7 @@
           <span id="add-to-cart-text-{{ product.id }}">Add to Cart</span>
           <i id="add-to-cart-spinner-{{ product.id }}" class="fas fa-spinner fa-spin ml-2" style="display: none;"></i>
         {% endif %}
+      </button>
     </form>
     {% else %}
     <span class="text-sm text-red-500 font-medium">Unavailable</span>

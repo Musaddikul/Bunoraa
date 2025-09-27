@@ -25,7 +25,7 @@
         <!-- Order Details Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div>
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">Order Information</h2>
+                <h5 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">Order Information</h5>
                 <p class="text-gray-700 dark:text-gray-300"><strong>Order Date:</strong> {{ order.created_at|date:"F j, Y, P" }}</p>
                 <p class="text-gray-700 dark:text-gray-300"><strong>Payment Method:</strong> {{ order.payment.method.name }}</p>
                 <p class="text-gray-700 dark:text-gray-300"><strong>Payment Status:</strong> {{ order.payment.status }}</p>
@@ -38,21 +38,17 @@
                 {% endif %}
             </div>
             <div>
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">Shipping Address</h2>
+                <h5 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">Shipping Address</h5>
                 <p class="text-gray-700 dark:text-gray-300">{{ order.address.full_name }}</p>
-                <p class="text-gray-700 dark:text-gray-300">{{ order.address.address_line_1 }}</p>
-                {% if order.address.address_line_2 %}
-                    <p class="text-gray-700 dark:text-gray-300">{{ order.address.upazila }}</p>
-                {% endif %}
-                <p class="text-gray-700 dark:text-gray-300">{{ order.address.city }}, {{ order.address.state }} {{ order.address.postal_code }}</p>
-                <p class="text-gray-700 dark:text-gray-300">{{ order.address.country }}</p>
+                <p class="text-gray-700 dark:text-gray-300">{{ order.address.address_line_1 }}, {{ order.address.upazila }},</p></p>
+                <p class="text-gray-700 dark:text-gray-300">{{ order.address.city }}-{{ order.address.postal_code }}, {{ order.address.state }}, {{ order.address.country }}</p>
                 <p class="text-gray-700 dark:text-gray-300"><strong>Phone:</strong> {{ order.address.phone_number }}</p>
                 <p class="text-gray-700 dark:text-gray-300"><strong>Email:</strong> {{ order.user.email }}</p>
             </div>
         </div>
 
         <!-- Order Items -->
-        <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">Order Items</h2>
+        <h5 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">Order Items</h5>
         <div class="bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner mb-8">
             {% for item in order.items.all %}
             <div class="flex items-center py-4 px-6 {% if not forloop.last %}border-b border-gray-200 dark:border-gray-600{% endif %}">
@@ -65,11 +61,20 @@
                 </div>
                 <div class="ml-4 flex-grow">
                     <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ item.product_name }}</h3>
-                    <p class="text-gray-700 dark:text-gray-300">Quantity: {{ item.quantity }}</p>
                     <p class="text-gray-700 dark:text-gray-300">Price: ৳{{ item.price|floatformat:2 }}</p>
+                    {% if item.color %}
+                        <p class="text-gray-700 dark:text-gray-300">Color: {{ item.color.name }}</p>
+                    {% endif %}
+                    {% if item.size %}
+                        <p class="text-gray-700 dark:text-gray-300">Size: {{ item.size.name }}</p>
+                    {% endif %}
+                    {% if item.fabric %}
+                        <p class="text-gray-700 dark:text-gray-300">Fabric: {{ item.fabric.name }}</p>
+                    {% endif %}
                     {% if item.discount > 0 %}
                         <p class="text-gray-700 dark:text-gray-300">Discount: ৳{{ item.discount|floatformat:2 }}</p>
                     {% endif %}
+                    <p class="text-gray-700 dark:text-gray-300">Quantity: {{ item.quantity }}</p>
                 </div>
             </div>
             {% endfor %}
@@ -77,7 +82,7 @@
 
         <!-- Order Totals -->
         <div class="bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner p-6">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Order Totals</h2>
+            <h5 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Order Totals</h5>
             <div class="space-y-2 text-left">
                 <p class="flex justify-between text-gray-700 dark:text-gray-300">
                     <span>Subtotal:</span>

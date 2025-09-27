@@ -14,7 +14,7 @@ class CartItemInline(admin.TabularInline):
     model           = CartItem
     extra           = 0
     readonly_fields = ['added_at','updated_at','price','total_price']
-    fields          = ['product','quantity','saved_for_later','price','total_price','added_at']
+    fields          = ['product','color','size','fabric','quantity','saved_for_later','price','total_price','added_at']
 
     def price(self,obj):
         return obj.price
@@ -111,7 +111,7 @@ class CartItemAdmin(admin.ModelAdmin):
     """
     Admin configuration for the CartItem model.
     """
-    list_display    = ['product', 'cart_link', 'quantity', 'price', 'total_price', 'saved_for_later', 'added_at']
+    list_display    = ['product', 'color', 'size', 'fabric', 'cart_link', 'quantity', 'price', 'total_price', 'saved_for_later', 'added_at']
     list_filter     = ['saved_for_later', 'added_at', 'cart__checked_out']
     search_fields   = ['product__name', 'cart__user__email', 'cart__session_key']
     readonly_fields = ['added_at', 'updated_at']

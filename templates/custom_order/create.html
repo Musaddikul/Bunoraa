@@ -653,7 +653,7 @@
                     return response.json();
                 })
                 .then(data => {
-                    this.userAddresses = data.results;
+                    this.userAddresses = Array.isArray(data.results) ? data.results : [];
                     this.apiErrors.userAddresses = null;
                     const defaultAddress = this.userAddresses.find(addr => addr.is_default);
                     if (defaultAddress) {

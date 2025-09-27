@@ -12,7 +12,18 @@
               <img :src="item.product.image" alt="" class="w-24 h-24 object-cover" />
             </div>
             <div class="flex-grow">
-              <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="item.name"></p>
+              <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="item.product.name"></p>
+              <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                <template x-if="item.color">
+                  <p>Color: <span :style="`background-color: ${item.color.hex || item.color.name.toLowerCase()}; display: inline-block; width: 12px; height: 12px; border-radius: 50%; vertical-align: middle; margin-right: 4px; border: 1px solid #ccc;`"></span><span x-text="item.color.name"></span></p>
+                </template>
+                <template x-if="item.size">
+                  <p>Size: <span x-text="item.size.name"></span></p>
+                </template>
+                <template x-if="item.fabric">
+                  <p>Fabric: <span x-text="item.fabric.name"></span></p>
+                </template>
+              </div>
               
               <!-- Editable Quantity -->
               <div class="flex items-center space-x-2 mt-1">

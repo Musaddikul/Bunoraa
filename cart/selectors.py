@@ -19,15 +19,13 @@ def get_cart_for_user(user: User) -> Cart:
     cart = Cart.objects.filter(user=user, checked_out=False).select_related('coupon').first()
     if not cart:
         cart = Cart.objects.create(user=user, checked_out=False)
-        logger.info(f"get_cart_for_user: New cart {cart.id} created for user {user.id}.")
     else:
         # Ensure related objects are loaded fresh
         cart = Cart.objects.select_related(
             'coupon', 'shipping_method__carrier', 'address'
         ).prefetch_related(
             'items__product'
-        ).get(id=cart.id) # Re-fetch with select_related/prefetch_related
-        logger.info(f"get_cart_for_user: Existing cart {cart.id} retrieved for user {user.id}.")
+        ).get(id=cart.id)
 
     return cart
 
@@ -45,15 +43,12 @@ def get_cart_for_session(session_key: str) -> Cart:
     cart = Cart.objects.filter(session_key=session_key, checked_out=False).select_related('coupon').first()
     if not cart:
         cart = Cart.objects.create(session_key=session_key, checked_out=False)
-        logger.info(f"get_cart_for_session: New cart {cart.id} created for session {session_key}.")
     else:
-        # Ensure related objects are loaded fresh
         cart = Cart.objects.select_related(
             'coupon', 'shipping_method'
         ).prefetch_related(
             'items__product'
-        ).get(id=cart.id) # Re-fetch with select_related/prefetch_related
-        logger.info(f"get_cart_for_session: Existing cart {cart.id} retrieved for session {session_key}.")
+        ).get(id=cart.id)
     
     return cart
 

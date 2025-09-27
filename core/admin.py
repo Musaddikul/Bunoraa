@@ -1,7 +1,7 @@
 # core/admin.py
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
-from .models import HomeSlide, SiteSetting, TaxSetting
+from .models import HomeSlide, SiteSetting, TaxSetting, Language # Import Language
 
 @admin.register(HomeSlide)
 class HomeSlideAdmin(admin.ModelAdmin):
@@ -53,3 +53,10 @@ class TaxSettingAdmin(admin.ModelAdmin):
         """Displays the VAT rate as a percentage."""
         return f"{obj.vat_rate * 100:.2f}%"
     vat_rate_display.short_description = _("VAT Rate")
+
+@admin.register(Language)
+class LanguageAdmin(admin.ModelAdmin):
+    list_display = ('name', 'code', 'is_active', 'is_default')
+    list_editable = ('is_active', 'is_default')
+    list_filter = ('is_active', 'is_default')
+    search_fields = ('name', 'code')

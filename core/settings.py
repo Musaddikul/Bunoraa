@@ -26,8 +26,16 @@ try:
 except UndefinedValueError:
     from django.core.management.utils import get_random_secret_key
     SECRET_KEY = get_random_secret_key()
-DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = config("ALLOWED_HOSTS", cast=Csv())
+DEBUG = config('DEBUG', default=True, cast=bool)
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '.onrender.com',
+    'bunoraa.onrender.com',
+    '.railway.app',
+    'bunoraa.up.railway.app',
+    'bunoraa.com',
+]
 SITE_URL = env('SITE_URL', default="http://localhost:8000")
 SITE_ID = 1
 
@@ -64,8 +72,9 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.facebook',
     'allauth.socialaccount.providers.microsoft',
     'crispy_forms',
-    'crispy_bootstrap5',
+    'crispy_tailwind',
     'django_countries',
+    'django_celery_beat',
     'phonenumber_field',
     'django_filters',
     'widget_tweaks',
@@ -74,7 +83,8 @@ INSTALLED_APPS = [
     'storages',
     'taggit',
     'corsheaders',
-    'celery', # Added for Celery integration
+    'celery',
+    'rosetta',
 
     # Automation
     'rembg',
@@ -101,6 +111,7 @@ INSTALLED_APPS = [
     'legal',
     'support',
     'analytics',
+    'currencies',
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
@@ -119,29 +130,45 @@ CORS_ALLOW_HEADERS = [
 ]
 CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[
     'http://localhost:8000',
-    'http://127.0.0.1:8000'
+    'http://127.0.0.1:8000',
+    'http://127.0.0.1:3000',
 ])
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [os.environ.get('REDIS_URL', 'redis://red-d24dtc2dbo4c73akdg9g:6379')],
+if DEBUG:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
         },
-    },
-}
+    }
+else:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                "hosts": [os.environ.get('REDIS_URL', 'redis://red-d24dtc2dbo4c73akdg9g:6379')],
+            },
+        },
+    }
 
-CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/0'),
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'CONNECTION_POOL_KWARGS': {
-                'max_connections': 100
+if DEBUG:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-snowflake',
+        }
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/0'),
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'CONNECTION_POOL_KWARGS': {
+                    'max_connections': 100
+                }
             }
         }
     }
-}
 
 REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_CLASSES': [
@@ -149,28 +176,28 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle'
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/day',  # Example rate for unauthenticated users
-        'user': '1000/day', # Example rate for authenticated users (you might not need this if using custom scopes)
-        'standard': '60/minute',  # This is the rate for your 'standard' scope
+        'anon': '100/day',
+        'user': '1000/day',
+        'standard': '60/minute',
         # Add other scopes and their rates as needed
     },
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication', # If you use token auth
+        'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
     'DEFAULT_PAGINATION_CLASS': 'reviews.pagination.ReviewPagination',
-    'PAGE_SIZE': 10, # Default page size for DRF views
+    'PAGE_SIZE': 10,
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer', # Good for development
+        'rest_framework.renderers.BrowsableAPIRenderer',
     ],
     'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',
         'rest_framework.parsers.FormParser',
-        'rest_framework.parsers.MultiPartParser' # Needed for file uploads in API views
+        'rest_framework.parsers.MultiPartParser'
     ],
     
 }
@@ -188,11 +215,8 @@ CKEDITOR_5_CONFIGS = {
     'default': {
         'toolbar': ['heading', '|', 'bold', 'italic', 'link',
                    'bulletedList', 'numberedList', 'blockQuote', 'imageUpload', 'sourceEditing'],
-        'language': 'en',
-        'bodyClass': 'ck-editor__body',
     },
     'extends': {
-        'language': 'en',
         'blockToolbar': [
             'paragraph', 'heading1', 'heading2', 'heading3',
             '|',
@@ -252,51 +276,10 @@ CKEDITOR_5_CONFIGS = {
                 {'name': '/.*/', 'attributes': True, 'classes': True, 'styles': True}
             ]
         },
-        'extraPlugins': ['sourceEditing', 'darkmode'],  # Adding 'sourceEditing' plugin
-        'darkMode': True,  # Enable dark mode
-        'image': {
-            'toolbar': ['imageTextAlternative', 'imageStyle:alignLeft', 'imageStyle:alignRight', 'imageStyle:alignCenter', 'imageStyle:side']
-        }
     }
 }
 
-# Custom CSS for Dark Mode
-CKEDITOR_5_EXTRA_CSS = """
-    .ck-editor__editable_inline {
-        background-color: #333;  /* Dark background */
-        color: white;  /* Light text color */
-    }
-    .ck-toolbar {
-        background-color: #222;  /* Dark toolbar background */
-        border: 1px solid #555;  /* Border for contrast */
-    }
-    .ck-button {
-        color: #fff !important;  /* Button text color for visibility */
-    }
-    .ck-toolbar .ck-button.ck-on {
-        background-color: #4f46e5;  /* Active button highlight color */
-    }
-    .ck-editor__body {
-        background-color: #222;  /* Dark body background */
-    }
-    .ck-editor__editable_inline:focus {
-        background-color: #111;  /* Darker background on focus */
-    }
-    /* Update color palette for dark mode */
-    .ck-color-palette .ck-color {
-        background-color: #444;  /* Darker color tiles */
-    }
-    .ck-color-palette .ck-color label {
-        color: #ddd;  /* Light text on color labels */
-    }
-    /* Source Editing Mode Style */
-    .ck-source-editing {
-        background-color: #222;
-        color: #ccc;
-        font-family: monospace;
-        font-size: 14px;
-    }
-"""
+CKEDITOR_5_CUSTOM_CSS = 'css/ckeditor5_dark_mode.css'
 
 MIDDLEWARE = [
     'django_hosts.middleware.HostsRequestMiddleware',
@@ -333,6 +316,9 @@ TEMPLATES = [
                 'products.context_processors.categories',
                 'products.context_processors.cart',
                 'products.context_processors.site_settings',
+                'currencies.context_processors.currency_context',
+                'accounts.context_processors.user_settings_context',
+                'core.context_processors.active_languages',
             ],
         },
     },
@@ -341,21 +327,22 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 # Database
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': env('DB_NAME', default='bunoraa_db'),
-#         'USER': env('DB_USER', default='bunoraa_user'),
-#         'PASSWORD': env('DB_PASSWORD', default=''),
-#         'HOST': env('DB_HOST', default='localhost'),
-#         'PORT': env('DB_PORT', default='5252'),
-#     }
-# }
+if DEBUG:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': env('DB_NAME', default='bunoraa'),
+            'USER': env('DB_USER', default='bunoraa'),
+            'PASSWORD': env('DB_PASSWORD', default=''),
+            'HOST': env('DB_HOST', default='localhost'),
+            'PORT': env('DB_PORT', default='5252'),
+        }
+    }
 
-DATABASES = {
-    'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
-}
-
+else:
+    DATABASES = {
+        'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
+    }
 
 # # Database
 # DATABASES = {
@@ -372,6 +359,19 @@ TIME_ZONE = 'Asia/Dhaka'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
+
+LANGUAGES = [
+    ('en', 'English'),
+    ('bn', 'বাংলা'), # Bangla
+]
+
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
+]
+
+# Rosetta auto-translation
+ROSETTA_GOOGLE_API_KEY = env('GOOGLE_TRANSLATE_API_KEY', default='')
+ROSETTA_GOOGLE_TRANSLATE = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
@@ -533,8 +533,8 @@ SSLCOMMERZ_VALIDATION_URL = env('SSLCOMMERZ_VALIDATION_URL')
 
 
 # Crispy Forms
-CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
-CRISPY_TEMPLATE_PACK = "bootstrap5"
+CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
+CRISPY_TEMPLATE_PACK = "tailwind"
 
 # Session settings
 CART_ABANDONMENT_MINUTES = 300
@@ -571,8 +571,13 @@ OUR_WAREHOUSE_ADDRESS = {
 } 
 
 # Celery Configuration
-CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL', 'redis://localhost:6379/1')
+if DEBUG:
+    CELERY_TASK_ALWAYS_EAGER = True
+    CELERY_BROKER_URL = 'memory://'
+    CELERY_RESULT_BACKEND = 'db+sqlite:///results.sqlite3'
+else:
+    CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+    CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL', 'redis://localhost:6379/1')
 
 # Additional Celery settings
 CELERY_ACCEPT_CONTENT = ['json']
@@ -581,15 +586,19 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Asia/Dhaka' # Ensure this matches your Django TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True # Useful for monitoring tasks
 CELERY_TASK_ALWAYS_EAGER = False # Set to True for synchronous execution in tests/dev if needed
-CELERY_WORKER_SEND_TASK_EVENTS = True # Enable sending task events for monitoring
-CELERY_WORKER_STATE_DB = 'celery_worker_state.db' # Optional: for persistent worker state
-CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True # Added for robust broker connection
+CELERY_WORKER_SEND_TASK_EVENTS = True
+CELERY_WORKER_STATE_DB = 'celery_worker_state.db'
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 # Celery Beat Schedule
 CELERY_BEAT_SCHEDULE = {
     'find-and-notify-abandoned-carts': {
         'task': 'cart.tasks.find_and_notify_abandoned_carts',
-        'schedule': timedelta(hours=1), # Run this task every hour
+        'schedule': timedelta(hours=1),
+    },
+    'update-exchange-rates': {
+        'task': 'currencies.tasks.update_exchange_rates',
+        'schedule': timedelta(days=30),
     },
 }
 
@@ -601,7 +610,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': "[{asctime}] {levelname} [{name}] {message}", # Changed to include {name} for logger name
+            'format': "[{asctime}] {levelname} [{name}] {message}",
             'style': '{',
         },
         'simple': {
@@ -612,8 +621,8 @@ LOGGING = {
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose', # Use 'verbose' to see logger names and full timestamps
-            'level': 'DEBUG', # <--- IMPORTANT: Set console handler to DEBUG
+            'formatter': 'verbose',
+            'level': 'DEBUG',
         },
         'file_products': {
             'level': 'INFO',
@@ -642,20 +651,20 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['console'],
-            'level': 'INFO', # Keep Django's default INFO or WARNING if you want less noise
+            'level': 'INFO',
             'propagate': False,
         },
-        'custom_order': { # <--- IMPORTANT: Add this logger for your custom_order app
+        'custom_order': {
             'handlers': ['console'],
-            'level': 'DEBUG', # <--- Set this to DEBUG to see all your custom logs
+            'level': 'DEBUG',
             'propagate': False,
         },
-        'promotions': { # <--- IMPORTANT: Add this logger for promotions app
+        'promotions': {
             'handlers': ['console'],
-            'level': 'DEBUG', # <--- Set this to DEBUG
+            'level': 'DEBUG',
             'propagate': False,
         },
-        'shipping': { # <--- IMPORTANT: Add this logger for shipping app
+        'shipping': {
             'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': False,
@@ -672,7 +681,7 @@ LOGGING = {
         },
         'celery': {
             'handlers': ['console', 'file_celery'],
-            'level': 'DEBUG', # Keep this at DEBUG
+            'level': 'DEBUG',
             'propagate': False,
         },
         'kombu': {
@@ -750,16 +759,17 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
-        # Catch-all root logger
         '': {
             'handlers': ['console'],
-            'level': 'WARNING', # Default level for anything not explicitly configured
+            'level': 'WARNING',
         }
     }
 }
 
-# Security settings for production
-# Security settings for production
+# ExchangeRate-API configuration
+EXCHANGERATE_API_KEY = env('EXCHANGERATE_API_KEY', default='your_api_key_here')
+
+# # Security settings for production
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
@@ -773,9 +783,6 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    # Clear cache only in production if needed, or handle differently
-    # from django.core.cache import cache
-    # cache.clear()
+
 else:
-    # Development settings
-    pass # Removed cache.clear()
+    pass

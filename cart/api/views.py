@@ -63,6 +63,9 @@ class CartItemAPIView(APIView):
 
         product_id = serializer.validated_data['product_id']
         quantity = serializer.validated_data['quantity']
+        color_id = serializer.validated_data.get('color_id')
+        size_id = serializer.validated_data.get('size_id')
+        fabric_id = serializer.validated_data.get('fabric_id')
         override_quantity = serializer.validated_data.get('override_quantity', False)
         saved_for_later = serializer.validated_data.get('saved_for_later', False)
 
@@ -71,7 +74,7 @@ class CartItemAPIView(APIView):
         try:
             # Service returns the updated cart
             # Pass request (HttpRequest object) to add_product_to_cart
-            updated_cart = add_product_to_cart(request, product, quantity, override_quantity, saved_for_later)
+            updated_cart = add_product_to_cart(request, product, quantity, color_id, size_id, fabric_id, override_quantity, saved_for_later)
             
             # Prepare response message
             message = _(f"'{product.name}' added to cart.")
@@ -102,11 +105,14 @@ class CartItemAPIView(APIView):
             raise ValidationError(serializer.errors)
 
         quantity = serializer.validated_data['quantity']
+        color_id = serializer.validated_data.get('color_id')
+        size_id = serializer.validated_data.get('size_id')
+        fabric_id = serializer.validated_data.get('fabric_id')
 
         try:
             # Service returns the updated cart
             # Pass request (HttpRequest object) to update_cart_item_quantity
-            updated_cart = update_cart_item_quantity(request, product, quantity)
+            updated_cart = update_cart_item_quantity(request, product, quantity, color_id, size_id, fabric_id)
 
             message = _(f"Quantity for '{product.name}' updated to {quantity}.")
             # Check if quantity was adjusted due to stock limits
@@ -130,10 +136,13 @@ class CartItemAPIView(APIView):
         Removes a product from the cart.
         """
         product = get_object_or_404(Product, id=product_id)
+        color_id = request.data.get('color_id')
+        size_id = request.data.get('size_id')
+        fabric_id = request.data.get('fabric_id')
         try:
             # Service returns the updated cart
             # Pass request (HttpRequest object) to remove_product_from_cart
-            updated_cart = remove_product_from_cart(request, product)
+            updated_cart = remove_product_from_cart(request, product, color_id, size_id, fabric_id)
             message = _(f"'{product.name}' removed from cart.")
             return Response(
                 {'message': message, 'cart': CartSerializer(updated_cart, context={'request': request}).data},
@@ -160,10 +169,13 @@ class CartItemToggleSavedAPIView(APIView):
         Toggles the 'saved_for_later' status for a cart item.
         """
         product = get_object_or_404(Product, id=product_id)
+        color_id = request.data.get('color_id')
+        size_id = request.data.get('size_id')
+        fabric_id = request.data.get('fabric_id')
         try:
             # Service returns the updated cart
             # Pass request (HttpRequest object) to toggle_saved_for_later
-            updated_cart = toggle_saved_for_later(request, product)
+            updated_cart = toggle_saved_for_later(request, product, color_id, size_id, fabric_id)
             is_saved = updated_cart.items.get(product=product).saved_for_later # Get the latest status
             action_msg = _("moved to 'Saved for Later'") if is_saved else _("moved to active cart")
             message = _(f"'{product.name}' {action_msg}.")
@@ -259,9 +271,14 @@ class CartClearAPIView(APIView):
         Clears all active items from the user's or session's cart.
         """
         try:
-            # Pass request (HttpRequest object) to clear_cart_items
-            updated_cart = clear_cart_items(request) # The service expects the request object
-            message = _(f"Your cart has been emptied ({updated_cart.total_items} items removed).")
+            # The service returns the count of items removed, not the cart object.
+            items_removed_count = clear_cart_items(request)
+            
+            # Fetch the now-empty cart to return in the response.
+            updated_cart = get_user_cart(request)
+            
+            message = _(f"Your cart has been emptied ({items_removed_count} items removed).")
+            
             return Response(
                 {'message': message, 'cart': CartSerializer(updated_cart, context={'request': request}).data},
                 status=status.HTTP_200_OK

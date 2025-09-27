@@ -160,6 +160,7 @@
         userAddresses: [],
         shippingMethods: [],
         paymentMethods: [],
+        orderNote: '', // New field for order notes
         showNewAddressForm: false,
         isLoadingPaymentMethods: true, // New loading state for payment methods
         isCalculatingShipping: false, // New loading state for shipping calculation
@@ -421,7 +422,7 @@
             total: parseFloat(this.total), // Pass calculated total
             tax: parseFloat(this.tax), // Pass calculated tax, ensure it's a number
             discount: parseFloat(this.discount || 0), // Pass calculated discount, ensure it's a number
-            order_note: '', // Add any order notes if you have them in the UI
+            order_note: this.orderNote, // Add order note
             promo_code: this.promoCode, // Pass promo_code if needed by service
           };
 

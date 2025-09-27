@@ -10,396 +10,359 @@
  * It replaces the previous HTMX-driven approach for these sections.
  */
 
-// Ensure this script only runs once
-if (window.cartInteractionsInitialized) {
-    
-} else {
-    window.cartInteractionsInitialized = true;
+// API Endpoints (ensure these match your Django urls.py)
+window.API_ENDPOINTS = {
+    CART_DETAIL: '/cart/api/',
+    CART_ITEM_ADD: '/cart/api/items/', // POST
+    CART_ITEM_DETAIL: (productId) => `/cart/api/items/${productId}/`, // PUT, DELETE
+    CART_ITEM_TOGGLE_SAVED: (productId) => `/cart/api/items/${productId}/toggle-saved/`, // POST
+    CART_COUPON_APPLY: '/cart/api/coupons/apply/', // POST
+    CART_COUPON_REMOVE: '/cart/api/coupons/apply/', // DELETE
+    CART_SHIPPING: '/cart/api/shipping/', // POST
+    CART_CHECKOUT: '/cart/api/checkout/', // POST
+    CART_CLEAR: '/cart/api/empty/', // POST
+    PAYMENT_METHODS: '/payments/api/methods/',
+    SHIPPING_METHODS: '/shipping/api/methods/',
+    RELATED_PRODUCTS: '/api/products/related-products/',
+};
 
-    // API Endpoints (ensure these match your Django urls.py)
-    window.API_ENDPOINTS = {
-        CART_DETAIL: '/cart/api/',
-        CART_ITEM_ADD: '/cart/api/items/', // POST
-        CART_ITEM_DETAIL: (productId) => `/cart/api/items/${productId}/`, // PUT, DELETE
-        CART_ITEM_TOGGLE_SAVED: (productId) => `/cart/api/items/${productId}/toggle-saved/`, // POST
-        CART_COUPON_APPLY: '/cart/api/coupons/apply/', // POST
-        CART_COUPON_REMOVE: '/cart/api/coupons/apply/', // DELETE
-        CART_SHIPPING: '/cart/api/shipping/', // POST
-        CART_CHECKOUT: '/cart/api/checkout/', // POST
-        CART_CLEAR: '/cart/api/empty/', // POST
-        PAYMENT_METHODS: '/payments/api/methods/',
-        SHIPPING_METHODS: '/shipping/api/methods/',
-        RELATED_PRODUCTS: '/api/products/related-products/',
-    };
+// DOM Elements (will be populated after DOMContentLoaded)
+let cartSectionWrapper;
+let relatedProductsSection;
+let quickCartSidebarContentWrapper;
 
-    // DOM Elements
-    const cartSectionWrapper = document.getElementById('cart-section-wrapper');
-    const relatedProductsSection = document.getElementById('related-products-section'); // Keep if related products are still HTMX or JS loaded
-    const quickCartSidebarContentWrapper = document.getElementById('cart-sidebar-content-wrapper');
+// Global state to store fetched data
+let cachedPaymentMethods = [];
+let cachedShippingMethods = [];
+let currentCartData = null;
 
-    // Global state to store fetched data
-    let cachedPaymentMethods = [];
-    let cachedShippingMethods = [];
-    let currentCartData = null;
+/**
+ * Utility function to fetch cart data, payment methods, and shipping methods concurrently.
+ * @returns {Promise<{cart: object, paymentMethods: Array, shippingMethods: Array}>}
+ */
+async function fetchCartData() {
+    try {
+        const [cartResponse, paymentMethodsResponse, shippingMethodsResponse] = await Promise.all([
+            fetch(window.API_ENDPOINTS.CART_DETAIL, { cache: 'no-store' }),
+            fetch(window.API_ENDPOINTS.PAYMENT_METHODS),
+            fetch(window.API_ENDPOINTS.SHIPPING_METHODS)
+        ]);
 
-    /**
-     * Utility function to fetch cart data, payment methods, and shipping methods concurrently.
-     * @returns {Promise<{cart: object, paymentMethods: Array, shippingMethods: Array}>}
-     */
-    async function fetchCartData() {
-        try {
-            const [cartResponse, paymentMethodsResponse, shippingMethodsResponse] = await Promise.all([
-                fetch(window.API_ENDPOINTS.CART_DETAIL, { cache: 'no-store' }),
-                fetch(window.API_ENDPOINTS.PAYMENT_METHODS),
-                fetch(window.API_ENDPOINTS.SHIPPING_METHODS)
-            ]);
-
-            if (!cartResponse.ok) {
-                const errorData = await cartResponse.json();
-                throw new Error(errorData.error || `HTTP error! status: ${cartResponse.status}`);
-            }
-            const cartData = await cartResponse.json();
-
-            // Validate cartData to ensure it has expected properties
-            if (!cartData || typeof cartData.total_price === 'undefined') {
-                console.error('Received invalid cart data from API:', cartData);
-                throw new Error('Invalid cart data received from server. Please try again.');
-            }
-
-            currentCartData = cartData;
-
-            if (paymentMethodsResponse.ok) {
-                cachedPaymentMethods = await paymentMethodsResponse.json();
-            } else {
-                const errorData = await paymentMethodsResponse.json();
-                console.warn('Failed to fetch payment methods:', errorData.error || `HTTP error! status: ${paymentMethodsResponse.status}`);
-                cachedPaymentMethods = [];
-            }
-
-            if (shippingMethodsResponse.ok) {
-                cachedShippingMethods = await shippingMethodsResponse.json();
-            } else {
-                const errorData = await shippingMethodsResponse.json();
-                console.warn('Failed to fetch shipping methods:', errorData.error || `HTTP error! status: ${shippingMethodsResponse.status}`);
-                cachedShippingMethods = [];
-            }
-
-            return { cart: cartData, paymentMethods: cachedPaymentMethods, shippingMethods: cachedShippingMethods };
-
-        } catch (error) {
-            console.error("Error fetching cart data:", error);
-            throw error; // Re-throw to be caught by calling functions
+        if (!cartResponse.ok) {
+            const errorData = await cartResponse.json();
+            throw new Error(errorData.error || `HTTP error! status: ${cartResponse.status}`);
         }
-    }
+        const cartData = await cartResponse.json();
 
-    /**
-     * Fetches cart data and renders the main cart page.
-     * Displays a loading state while fetching.
-     */
-    async function fetchAndRenderMainCartPage(initialCart = null) {
-        if (!cartSectionWrapper) {
-            console.error("Cart section wrapper not found. Cannot initialize cart interactions.");
-            return;
+        // Validate cartData to ensure it has expected properties
+        if (!cartData || typeof cartData.total_price === 'undefined') {
+            console.error('Received invalid cart data from API:', cartData);
+            throw new Error('Invalid cart data received from server. Please try again.');
         }
 
-        // Show loading state
-        cartSectionWrapper.innerHTML = `
-            <div class="lg:col-span-3 text-center py-10">
-                <i class="fas fa-spinner fa-spin text-4xl text-blue-500 mb-4"></i>
-                <p class="text-gray-600 dark:text-gray-400">Loading your cart...</p>
-            </div>
-        `;
+        currentCartData = cartData;
 
-        try {
-            let cartToRender;
-            let paymentMethodsToRender;
-            let shippingMethodsToRender;
-
-            if (initialCart) {
-                cartToRender = initialCart;
-                // If initialCart is provided, assume payment and shipping methods are already cached or not needed for this specific render path
-                // For full consistency, you might want to re-fetch them or ensure they are part of initialCart if always needed.
-                // For now, we'll use the cached ones if initialCart is provided.
-                paymentMethodsToRender = cachedPaymentMethods;
-                shippingMethodsToRender = cachedShippingMethods;
-            } else {
-                const { cart, paymentMethods, shippingMethods } = await fetchCartData();
-                cartToRender = cart;
-                paymentMethodsToRender = paymentMethods;
-                shippingMethodsToRender = shippingMethods;
-            }
-
-            renderCartSection(cartToRender, paymentMethodsToRender, shippingMethodsToRender);
-            // Dispatch event for cart count update in navbar/sidebar
-            document.dispatchEvent(new CustomEvent('cartCountUpdate', { detail: cartToRender.total_items }));
-            fetchAndRenderRelatedProducts(); // Call to fetch and render related products
-        } catch (error) {
-            console.error("Error fetching or rendering main cart page:", error);
-            cartSectionWrapper.innerHTML = `
-                <div class="lg:col-span-3 text-center py-10 text-red-600">
-                    <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
-                    <p>Failed to load your cart. Please try again later.</p>
-                    <p class="text-sm text-red-400">${error.message}</p>
-                </div>
-            `;
-            showToast(`Failed to load cart: ${error.message}`, 'error');
-        }
-    }
-
-    /**
-     * Fetches cart data and renders the quick cart sidebar.
-     * Displays a loading state while fetching.
-     */
-    async function fetchAndRenderSidebarCart(initialCart = null) {
-        if (!quickCartSidebarContentWrapper) {
-            console.error("Quick cart sidebar content wrapper not found. Cannot render sidebar.");
-            return;
-        }
-
-        // Show loading state in sidebar
-        quickCartSidebarContentWrapper.innerHTML = `
-            <div class="p-4 text-center text-gray-500">
-                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
-                <p>Loading cart content...</p>
-            </div>
-        `;
-
-        try {
-            let cartToRender;
-            if (initialCart) {
-                cartToRender = initialCart;
-            } else {
-                const { cart } = await fetchCartData(); // Sidebar only needs cart data for now
-                cartToRender = cart;
-            }
-            renderCartSidebar(cartToRender);
-        } catch (error) {
-            console.error("Error fetching or rendering sidebar cart:", error);
-            quickCartSidebarContentWrapper.innerHTML = `
-                <div class="p-4 text-center text-red-600">
-                    <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
-                    <p>Failed to load cart.</p>
-                </div>
-            `;
-            showToast(`Failed to load sidebar cart: ${error.message}`, 'error');
-        }
-    }
-
-
-    /**
-     * Renders the entire cart section on the main cart page based on the provided cart data.
-     * This function will replace the content of the #cart-section-wrapper.
-     * @param {object} cart - The cart data object from the API.
-     * @param {Array} paymentMethods - Array of available payment methods.
-     * @param {Array} shippingMethods - Array of available shipping methods.
-     */
-    function renderCartSection(cart, paymentMethods, shippingMethods) {
-        if (!cartSectionWrapper) return;
-
-        const activeItems = cart.active_items || [];
-        const savedItems = cart.saved_items || [];
-        const isEmpty = activeItems.length === 0 && savedItems.length === 0;
-
-        let htmlContent = '';
-
-        if (isEmpty) {
-            htmlContent = `
-                <div class="lg:col-span-3">
-                    <div class="p-8 text-center">
-                        <img src="/static/images/empty_cart.svg" class="mx-auto h-32 mb-4" alt="Empty Cart">
-                        <h2 class="text-xl font-bold mb-2">Your cart is empty</h2>
-                        <p class="text-gray-500 mb-4">Browse products and add to cart!</p>
-                        <a href="/products/" class="btn btn-outline-primary">Continue Shopping</a>
-                    </div>
-                </div>
-            `;
+        if (paymentMethodsResponse.ok) {
+            cachedPaymentMethods = await paymentMethodsResponse.json();
         } else {
-            const groupedItemsBySeller = groupCartItemsBySeller(activeItems);
-            let cartItemsHtml = '';
-            if (groupedItemsBySeller.length > 0) {
-                cartItemsHtml = groupedItemsBySeller.map(group => renderSellerGroup(group)).join('');
-            } else {
-                cartItemsHtml = `
-                    <div class="border rounded-2xl bg-white dark:bg-gray-900 shadow-sm p-6 space-y-6">
-                        <h2 class="text-lg font-semibold">Active Items</h2>
-                        <p class="text-gray-500">No active items in cart.</p>
-                    </div>
-                `;
-            }
-
-            const savedItemsHtml = renderSavedItems(savedItems, false); // Render for main page
-            const orderSummaryHtml = renderOrderSummary(cart, paymentMethods, shippingMethods);
-
-            htmlContent = `
-                <div class="lg:col-span-2 space-y-6">
-                    ${cartItemsHtml}
-                    ${savedItems.length > 0 ? savedItemsHtml : ''}
-                </div>
-                <div class="lg:col-span-1">
-                    ${orderSummaryHtml}
-                </div>
-            `;
+            const errorData = await paymentMethodsResponse.json();
+            console.warn('Failed to fetch payment methods:', errorData.error || `HTTP error! status: ${paymentMethodsResponse.status}`);
+            cachedPaymentMethods = [];
         }
 
-        cartSectionWrapper.innerHTML = htmlContent;
-        attachCartEventListeners(); // Re-attach listeners after rendering
+        if (shippingMethodsResponse.ok) {
+            cachedShippingMethods = await shippingMethodsResponse.json();
+        } else {
+            const errorData = await shippingMethodsResponse.json();
+            console.warn('Failed to fetch shipping methods:', errorData.error || `HTTP error! status: ${shippingMethodsResponse.status}`);
+            cachedShippingMethods = [];
+        }
+
+        return { cart: cartData, paymentMethods: cachedPaymentMethods, shippingMethods: cachedShippingMethods };
+
+    } catch (error) {
+        console.error("Error fetching cart data:", error);
+        throw error; // Re-throw to be caught by calling functions
+    }
+}
+
+/**
+ * Fetches cart data and renders the main cart page.
+ * Displays a loading state while fetching.
+ */
+async function fetchAndRenderMainCartPage(initialCart = null) {
+    if (!cartSectionWrapper) {
+        console.error("Cart section wrapper not found. Cannot initialize cart interactions.");
+        return;
     }
 
-    /**
-     * Renders the content of the quick cart sidebar.
-     * @param {object} cart - The cart data object from the API.
-     */
-    /**
-     * Fetches and renders related products into the relatedProductsSection.
-     */
-    async function fetchAndRenderRelatedProducts() {
-        if (!relatedProductsSection) {
-            console.warn("Related products section wrapper not found. Cannot render related products.");
-            return;
+    // Show loading state
+    cartSectionWrapper.innerHTML = `
+        <div class="lg:col-span-3 text-center py-10">
+            <i class="fas fa-spinner fa-spin text-4xl text-blue-500 mb-4"></i>
+            <p class="text-gray-600 dark:text-gray-400">Loading your cart...</p>
+        </div>
+    `;
+
+    try {
+        let cartToRender;
+        let paymentMethodsToRender;
+        let shippingMethodsToRender;
+
+        if (initialCart) {
+            cartToRender = initialCart;
+            // If initialCart is provided, assume payment and shipping methods are already cached or not needed for this specific render path
+            // For full consistency, you might want to re-fetch them or ensure they are part of initialCart if always needed.
+            // For now, we'll use the cached ones if initialCart is provided.
+            paymentMethodsToRender = cachedPaymentMethods;
+            shippingMethodsToRender = cachedShippingMethods;
+        } else {
+            const { cart, paymentMethods, shippingMethods } = await fetchCartData();
+            cartToRender = cart;
+            paymentMethodsToRender = paymentMethods;
+            shippingMethodsToRender = shippingMethods;
         }
 
-        // Show loading state
-        relatedProductsSection.innerHTML = `
-            <div class="text-center py-10">
-                <i class="fas fa-spinner fa-spin text-3xl text-blue-500 mb-4"></i>
-                <p class="text-gray-600 dark:text-gray-400">Loading recommendations...</p>
+        renderCartSection(cartToRender, paymentMethodsToRender, shippingMethodsToRender);
+        // Dispatch event for cart count update in navbar/sidebar
+        document.dispatchEvent(new CustomEvent('cartCountUpdate', { detail: cartToRender.total_items }));
+        fetchAndRenderRelatedProducts(); // Call to fetch and render related products
+    } catch (error) {
+        console.error("Error fetching or rendering main cart page:", error);
+        cartSectionWrapper.innerHTML = `
+            <div class="lg:col-span-3 text-center py-10 text-red-600">
+                <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
+                <p>Failed to load your cart. Please try again later.</p>
+                <p class="text-sm text-red-400">${error.message}</p>
             </div>
         `;
+        showToast(`Failed to load cart: ${error.message}`, 'error');
+    }
+}
 
-        try {
-            const response = await fetch(window.API_ENDPOINTS.RELATED_PRODUCTS);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const products = await response.json();
-            renderRelatedProducts(products);
-        } catch (error) {
-            console.error("Error fetching related products:", error);
-            relatedProductsSection.innerHTML = `
-                <div class="text-center py-10 text-red-600">
-                    <i class="fas fa-exclamation-triangle text-3xl mb-4"></i>
-                    <p>Failed to load recommendations. Please try again later.</p>
-                    <p class="text-sm text-red-400">${error.message}</p>
-                </div>
-            `;
-            showToast(`Failed to load recommendations: ${error.message}`, 'error');
-        }
+/**
+ * Fetches cart data and renders the quick cart sidebar.
+ * Displays a loading state while fetching.
+ */
+async function fetchAndRenderSidebarCart(initialCart = null) {
+    if (!quickCartSidebarContentWrapper) {
+        console.error("Quick cart sidebar content wrapper not found. Cannot render sidebar.");
+        return;
     }
 
-    /**
-     * Renders the related products into the relatedProductsSection.
-     * @param {Array} products - Array of product objects.
-     */
-    function renderRelatedProducts(products) {
-        if (!relatedProductsSection) return;
+    // Show loading state in sidebar
+    quickCartSidebarContentWrapper.innerHTML = `
+        <div class="p-4 text-center text-gray-500">
+            <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+            <p>Loading cart content...</p>
+        </div>
+    `;
 
-        let productsHtml = '';
-        if (products.length > 0) {
-            productsHtml = products.map(product => `
-                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
-                     onclick="window.showQuickView(${product.id})">
-                    <a href="${product.get_absolute_url}">
-                        <img src="${product.image}" class="w-full h-32 object-cover rounded-md mb-2">
-                        <div class="font-semibold text-sm text-gray-900 dark:text-white truncate">${product.name}</div>
-                        <div class="text-xs text-gray-600 dark:text-gray-400">
-                            ${product.is_discounted ? `
-                                <span class="line-through mr-1">৳${parseFloat(product.price).toFixed(2)}</span>
-                                <span class="text-green-700 dark:text-green-400">৳${parseFloat(product.discounted_price).toFixed(2)}</span>
-                            ` : `
-                                ৳${parseFloat(product.price).toFixed(2)}
-                            `}
-                        </div>
+    try {
+        let cartToRender;
+        if (initialCart) {
+            cartToRender = initialCart;
+        } else {
+            const { cart } = await fetchCartData(); // Sidebar only needs cart data for now
+            cartToRender = cart;
+        }
+        renderCartSidebar(cartToRender);
+    } catch (error) {
+        console.error("Error fetching or rendering sidebar cart:", error);
+        quickCartSidebarContentWrapper.innerHTML = `
+            <div class="p-4 text-center text-red-600">
+                <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
+                <p>Failed to load cart.</p>
+            </div>
+        `;
+        showToast(`Failed to load sidebar cart: ${error.message}`, 'error');
+    }
+}
+
+
+/**
+ * Renders the entire cart section on the main cart page based on the provided cart data.
+ * This function will replace the content of the #cart-section-wrapper.
+ * @param {object} cart - The cart data object from the API.
+ * @param {Array} paymentMethods - Array of available payment methods.
+ * @param {Array} shippingMethods - Array of available shipping methods.
+ */
+function renderCartSection(cart, paymentMethods, shippingMethods) {
+    if (!cartSectionWrapper) return;
+
+    const activeItems = cart.active_items || [];
+    const savedItems = cart.saved_items || [];
+    const isEmpty = activeItems.length === 0 && savedItems.length === 0;
+
+    let htmlContent = '';
+
+    if (isEmpty) {
+        htmlContent = `
+            <div class="lg:col-span-3">
+                <div class="p-8 text-center">
+                    <img src="/static/images/empty_cart.svg" class="mx-auto h-32 mb-4" alt="Empty Cart">
+                    <h2 class="text-xl font-bold mb-2">Your cart is empty</h2>
+                    <p class="text-gray-500 mb-4">Browse products and add to cart!</p>
+                    <a href="/products/" class="btn btn-outline-primary">Continue Shopping</a>
+                </div>
+            </div>
+        `;
+    } else {
+        const groupedItemsBySeller = groupCartItemsBySeller(activeItems);
+        let cartItemsHtml = '';
+        if (groupedItemsBySeller.length > 0) {
+            cartItemsHtml = groupedItemsBySeller.map(group => renderSellerGroup(group)).join('');
+        } else {
+            cartItemsHtml = `
+                <div class="border rounded-2xl bg-white dark:bg-gray-900 shadow-sm p-6 space-y-6">
+                    <h2 class="text-lg font-semibold">Active Items</h2>
+                    <p class="text-gray-500">No active items in cart.</p>
+                </div>
+            `;
+        }
+
+        const savedItemsHtml = renderSavedItems(savedItems, false); // Render for main page
+        const orderSummaryHtml = renderOrderSummary(cart, paymentMethods, shippingMethods);
+
+        htmlContent = `
+            <div class="lg:col-span-2 space-y-6">
+                ${cartItemsHtml}
+                ${savedItems.length > 0 ? savedItemsHtml : ''}
+            </div>
+            <div class="lg:col-span-1">
+                ${orderSummaryHtml}
+            </div>
+        `;
+    }
+
+    cartSectionWrapper.innerHTML = htmlContent;
+    attachCartEventListeners(); // Re-attach listeners after rendering
+}
+
+/**
+ * Renders the content of the quick cart sidebar.
+ * @param {object} cart - The cart data object from the API.
+ */
+/**
+ * Fetches and renders related products into the relatedProductsSection.
+ */
+async function fetchAndRenderRelatedProducts() {
+    if (!relatedProductsSection) {
+        console.warn("Related products section wrapper not found. Cannot render related products.");
+        return;
+    }
+
+    // Show loading state
+    relatedProductsSection.innerHTML = `
+        <div class="text-center py-10">
+            <i class="fas fa-spinner fa-spin text-3xl text-blue-500 mb-4"></i>
+            <p class="text-gray-600 dark:text-gray-400">Loading recommendations...</p>
+        </div>
+    `;
+
+    try {
+        const response = await fetch(window.API_ENDPOINTS.RELATED_PRODUCTS);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const html = await response.text(); // Expect HTML
+        relatedProductsSection.innerHTML = html;
+    } catch (error) {
+        console.error("Error fetching related products:", error);
+        relatedProductsSection.innerHTML = `
+            <div class="text-center py-10 text-red-600">
+                <i class="fas fa-exclamation-triangle text-3xl mb-4"></i>
+                <p>Failed to load recommendations. Please try again later.</p>
+                <p class="text-sm text-red-400">${error.message}</p>
+            </div>
+        `;
+        showToast(`Failed to load recommendations: ${error.message}`, 'error');
+    }
+}
+
+function renderCartSidebar(cart) {
+    if (!quickCartSidebarContentWrapper) return;
+
+    const activeItems = cart.active_items || [];
+    const savedItems = cart.saved_items || [];
+    const isEmpty = activeItems.length === 0;
+
+    let sidebarHtml = `
+        <div class="flex flex-col h-full bg-white dark:bg-gray-900 shadow-xl rounded-lg overflow-hidden">
+            <!-- Header -->
+            <div class="flex items-center justify-between p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                <h3 class="font-extrabold text-xl text-gray-900 dark:text-white flex items-center">
+                    <i class="fas fa-shopping-cart text-blue-600 mr-3"></i> Your Cart
+                    <span class="text-sm text-gray-500 ml-2 cart-count-span">(${cart.total_items || 0})</span>
+                </h3>
+            </div>
+
+            <!-- Cart Items List -->
+            <div class="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
+    `;
+
+    if (isEmpty) {
+        sidebarHtml += `
+                <div class="flex flex-col items-center justify-center h-full py-10 text-gray-500">
+                    <i class="fas fa-shopping-basket text-6xl text-gray-300 mb-6"></i>
+                    <p class="text-lg font-medium mb-3">Your cart is empty.</p>
+                    <p class="text-sm text-gray-400 mb-6">Looks like you haven't added anything yet.</p>
+                    <a href="/products/" class="btn btn-primary btn-lg animate-bounce-once">
+                        <i class="fas fa-shop mr-2"></i> Start Shopping
                     </a>
                 </div>
-            `).join('');
-        } else {
-            productsHtml = `
-                <p class="text-center text-gray-500 col-span-full py-5">No recommendations found at the moment.</p>
             `;
-        }
-
-        relatedProductsSection.innerHTML = `
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                ${productsHtml}
-            </div>
-        `;
-    }
-
-    function renderCartSidebar(cart) {
-        if (!quickCartSidebarContentWrapper) return;
-
-        const activeItems = cart.active_items || [];
-        const savedItems = cart.saved_items || [];
-        const isEmpty = activeItems.length === 0;
-
-        let sidebarHtml = `
-            <div class="flex flex-col h-full bg-white dark:bg-gray-900 shadow-xl rounded-lg overflow-hidden">
-                <!-- Header -->
-                <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-                    <h3 class="font-extrabold text-xl text-gray-900 dark:text-white flex items-center">
-                        <i class="fas fa-shopping-cart text-blue-600 mr-3"></i> Your Cart
-                        <span class="text-sm text-gray-500 ml-2 cart-count-span">(${cart.total_items || 0})</span>
-                    </h3>
-                </div>
-
-                <!-- Cart Items List -->
-                <div class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-        `;
-
-        if (isEmpty) {
+    } else {
+        sidebarHtml += `<ul class="space-y-4">`;
+        activeItems.forEach(item => {
+            if (!item || !item.product || typeof item.product.id === 'undefined') {
+                console.warn('Skipping rendering of sidebar cart item due to missing product data:', item);
+                return; // Skip this item if product data is incomplete
+            }
             sidebarHtml += `
-                    <div class="flex flex-col items-center justify-center h-full py-10 text-gray-500">
-                        <i class="fas fa-shopping-basket text-6xl text-gray-300 mb-6"></i>
-                        <p class="text-lg font-medium mb-3">Your cart is empty.</p>
-                        <p class="text-sm text-gray-400 mb-6">Looks like you haven't added anything yet.</p>
-                        <a href="/products/" class="btn btn-primary btn-lg animate-bounce-once">
-                            <i class="fas fa-shop mr-2"></i> Start Shopping
-                        </a>
-                    </div>
-                `;
-        } else {
-            sidebarHtml += `<ul class="space-y-4">`;
-            activeItems.forEach(item => {
-                sidebarHtml += `
-                    <li class="flex items-center gap-2 p-0 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
-                        <!-- Product Image -->
-                        <img src="${item.product.image}" alt="${item.product.name}"
-                            class="h-24 w-24 rounded-md object-cover border border-gray-200 dark:border-gray-700 flex-shrink-0 shadow-inner">
+                <li class="cart-item flex items-center gap-2 p-0 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <!-- Product Image -->
+                    <img src="${item.product.image}" alt="${item.product.name}"
+                        class="h-24 w-20 rounded-md object-cover border border-gray-200 dark:border-gray-700 flex-shrink-0 shadow-inner">
+                    
+                    <!-- Product Info and Quantity Controls -->
+                    <div class="flex-1 min-w-0">
+                        <!-- Product Name and Price -->
+                        <p class="font-semibold text-gray-900 dark:text-white truncate mb-1">${item.product.name}</p>
+                        <p class="text-sm text-gray-500 mb-2">
+                            ${item.quantity} × ৳${parseFloat(item.price).toFixed(2)}
+                        </p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            ${item.color ? `Color: <span style="background-color: ${item.color.hex || item.color.name.toLowerCase()}; display: inline-block; width: 12px; height: 12px; border-radius: 50%; vertical-align: middle; margin-right: 4px; border: 1px solid #ccc;"></span>${item.color.name}` : ''}
+                            ${item.size ? `Size: ${item.size.name}` : ''}
+                            ${item.fabric ? `Fabric: ${item.fabric.name}` : ''}
+                        </p>
                         
-                        <!-- Product Info and Quantity Controls -->
-                        <div class="flex-1 min-w-0">
-                            <!-- Product Name and Price -->
-                            <p class="font-semibold text-gray-900 dark:text-white truncate mb-1">${item.product.name}</p>
-                            <p class="text-sm text-gray-500 mb-2">
-                                ${item.quantity} × ৳${parseFloat(item.price).toFixed(2)}
-                            </p>
-                            
-                            <!-- Quantity Controls and Remove Button -->
-                            <div class="flex justify-between items-center mt-4 mb-2">
-                                <div class="flex items-center space-x-2">
-                                    <!-- Decrement Button -->
-                                    <button type="button" class="w-2 h-auto flex items-center justify-center rounded-full text-background shadow-md transform transition-transform duration-200 ease-in-out hover:scale-105 quantity-btn" data-action="decrement" data-product-id="${item.product.id}">
-                                        <i class="fas fa-minus text-lg"></i>
-                                    </button>
-                                    
-                                    <!-- Quantity Input -->
-                                    <input type="number" value="${item.quantity}" min="1" max="${item.product.stock}"
-                                        class="w-auto h-8 text-center border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-xs font-semibold text-gray-800 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 ease-in-out transform hover:scale-105"
-                                        data-product-id="${item.product.id}" data-item-id="${item.id}" aria-label="Quantity">
-                                    
-                                    <!-- Increment Button -->
-                                    <button type="button" class="w-2 h-auto flex items-center justify-center rounded-full text-background shadow-md transform transition-transform duration-200 ease-in-out hover:scale-105 quantity-btn" data-action="increment" data-product-id="${item.product.id}">
-                                        <i class="fas fa-plus text-lg"></i>
-                                    </button>
-                                </div>
+                        <!-- Quantity Controls and Remove Button -->
+                        <div class="flex justify-between items-center mt-4 mb-2">
+                            <div class="flex items-center space-x-2">
+                                <!-- Decrement Button -->
+                                <button type="button" class="w-2 h-auto flex items-center justify-center rounded-full text-background shadow-md transform transition-transform duration-200 ease-in-out hover:scale-105 quantity-btn" data-action="decrement" data-product-id="${item.product.id}">
+                                    <i class="fas fa-minus text-lg"></i>
+                                </button>
                                 
-                                <!-- Remove Button (Aligned Right) -->
-                                <button type="button" class="text-red-500 hover:text-red-700 text-xs font-mono transition-colors duration-300 remove-item-btn gap" data-product-id="${item.product.id}">
-                                    <i class="fas fa-trash-alt mr-2"></i> Remove
+                                <!-- Quantity Input -->
+                                <input type="number" value="${item.quantity}" min="1" max="${item.product.stock}"
+                                    class="w-auto h-8 text-center border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-xs font-semibold text-gray-800 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 ease-in-out transform hover:scale-105 quantity-input"
+                                    data-product-id="${item.product.id}" data-item-id="${item.id}" aria-label="Quantity">
+                                
+                                <!-- Increment Button -->
+                                <button type="button" class="w-2 h-auto flex items-center justify-center rounded-full text-background shadow-md transform transition-transform duration-200 ease-in-out hover:scale-105 quantity-btn" data-action="increment" data-product-id="${item.product.id}">
+                                    <i class="fas fa-plus text-lg"></i>
                                 </button>
                             </div>
+                            
+                            <!-- Remove Button (Aligned Right) -->
+                            <button type="button" class="text-red-500 hover:text-red-700 text-xs font-mono transition-colors duration-300 remove-item-btn gap" data-product-id="${item.product.id}">
+                                <i class="fas fa-trash-alt mr-1"></i> Remove
+                            </button>
                         </div>
-                    </li>
+                    </div>
                 `;
             });
             sidebarHtml += `</ul>`;
@@ -414,18 +377,18 @@ if (window.cartInteractionsInitialized) {
 
         // Footer with total and buttons
         sidebarHtml += `
-                <div class="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                <div class="p-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
                     <div class="flex justify-between items-center mb-4">
                         <span class="text-lg font-semibold text-gray-800 dark:text-gray-200">Subtotal:</span>
-                        <span class="text-xl font-bold text-blue-600 dark:text-blue-400">৳${parseFloat(cart.total_price || 0).toFixed(2)}</span>
+                        <span class="text-lg font-bold text-blue-600 dark:text-blue-400">৳${parseFloat(cart.total_price || 0).toFixed(2)}</span>
                     </div>
-                    <a href="/checkout/" class="btn btn-primary w-full py-3 text-lg transition-all duration-300 ease-in-out transform hover:scale-105 shadow-lg hover:shadow-xl mb-3">
+                    <a href="/checkout/" class="btn btn-primary w-full py-2 text-base transition-all duration-300 ease-in-out transform hover:scale-105 shadow-lg hover:shadow-xl mb-3">
                         <i class="fas fa-credit-card mr-2"></i> Proceed to Checkout
                     </a>
-                    <a href="/cart/" class="btn btn-outline-secondary w-full py-3 text-lg mb-3">
+                    <a href="/cart/" class="btn btn-primary w-full py-2 text-base transition-all duration-300 ease-in-out transform hover:scale-105 shadow-lg hover:shadow-xl mb-3">
                         <i class="fas fa-shopping-cart mr-2"></i> View Full Cart
                     </a>
-                    <button id="empty-cart-btn" class="btn btn-danger-outline w-full py-2 text-sm">
+                    <button id="empty-cart-btn" class="btn btn-primary w-full py-2 text-sm transition-all duration-300 ease-in-out transform hover:scale-105 shadow-lg hover:shadow-xl mb-3">
                         <i class="fas fa-trash-alt mr-2"></i> Empty Cart
                     </button>
                 </div>
@@ -508,12 +471,17 @@ if (window.cartInteractionsInitialized) {
      * @returns {string} HTML string.
      */
     function renderCartItem(item) {
+        if (!item || !item.product || typeof item.product.id === 'undefined') {
+            console.warn('Skipping rendering of cart item due to missing product data:', item);
+            return ''; // Return empty string if product data is incomplete
+        }
+
         const productPrice = parseFloat(item.product.price).toFixed(2);
         const discountedPrice = item.product.is_discounted ? parseFloat(item.product.discounted_price).toFixed(2) : null;
         const maxStock = item.product.stock;
 
         return `
-            <div class="flex flex-col sm:flex-row gap-4 border-t border-gray-200 dark:border-gray-700 pt-6" data-item-id="${item.id}" data-product-id="${item.product.id}">
+            <div class="cart-item flex flex-col sm:flex-row gap-4 border-t border-gray-200 dark:border-gray-700 pt-6" data-item-id="${item.id}" data-product-id="${item.product.id}" data-color-id="${item.color ? item.color.id : ''}" data-size-id="${item.size ? item.size.id : ''}" data-fabric-id="${item.fabric ? item.fabric.id : ''}">
                 <!-- Product Image -->
                 <img src="${item.product.image}" alt="${item.product.name}"
                      class="w-56 h-48 object-cover rounded-md border hover:shadow-md transition-transform cursor-pointer lg:col-span-1"
@@ -531,6 +499,11 @@ if (window.cartInteractionsInitialized) {
                             ${item.product.category.name}
                             ${item.product.brand ? `• ${item.product.brand.name}` : ''}
                         </p>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">
+                            ${item.color ? `<span class="font-semibold">Color:</span> ${item.color.name} ` : ''}
+                            ${item.size ? `<span class="font-semibold">Size:</span> ${item.size.name} ` : ''}
+                            ${item.fabric ? `<span class="font-semibold">Fabric:</span> ${item.fabric.name}` : ''}
+                        </div>
                         <div class="flex items-center space-x-2">
                             ${discountedPrice ? `
                                 <span class="line-through text-gray-400">৳${productPrice}</span>
@@ -548,7 +521,7 @@ if (window.cartInteractionsInitialized) {
                                 <i class="fas fa-minus text-xs"></i>
                             </button>
                             <input type="number" value="${item.quantity}" min="1" max="${maxStock}"
-                                   class="w-20 text-center border-y-0 border-x border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:ring-0 focus:border-transparent cart-item-quantity-input"
+                                   class="w-20 text-center border-y-0 border-x border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:ring-0 focus:border-transparent quantity-input"
                                    data-product-id="${item.product.id}" data-item-id="${item.id}" aria-label="Quantity">
                             <button type="button" class="w-7 h-7 flex items-center justify-center bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 quantity-btn" data-action="increment" data-product-id="${item.product.id}">
                                 <i class="fas fa-plus text-xs"></i>
@@ -638,32 +611,25 @@ if (window.cartInteractionsInitialized) {
         const couponApplied = cart.coupon !== null;
 
         let shippingOptionsHtml = '';
-    if (shippingMethods && shippingMethods.results.length > 0) {
+        if (shippingMethods && shippingMethods.results.length > 0) {
             shippingOptionsHtml = `
-                <div class="border rounded-2xl bg-white dark:bg-gray-900 shadow-sm p-6">
+                <div class="border rounded-2xl bg-white dark:bg-gray-900 shadow-sm p-2">
                     <h2 class="text-lg font-semibold mb-4 flex items-center">
                         <i class="fas fa-truck text-blue-500 mr-2"></i> Shipping Options
                     </h2>
                     <form id="shipping-form" data-api-url="/cart/api/shipping/" method="POST">
-                        <div class="space-y-3">
-                            ${shippingMethods.results.map(method => {
-                                return `
-                                <div class="flex items-start">
-                                    <input type="radio"
-                                           id="shipping-method-${method.id}"
-                                           name="shipping_method_id"
-                                           value="${method.id}"
-                                           class="mt-1 shipping-method-radio"
-                                           ${cart.shipping_method?.id === method.id ? 'checked' : ''}>
-                                    <label for="shipping-method-${method.id}" class="ml-2 block cursor-pointer">
-                                        <span class="font-medium">${method.name}</span>
-                                        <span class="block text-sm text-gray-600 dark:text-gray-400">
-                                            ৳${parseFloat(method.base_charge).toFixed(2)} • ${method.estimated_delivery_days}
-                                        </span>
-                                    </label>
-                                </div>
-                            `;
-                            }).join('')}
+                        <div class="relative">
+                            <select id="shipping-method-select" name="shipping_method_id"
+                                    class="block appearance-none w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white py-3 px-2 pr-8 rounded-lg leading-tight focus:outline-none focus:bg-white dark:focus:bg-gray-700 focus:border-blue-500">
+                                <option value="">Select a shipping method</option>
+                                ${shippingMethods.results.map(method => {
+                                    return `
+                                    <option value="${method.id}" ${cart.shipping_method?.id === method.id ? 'selected' : ''}>
+                                        ${method.name} (৳${parseFloat(method.base_charge).toFixed(2)} - ${method.estimated_delivery_days})
+                                    </option>
+                                `;
+                                }).join('')}
+                            </select>
                         </div>
                     </form>
                 </div>
@@ -696,13 +662,13 @@ if (window.cartInteractionsInitialized) {
 
 
         return `
-            <div id="order-summary-content" class="space-y-6">
-                <div class="border rounded-2xl bg-white dark:bg-gray-900 shadow-sm p-6 sticky top-6">
+            <div id="order-summary-content" class="space-y-3">
+                <div class="border rounded-2xl bg-white dark:bg-gray-900 shadow-sm p-2 sticky top-6">
                     <h2 class="text-lg font-semibold mb-4 flex items-center">
                         <i class="fas fa-receipt mr-2 text-blue-500"></i> Order Summary
                     </h2>
 
-                    <div class="space-y-3">
+                    <div class="space-y-1">
                         <div class="flex justify-between">
                             <span class="text-gray-600 dark:text-gray-400">Subtotal (${cart.total_items || 0} items)</span>
                             <span class="cart-subtotal-display">৳${parseFloat(cart.total_price || 0).toFixed(2)}</span>
@@ -726,14 +692,14 @@ if (window.cartInteractionsInitialized) {
                         </div>
                     </div>
 
-                    <hr class="my-4 border-gray-200 dark:border-gray-700">
+                    <hr class="my-2 border-gray-200 dark:border-gray-700">
 
                     <div class="flex justify-between items-center font-bold text-lg text-gray-900 dark:text-white">
                         <span>Total</span>
                         <span class="cart-final-total-display">৳${parseFloat(cart.final_total || 0).toFixed(2)}</span>
                     </div>
 
-                    <a href="/checkout/" class="btn btn-primary w-full mt-6 py-3 text-lg bg-pink-500 hover:bg-pink-600 transition-colors duration-200 ease-in-out transform hover:scale-105 shadow-lg hover:shadow-xl">
+                    <a href="/checkout/" class="btn btn-primary w-full mt-3 py-2 text-lg bg-pink-500 hover:bg-pink-600 transition-colors duration-200 ease-in-out transform hover:scale-105 shadow-lg hover:shadow-xl">
                         Proceed to Checkout
                     </a>
 
@@ -741,8 +707,8 @@ if (window.cartInteractionsInitialized) {
                         <i class="fas fa-lock text-green-500 mr-1"></i> Secure Checkout
                     </p>
 
-                    <div class="mt-6">
-                        <h6 class="text-md font-semibold mb-2 flex items-center">
+                    <div class="mt-3">
+                        <h6 class="text-lg font-semibold mb-1 flex items-center">
                             <i class="fas fa-tag text-blue-500 mr-2"></i> Have a coupon?
                         </h6>
                         ${couponApplied ? `
@@ -765,7 +731,7 @@ if (window.cartInteractionsInitialized) {
                     </div>
                 </div>
                 ${shippingOptionsHtml}
-                <div class="border rounded-2xl bg-white dark:bg-gray-900 shadow-sm p-6">
+                <div class="border rounded-2xl bg-white dark:bg-gray-900 shadow-sm p-2">
                     <h2 class="text-lg font-semibold mb-4 flex items-center">
                         <i class="fas fa-shield-alt text-blue-500 mr-2"></i> Secure Payment
                     </h2>
@@ -790,7 +756,7 @@ if (window.cartInteractionsInitialized) {
             button.addEventListener('click', handleQuantityButtonClick);
         });
 
-        document.querySelectorAll('.cart-item-quantity-input').forEach(input => {
+        document.querySelectorAll('.quantity-input').forEach(input => {
             input.removeEventListener('change', handleQuantityInputChange); // Prevent double-listening
             input.addEventListener('change', handleQuantityInputChange);
         });
@@ -824,16 +790,10 @@ if (window.cartInteractionsInitialized) {
         // Shipping form submission (radio buttons and express checkbox)
         const shippingForm = document.getElementById('shipping-form');
         if (shippingForm) {
-            // Listen for changes on radio buttons
-            shippingForm.querySelectorAll('input[name="shipping_method_id"]').forEach(radio => {
-                radio.removeEventListener('change', handleShippingChange);
-                radio.addEventListener('change', handleShippingChange);
-            });
-            // Listen for changes on express checkbox
-            const expressCheckbox = shippingForm.querySelector('input[name="is_express"]');
-            if (expressCheckbox) {
-                expressCheckbox.removeEventListener('change', handleShippingChange);
-                expressCheckbox.addEventListener('change', handleShippingChange);
+            const shippingMethodSelect = shippingForm.querySelector('#shipping-method-select');
+            if (shippingMethodSelect) {
+                shippingMethodSelect.removeEventListener('change', handleShippingChange);
+                shippingMethodSelect.addEventListener('change', handleShippingChange);
             }
         }
 
@@ -865,34 +825,56 @@ if (window.cartInteractionsInitialized) {
         event.preventDefault();
         const button = event.currentTarget;
         const productId = button.dataset.productId;
-        const input = document.querySelector(`.cart-item-quantity-input[data-product-id="${productId}"]`);
 
-        if (!input) {
-            console.error('Quantity input not found for product:', productId);
-            return;
-        }
+        // Find the closest parent element that contains the quantity input for this product.
+        // This assumes a common parent element for each cart item, e.g., with a class 'cart-item'
+        const cartItemElement = button.closest('.cart-item');
 
-        let currentQuantity = parseInt(input.value);
-        const maxStock = parseInt(input.max);
-        let newQuantity = currentQuantity;
+        let quantityInput = null;
+        if (cartItemElement) {
+            // Try to find the quantity input within this specific cart item.
+            // Prioritize finding by a common class and the data-product-id attribute on the input itself.
+            quantityInput = cartItemElement.querySelector(`.quantity-input[data-product-id="${productId}"]`);
 
-        if (button.dataset.action === 'increment') {
-            newQuantity++;
-            if (!isNaN(maxStock) && newQuantity > maxStock) {
-                showToast(`Cannot add more than available stock (${maxStock}).`, 'warning');
-                return;
+            // Fallback: If not found with data-product-id on the input, try finding by ID within the item.
+            if (!quantityInput) {
+                quantityInput = cartItemElement.querySelector(`#quantity-input-${productId}`);
             }
-        } else if (button.dataset.action === 'decrement') {
-            newQuantity--;
-            if (newQuantity < 1) {
-                showToast('Quantity cannot be less than 1. To remove, click the "Remove" button.', 'warning');
-                return;
+
+            // Final fallback: If still not found, try finding by a common class within the item (less specific, but might work if IDs/data-product-id are inconsistent)
+            if (!quantityInput) {
+                quantityInput = cartItemElement.querySelector('.quantity-input');
             }
         }
 
-        if (newQuantity !== currentQuantity) {
-            input.value = newQuantity; // Update input value immediately
-            await updateCartItemQuantity(productId, newQuantity);
+        if (quantityInput) {
+            let currentQuantity = parseInt(quantityInput.value);
+            const maxStock = parseInt(quantityInput.max);
+            let newQuantity = currentQuantity;
+
+            if (button.dataset.action === 'increment') {
+                newQuantity++;
+                if (!isNaN(maxStock) && newQuantity > maxStock) {
+                    showToast(`Cannot add more than available stock (${maxStock}).`, 'warning');
+                    return;
+                }
+            } else if (button.dataset.action === 'decrement') {
+                newQuantity--;
+                if (newQuantity < 1) {
+                    showToast('Quantity cannot be less than 1. To remove, click the "Remove" button.', 'warning');
+                    return;
+                }
+            }
+
+            if (newQuantity !== currentQuantity) {
+                quantityInput.value = newQuantity; // Update input value immediately
+                const colorId = quantityInput.dataset.colorId || null;
+                const sizeId = quantityInput.dataset.sizeId || null;
+                const fabricId = quantityInput.dataset.fabricId || null;
+                await updateCartItemQuantity(productId, newQuantity, colorId, sizeId, fabricId);
+            }
+        } else {
+            console.error(`Quantity input not found for product: ${productId}. Please ensure the quantity input has a class 'quantity-input' and/or a unique ID 'quantity-input-${productId}' within its '.cart-item' container.`);
         }
     }
 
@@ -909,7 +891,8 @@ if (window.cartInteractionsInitialized) {
         if (isNaN(newQuantity) || newQuantity < 1) {
             showToast('Quantity must be at least 1.', 'error');
             // Revert to previous valid quantity if invalid input
-            window.fetchAndRenderMainCartPage(); // Re-fetch to get correct quantity
+            // No need to re-fetch the entire page, just update the input value
+            input.value = input.dataset.previousQuantity || 1; // Revert to previous valid quantity or 1
             return;
         }
 
@@ -919,15 +902,25 @@ if (window.cartInteractionsInitialized) {
             input.value = newQuantity;
         }
 
-        await updateCartItemQuantity(productId, newQuantity);
+        // Store the current quantity as previousQuantity before updating
+        input.dataset.previousQuantity = newQuantity;
+
+        const colorId = input.dataset.colorId || null;
+        const sizeId = input.dataset.sizeId || null;
+        const fabricId = input.dataset.fabricId || null;
+
+        await updateCartItemQuantity(productId, newQuantity, colorId, sizeId, fabricId);
     }
 
     /**
      * Sends an API request to update a cart item's quantity.
      * @param {string} productId - The ID of the product.
      * @param {number} quantity - The new quantity.
+     * @param {number|null} colorId - The ID of the selected color.
+     * @param {number|null} sizeId - The ID of the selected size.
+     * @param {number|null} fabricId - The ID of the selected fabric.
      */
-    async function updateCartItemQuantity(productId, quantity) {
+    async function updateCartItemQuantity(productId, quantity, colorId = null, sizeId = null, fabricId = null) {
         try {
             const response = await fetch(window.API_ENDPOINTS.CART_ITEM_DETAIL(productId), {
                 method: 'PUT',
@@ -935,7 +928,7 @@ if (window.cartInteractionsInitialized) {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken'),
                 },
-                body: JSON.stringify({ quantity: quantity }),
+                body: JSON.stringify({ quantity: quantity, color_id: colorId, size_id: sizeId, fabric_id: fabricId }),
             });
 
             const data = await response.json();
@@ -988,6 +981,9 @@ if (window.cartInteractionsInitialized) {
         event.preventDefault();
         const button = event.currentTarget;
         const productId = button.dataset.productId;
+        const colorId = button.dataset.colorId || null;
+        const sizeId = button.dataset.sizeId || null;
+        const fabricId = button.dataset.fabricId || null;
 
         // Custom confirmation dialog instead of alert/confirm
         if (!await showConfirmationDialog('Are you sure you want to remove this item from your cart?')) {
@@ -1001,6 +997,7 @@ if (window.cartInteractionsInitialized) {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken'),
                 },
+                body: JSON.stringify({ color_id: colorId, size_id: sizeId, fabric_id: fabricId }),
             });
 
             const data = await response.json();
@@ -1010,18 +1007,27 @@ if (window.cartInteractionsInitialized) {
             }
 
             showToast(data.message, 'info');
-            // Re-render both main cart page (if active) and sidebar
-            window.fetchAndRenderMainCartPage();
+            
+            // Re-render main cart page if it exists
+            if (cartSectionWrapper) {
+                fetchAndRenderMainCartPage(data.cart);
+            }
+
+            // Always re-render sidebar if it's open
             const quickCartSidebar = document.getElementById('quick-cart-sidebar');
             if (quickCartSidebar && !quickCartSidebar.classList.contains('translate-x-full')) {
-                window.fetchAndRenderSidebarCart();
+                fetchAndRenderSidebarCart(data.cart);
             }
+            
             document.dispatchEvent(new CustomEvent('cartCountUpdate', { detail: data.cart.total_items }));
 
         } catch (error) {
             console.error('Error removing cart item:', error);
             showToast(error.message || 'Failed to remove item.', 'error');
-            window.fetchAndRenderMainCartPage(); // Re-fetch to revert to consistent state
+            // Re-fetch to revert to consistent state only if the main cart is visible
+            if (cartSectionWrapper) {
+                fetchAndRenderMainCartPage();
+            }
         }
     }
 
@@ -1033,6 +1039,9 @@ if (window.cartInteractionsInitialized) {
         event.preventDefault();
         const button = event.currentTarget;
         const productId = button.dataset.productId;
+        const colorId = button.dataset.colorId || null;
+        const sizeId = button.dataset.sizeId || null;
+        const fabricId = button.dataset.fabricId || null;
 
         try {
             const response = await fetch(window.API_ENDPOINTS.CART_ITEM_TOGGLE_SAVED(productId), {
@@ -1041,7 +1050,7 @@ if (window.cartInteractionsInitialized) {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken'),
                 },
-                body: JSON.stringify({}), // No specific data needed for toggle
+                body: JSON.stringify({ color_id: colorId, size_id: sizeId, fabric_id: fabricId }),
             });
 
             const data = await response.json();
@@ -1051,18 +1060,27 @@ if (window.cartInteractionsInitialized) {
             }
 
             showToast(data.message, 'info');
-            // Re-render both main cart page (if active) and sidebar
-            window.fetchAndRenderMainCartPage();
+            
+            // Re-render main cart page if it exists
+            if (cartSectionWrapper) {
+                fetchAndRenderMainCartPage(data.cart);
+            }
+
+            // Always re-render sidebar if it's open
             const quickCartSidebar = document.getElementById('quick-cart-sidebar');
             if (quickCartSidebar && !quickCartSidebar.classList.contains('translate-x-full')) {
-                window.fetchAndRenderSidebarCart();
+                fetchAndRenderSidebarCart(data.cart);
             }
+            
             document.dispatchEvent(new CustomEvent('cartCountUpdate', { detail: data.cart.total_items }));
 
         } catch (error) {
             console.error('Error toggling saved status:', error);
             showToast(error.message || 'Failed to toggle saved status.', 'error');
-            window.fetchAndRenderMainCartPage(); // Re-fetch to revert to consistent state
+            // Re-fetch to revert to consistent state only if the main cart is visible
+            if (cartSectionWrapper) {
+                fetchAndRenderMainCartPage();
+            }
         }
     }
 
@@ -1183,8 +1201,8 @@ if (window.cartInteractionsInitialized) {
         const form = document.getElementById('shipping-form');
         if (!form) return;
 
-        const shippingMethodRadio = form.querySelector('input[name="shipping_method_id"]:checked');
-        const shippingMethodId = shippingMethodRadio ? parseInt(shippingMethodRadio.value) : null;
+        const shippingMethodSelect = form.querySelector('#shipping-method-select');
+        const shippingMethodId = shippingMethodSelect ? parseInt(shippingMethodSelect.value) : null;
 
         if (shippingMethodId === null) {
             showToast('Please select a shipping method.', 'warning');
@@ -1247,15 +1265,42 @@ if (window.cartInteractionsInitialized) {
         const form = event.currentTarget;
         const productId = form.dataset.productId;
         const quantityInput = form.querySelector('input[name="quantity"]');
+        const colorInput = form.querySelector('#selected-color-detail');
+        const sizeInput = form.querySelector('#selected-size-detail');
+        const fabricInput = form.querySelector('#selected-fabric-detail');
         const overrideInput = form.querySelector('input[name="override"]');
         const savedForLaterInput = form.querySelector('input[name="saved_for_later"]');
 
         const quantity = parseInt(quantityInput ? quantityInput.value : '1');
+        const colorId = colorInput ? colorInput.value : null;
+        const sizeId = sizeInput ? sizeInput.value : null;
+        const fabricId = fabricInput ? fabricInput.value : null;
         const override = overrideInput ? overrideInput.checked : false;
         const savedForLater = savedForLaterInput ? savedForLaterInput.checked : false;
 
         if (isNaN(quantity) || quantity < 1) {
             showToast('Quantity must be at least 1.', 'error');
+            return;
+        }
+
+        // Basic validation for color/size/fabric if product has them
+        // This assumes product.colors.exists, product.sizes.exists, product.fabrics.exists
+        // are available in the template to conditionally render the selectors.
+        // For more robust validation, you'd need to fetch product details here or pass them from Django.
+        const productHasColors = form.querySelector('#color-selector') !== null;
+        const productHasSizes = form.querySelector('#size-selector') !== null;
+        const productHasFabrics = form.querySelector('#fabric-selector') !== null;
+
+        if (productHasColors && !colorId) {
+            showToast('Please select a color.', 'error');
+            return;
+        }
+        if (productHasSizes && !sizeId) {
+            showToast('Please select a size.', 'error');
+            return;
+        }
+        if (productHasFabrics && !fabricId) {
+            showToast('Please select a fabric.', 'error');
             return;
         }
 
@@ -1269,6 +1314,9 @@ if (window.cartInteractionsInitialized) {
                 body: JSON.stringify({
                     product_id: productId,
                     quantity: quantity,
+                    color_id: colorId,
+                    size_id: sizeId,
+                    fabric_id: fabricId,
                     override_quantity: override,
                     saved_for_later: savedForLater,
                 }),
@@ -1316,7 +1364,7 @@ if (window.cartInteractionsInitialized) {
         }
 
         try {
-            const response = await fetch(API_ENDPOINTS.CART_CLEAR, {
+            const response = await fetch(window.API_ENDPOINTS.CART_CLEAR, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1332,18 +1380,27 @@ if (window.cartInteractionsInitialized) {
             }
 
             showToast(data.message, 'info');
-            // Re-render both main cart page (if active) and sidebar
-            window.fetchAndRenderMainCartPage();
+
+            // Re-render main cart page if it exists
+            if (cartSectionWrapper) {
+                fetchAndRenderMainCartPage(data.cart);
+            }
+
+            // Always re-render sidebar if it's open
             const quickCartSidebar = document.getElementById('quick-cart-sidebar');
             if (quickCartSidebar && !quickCartSidebar.classList.contains('translate-x-full')) {
-                window.fetchAndRenderSidebarCart();
+                fetchAndRenderSidebarCart(data.cart);
             }
+
             document.dispatchEvent(new CustomEvent('cartCountUpdate', { detail: data.cart.total_items }));
 
         } catch (error) {
             console.error('Error emptying cart:', error);
             showToast(error.message || 'Failed to empty cart.', 'error');
-            window.fetchAndRenderMainCartPage(); // Re-fetch to ensure UI consistency
+            // Re-fetch to revert to consistent state only if the main cart is visible
+            if (cartSectionWrapper) {
+                fetchAndRenderMainCartPage();
+            }
         }
     }
 
@@ -1409,6 +1466,11 @@ if (window.cartInteractionsInitialized) {
      * It primarily handles the initial fetch and render of the main cart page.
      */
     async function initCartInteractions() {
+        // Assign DOM elements here to ensure they are available
+        cartSectionWrapper = document.getElementById('cart-section-wrapper');
+        relatedProductsSection = document.getElementById('related-products-section');
+        quickCartSidebarContentWrapper = document.getElementById('cart-sidebar-content-wrapper');
+
         // Always fetch cart data on initialization to update global cart count
         try {
             const { cart } = await fetchCartData();
@@ -1430,4 +1492,5 @@ if (window.cartInteractionsInitialized) {
     window.fetchAndRenderSidebarCart = fetchAndRenderSidebarCart;
     window.initCartInteractions = initCartInteractions;
     window.handleAddToCartSubmit = handleAddToCartSubmit; // Already exposed, ensuring consistency
-}
+
+document.addEventListener('DOMContentLoaded', initCartInteractions);

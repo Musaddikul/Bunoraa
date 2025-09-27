@@ -1,9 +1,8 @@
-<div class="mt-10 text-center">
+<div class="mt-10 text-center" x-data>
   <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">We accept</p>
   <div class="flex justify-center space-x-4">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Visa_Logo.png" alt="Visa" class="h-6">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/MasterCard_Logo.svg" alt="Mastercard" class="h-6">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mobile_banking_icon.png" alt="bKash/Nagad" class="h-6">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/PayPal_Logo_2014.svg" alt="PayPal" class="h-6">
+    <template x-for="method in paymentMethods" :key="method.id">
+      <img :src="method.icon" :alt="method.name" class="h-6" :title="method.name">
+    </template>
   </div>
 </div>

@@ -1,4 +1,6 @@
+{% load i18n %}
 {% load static %}
+{% load currency_filters %}
 <div class="group relative bg-white dark:bg-gray-900 rounded-xl shadow hover:shadow-lg overflow-hidden transition-all duration-300 border border-gray-100 dark:border-gray-800">
   
   <!-- Image & Badges -->
@@ -36,7 +38,7 @@
                 
                 // Dispatch the 'wishlist-count-updated' event with all necessary details
                 const message = data.message || 
-                                (data.added ? 'Product added to wishlist!' : 'Product removed from wishlist!');
+                                (data.added ? '{% translate 'Product added to wishlist!' %}' : '{% translate 'Product removed from wishlist!' %}');
 
                 document.dispatchEvent(new CustomEvent('wishlist-count-updated', {
                     bubbles: true,
@@ -51,25 +53,32 @@
             })
             .catch(error => {
                 console.error('Product Grid: Error toggling wishlist:', error);
-                showToast(error.message || 'Failed to update wishlist.', 'error');
+                showToast(error.message || '{% translate 'Failed to update wishlist.' %}', 'error');
             });
             }
         }" 
         x-init="is_wished = {{ product.is_wished|yesno:'true,false' }}"
         class="absolute top-2 right-2 z-20">
         <button type="button" aria-label="Add to wishlist" x-on:click.prevent.stop="toggle()">
-            <i :class="is_wished ? 'fas fa-heart text-red-600' : 'far fa-heart text-gray-400 dark:text-gray-500'" class="text-lg transition"></i>
+            <i :class="is_wished ? 'fas fa-heart text-red-600' : 'far fa-heart text-gray-900 dark:text-gray-800'" class="text-lg transition"></i>
         </button>
         </div>
     </div>
   </a>
 
   <!-- Product Info -->
-  <div class="p-4 space-y-2 text-sm">
+  <div class="p-4">
     <div class="flex justify-between items-center">
       {% if product.category %}
       <p class="text-xs text-center uppercase tracking-wide text-gray-400 dark:text-gray-500">{{ product.category.name }}</p>
       {% endif %}
+      <button type="button" aria-label="Quick View" onclick="showQuickView({{ product.id }})" class="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 text-lg transition-opacity duration-300">
+        <i class="fas fa-eye"></i>
+        <span class="ml-1 text-base font-semibold text-yellow-500">{% translate "Quick View" %}</span>
+      </button>
     </div>
+    {% if product.free_shipping %}
+      <div class="text-xs text-teal-600 mt-1">{% translate "Free Shipping" %}</div>
+    {% endif %}
   </div>
 </div>

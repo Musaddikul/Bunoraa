@@ -67,6 +67,7 @@ def get_zone_for_address(address: UserAddress) -> ShippingZone | None:
             zone = ShippingZone.objects.filter(regions__name__iexact=region_name, is_active=True).first()
             if zone:
                 cache.set(cache_key, zone, CACHE_TIMEOUT)
+                logger.info(f"Found shipping zone '{zone.name}' for region '{region_name}'.")
         if zone:
             return zone
     
@@ -103,11 +104,19 @@ def calculate_shipping_cost(
     """
     try:
         address_zone = get_zone_for_address(address)
+        if not address_zone:
+            logger.warning(f"calculate_shipping_cost: No shipping zone found for address ID: {address.id}")
+            raise ValidationError(_("No shipping zone found for your address."))
+
+        logger.info(f"calculate_shipping_cost: Address zone found: {address_zone.name}")
+
         if address_zone not in shipping_method.zones.all():
+            logger.warning(f"calculate_shipping_cost: Shipping method '{shipping_method.name}' not available for zone '{address_zone.name}'.")
             raise ValidationError(_("Selected shipping method is not available for your address's zone."))
 
         # Check for free shipping threshold first
         if order_total >= address_zone.free_shipping_threshold > 0:
+            logger.info(f"calculate_shipping_cost: Free shipping applied for order total {order_total} >= threshold {address_zone.free_shipping_threshold}.")
             return Decimal('0.00')
 
         # Validate weight and dimensions against method limits
@@ -139,11 +148,17 @@ def calculate_shipping_cost(
             )
             chargeable_weight = max(weight_kg, vol_weight)
         
+        logger.info(f"calculate_shipping_cost: Inputs - Method: {shipping_method.name}, Weight: {weight_kg}kg, Order Total: {order_total}")
+        logger.info(f"calculate_shipping_cost: Method Base Charge: {shipping_method.base_charge}, Price per KG: {shipping_method.price_per_kg}, Zone Base Cost: {address_zone.base_cost}")
+
         cost = shipping_method.base_charge + (shipping_method.price_per_kg * chargeable_weight)
         cost += address_zone.base_cost
+        
+        logger.info(f"calculate_shipping_cost: Calculated cost before quantize: {cost}")
         return cost.quantize(Decimal('0.01'))
 
     except ValidationError as e:
+        logger.warning(f"calculate_shipping_cost Validation Error: {e.message}")
         raise e
     except Exception as e:
         logger.error(f"Error in calculate_shipping_cost: {e}", exc_info=True)

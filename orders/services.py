@@ -113,7 +113,10 @@ class OrderService:
                 product_sku  = getattr(prod,'sku', ''), # Safely get SKU
                 price        = item_data['price'],
                 quantity     = item_data['quantity'],
-                discount     = item_data.get('discount', Decimal('0.00'))
+                discount     = item_data.get('discount', Decimal('0.00')),
+                color_id     = item_data.get('color_id'),
+                size_id      = item_data.get('size_id'),
+                fabric_id    = item_data.get('fabric_id')
             )
             # Optionally, reduce product stock here
             if prod.stock < item_data['quantity']:

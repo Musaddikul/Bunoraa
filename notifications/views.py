@@ -29,9 +29,9 @@ class MarkReadAPI(APIView):
 class MarkAllReadAPI(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def post(self, request):
-        Notification.objects.filter(user=request.user, is_read=False).update(
-            is_read=True, read_at=timezone.now()
-        )
+        notifications = Notification.objects.filter(user=request.user, is_read=False)
+        for notif in notifications:
+            notif.mark_read()
         return Response({'status':'ok'})
 
 class UnreadCountAPI(APIView):

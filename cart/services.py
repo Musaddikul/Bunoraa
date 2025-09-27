@@ -62,7 +62,7 @@ def _get_or_create_cart(request_or_user):
 
 
 @transaction.atomic
-def add_product_to_cart(request, product: Product, quantity: int = 1, override_quantity: bool = False, saved_for_later: bool = False) -> Cart:
+def add_product_to_cart(request, product: Product, quantity: int = 1, color_id: int = None, size_id: int = None, fabric_id: int = None, override_quantity: bool = False, saved_for_later: bool = False) -> Cart:
     """
     Adds a product to the cart or updates its quantity.
     If override_quantity is True, the item's quantity is set to the given quantity.
@@ -86,8 +86,14 @@ def add_product_to_cart(request, product: Product, quantity: int = 1, override_q
     cart_item, created = CartItem.objects.get_or_create(
         cart=cart,
         product=product,
+        color_id=color_id,
+        size_id=size_id,
+        fabric_id=fabric_id,
         defaults={'quantity': 0, 'price': product.current_price, 'saved_for_later': saved_for_later}
     )
+
+    if not created:
+        cart_item.price = product.current_price # Update price for existing items too
 
     old_quantity = cart_item.quantity
     if override_quantity:
@@ -139,7 +145,7 @@ def add_product_to_cart(request, product: Product, quantity: int = 1, override_q
     return cart
 
 @transaction.atomic
-def remove_product_from_cart(request, product: Product) -> Cart:
+def remove_product_from_cart(request, product: Product, color_id: int = None, size_id: int = None, fabric_id: int = None) -> Cart:
     """
     Removes a product entirely from the cart.
 
@@ -150,9 +156,11 @@ def remove_product_from_cart(request, product: Product) -> Cart:
     """
     cart = _get_or_create_cart(request)
     try:
-        cart_item = CartItem.objects.get(cart=cart, product=product)
+        # Assuming product, color, size, and fabric are passed to identify the specific item
+        # If not, you might need to adjust how the item is identified for removal
+        cart_item = CartItem.objects.get(cart=cart, product=product, color_id=color_id, size_id=size_id, fabric_id=fabric_id)
         cart_item.delete()
-        logger.info(f"Product '{product.name}' (ID: {product.id}) removed from cart {cart.id}.")
+        logger.info(f"Product '{product.name}' (ID: {product.id}) with variations removed from cart {cart.id}.")
     except CartItem.DoesNotExist:
         logger.warning(f"Attempted to remove product '{product.name}' (ID: {product.id}) not found in cart {cart.id}.")
         raise ValidationError(_(f"Product '{product.name}' is not in your cart."))
@@ -161,7 +169,7 @@ def remove_product_from_cart(request, product: Product) -> Cart:
     return cart
 
 @transaction.atomic
-def update_cart_item_quantity(request, product: Product, quantity: int) -> Cart:
+def update_cart_item_quantity(request, product: Product, quantity: int, color_id: int = None, size_id: int = None, fabric_id: int = None) -> Cart:
     """
     Updates the quantity of an existing product in the cart.
     If quantity is 0 or less, the item is removed.
@@ -178,9 +186,9 @@ def update_cart_item_quantity(request, product: Product, quantity: int) -> Cart:
         raise ValidationError(_(f"Product '{product.name}' is currently unavailable."))
 
     try:
-        cart_item = CartItem.objects.get(cart=cart, product=product)
+        cart_item = CartItem.objects.get(cart=cart, product=product, color_id=color_id, size_id=size_id, fabric_id=fabric_id)
     except CartItem.DoesNotExist:
-        raise ValidationError(_(f"Product '{product.name}' is not in your cart to update."))
+        raise ValidationError(_(f"Product '{product.name}' with selected variations is not in your cart to update."))
 
     if quantity <= 0:
         cart_item.delete()
@@ -209,22 +217,25 @@ def update_cart_item_quantity(request, product: Product, quantity: int) -> Cart:
 
 
 @transaction.atomic
-def toggle_saved_for_later(request, product: Product) -> Cart:
+def toggle_saved_for_later(request, product: Product, color_id: int = None, size_id: int = None, fabric_id: int = None) -> Cart:
     """
     Toggles a cart item's 'saved_for_later' status.
     Moves item between active cart and saved items.
 
     :param request: HttpRequest object (for session/user).
     :param product: The Product instance to toggle.
+    :param color_id: The ID of the selected color (optional).
+    :param size_id: The ID of the selected size (optional).
+    :param fabric_id: The ID of the selected fabric (optional).
     :return: The updated Cart instance.
     :raises ValidationError: If the product is not in the cart.
     """
     cart = _get_or_create_cart(request)
     try:
-        cart_item = CartItem.objects.get(cart=cart, product=product)
+        cart_item = CartItem.objects.get(cart=cart, product=product, color_id=color_id, size_id=size_id, fabric_id=fabric_id)
         cart_item.saved_for_later = not cart_item.saved_for_later
         cart_item.save()
-        logger.info(f"Product '{product.name}' (ID: {product.id}) saved_for_later status toggled to {cart_item.saved_for_later} in cart {cart.id}.")
+        logger.info(f"Product '{product.name}' (ID: {product.id}) with variations saved_for_later status toggled to {cart_item.saved_for_later} in cart {cart.id}.")
     except CartItem.DoesNotExist:
         raise ValidationError(_(f"Product '{product.name}' is not in your cart."))
     
@@ -247,17 +258,14 @@ def apply_coupon_to_cart(request_or_user, coupon_code: str) -> Cart:
     user_for_validation = request_or_user.user if hasattr(request_or_user, 'user') else request_or_user
     coupon = CouponService.validate_coupon(coupon_code, cart.total_price, user_for_validation)
 
-    logger.debug(f"Before applying coupon to cart {cart.id}: current coupon is {cart.coupon}")
     # Apply the coupon
     cart.coupon = coupon
-    cart.save() # Save without update_fields to ensure all fields are persisted
-    logger.debug(f"After applying coupon to cart {cart.id} and saving: coupon is now {cart.coupon.code if cart.coupon else 'None'}")
+    cart.save()
     
     # Force refresh and recalculate
     cart.refresh_from_db()
     cart.update_totals()
     
-    logger.info(f"Coupon '{coupon.code}' applied to cart {cart.id}")
     return cart
 
 @transaction.atomic

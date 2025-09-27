@@ -289,7 +289,7 @@ class ProductDetailView(DetailView):
             available=True,
             category__active=True
         ).select_related('category', 'category__parent') \
-         .prefetch_related('images', 'reviews__user') \
+         .prefetch_related('images', 'reviews__user', 'colors', 'sizes', 'fabric') \
          .annotate(
             is_wished=Exists(
                 Wishlist.objects.filter(user=self.request.user, products=OuterRef('pk'))
@@ -347,13 +347,13 @@ class ProductDetailView(DetailView):
         return qs
 
     def get_breadcrumbs(self, product):
-        return list(filter(None, [
+        breadcrumbs = [
             {'name': 'Home', 'url': reverse('home')},
-            {'name': 'Products', 'url': reverse('products:all_products')},
-            {'name': product.category.parent.name, 'url': product.category.parent.get_absolute_url()} if product.category.parent else None,
-            {'name': product.category.name, 'url': product.category.get_absolute_url()},
-            {'name': product.name, 'url': product.get_absolute_url()},
-        ]))
+        ]
+        if product.category.parent:
+            breadcrumbs.append({'name': product.category.parent.name, 'url': product.category.parent.get_absolute_url()})
+        breadcrumbs.append({'name': product.category.name, 'url': product.category.get_absolute_url()})
+        return breadcrumbs
 
     def get_review_stats(self, reviews):
         if not reviews.exists():
@@ -513,11 +513,7 @@ class ProductSearchView(ListView):
 
 def quick_view(request, product_id):
     product = get_object_or_404(
-        Product.objects.select_related('category').prefetch_related('images').annotate(
-            is_wished=Exists(
-                Wishlist.objects.filter(user=request.user, products=OuterRef('pk'))
-            ) if request.user.is_authenticated else Value(False, output_field=BooleanField())
-        ), 
+        Product.objects.select_related('category').prefetch_related('images'), 
         id=product_id
     )
 
