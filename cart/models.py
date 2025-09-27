@@ -193,16 +193,14 @@ class Cart(models.Model):
         self.save(update_fields=[
             'total_items_cached', 'total_price_cached', 'total_discount_cached',
             'total_tax_cached', 'total_shipping_cached', 'final_total_cached',
-            'shipping_method', 'coupon', 'updated_at'
+            'shipping_method', 'coupon', 'address', 'updated_at'
         ])
-        logger.info(f"Cart {self.id} totals updated. Final Total: {self.final_total_cached}, Discount: {self.total_discount_cached}, Shipping: {self.total_shipping_cached}")
 
     def clear_cart(self):
         """Removes all active items from the cart."""
         cleared_count = self.items.filter(saved_for_later=False).delete()[0]
         if cleared_count > 0:
-            self.save(update_fields=['updated_at']) # Update timestamp
-        logger.info(f"Cleared {cleared_count} active items from cart {self.id}.")
+            self.save(update_fields=['updated_at'])
         return cleared_count
 
     def mark_abandoned(self):
@@ -211,7 +209,6 @@ class Cart(models.Model):
             self.abandoned = True
             self.abandoned_at = timezone.now()
             self.save(update_fields=['abandoned', 'abandoned_at', 'updated_at'])
-            logger.info(f"Cart {self.id} marked as abandoned.")
 
     def mark_converted(self):
         """Marks the cart as converted (e.g., order placed)."""
@@ -219,7 +216,6 @@ class Cart(models.Model):
             self.converted = True
             self.converted_at = timezone.now()
             self.save(update_fields=['converted', 'converted_at', 'updated_at'])
-            logger.info(f"Cart {self.id} marked as converted.")
 
     def mark_checked_out(self):
         """
@@ -231,8 +227,7 @@ class Cart(models.Model):
             self.save(update_fields=['checked_out', 'updated_at'])
         # Ensure mark_converted is called only if it was an abandoned cart
         if self.abandoned:
-            self.mark_converted() # Call on self
-        logger.info(f"Cart {self.id} marked as checked out and converted (if abandoned).")
+            self.mark_converted()
         
 
 
@@ -242,6 +237,9 @@ class CartItem(models.Model):
     """
     cart            = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items', verbose_name=_("Cart"))
     product         = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name=_("Product"))
+    color           = models.ForeignKey('products.Color', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Color"))
+    size            = models.ForeignKey('products.Size', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Size"))
+    fabric          = models.ForeignKey('products.Fabric', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Fabric"))
     quantity        = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)], verbose_name=_("Quantity"))
     price           = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Price")) # Price at the time of adding to cart
     saved_for_later = models.BooleanField(default=False, verbose_name=_("Saved for Later"),
@@ -252,7 +250,7 @@ class CartItem(models.Model):
     class Meta:
         verbose_name = _("Cart Item")
         verbose_name_plural = _("Cart Items")
-        unique_together = ('cart', 'product') # A product can only be in a cart once
+        unique_together = ('cart', 'product', 'color', 'size', 'fabric') # A product with specific variations can only be in a cart once
         ordering = ['added_at']
         indexes = [
             models.Index(fields=['cart', 'saved_for_later']),

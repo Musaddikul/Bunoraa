@@ -15,7 +15,7 @@
 
         <div class="text-center">
             <p class="mt-4 text-lg text-dark/70 dark:text-light/70">
-                {% blocktrans %}To access this page, you must first verify your email address. We've sent a verification link to your email. Please click the link to continue. If you don't see the email, check your spam folder or <a href="{% url 'account_email' %}" class="font-medium text-primary-600 hover:text-primary-700">re-send the verification email</a>.{% endblocktrans %}
+                {% translate "To access this page, you must first verify your email address. We've sent a verification link to your email. Please click the link to continue. If you don't see the email, check your spam folder or" %} <a href="{% url 'account_email' %}" class="font-medium text-primary-600 hover:text-primary-700">{% translate "re-send the verification email" %}</a>.
             </p>
             <div class="mt-6">
                 <a href="{% url 'account_logout' %}" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-lg text-base font-semibold text-white bg-gradient-to-r from-primary-500 to-primary-700 hover:from-primary-600 hover:to-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transform hover:-translate-y-0.5 transition-all duration-300">

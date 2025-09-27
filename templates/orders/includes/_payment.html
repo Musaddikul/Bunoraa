@@ -52,7 +52,7 @@
                    name="payment_method" 
                    :value="method.id"
                    x-model="selectedPayment" 
-                   @change="$dispatch('payment-method-selected', { id: parseInt($event.target.value) })" {# Dispatch the parsed integer value #}
+                   @change="$dispatch('payment-method-selected', { id: parseInt($event.target.value) })"
                    class="form-radio h-4 w-4 text-blue-600 transition duration-150 ease-in-out" />
 
             <img :src="method.icon" :alt="method.name" class="h-8 w-8 object-contain mr-2" />

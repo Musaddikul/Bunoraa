@@ -1,4 +1,3 @@
-# accounts/models.py
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import FileExtensionValidator
@@ -7,6 +6,8 @@ from phonenumber_field.modelfields import PhoneNumberField
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from .constants import GENDER_CHOICES
+from currencies.models import Currency # Import the Currency model
+from core.models import Language # Import the Language model
 
 
 class User(AbstractUser):
@@ -108,7 +109,7 @@ class Seller(models.Model):
         help_text=_('A brief description of the seller or their store.')
     )
     # You might add a profile picture for the store, business address, etc.
-    # For now, using user's profile picture as a fallback in templates.
+    # For now, using user\'s profile picture as a fallback in templates.
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created At'))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('Updated At'))
 
@@ -122,12 +123,16 @@ class Seller(models.Model):
 
     @property
     def get_full_name(self):
-        """Returns the full name of the associated user."""
+        """
+        Returns the full name of the associated user.
+        """
         return self.user.get_full_name()
 
     @property
     def email(self):
-        """Returns the email of the associated user."""
+        """
+        Returns the email of the associated user.
+        """
         return self.user.email
 
     @property
@@ -135,7 +140,7 @@ class Seller(models.Model):
         """
         Provides a 'profile' object with an 'image' attribute for template compatibility.
         This is a workaround to allow `seller.profile.image.url` to work in templates
-        even if Seller doesn't have a direct image field, falling back to User's profile_picture.
+        even if Seller doesn't have a direct image field, falling back to User\'s profile_picture.
         If you add a `store_logo` or similar field to `Seller`, you can update this.
         """
         class TempProfile:
@@ -148,7 +153,7 @@ class Seller(models.Model):
                         self.url = url
                     def __str__(self):
                         return self.url
-                # Use seller's own logo if available, otherwise user's profile picture, then default
+                # Use seller\'s own logo if available, otherwise user\'s profile picture, then default
                 if hasattr(self.seller, 'store_logo') and self.seller.store_logo: # Assuming 'store_logo' field
                     return TempImage(self.seller.store_logo.url)
                 elif self.seller.user.profile_picture:
@@ -156,3 +161,43 @@ class Seller(models.Model):
                 return TempImage('/static/images/default-store.png')
         return TempProfile(self)
 
+
+class UserSettings(models.Model):
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='settings',
+        verbose_name=_('User')
+    )
+    currency = models.ForeignKey(
+        Currency,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_('Preferred Currency')
+    )
+    language = models.ForeignKey(
+        Language,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_('Preferred Language')
+    )
+    country = CountryField(
+        _('Preferred Country'),
+        blank=True,
+        null=True
+    )
+    timezone = models.CharField(
+        _('Timezone'),
+        max_length=50,
+        default='Asia/Dhaka',
+        blank=True
+    )
+
+    class Meta:
+        verbose_name = _('User Setting')
+        verbose_name_plural = _('User Settings')
+
+    def __str__(self):
+        return f"Settings for {self.user.username}"

@@ -22,11 +22,23 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Tiro+Bangla&family=Noto+Serif+Bengali:wght@400;500;600;700&family=Galada&family=Mina:wght@400;700&family=Atma:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@400;700&family=Lato:wght@400;700&family=Raleway:wght@400;700&family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&family=Nunito:wght@400;700&family=Cabin:wght@400;700&family=Quicksand:wght@400;700&family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
 
   {% block extra_css %}{% endblock %}
 </head>
 
-<body class="font-mono bg-white text-[#333] dark:bg-[#181A1B] dark:text-[#DDD] transition-colors duration-300">
+<body class="
+  {% if request.LANGUAGE_CODE == 'bn' %}
+    font-hind-siliguri
+  {% else %}
+    font-inter
+  {% endif %}
+  bg-white text-[#333] dark:bg-[#181A1B] dark:text-[#DDD] transition-colors duration-300
+">
 
   {% include 'partials/navbar.html' %}
   <main class="min-h-screen py-6">{% block content %}{% endblock %}</main>
@@ -66,7 +78,7 @@
         <i class="fas fa-times"></i>
       </button>
       <div id="product-quick-view-content" class="min-h-[200px] flex items-center justify-center">
-        <div classd="text-center text-gray-500 py-10">Loading product details...</div>
+        <div class="text-center text-gray-500 py-10">Loading product details...</div>
       </div>
     </div>
   </div>
@@ -113,7 +125,6 @@
   <script src="{% static 'js/products.js' %}"></script>
   <script src="{% static 'js/wishlist.js' %}"></script>
   <script src="{% static 'js/app.js' %}"></script>
-
 
   <script>
     window.CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').getAttribute('content');

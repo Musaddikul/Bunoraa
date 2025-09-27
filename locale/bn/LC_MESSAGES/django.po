@@ -1,0 +1,3955 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-08-09 14:17+0600\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: .\accounts\forms.py:24 .\accounts\forms.py:75 .\accounts\forms.py:89
+#: .\accounts\forms.py:194 .\accounts\forms.py:358
+#: .\custom_order\models.py:164 .\templates\accounts\add_address.html:55
+#: .\templates\accounts\partials\profile_section.html:177
+msgid "Phone Number"
+msgstr "ফোন নম্বর"
+
+#: .\accounts\forms.py:49
+msgid "Profile Picture"
+msgstr "প্রোফাইল ছবি"
+
+#: .\accounts\forms.py:68 .\accounts\forms.py:137
+msgid "Enter a valid Bangladeshi phone number in the format +8801XXXXXXXXX."
+msgstr "+8801XXXXXXXXX ফর্ম্যাটে একটি বৈধ বাংলাদেশি ফোন নম্বর লিখুন।"
+
+#: .\accounts\forms.py:88 .\templates\accounts\add_address.html:46
+msgid "Full Name"
+msgstr "পুরো নাম"
+
+#: .\accounts\forms.py:90 .\templates\accounts\add_address.html:67
+msgid "Address Line"
+msgstr "ঠিকানা লাইন"
+
+#: .\accounts\forms.py:91
+msgid "Address Line 2 (optional)"
+msgstr "ঠিকানা লাইন 2 (al চ্ছিক)"
+
+#: .\accounts\forms.py:92 .\templates\accounts\add_address.html:81
+msgid "Division"
+msgstr "বিভাগ"
+
+#: .\accounts\forms.py:93 .\templates\accounts\add_address.html:92
+msgid "District"
+msgstr "জেলা"
+
+#: .\accounts\forms.py:94 .\templates\accounts\add_address.html:114
+msgid "Postal Code"
+msgstr "ডাক কোড"
+
+#: .\accounts\forms.py:95 .\templates\accounts\add_address.html:128
+msgid "Country"
+msgstr "দেশ"
+
+#: .\accounts\forms.py:96
+msgid "Set as default"
+msgstr "ডিফল্ট হিসাবে সেট করুন"
+
+#: .\accounts\forms.py:144
+msgid "Postal code must be a 4-digit number."
+msgstr "ডাক কোড অবশ্যই একটি 4-অঙ্কের নম্বর হতে হবে।"
+
+#: .\accounts\forms.py:156
+msgid "Division is required."
+msgstr "বিভাগ প্রয়োজন।"
+
+#: .\accounts\forms.py:158
+msgid "District is required."
+msgstr "জেলা প্রয়োজন।"
+
+#: .\accounts\forms.py:170 .\accounts\forms.py:172 .\accounts\forms.py:342
+#: .\accounts\forms.py:344
+#: .\templates\accounts\partials\profile_section.html:125
+msgid "First Name"
+msgstr "প্রথম নাম"
+
+#: .\accounts\forms.py:178 .\accounts\forms.py:180 .\accounts\forms.py:350
+#: .\accounts\forms.py:352
+#: .\templates\accounts\partials\profile_section.html:151
+msgid "Last Name"
+msgstr "শেষ নাম"
+
+#: .\accounts\forms.py:186 .\accounts\forms.py:188 .\accounts\forms.py:387
+msgid "Username"
+msgstr "ব্যবহারকারীর নাম"
+
+#: .\accounts\forms.py:196 .\accounts\forms.py:360
+msgid "+8801XXXXXXXXX"
+msgstr "+8801xxxxxxxxxx"
+
+#: .\accounts\forms.py:199 .\accounts\forms.py:363
+msgid "We may use this for order updates"
+msgstr "আমরা এটি অর্ডার আপডেটের জন্য ব্যবহার করতে পারি"
+
+#: .\accounts\forms.py:203 .\accounts\forms.py:367
+msgid "Gender"
+msgstr "লিঙ্গ"
+
+#: .\accounts\forms.py:211
+msgid "I accept the Terms and Conditions"
+msgstr "আমি শর্তাদি এবং শর্তাদি গ্রহণ করি"
+
+#: .\accounts\forms.py:213
+msgid "You must accept the terms and conditions to register."
+msgstr "নিবন্ধনের জন্য আপনাকে অবশ্যই শর্তাদি এবং শর্তাদি গ্রহণ করতে হবে।"
+
+#: .\accounts\forms.py:229 .\accounts\forms.py:381
+msgid "Email address"
+msgstr "ইমেল ঠিকানা"
+
+#: .\accounts\forms.py:235 .\accounts\forms.py:286
+msgid "Password"
+msgstr "পাসওয়ার্ড"
+
+#: .\accounts\forms.py:241
+msgid "Confirm Password"
+msgstr "পাসওয়ার্ড নিশ্চিত করুন"
+
+#: .\accounts\forms.py:248
+msgid "A user with that username already exists."
+msgstr "সেই ব্যবহারকারীর নাম সহ একজন ব্যবহারকারী ইতিমধ্যে বিদ্যমান।"
+
+#: .\accounts\forms.py:256
+msgid "This phone number is already registered."
+msgstr "এই ফোন নম্বরটি ইতিমধ্যে নিবন্ধিত।"
+
+#: .\accounts\forms.py:279 .\templates\account\login.html:28
+msgid "Email or Username"
+msgstr "ইমেল বা ব্যবহারকারীর নাম"
+
+#: .\accounts\forms.py:299
+msgid "Invalid username or email address"
+msgstr "অবৈধ ব্যবহারকারীর নাম বা ইমেল ঠিকানা"
+
+#: .\accounts\forms.py:305 .\custom_order\models.py:144
+#: .\templates\accounts\partials\profile_section.html:219
+msgid "Email"
+msgstr "ইমেল"
+
+#: .\accounts\forms.py:310
+msgid "Enter your email address"
+msgstr "আপনার ইমেল ঠিকানা লিখুন"
+
+#: .\accounts\forms.py:320 .\accounts\forms.py:324
+msgid "New password"
+msgstr "নতুন পাসওয়ার্ড"
+
+#: .\accounts\forms.py:327
+msgid "Your password must contain at least 8 characters."
+msgstr "আপনার পাসওয়ার্ডে কমপক্ষে 8 টি অক্ষর থাকতে হবে।"
+
+#: .\accounts\forms.py:330
+msgid "New password confirmation"
+msgstr "নতুন পাসওয়ার্ড নিশ্চিতকরণ"
+
+#: .\accounts\forms.py:335
+msgid "Confirm new password"
+msgstr "নতুন পাসওয়ার্ড নিশ্চিত করুন"
+
+#: .\accounts\forms.py:408 .\accounts\models.py:184
+msgid "Preferred Language"
+msgstr "পছন্দসই ভাষা"
+
+#: .\accounts\models.py:14
+msgid "email address"
+msgstr "ইমেল ঠিকানা"
+
+#: .\accounts\models.py:15 .\accounts\models.py:57
+msgid "phone number"
+msgstr "ফোন নম্বর"
+
+#: .\accounts\models.py:16
+msgid "gender"
+msgstr "লিঙ্গ"
+
+#: .\accounts\models.py:17
+msgid "address"
+msgstr "ঠিকানা"
+
+#: .\accounts\models.py:18
+msgid "city"
+msgstr "শহর"
+
+#: .\accounts\models.py:19 .\accounts\models.py:66
+msgid "country"
+msgstr "দেশ"
+
+#: .\accounts\models.py:20 .\accounts\models.py:65
+msgid "postal code"
+msgstr "ডাক কোড"
+
+#: .\accounts\models.py:21
+msgid "date of birth"
+msgstr "জন্মের তারিখ"
+
+#: .\accounts\models.py:24
+msgid "profile picture"
+msgstr "প্রোফাইল ছবি"
+
+#: .\accounts\models.py:31
+msgid "email verified"
+msgstr "ইমেল যাচাই করা হয়েছে"
+
+#: .\accounts\models.py:34
+msgid "Google ID"
+msgstr "গুগল আইডি"
+
+#: .\accounts\models.py:35
+msgid "Facebook ID"
+msgstr "ফেসবুক আইডি"
+
+#: .\accounts\models.py:36
+msgid "Microsoft ID"
+msgstr "মাইক্রোসফ্ট আইডি"
+
+#: .\accounts\models.py:42 .\accounts\models.py:54
+msgid "user"
+msgstr "ব্যবহারকারী"
+
+#: .\accounts\models.py:43
+msgid "users"
+msgstr "ব্যবহারকারীরা"
+
+#: .\accounts\models.py:56
+msgid "full name"
+msgstr "পুরো নাম"
+
+#: .\accounts\models.py:59
+msgid "address line 1"
+msgstr "ঠিকানা লাইন 1"
+
+#: .\accounts\models.py:60
+msgid "address line 2"
+msgstr "ঠিকানা লাইন 2"
+
+#: .\accounts\models.py:62
+msgid "district"
+msgstr "জেলা"
+
+#: .\accounts\models.py:63
+msgid "division"
+msgstr "বিভাগ"
+
+#: .\accounts\models.py:64
+msgid "upazila"
+msgstr "উপজিলা"
+
+#: .\accounts\models.py:68
+msgid "default address"
+msgstr "ডিফল্ট ঠিকানা"
+
+#: .\accounts\models.py:69
+msgid "created at"
+msgstr "এটি তৈরি"
+
+#: .\accounts\models.py:72
+msgid "user address"
+msgstr "ব্যবহারকারীর ঠিকানা"
+
+#: .\accounts\models.py:73
+msgid "user addresses"
+msgstr "ব্যবহারকারীর ঠিকানা"
+
+#: .\accounts\models.py:98
+msgid "User Account"
+msgstr "ব্যবহারকারী অ্যাকাউন্ট"
+
+#: .\accounts\models.py:101
+msgid "Store Name"
+msgstr "স্টোর নাম"
+
+#: .\accounts\models.py:104
+msgid "The name of the seller's store or brand."
+msgstr "বিক্রেতার স্টোর বা ব্র্যান্ডের নাম।"
+
+#: .\accounts\models.py:107 .\custom_order\models.py:21
+#: .\custom_order\models.py:43 .\custom_order\models.py:69
+#: .\custom_order\models.py:93 .\custom_order\models.py:267
+#: .\custom_order\models.py:285 .\promotions\models.py:30
+#: .\shipping\admin.py:29 .\shipping\models.py:16 .\shipping\models.py:352
+msgid "Description"
+msgstr "বর্ণনা"
+
+#: .\accounts\models.py:109
+msgid "A brief description of the seller or their store."
+msgstr "বিক্রেতা বা তাদের স্টোরের একটি সংক্ষিপ্ত বিবরণ।"
+
+#: .\accounts\models.py:113 .\cart\models.py:28 .\currencies\models.py:42
+#: .\custom_order\models.py:23 .\custom_order\models.py:51
+#: .\custom_order\models.py:76 .\custom_order\models.py:102
+#: .\custom_order\models.py:120 .\custom_order\models.py:206
+#: .\custom_order\models.py:269 .\custom_order\models.py:286
+#: .\custom_order\models.py:304 .\payments\models.py:19
+#: .\payments\models.py:126 .\payments\models.py:183 .\payments\models.py:218
+#: .\promotions\models.py:107 .\shipping\models.py:60 .\shipping\models.py:110
+#: .\shipping\models.py:207 .\shipping\models.py:284 .\shipping\models.py:329
+msgid "Created At"
+msgstr "এটি তৈরি"
+
+#: .\accounts\models.py:114 .\cart\models.py:29 .\cart\models.py:248
+#: .\currencies\models.py:43 .\custom_order\models.py:24
+#: .\custom_order\models.py:52 .\custom_order\models.py:77
+#: .\custom_order\models.py:103 .\custom_order\models.py:121
+#: .\custom_order\models.py:207 .\payments\models.py:20
+#: .\payments\models.py:127 .\payments\models.py:184
+#: .\promotions\models.py:111 .\shipping\models.py:61 .\shipping\models.py:111
+#: .\shipping\models.py:208 .\shipping\models.py:285
+msgid "Updated At"
+msgstr "আপডেট"
+
+#: .\accounts\models.py:117
+msgid "Seller"
+msgstr "বিক্রেতা"
+
+#: .\accounts\models.py:118
+msgid "Sellers"
+msgstr "বিক্রেতারা"
+
+#: .\accounts\models.py:170 .\cart\admin.py:48 .\cart\models.py:25
+#: .\custom_order\models.py:159 .\payments\admin.py:137
+#: .\payments\models.py:66
+msgid "User"
+msgstr "ব্যবহারকারী"
+
+#: .\accounts\models.py:177
+msgid "Preferred Currency"
+msgstr "পছন্দসই মুদ্রা"
+
+#: .\accounts\models.py:187
+msgid "Preferred Country"
+msgstr "পছন্দসই দেশ"
+
+#: .\accounts\models.py:192
+msgid "Timezone"
+msgstr "টাইমজোন"
+
+#: .\accounts\models.py:199
+msgid "User Setting"
+msgstr "ব্যবহারকারী সেটিং"
+
+#: .\accounts\models.py:200
+#: .\templates\accounts\partials\profile_section.html:69
+msgid "User Settings"
+msgstr "ব্যবহারকারী সেটিংস"
+
+#: .\cart\admin.py:21 .\cart\models.py:244
+msgid "Price"
+msgstr "দাম"
+
+#: .\cart\admin.py:25
+msgid "Total Price"
+msgstr "মোট মূল্য"
+
+#: .\cart\admin.py:47
+msgid "Anonymous"
+msgstr "বেনামে"
+
+#: .\cart\admin.py:53 .\cart\models.py:26
+msgid "Session Key"
+msgstr "সেশন কী"
+
+#: .\cart\admin.py:58
+msgid "Items"
+msgstr "আইটেম"
+
+#: .\cart\admin.py:64
+msgid "Subtotal"
+msgstr "সাবটোটাল"
+
+#: .\cart\admin.py:70
+msgid "Discount"
+msgstr "ছাড়"
+
+#: .\cart\admin.py:75
+msgid "Shipping"
+msgstr "শিপিং"
+
+#: .\cart\admin.py:80
+msgid "Tax"
+msgstr "কর"
+
+#: .\cart\admin.py:85
+msgid "Final Total"
+msgstr "চূড়ান্ত মোট"
+
+#: .\cart\admin.py:88
+msgid "Mark selected carts as checked out"
+msgstr "চেক আউট হিসাবে নির্বাচিত কার্ট চিহ্নিত করুন"
+
+#: .\cart\admin.py:98
+msgid "Clear all items from selected carts"
+msgstr "নির্বাচিত গাড়ি থেকে সমস্ত আইটেম সাফ করুন"
+
+#: .\cart\admin.py:124 .\cart\models.py:55 .\cart\models.py:238
+msgid "Cart"
+msgstr "কার্ট"
+
+#: .\cart\api\views.py:180
+msgid "moved to 'Saved for Later'"
+msgstr "'পরে সংরক্ষণ' এ সরানো হয়েছে"
+
+#: .\cart\api\views.py:180
+msgid "moved to active cart"
+msgstr "সক্রিয় কার্টে সরানো"
+
+#: .\cart\api\views.py:217
+msgid "Shipping method updated."
+msgstr "শিপিং পদ্ধতি আপডেট হয়েছে।"
+
+#: .\cart\api\views.py:248
+msgid "Cannot checkout an empty cart."
+msgstr "খালি কার্ট চেকআউট করতে পারে না।"
+
+#: .\cart\api\views.py:251
+msgid "Cart is already checked out."
+msgstr "কার্ট ইতিমধ্যে চেক আউট করা হয়।"
+
+#: .\cart\api\views.py:254
+msgid "Cart successfully marked as checked out."
+msgstr "কার্ট সফলভাবে চেক আউট হিসাবে চিহ্নিত।"
+
+#: .\cart\api\views.py:324
+msgid "Coupon removed successfully."
+msgstr "কুপন সফলভাবে সরানো হয়েছে।"
+
+#: .\cart\apps.py:8
+msgid "Shopping Cart"
+msgstr "শপিং কার্ট"
+
+#: .\cart\forms.py:17 .\cart\serializers.py:52
+msgid "Quantity of the product."
+msgstr "পণ্যের পরিমাণ।"
+
+#: .\cart\forms.py:23 .\cart\serializers.py:56
+msgid "If true, overrides existing quantity; otherwise, adds to it."
+msgstr ""
+"যদি সত্য হয় তবে বিদ্যমান পরিমাণকে ওভাররাইড করে; অন্যথায়, এটি যোগ করে।"
+
+#: .\cart\forms.py:30 .\cart\serializers.py:57
+msgid "If true, adds to 'saved for later' instead of active cart."
+msgstr "যদি সত্য হয় তবে সক্রিয় কার্টের পরিবর্তে 'পরে সংরক্ষণ করা' যোগ করে।"
+
+#: .\cart\forms.py:39 .\custom_order\forms.py:44
+msgid "Enter coupon code"
+msgstr "কুপন কোড প্রবেশ করুন"
+
+#: .\cart\forms.py:40
+msgid "Your coupon code."
+msgstr "আপনার কুপন কোড।"
+
+#: .\cart\forms.py:50
+msgid "ID of the selected shipping method."
+msgstr "নির্বাচিত শিপিং পদ্ধতির আইডি।"
+
+#: .\cart\models.py:27
+msgid "Used for anonymous carts."
+msgstr "বেনামে কার্টের জন্য ব্যবহৃত।"
+
+#: .\cart\models.py:30
+msgid "Checked Out"
+msgstr "চেক আউট"
+
+#: .\cart\models.py:31
+msgid "Indicates if the cart has been converted to an order."
+msgstr "কার্টটি কোনও অর্ডারে রূপান্তরিত হয়েছে কিনা তা নির্দেশ করে।"
+
+#: .\cart\models.py:32
+msgid "Abandoned"
+msgstr "পরিত্যক্ত"
+
+#: .\cart\models.py:33
+msgid "True if the cart has been flagged as abandoned."
+msgstr "সত্য যদি কার্টটি পরিত্যক্ত হিসাবে চিহ্নিত করা হয়।"
+
+#: .\cart\models.py:34
+msgid "Abandoned At"
+msgstr "ত্যাগ করা"
+
+#: .\cart\models.py:35
+msgid "Timestamp when the cart was marked as abandoned."
+msgstr "টাইমস্ট্যাম্প যখন কার্টটি পরিত্যক্ত হিসাবে চিহ্নিত করা হয়েছিল।"
+
+#: .\cart\models.py:36
+msgid "Converted"
+msgstr "রূপান্তরিত"
+
+#: .\cart\models.py:37
+msgid "True if the cart led to a successful conversion (e.g., order placed)."
+msgstr ""
+"সত্য যদি কার্টটি একটি সফল রূপান্তরকে পরিচালিত করে (উদাঃ, অর্ডার স্থাপন)।"
+
+#: .\cart\models.py:38
+msgid "Converted At"
+msgstr "রূপান্তরিত"
+
+#: .\cart\models.py:39
+msgid "Timestamp when the cart was converted."
+msgstr "টাইমস্ট্যাম্প যখন কার্টটি রূপান্তরিত হয়েছিল।"
+
+#: .\cart\models.py:40 .\custom_order\models.py:191 .\promotions\models.py:115
+msgid "Coupon"
+msgstr "কুপন"
+
+#: .\cart\models.py:41 .\custom_order\models.py:189 .\shipping\models.py:211
+#: .\shipping\models.py:246
+msgid "Shipping Method"
+msgstr "শিপিং পদ্ধতি"
+
+#: .\cart\models.py:42 .\custom_order\models.py:188
+#: .\templates\accounts\partials\profile_section.html:59
+msgid "Shipping Address"
+msgstr "শিপিং ঠিকানা"
+
+#: .\cart\models.py:43
+msgid "Express Shipping"
+msgstr "এক্সপ্রেস শিপিং"
+
+#: .\cart\models.py:44
+msgid "Whether express shipping is selected for this cart."
+msgstr "এই কার্টের জন্য এক্সপ্রেস শিপিং নির্বাচন করা হয়েছে কিনা।"
+
+#: .\cart\models.py:47
+msgid "Total Price (Cached)"
+msgstr "মোট মূল্য (ক্যাশেড)"
+
+#: .\cart\models.py:48
+msgid "Total Discount (Cached)"
+msgstr "মোট ছাড় (ক্যাশেড)"
+
+#: .\cart\models.py:49
+msgid "Total Shipping (Cached)"
+msgstr "মোট শিপিং (ক্যাশেড)"
+
+#: .\cart\models.py:50
+msgid "Total Tax (Cached)"
+msgstr "মোট কর (ক্যাশেড)"
+
+#: .\cart\models.py:51
+msgid "Final Total (Cached)"
+msgstr "চূড়ান্ত মোট (ক্যাশেড)"
+
+#: .\cart\models.py:52
+msgid "Total Items (Cached)"
+msgstr "মোট আইটেম (ক্যাশেড)"
+
+#: .\cart\models.py:56
+msgid "Carts"
+msgstr "কার্টস"
+
+#: .\cart\models.py:163
+msgid "Not selected"
+msgstr "নির্বাচিত নয়"
+
+#: .\cart\models.py:239
+msgid "Product"
+msgstr "পণ্য"
+
+#: .\cart\models.py:240 .\custom_order\admin.py:136
+#: .\templates\products\product_detail.html:164
+msgid "Color"
+msgstr "রঙ"
+
+#: .\cart\models.py:241 .\templates\products\product_detail.html:178
+msgid "Size"
+msgstr "আকার"
+
+#: .\cart\models.py:242 .\templates\products\product_detail.html:191
+msgid "Fabric"
+msgstr "ফ্যাব্রিক"
+
+#: .\cart\models.py:243 .\custom_order\models.py:174
+#: .\templates\products\product_detail.html:207
+msgid "Quantity"
+msgstr "পরিমাণ"
+
+#: .\cart\models.py:245
+msgid "Saved for Later"
+msgstr "পরে সংরক্ষণ করা"
+
+#: .\cart\models.py:246
+msgid "If true, item is saved for later, not part of active cart total."
+msgstr ""
+"যদি সত্য হয় তবে আইটেমটি পরে সংরক্ষণ করা হয়, সক্রিয় কার্টের মোট অংশ নয়।"
+
+#: .\cart\models.py:247
+msgid "Added At"
+msgstr "যোগ করা হয়েছে"
+
+#: .\cart\models.py:251
+msgid "Cart Item"
+msgstr "কার্ট আইটেম"
+
+#: .\cart\models.py:252
+msgid "Cart Items"
+msgstr "কার্ট আইটেম"
+
+#: .\cart\serializers.py:51
+msgid "ID of the product to add/update."
+msgstr "পণ্য যুক্ত/আপডেট করতে আইডি।"
+
+#: .\cart\serializers.py:53
+msgid "ID of the selected color."
+msgstr "নির্বাচিত রঙের আইডি।"
+
+#: .\cart\serializers.py:54
+msgid "ID of the selected size."
+msgstr "নির্বাচিত আকারের আইডি।"
+
+#: .\cart\serializers.py:55
+msgid "ID of the selected fabric."
+msgstr "নির্বাচিত ফ্যাব্রিকের আইডি।"
+
+#: .\cart\serializers.py:66
+msgid "This product is out of stock."
+msgstr "এই পণ্যটি স্টকের বাইরে।"
+
+#: .\cart\serializers.py:68
+msgid "Product not found or not available."
+msgstr "পণ্য পাওয়া যায় না বা পাওয়া যায় না।"
+
+#: .\cart\serializers.py:209 .\shipping\api\serializers.py:146
+msgid "Shipping method not found."
+msgstr "শিপিং পদ্ধতি পাওয়া যায় নি।"
+
+#: .\cart\services.py:256
+msgid "Cannot apply a coupon to an empty cart."
+msgstr "খালি কার্টে কুপন প্রয়োগ করতে পারে না।"
+
+#: .\cart\services.py:286
+msgid "No coupon is currently applied to your cart."
+msgstr "আপনার কার্টে বর্তমানে কোনও কুপন প্রয়োগ করা হয়নি।"
+
+#: .\cart\services.py:312
+msgid "Selected shipping method is invalid or inactive."
+msgstr "নির্বাচিত শিপিং পদ্ধতিটি অবৈধ বা নিষ্ক্রিয়।"
+
+#: .\cart\services.py:319
+msgid "Selected address is invalid."
+msgstr "নির্বাচিত ঠিকানা অবৈধ।"
+
+#: .\cart\tasks.py:38
+#, python-brace-format
+msgid "Don't Miss Out! Your Cart Awaits at {site_name}"
+msgstr "মিস করবেন না! আপনার কার্টটি {সাইট_নাম} এ অপেক্ষা করছে"
+
+#: .\cart\views.py:74
+msgid "Our Store"
+msgstr "আমাদের স্টোর"
+
+#: .\core\admin.py:46 .\custom_order\admin.py:202 .\payments\admin.py:85
+#: .\payments\admin.py:210 .\payments\admin.py:239 .\promotions\admin.py:36
+#: .\shipping\admin.py:56 .\shipping\admin.py:83 .\shipping\admin.py:113
+#: .\shipping\admin.py:154
+msgid "Timestamps"
+msgstr "টাইমস্ট্যাম্পস"
+
+#: .\core\admin.py:55
+msgid "VAT Rate"
+msgstr "ভ্যাট হার"
+
+#: .\core\models.py:52
+msgid "Setting Name"
+msgstr "নাম স্থাপন"
+
+#: .\core\models.py:57
+msgid "VAT rate as a decimal (e.g., 0.10 for 10%)"
+msgstr "দশমিক হিসাবে ভ্যাট রেট (উদাঃ, 10%এর জন্য 0.10)"
+
+#: .\core\models.py:59 .\payments\models.py:16 .\promotions\models.py:78
+msgid "Is Active"
+msgstr "সক্রিয়"
+
+#: .\core\models.py:64
+msgid "Tax Setting"
+msgstr "কর সেটিং"
+
+#: .\core\models.py:65
+msgid "Tax Settings"
+msgstr "কর সেটিংস"
+
+#: .\core\models.py:72
+msgid "Language Code"
+msgstr "ভাষা কোড"
+
+#: .\core\models.py:75
+msgid "e.g., en, bn, fr. Must match Django's LANGUAGES setting."
+msgstr "উদাহরণস্বরূপ, এন, বিএন, ফ্র। জ্যাঙ্গোর ভাষার সেটিংটি অবশ্যই মেলে।"
+
+#: .\core\models.py:78
+msgid "Language Name"
+msgstr "ভাষার নাম"
+
+#: .\core\models.py:80
+msgid "Full name of the language, e.g., English, Bengali."
+msgstr "ভাষার পুরো নাম, যেমন, ইংরেজি, বাঙালি।"
+
+#: .\core\models.py:83 .\currencies\models.py:38 .\custom_order\models.py:22
+#: .\custom_order\models.py:50 .\custom_order\models.py:75
+#: .\custom_order\models.py:94 .\custom_order\models.py:119
+#: .\shipping\models.py:59 .\shipping\models.py:109 .\shipping\models.py:178
+msgid "Active"
+msgstr "সক্রিয়"
+
+#: .\core\models.py:85
+msgid "Is this language available for users to select?"
+msgstr "এই ভাষাটি কি ব্যবহারকারীদের জন্য নির্বাচন করার জন্য উপলব্ধ?"
+
+#: .\core\models.py:88 .\templates\accounts\partials\profile_section.html:335
+msgid "Default"
+msgstr "ডিফল্ট"
+
+#: .\core\models.py:90
+msgid "Is this the default language for the site?"
+msgstr "এটি কি সাইটের জন্য ডিফল্ট ভাষা?"
+
+#: .\core\models.py:94
+msgid "Language"
+msgstr "ভাষা"
+
+#: .\core\models.py:95
+msgid "Languages"
+msgstr "ভাষা"
+
+#: .\currencies\models.py:10
+msgid "Currency Code"
+msgstr "মুদ্রা কোড"
+
+#: .\currencies\models.py:13
+msgid "ISO 4217 currency code, e.g., USD, EUR, BDT."
+msgstr "আইএসও 4217 মুদ্রা কোড, উদাঃ, ইউএসডি, ইউরো, বিডিটি।"
+
+#: .\currencies\models.py:16
+msgid "Currency Name"
+msgstr "মুদ্রার নাম"
+
+#: .\currencies\models.py:18
+msgid "Full name of the currency, e.g., United States Dollar."
+msgstr "মুদ্রার পুরো নাম, যেমন, মার্কিন যুক্তরাষ্ট্রের ডলার।"
+
+#: .\currencies\models.py:21
+msgid "Symbol"
+msgstr "প্রতীক"
+
+#: .\currencies\models.py:23
+msgid "Currency symbol, e.g., $, €, ৳."
+msgstr "মুদ্রার প্রতীক, উদাঃ, $, €, ৳।"
+
+#: .\currencies\models.py:26
+msgid "Exchange Rate"
+msgstr "বিনিময় হার"
+
+#: .\currencies\models.py:30
+msgid "Exchange rate against the base currency (e.g., BDT)."
+msgstr "বেস মুদ্রার বিরুদ্ধে বিনিময় হার (উদাঃ, বিডিটি)।"
+
+#: .\currencies\models.py:33
+msgid "Default Currency"
+msgstr "ডিফল্ট মুদ্রা"
+
+#: .\currencies\models.py:35
+msgid "Is this the default currency for the store?"
+msgstr "এটি কি স্টোরের জন্য ডিফল্ট মুদ্রা?"
+
+#: .\currencies\models.py:40
+msgid "Is this currency available for use?"
+msgstr "এই মুদ্রা কি ব্যবহারের জন্য উপলব্ধ?"
+
+#: .\currencies\models.py:46 .\payments\models.py:88
+msgid "Currency"
+msgstr "মুদ্রা"
+
+#: .\currencies\models.py:47
+msgid "Currencies"
+msgstr "মুদ্রা"
+
+#: .\custom_order\admin.py:51 .\custom_order\admin.py:73
+msgid "Preview"
+msgstr "পূর্বরূপ"
+
+#: .\custom_order\admin.py:166
+msgid "Order Info"
+msgstr "অর্ডার তথ্য"
+
+#: .\custom_order\admin.py:171
+msgid "Customer Details"
+msgstr "গ্রাহকের বিবরণ"
+
+#: .\custom_order\admin.py:176
+msgid "Design / Product"
+msgstr "ডিজাইন / পণ্য"
+
+#: .\custom_order\admin.py:184 .\shipping\admin.py:103
+msgid "Pricing"
+msgstr "মূল্য নির্ধারণ"
+
+#: .\custom_order\admin.py:190
+msgid "Shipping & Payment"
+msgstr "শিপিং এবং অর্থ প্রদান"
+
+#: .\custom_order\admin.py:196
+msgid "Additional Info"
+msgstr "অতিরিক্ত তথ্য"
+
+#: .\custom_order\admin.py:208
+msgid "Links"
+msgstr "লিঙ্কগুলি"
+
+#: .\custom_order\admin.py:220
+msgid "View Order"
+msgstr "অর্ডার দেখুন"
+
+#: .\custom_order\admin.py:222
+msgid "Order Link"
+msgstr "অর্ডার লিঙ্ক"
+
+#: .\custom_order\admin.py:234
+#, python-format
+msgid "Error calculating pricing for order %(order_id)s: %(error)s"
+msgstr "অর্ডার %(অর্ডার_আইডি) এস: %(ত্রুটি) এর জন্য মূল্য গণনা করার ত্রুটি"
+
+#: .\custom_order\admin.py:242
+#, python-format
+msgid "Successfully calculated pricing for %(count)d orders."
+msgstr "%(গণনা) ডি অর্ডারগুলির জন্য সফলভাবে গণনা করা মূল্য।"
+
+#: .\custom_order\admin.py:244
+msgid "Recalculate pricing"
+msgstr "মূল্য নির্ধারণ"
+
+#: .\custom_order\admin.py:256
+#, python-format
+msgid "Successfully confirmed %(count)d orders."
+msgstr "সাফল্যের সাথে %(গণনা) ডি অর্ডারগুলি নিশ্চিত করেছে।"
+
+#: .\custom_order\admin.py:258
+msgid "Mark selected as confirmed"
+msgstr "নিশ্চিত হিসাবে নির্বাচিত চিহ্ন"
+
+#: .\custom_order\api_views.py:127
+msgid ""
+"Fabric type, subcategory, and quantity are required for price calculation."
+msgstr "দাম গণনার জন্য ফ্যাব্রিক প্রকার, উপশ্রেণী এবং পরিমাণ প্রয়োজন।"
+
+#: .\custom_order\api_views.py:172
+msgid "Invalid fabric type or subcategory selected."
+msgstr "অবৈধ ফ্যাব্রিক টাইপ বা উপশ্রেণী নির্বাচিত।"
+
+#: .\custom_order\apps.py:8
+msgid "Custom Order Management"
+msgstr "কাস্টম অর্ডার ম্যানেজমেন্ট"
+
+#: .\custom_order\custom_filter.py:7 .\custom_order\models.py:161
+msgid "Order Type"
+msgstr "অর্ডার টাইপ"
+
+#: .\custom_order\forms.py:47
+msgid "Apply a coupon for discount."
+msgstr "ছাড়ের জন্য একটি কুপন প্রয়োগ করুন।"
+
+#: .\custom_order\forms.py:62
+msgid "Your Full Name"
+msgstr "আপনার পুরো নাম"
+
+#: .\custom_order\forms.py:63
+msgid "e.g., +88017XXXXXXXX"
+msgstr "উদাহরণস্বরূপ, +88017xxxxxxxxx"
+
+#: .\custom_order\forms.py:64
+msgid "your.email@example.com"
+msgstr "your.email@example.com"
+
+#: .\custom_order\forms.py:65
+msgid "Describe your design in detail..."
+msgstr "আপনার নকশাটি বিস্তারিতভাবে বর্ণনা করুন ..."
+
+#: .\custom_order\forms.py:66
+msgid "Describe the product you are sending..."
+msgstr "আপনি যে পণ্যটি প্রেরণ করছেন তা বর্ণনা করুন ..."
+
+#: .\custom_order\forms.py:67
+msgid "e.g., Good condition, needs alteration"
+msgstr "উদাহরণস্বরূপ, ভাল অবস্থা, পরিবর্তন প্রয়োজন"
+
+#: .\custom_order\forms.py:70
+msgid "Any special instructions or notes..."
+msgstr "কোনও বিশেষ নির্দেশনা বা নোট ..."
+
+#: .\custom_order\forms.py:76
+msgid ""
+"Check this to save your order as a draft. You can complete it later from "
+"your account."
+msgstr ""
+"খসড়া হিসাবে আপনার অর্ডার সংরক্ষণ করতে এটি পরীক্ষা করুন। আপনি এটি পরে আপনার "
+"অ্যাকাউন্ট থেকে সম্পূর্ণ করতে পারেন।"
+
+#: .\custom_order\forms.py:183 .\custom_order\forms.py:186
+msgid "Please enter a valid phone number."
+msgstr "একটি বৈধ ফোন নম্বর লিখুন দয়া করে।"
+
+#: .\custom_order\forms.py:205
+msgid "An unexpected error occurred during coupon validation."
+msgstr "কুপন বৈধতার সময় একটি অপ্রত্যাশিত ত্রুটি ঘটেছে।"
+
+#: .\custom_order\forms.py:224
+msgid "Image description..."
+msgstr "চিত্রের বিবরণ ..."
+
+#: .\custom_order\forms.py:244
+msgid "Item image description..."
+msgstr "আইটেম চিত্রের বিবরণ ..."
+
+#: .\custom_order\models.py:18 .\custom_order\models.py:40
+#: .\custom_order\models.py:68 .\custom_order\models.py:92
+#: .\custom_order\models.py:117 .\payments\models.py:15
+#: .\shipping\models.py:15
+msgid "Name"
+msgstr "নাম"
+
+#: .\custom_order\models.py:19 .\custom_order\models.py:41
+msgid "Unique URL-friendly identifier"
+msgstr "অনন্য ইউআরএল-বান্ধব সনাক্তকারী"
+
+#: .\custom_order\models.py:20 .\custom_order\models.py:42
+#: .\custom_order\models.py:266 .\custom_order\models.py:284
+msgid "Image"
+msgstr "চিত্র"
+
+#: .\custom_order\models.py:27 .\custom_order\models.py:39
+#: .\custom_order\models.py:169
+msgid "Category"
+msgstr "বিভাগ"
+
+#: .\custom_order\models.py:28
+msgid "Categories"
+msgstr "বিভাগ"
+
+#: .\custom_order\models.py:47
+msgid "Base Price Multiplier"
+msgstr "মূল মূল্য গুণক"
+
+#: .\custom_order\models.py:48
+msgid ""
+"Multiplier applied to fabric base price for this subcategory (e.g., 1.2 for "
+"complex designs)."
+msgstr ""
+"এই উপশ্রেণীর জন্য ফ্যাব্রিক বেস মূল্যে প্রয়োগ করা গুণক (উদাঃ, জটিল ডিজাইনের"
+" জন্য 1.2)।"
+
+#: .\custom_order\models.py:55 .\custom_order\models.py:170
+msgid "SubCategory"
+msgstr "উপশ্রেণী"
+
+#: .\custom_order\models.py:56
+msgid "SubCategories"
+msgstr "উপশ্রেণী"
+
+#: .\custom_order\models.py:73
+msgid "Base Price per Unit"
+msgstr "ইউনিট প্রতি মূল্য মূল্য"
+
+#: .\custom_order\models.py:80 .\custom_order\models.py:171
+msgid "Fabric Type"
+msgstr "ফ্যাব্রিক টাইপ"
+
+#: .\custom_order\models.py:81
+msgid "Fabric Types"
+msgstr "ফ্যাব্রিক প্রকার"
+
+#: .\custom_order\models.py:99
+msgid "Applicable Subcategories"
+msgstr "প্রযোজ্য সাব বিভাগ"
+
+#: .\custom_order\models.py:100
+msgid "Leave blank if applicable to all subcategories."
+msgstr "সমস্ত উপশ্রেণীতে প্রযোজ্য হলে ফাঁকা ছেড়ে দিন।"
+
+#: .\custom_order\models.py:106 .\custom_order\models.py:172
+msgid "Size Option"
+msgstr "আকার বিকল্প"
+
+#: .\custom_order\models.py:107
+msgid "Size Options"
+msgstr "আকার বিকল্প"
+
+#: .\custom_order\models.py:118
+msgid "Hexadecimal color code (e.g., #RRGGBB)"
+msgstr "হেক্সাডেসিমাল রঙ কোড (উদাঃ, #RGGBBB)"
+
+#: .\custom_order\models.py:124 .\custom_order\models.py:173
+msgid "Color Option"
+msgstr "রঙ বিকল্প"
+
+#: .\custom_order\models.py:125
+msgid "Color Options"
+msgstr "রঙ বিকল্প"
+
+#: .\custom_order\models.py:136
+msgid "Own Design"
+msgstr "নিজস্ব নকশা"
+
+#: .\custom_order\models.py:137
+msgid "Send Product"
+msgstr "পণ্য প্রেরণ"
+
+#: .\custom_order\models.py:138
+msgid "Direct Contact"
+msgstr "সরাসরি যোগাযোগ"
+
+#: .\custom_order\models.py:141
+msgid "WhatsApp"
+msgstr "হোয়াটসঅ্যাপ"
+
+#: .\custom_order\models.py:142
+msgid "Messenger"
+msgstr "মেসেঞ্জার"
+
+#: .\custom_order\models.py:143
+msgid "Phone Call"
+msgstr "ফোন কল"
+
+#: .\custom_order\models.py:147
+msgid "Draft"
+msgstr "খসড়া"
+
+#: .\custom_order\models.py:148 .\payments\models.py:45
+#: .\payments\models.py:150 .\shipping\models.py:225
+msgid "Pending"
+msgstr "মুলতুবি"
+
+#: .\custom_order\models.py:149
+msgid "Confirmed"
+msgstr "নিশ্চিত"
+
+#: .\custom_order\models.py:150
+msgid "In Progress"
+msgstr "অগ্রগতি"
+
+#: .\custom_order\models.py:151
+msgid "Ready for Shipment"
+msgstr "চালানের জন্য প্রস্তুত"
+
+#: .\custom_order\models.py:152
+msgid "Shipped"
+msgstr "পাঠানো"
+
+#: .\custom_order\models.py:153 .\shipping\models.py:229
+msgid "Delivered"
+msgstr "বিতরণ"
+
+#: .\custom_order\models.py:154 .\payments\models.py:52
+#: .\payments\models.py:153 .\shipping\models.py:230
+msgid "Cancelled"
+msgstr "বাতিল"
+
+#: .\custom_order\models.py:155
+msgid "Rejected"
+msgstr "প্রত্যাখ্যান"
+
+#: .\custom_order\models.py:156
+msgid "On Hold"
+msgstr "হোল্ড"
+
+#: .\custom_order\models.py:158 .\payments\admin.py:122
+#: .\payments\models.py:68 .\templates\payments\payment_status.html:29
+msgid "Order ID"
+msgstr "অর্ডার আইডি"
+
+#: .\custom_order\models.py:163
+msgid "Customer Name"
+msgstr "গ্রাহকের নাম"
+
+#: .\custom_order\models.py:165 .\templates\account\email_change.html:5
+msgid "Email Address"
+msgstr "ইমেল ঠিকানা"
+
+#: .\custom_order\models.py:166
+msgid "Preferred Contact Method"
+msgstr "পছন্দসই যোগাযোগ পদ্ধতি"
+
+#: .\custom_order\models.py:176
+msgid "Design Description"
+msgstr "নকশা বর্ণনা"
+
+#: .\custom_order\models.py:177
+msgid "Customer Item Description"
+msgstr "গ্রাহক আইটেম বিবরণ"
+
+#: .\custom_order\models.py:178
+msgid "Customer Item Condition"
+msgstr "গ্রাহক আইটেম শর্ত"
+
+#: .\custom_order\models.py:181
+msgid "Size Information"
+msgstr "আকার তথ্য"
+
+#: .\custom_order\models.py:182
+msgid ""
+"JSON object for detailed measurements (e.g., {'chest': 40, 'waist': 32})"
+msgstr "বিস্তারিত পরিমাপের জন্য json অবজেক্ট (উদাঃ, {'বুক': 40, 'কোমর': 32})"
+
+#: .\custom_order\models.py:184
+msgid "Expected Completion Date"
+msgstr "প্রত্যাশিত সমাপ্তির তারিখ"
+
+#: .\custom_order\models.py:185
+msgid "Additional Information"
+msgstr "অতিরিক্ত তথ্য"
+
+#: .\custom_order\models.py:190 .\payments\models.py:34
+#: .\payments\models.py:74
+msgid "Payment Method"
+msgstr "অর্থ প্রদানের পদ্ধতি"
+
+#: .\custom_order\models.py:194
+msgid "Base Price"
+msgstr "মূল মূল্য"
+
+#: .\custom_order\models.py:195
+msgid "Shipping Cost"
+msgstr "শিপিং ব্যয়"
+
+#: .\custom_order\models.py:196
+msgid "VAT Percentage"
+msgstr "ভ্যাট শতাংশ"
+
+#: .\custom_order\models.py:197
+msgid "VAT Amount"
+msgstr "ভ্যাট পরিমাণ"
+
+#: .\custom_order\models.py:198
+msgid "Discount Amount"
+msgstr "ছাড়ের পরিমাণ"
+
+#: .\custom_order\models.py:199
+msgid "Total Amount"
+msgstr "মোট পরিমাণ"
+
+#: .\custom_order\models.py:201 .\payments\admin.py:111
+#: .\payments\models.py:81 .\payments\models.py:175 .\shipping\models.py:255
+#: .\templates\payments\payment_status.html:31
+msgid "Status"
+msgstr "স্থিতি"
+
+#: .\custom_order\models.py:202
+msgid "Is Draft"
+msgstr "খসড়া হয়"
+
+#: .\custom_order\models.py:204
+msgid "Confirmed At"
+msgstr "নিশ্চিত"
+
+#: .\custom_order\models.py:205 .\payments\models.py:128
+msgid "Completed At"
+msgstr "এটি সম্পন্ন"
+
+#: .\custom_order\models.py:210
+msgid "Custom Order"
+msgstr "কাস্টম অর্ডার"
+
+#: .\custom_order\models.py:211
+msgid "Custom Orders"
+msgstr "কাস্টম অর্ডার"
+
+#: .\custom_order\models.py:245
+msgid "Order created with initial status."
+msgstr "প্রাথমিক স্থিতি দিয়ে অর্ডার তৈরি করা হয়েছে।"
+
+#: .\custom_order\models.py:256
+msgid "Order status updated."
+msgstr "অর্ডার স্থিতি আপডেট হয়েছে।"
+
+#: .\custom_order\models.py:265 .\custom_order\models.py:283
+#: .\custom_order\models.py:300 .\shipping\admin.py:166
+#: .\shipping\models.py:238
+msgid "Order"
+msgstr "অর্ডার"
+
+#: .\custom_order\models.py:268
+msgid "Is Primary Image"
+msgstr "প্রাথমিক চিত্র"
+
+#: .\custom_order\models.py:273
+msgid "Design Image"
+msgstr "নকশা চিত্র"
+
+#: .\custom_order\models.py:274
+msgid "Design Images"
+msgstr "নকশা চিত্র"
+
+#: .\custom_order\models.py:290
+msgid "Customer Item Image"
+msgstr "গ্রাহক আইটেম চিত্র"
+
+#: .\custom_order\models.py:291
+msgid "Customer Item Images"
+msgstr "গ্রাহক আইটেম চিত্র"
+
+#: .\custom_order\models.py:301 .\shipping\models.py:316
+msgid "Old Status"
+msgstr "পুরানো অবস্থা"
+
+#: .\custom_order\models.py:302 .\shipping\models.py:320
+msgid "New Status"
+msgstr "নতুন অবস্থা"
+
+#: .\custom_order\models.py:303 .\shipping\models.py:283
+#: .\shipping\models.py:322
+msgid "Notes"
+msgstr "নোট"
+
+#: .\custom_order\models.py:310 .\shipping\models.py:327
+msgid "Updated By"
+msgstr "আপডেট দ্বারা"
+
+#: .\custom_order\models.py:315
+msgid "Order Status Update"
+msgstr "অর্ডার স্থিতি আপডেট"
+
+#: .\custom_order\models.py:316
+msgid "Order Status Updates"
+msgstr "অর্ডার স্থিতি আপডেট"
+
+#: .\custom_order\serializers.py:247
+msgid "Customer name, phone, and email are required for a final order."
+msgstr "চূড়ান্ত আদেশের জন্য গ্রাহকের নাম, ফোন এবং ইমেল প্রয়োজন।"
+
+#: .\custom_order\serializers.py:251
+msgid ""
+"Category, subcategory, fabric type, and quantity are required for this order"
+" type."
+msgstr ""
+"এই অর্ডার ধরণের জন্য বিভাগ, উপশ্রেণী, ফ্যাব্রিক প্রকার এবং পরিমাণ প্রয়োজন।"
+
+#: .\custom_order\serializers.py:254
+msgid "Quantity must be at least 1."
+msgstr "পরিমাণ কমপক্ষে 1 হতে হবে।"
+
+#: .\custom_order\serializers.py:257
+msgid ""
+"Shipping address, shipping method, and payment method are required for this "
+"order type."
+msgstr ""
+"এই অর্ডার ধরণের জন্য শিপিংয়ের ঠিকানা, শিপিং পদ্ধতি এবং অর্থ প্রদানের পদ্ধতি"
+" প্রয়োজন।"
+
+#: .\custom_order\serializers.py:261
+msgid "Design description is required for 'Own Design' orders."
+msgstr "'নিজস্ব নকশা' আদেশের জন্য ডিজাইনের বিবরণ প্রয়োজন।"
+
+#: .\custom_order\serializers.py:265
+msgid "At least one design image is required for 'Own Design' orders."
+msgstr "'নিজস্ব নকশা' আদেশের জন্য কমপক্ষে একটি ডিজাইনের চিত্র প্রয়োজন।"
+
+#: .\custom_order\serializers.py:269
+msgid "Customer item description is required for 'Send Product' orders."
+msgstr "'পণ্য প্রেরণ' আদেশের জন্য গ্রাহক আইটেমের বিবরণ প্রয়োজন।"
+
+#: .\custom_order\serializers.py:273
+msgid ""
+"At least one customer item image is required for 'Send Product' orders."
+msgstr ""
+"'পণ্য প্রেরণ' অর্ডারগুলির জন্য কমপক্ষে একটি গ্রাহক আইটেম চিত্রের প্রয়োজন।"
+
+#: .\custom_order\services.py:42
+msgid "Error calculating base price."
+msgstr "বেস দাম গণনা করার ত্রুটি।"
+
+#: .\custom_order\services.py:181
+msgid "Customer name, phone, and email are required."
+msgstr "গ্রাহকের নাম, ফোন এবং ইমেল প্রয়োজন।"
+
+#: .\custom_order\services.py:192
+msgid ""
+"Category, subcategory, fabric type, quantity, shipping method, and payment "
+"method are required for this order type."
+msgstr ""
+"এই অর্ডার ধরণের জন্য বিভাগ, উপশ্রেণী, ফ্যাব্রিক প্রকার, পরিমাণ, শিপিং পদ্ধতি"
+" এবং অর্থ প্রদানের পদ্ধতি প্রয়োজন।"
+
+#: .\custom_order\services.py:195
+msgid "Design description is required for own design orders."
+msgstr "নিজস্ব নকশা আদেশের জন্য ডিজাইনের বিবরণ প্রয়োজন।"
+
+#: .\custom_order\services.py:198
+msgid "Item description is required for send product orders."
+msgstr "পণ্য অর্ডার প্রেরণের জন্য আইটেমের বিবরণ প্রয়োজন।"
+
+#: .\custom_order\services.py:210
+msgid "Shipment created automatically upon order submission."
+msgstr "শিপমেন্ট অর্ডার জমা দেওয়ার পরে স্বয়ংক্রিয়ভাবে তৈরি।"
+
+#: .\custom_order\services.py:216
+msgid "Cannot initiate payment for zero or negative total amount."
+msgstr "শূন্য বা নেতিবাচক মোট পরিমাণের জন্য অর্থ প্রদান শুরু করতে পারে না।"
+
+#: .\custom_order\views.py:139 .\custom_order\views.py:393
+msgid "An error occurred while calculating order pricing."
+msgstr "অর্ডার মূল্য নির্ধারণের সময় একটি ত্রুটি ঘটেছে।"
+
+#: .\orders\apps.py:11
+msgid "Order Management"
+msgstr "অর্ডার ম্যানেজমেন্ট"
+
+#: .\payments\admin.py:30 .\payments\admin.py:236
+msgid "Payload"
+msgstr "পে -লোড"
+
+#: .\payments\admin.py:44
+msgid "Gateway Integration"
+msgstr "গেটওয়ে ইন্টিগ্রেশন"
+
+#: .\payments\admin.py:79
+msgid "Gateway Info"
+msgstr "গেটওয়ে তথ্য"
+
+#: .\payments\admin.py:82
+msgid "Flags & Status"
+msgstr "পতাকা এবং স্থিতি"
+
+#: .\payments\admin.py:139
+msgid "Capture selected authorized payments"
+msgstr "নির্বাচিত অনুমোদিত অর্থ প্রদান ক্যাপচার করুন"
+
+#: .\payments\admin.py:157
+msgid "Initiate full refund for selected payments"
+msgstr "নির্বাচিত অর্থ প্রদানের জন্য সম্পূর্ণ ফেরত শুরু করুন"
+
+#: .\payments\admin.py:165
+msgid "Full refund initiated by admin."
+msgstr "অ্যাডমিন দ্বারা শুরু করা সম্পূর্ণ ফেরত।"
+
+#: .\payments\admin.py:176
+msgid "Verify status of selected payments with gateway"
+msgstr "গেটওয়ে সহ নির্বাচিত অর্থের স্থিতি যাচাই করুন"
+
+#: .\payments\admin.py:207
+msgid "Gateway Details"
+msgstr "গেটওয়ে বিশদ"
+
+#: .\payments\admin.py:221 .\payments\admin.py:252 .\payments\models.py:139
+#: .\payments\models.py:159 .\payments\models.py:202
+msgid "Payment"
+msgstr "অর্থ প্রদান"
+
+#: .\payments\admin.py:251
+msgid "N/A"
+msgstr "এন/এ"
+
+#: .\payments\api\serializers.py:63
+msgid "The ID of the order for which to create a payment intent."
+msgstr "ক্রমের আইডি যার জন্য অর্থ প্রদানের অভিপ্রায় তৈরি করতে পারে।"
+
+#: .\payments\api\serializers.py:64
+msgid "The amount to be paid."
+msgstr "অর্থ প্রদান করতে হবে।"
+
+#: .\payments\api\serializers.py:65
+msgid "The code of the payment method to use (e.g., 'bkash', 'stripe_card')."
+msgstr ""
+"ব্যবহারের জন্য অর্থ প্রদানের পদ্ধতির কোড (উদাঃ, 'বেকশ', 'স্ট্রাইপ_কার্ড')।"
+
+#: .\payments\api\serializers.py:66
+msgid "The currency for the payment (default: BDT)."
+msgstr "অর্থ প্রদানের জন্য মুদ্রা (ডিফল্ট: বিডিটি)।"
+
+#: .\payments\api\serializers.py:67
+msgid "Set to true for test payments."
+msgstr "পরীক্ষার অর্থ প্রদানের জন্য সত্য সেট করুন।"
+
+#: .\payments\api\serializers.py:77
+msgid "Invalid or inactive payment method."
+msgstr "অবৈধ বা নিষ্ক্রিয় পেমেন্ট পদ্ধতি।"
+
+#: .\payments\api\serializers.py:85 .\shipping\api\serializers.py:140
+msgid "Order not found."
+msgstr "অর্ডার পাওয়া যায় নি।"
+
+#: .\payments\api\serializers.py:89
+msgid "Payment amount cannot exceed order total."
+msgstr "প্রদানের পরিমাণ মোট অর্ডার ছাড়িয়ে যেতে পারে না।"
+
+#: .\payments\api\serializers.py:97
+msgid "The payment intent ID to process."
+msgstr "প্রক্রিয়া করার জন্য অর্থ প্রদানের অভিপ্রায় আইডি।"
+
+#: .\payments\api\serializers.py:100
+msgid ""
+"Additional payment data from client (e.g., card token, 3D Secure result)."
+msgstr ""
+"ক্লায়েন্ট থেকে অতিরিক্ত অর্থ প্রদানের ডেটা (উদাঃ, কার্ড টোকেন, 3 ডি "
+"সুরক্ষিত ফলাফল)।"
+
+#: .\payments\api\serializers.py:106
+msgid "The ID of the payment to refund."
+msgstr "ফেরতের জন্য অর্থ প্রদানের আইডি।"
+
+#: .\payments\api\serializers.py:107
+msgid "The amount to refund. If not provided, full amount will be refunded."
+msgstr ""
+"রিফান্ডের পরিমাণ। যদি সরবরাহ না করা হয় তবে পুরো পরিমাণ ফেরত দেওয়া হবে।"
+
+#: .\payments\api\serializers.py:108
+msgid "Reason for the refund."
+msgstr "ফেরতের কারণ।"
+
+#: .\payments\api\serializers.py:118 .\payments\api\views.py:172
+#: .\payments\api\views.py:243
+msgid "Payment not found."
+msgstr "পেমেন্ট পাওয়া যায় নি।"
+
+#: .\payments\api\serializers.py:121 .\payments\services.py:303
+msgid "Payment is not in a refundable status."
+msgstr "অর্থ প্রদান ফেরতযোগ্য স্থিতিতে নয়।"
+
+#: .\payments\api\serializers.py:134
+msgid "No refundable amount remaining for this payment."
+msgstr "এই অর্থ প্রদানের জন্য কোনও ফেরতযোগ্য পরিমাণ বাকি নেই।"
+
+#: .\payments\api\serializers.py:143
+msgid "Unique ID of the event from the gateway."
+msgstr "গেটওয়ে থেকে ইভেন্টের অনন্য আইডি।"
+
+#: .\payments\api\serializers.py:144
+msgid "Type of the event (e.g., 'charge.succeeded')."
+msgstr "ইভেন্টের ধরণ (উদাঃ, 'চার্জ.সুসেডড')।"
+
+#: .\payments\api\serializers.py:145
+msgid "The main data object of the webhook event."
+msgstr "ওয়েবহুক ইভেন্টের প্রধান ডেটা অবজেক্ট।"
+
+#: .\payments\api\serializers.py:146
+msgid "Timestamp of the event."
+msgstr "ইভেন্টের টাইমস্ট্যাম্প।"
+
+#: .\payments\api\views.py:96
+msgid "You do not have permission to view this payment."
+msgstr "এই অর্থ প্রদান দেখার অনুমতি আপনার নেই।"
+
+#: .\payments\api\views.py:130
+msgid "You do not have permission to process this payment."
+msgstr "আপনার এই অর্থ প্রদানের প্রক্রিয়া করার অনুমতি নেই।"
+
+#: .\payments\api\views.py:138
+msgid "Payment intent not found."
+msgstr "অর্থ প্রদানের অভিপ্রায় পাওয়া যায় নি।"
+
+#: .\payments\api\views.py:164
+msgid "You do not have permission to capture payments."
+msgstr "আপনার পেমেন্ট ক্যাপচার করার অনুমতি নেই।"
+
+#: .\payments\api\views.py:203
+msgid "You do not have permission to initiate refunds."
+msgstr "আপনার কাছে ফেরত দেওয়ার অনুমতি নেই।"
+
+#: .\payments\api\views.py:235
+msgid "You do not have permission to check status for this payment."
+msgstr "এই অর্থ প্রদানের জন্য স্থিতি পরীক্ষা করার অনুমতি আপনার নেই।"
+
+#: .\payments\api\views.py:283
+msgid "Invalid webhook signature."
+msgstr "অবৈধ ওয়েবহুক স্বাক্ষর।"
+
+#: .\payments\api\views.py:292
+msgid "Webhook received and queued for processing."
+msgstr "ওয়েবহুক প্রক্রিয়াজাতকরণের জন্য প্রাপ্ত এবং সারিবদ্ধ।"
+
+#: .\payments\models.py:14
+msgid "Unique code like 'sslcommerz', 'bkash', 'stripe'"
+msgstr "'Sslcommerz', 'bkash', 'স্ট্রাইপ' এর মতো অনন্য কোড"
+
+#: .\payments\models.py:17
+msgid "Is Online Method"
+msgstr "অনলাইন পদ্ধতি"
+
+#: .\payments\models.py:18
+msgid "Icon"
+msgstr "আইকন"
+
+#: .\payments\models.py:25
+msgid ""
+"Code identifying the payment gateway (e.g., 'stripe', 'bkash', "
+"'sslcommerz')."
+msgstr ""
+"পেমেন্ট গেটওয়ে সনাক্তকরণ কোড (উদাঃ, 'স্ট্রাইপ', 'বেকশ', 'এসএসএলকমারজ')।"
+
+#: .\payments\models.py:29
+msgid "Gateway Configuration (JSON)"
+msgstr "গেটওয়ে কনফিগারেশন (জেএসএন)"
+
+#: .\payments\models.py:30
+msgid ""
+"Gateway-specific configuration details (e.g., public key, secret key, "
+"webhook secret). Store securely."
+msgstr ""
+"গেটওয়ে-নির্দিষ্ট কনফিগারেশন বিশদ (উদাঃ, পাবলিক কী, সিক্রেট কী, ওয়েবহুক "
+"সিক্রেট)। নিরাপদে সঞ্চয় করুন।"
+
+#: .\payments\models.py:35
+msgid "Payment Methods"
+msgstr "অর্থ প্রদানের পদ্ধতি"
+
+#: .\payments\models.py:46
+msgid "Authorized"
+msgstr "অনুমোদিত"
+
+#: .\payments\models.py:47
+msgid "Captured"
+msgstr "বন্দী"
+
+#: .\payments\models.py:48 .\payments\models.py:151
+msgid "Completed"
+msgstr "সম্পূর্ণ"
+
+#: .\payments\models.py:49 .\payments\models.py:152 .\shipping\models.py:231
+msgid "Failed"
+msgstr "ব্যর্থ"
+
+#: .\payments\models.py:50
+msgid "Refunded"
+msgstr "ফেরত দেওয়া"
+
+#: .\payments\models.py:51
+msgid "Partially Refunded"
+msgstr "আংশিক ফেরত"
+
+#: .\payments\models.py:53
+msgid "Processing"
+msgstr "প্রক্রিয়াজাতকরণ"
+
+#: .\payments\models.py:54
+msgid "Requires Customer Action"
+msgstr "গ্রাহক পদক্ষেপ প্রয়োজন"
+
+#: .\payments\models.py:55
+msgid "Disputed"
+msgstr "বিতর্কিত"
+
+#: .\payments\models.py:69
+msgid "The ID of the associated order (e.g., from custom_order app)."
+msgstr "সম্পর্কিত ক্রমের আইডি (উদাঃ, কাস্টম_ অর্ডার অ্যাপ্লিকেশন থেকে)।"
+
+#: .\payments\models.py:86 .\templates\payments\payment_status.html:30
+msgid "Amount"
+msgstr "পরিমাণ"
+
+#: .\payments\models.py:92
+msgid "Payment Intent ID"
+msgstr "পেমেন্ট ইনটেন্ট আইডি"
+
+#: .\payments\models.py:93
+msgid "ID from payment gateway for the payment intent/session."
+msgstr "অর্থ প্রদানের অভিপ্রায়/সেশনের জন্য পেমেন্ট গেটওয়ে থেকে আইডি।"
+
+#: .\payments\models.py:97 .\templates\payments\payment_status.html:34
+msgid "Transaction ID"
+msgstr "লেনদেন আইডি"
+
+#: .\payments\models.py:98
+msgid "Unique transaction ID from payment gateway for the actual charge."
+msgstr "প্রকৃত চার্জের জন্য পেমেন্ট গেটওয়ে থেকে অনন্য লেনদেন আইডি।"
+
+#: .\payments\models.py:102
+msgid "Gateway Reference"
+msgstr "গেটওয়ে রেফারেন্স"
+
+#: .\payments\models.py:103
+msgid "Any other reference ID from the payment gateway."
+msgstr "পেমেন্ট গেটওয়ে থেকে অন্য কোনও রেফারেন্স আইডি।"
+
+#: .\payments\models.py:107
+msgid "Is Captured"
+msgstr "ধরা হয়"
+
+#: .\payments\models.py:108
+msgid "True if authorized funds have been captured."
+msgstr "যদি অনুমোদিত তহবিল ধরা পড়ে তবে সত্য।"
+
+#: .\payments\models.py:110
+msgid "Is Verified"
+msgstr "যাচাই করা হয়"
+
+#: .\payments\models.py:111
+msgid "Indicates if payment has been verified with the gateway."
+msgstr "গেটওয়ে দিয়ে অর্থ প্রদান করা হয়েছে কিনা তা নির্দেশ করে।"
+
+#: .\payments\models.py:112
+msgid "Is Test Payment"
+msgstr "পরীক্ষার অর্থ প্রদান"
+
+#: .\payments\models.py:117
+msgid "Error Details"
+msgstr "ত্রুটির বিশদ"
+
+#: .\payments\models.py:118
+msgid "JSON object containing error information from the payment gateway."
+msgstr "পেমেন্ট গেটওয়ে থেকে ত্রুটি সম্পর্কিত তথ্যযুক্ত জেএসএন অবজেক্ট।"
+
+#: .\payments\models.py:122
+msgid "Metadata"
+msgstr "মেটাডেটা"
+
+#: .\payments\models.py:123
+msgid "Arbitrary metadata from the payment gateway or for internal use."
+msgstr ""
+"পেমেন্ট গেটওয়ে থেকে বা অভ্যন্তরীণ ব্যবহারের জন্য স্বেচ্ছাসেবী মেটাডেটা।"
+
+#: .\payments\models.py:140
+msgid "Payments"
+msgstr "অর্থ প্রদান"
+
+#: .\payments\models.py:163
+msgid "Refund ID"
+msgstr "ফেরত আইডি"
+
+#: .\payments\models.py:164
+msgid "Unique refund ID from payment gateway."
+msgstr "পেমেন্ট গেটওয়ে থেকে অনন্য ফেরত আইডি।"
+
+#: .\payments\models.py:169
+msgid "Refund Amount"
+msgstr "ফেরত পরিমাণ"
+
+#: .\payments\models.py:177
+msgid "Reason for Refund"
+msgstr "ফেরতের কারণ"
+
+#: .\payments\models.py:180
+msgid "Gateway Response Data"
+msgstr "গেটওয়ে প্রতিক্রিয়া ডেটা"
+
+#: .\payments\models.py:181
+msgid "Raw JSON response from the payment gateway for the refund."
+msgstr "ফেরতের জন্য পেমেন্ট গেটওয়ে থেকে কাঁচা জসন প্রতিক্রিয়া।"
+
+#: .\payments\models.py:188
+msgid "Refund"
+msgstr "ফেরত"
+
+#: .\payments\models.py:189
+msgid "Refunds"
+msgstr "ফেরত"
+
+#: .\payments\models.py:205 .\shipping\models.py:350
+msgid "Event Type"
+msgstr "ইভেন্টের ধরণ"
+
+#: .\payments\models.py:206
+msgid "e.g., 'charge.succeeded', 'payment_intent.succeeded', 'refund.created'"
+msgstr "উদাঃ, 'চার্জ.সুসেডড', 'পেমেন্ট_ইন্টেন্ট.সুসেডড', 'রিফান্ড.ক্রিটেড'"
+
+#: .\payments\models.py:209
+msgid "Gateway Event ID"
+msgstr "গেটওয়ে ইভেন্ট আইডি"
+
+#: .\payments\models.py:210
+msgid "Unique ID of the event from the payment gateway."
+msgstr "পেমেন্ট গেটওয়ে থেকে ইভেন্টের অনন্য আইডি।"
+
+#: .\payments\models.py:213
+msgid "Event Payload"
+msgstr "ইভেন্ট পে -লোড"
+
+#: .\payments\models.py:214
+msgid "Raw JSON payload received from the payment gateway webhook."
+msgstr "পেমেন্ট গেটওয়ে ওয়েবহুক থেকে প্রাপ্ত কাঁচা জসন পে -লোড।"
+
+#: .\payments\models.py:216
+msgid "Processed"
+msgstr "প্রক্রিয়াজাত"
+
+#: .\payments\models.py:217
+msgid "Indicates if this event has been processed by the system."
+msgstr "এই ইভেন্টটি সিস্টেম দ্বারা প্রক্রিয়া করা হয়েছে কিনা তা নির্দেশ করে।"
+
+#: .\payments\models.py:222
+msgid "Payment Event"
+msgstr "পেমেন্ট ইভেন্ট"
+
+#: .\payments\models.py:223
+msgid "Payment Events"
+msgstr "পেমেন্ট ইভেন্টস"
+
+#: .\payments\services.py:104
+msgid "Payment intent created. Awaiting customer action."
+msgstr "অর্থ প্রদানের অভিপ্রায় তৈরি। গ্রাহক পদক্ষেপের অপেক্ষায়।"
+
+#: .\payments\services.py:108
+msgid "Unknown error from gateway during intent creation."
+msgstr "অভিপ্রায় তৈরির সময় গেটওয়ে থেকে অজানা ত্রুটি।"
+
+#: .\payments\services.py:117
+msgid "Invalid payment method selected."
+msgstr "অবৈধ অর্থ প্রদানের পদ্ধতি নির্বাচিত।"
+
+#: .\payments\services.py:198
+msgid "Unknown error from gateway during processing."
+msgstr "প্রসেসিংয়ের সময় গেটওয়ে থেকে অজানা ত্রুটি।"
+
+#: .\payments\services.py:237
+msgid "Payment is not in an authorized state or has already been captured."
+msgstr "অর্থ প্রদান কোনও অনুমোদিত অবস্থায় নেই বা ইতিমধ্যে বন্দী হয়ে গেছে।"
+
+#: .\payments\services.py:240
+msgid "Payment has no transaction ID to capture."
+msgstr "ক্যাপচারের জন্য অর্থ প্রদানের কোনও লেনদেন আইডি নেই।"
+
+#: .\payments\services.py:268
+msgid "Unknown error during capture."
+msgstr "ক্যাপচারের সময় অজানা ত্রুটি।"
+
+#: .\payments\services.py:349
+msgid "Unknown error during refund."
+msgstr "ফেরতের সময় অজানা ত্রুটি।"
+
+#: .\payments\services.py:382
+msgid "Payment has no gateway reference to verify status."
+msgstr "পেমেন্টের স্থিতি যাচাই করার জন্য কোনও গেটওয়ে রেফারেন্স নেই।"
+
+#: .\payments\services.py:410
+msgid "Unknown error during status verification."
+msgstr "স্থিতি যাচাইয়ের সময় অজানা ত্রুটি।"
+
+#: .\payments\services.py:441
+msgid "Duplicate webhook event. Already processed."
+msgstr "সদৃশ ওয়েবহুক ইভেন্ট। ইতিমধ্যে প্রক্রিয়াজাত।"
+
+#: .\payments\services.py:529
+msgid "Refund initiated via gateway webhook."
+msgstr "রিফান্ড গেটওয়ে ওয়েবহুকের মাধ্যমে শুরু হয়েছিল।"
+
+#: .\payments\views.py:24
+msgid "Your payment was successful!"
+msgstr "আপনার অর্থ প্রদান সফল হয়েছিল!"
+
+#: .\payments\views.py:41
+msgid "Your payment failed. Please try again or choose a different method."
+msgstr ""
+"আপনার অর্থ প্রদান ব্যর্থ হয়েছে। দয়া করে আবার চেষ্টা করুন বা একটি ভিন্ন "
+"পদ্ধতি চয়ন করুন।"
+
+#: .\payments\views.py:57
+msgid ""
+"Your payment was cancelled. You can try again or choose another payment "
+"method."
+msgstr ""
+"আপনার অর্থ প্রদান বাতিল করা হয়েছিল। আপনি আবার চেষ্টা করতে পারেন বা অন্য "
+"অর্থ প্রদানের পদ্ধতি চয়ন করতে পারেন।"
+
+#: .\promotions\admin.py:26
+msgid "Discount Details"
+msgstr "ছাড়ের বিশদ"
+
+#: .\promotions\admin.py:29
+msgid "Validity & Usage"
+msgstr "বৈধতা এবং ব্যবহার"
+
+#: .\promotions\admin.py:32
+msgid "Statistics"
+msgstr "পরিসংখ্যান"
+
+#: .\promotions\admin.py:47
+msgid "Unique Users Used"
+msgstr "অনন্য ব্যবহারকারীরা ব্যবহৃত"
+
+#: .\promotions\apps.py:12
+msgid "Promotions & Coupons"
+msgstr "প্রচার এবং কুপন"
+
+#: .\promotions\forms.py:11 .\promotions\models.py:25
+msgid "Coupon Code"
+msgstr "কুপন কোড"
+
+#: .\promotions\forms.py:12
+msgid "Enter your coupon code here."
+msgstr "এখানে আপনার কুপন কোড লিখুন।"
+
+#: .\promotions\models.py:18
+msgid "Percentage"
+msgstr "শতাংশ"
+
+#: .\promotions\models.py:19
+msgid "Fixed Amount"
+msgstr "স্থির পরিমাণ"
+
+#: .\promotions\models.py:26
+msgid "Unique code for the coupon (e.g., SUMMER20, FLAT100)"
+msgstr "কুপনের জন্য অনন্য কোড (উদাঃ, সামার 20, ফ্ল্যাট 100)"
+
+#: .\promotions\models.py:31
+msgid "A brief description of the coupon's purpose or offer."
+msgstr "কুপনের উদ্দেশ্য বা অফারের একটি সংক্ষিপ্ত বিবরণ।"
+
+#: .\promotions\models.py:37
+msgid "Discount Type"
+msgstr "ছাড়ের ধরণ"
+
+#: .\promotions\models.py:38
+msgid "Choose whether the discount is a percentage or a fixed amount."
+msgstr "ছাড়টি শতাংশ বা একটি নির্দিষ্ট পরিমাণ কিনা তা চয়ন করুন।"
+
+#: .\promotions\models.py:44
+msgid "Discount Value"
+msgstr "ছাড়ের মান"
+
+#: .\promotions\models.py:45
+#, python-format
+msgid "The value of the discount (e.g., 10 for 10% or 100 for ৳100 off)."
+msgstr "ছাড়ের মান (উদাঃ, 10% এর জন্য 10 বা 100 এর জন্য 100)।"
+
+#: .\promotions\models.py:53
+msgid "Minimum Order Amount"
+msgstr "সর্বনিম্ন অর্ডার পরিমাণ"
+
+#: .\promotions\models.py:54
+msgid ""
+"The minimum total amount of the order required to use this coupon. Leave "
+"blank for no minimum."
+msgstr ""
+"এই কুপনটি ব্যবহারের জন্য প্রয়োজনীয় সর্বনিম্ন মোট পরিমাণ। ন্যূনতম জন্য "
+"ফাঁকা ছেড়ে দিন।"
+
+#: .\promotions\models.py:62
+msgid "Maximum Discount Amount"
+msgstr "সর্বাধিক ছাড়ের পরিমাণ"
+
+#: .\promotions\models.py:63
+msgid ""
+"For percentage discounts, the maximum amount that can be discounted. Leave "
+"blank for no maximum."
+msgstr ""
+"শতাংশ ছাড়ের জন্য, সর্বাধিক পরিমাণ যা ছাড় দেওয়া যেতে পারে। কোনও সর্বোচ্চ "
+"জন্য ফাঁকা ছেড়ে দিন।"
+
+#: .\promotions\models.py:67
+msgid "Valid From"
+msgstr "থেকে বৈধ"
+
+#: .\promotions\models.py:68
+msgid "The date and time from which the coupon becomes active."
+msgstr "যে তারিখ এবং সময় থেকে কুপন সক্রিয় হয়।"
+
+#: .\promotions\models.py:73
+msgid "Valid Until"
+msgstr "বৈধ হওয়া পর্যন্ত"
+
+#: .\promotions\models.py:74
+msgid ""
+"The date and time until which the coupon is valid. Leave blank for no "
+"expiry."
+msgstr ""
+"কুপন বৈধ না হওয়া পর্যন্ত তারিখ এবং সময়। কোনও মেয়াদ শেষ হওয়ার জন্য ফাঁকা "
+"ছেড়ে দিন।"
+
+#: .\promotions\models.py:79
+msgid "Designates whether this coupon can currently be used."
+msgstr "এই কুপনটি বর্তমানে ব্যবহার করা যেতে পারে কিনা তা নির্ধারণ করে।"
+
+#: .\promotions\models.py:84
+msgid "Total Usage Limit"
+msgstr "মোট ব্যবহারের সীমা"
+
+#: .\promotions\models.py:85
+msgid ""
+"The maximum number of times this coupon can be used overall. Leave blank for"
+" unlimited."
+msgstr ""
+"এই কুপনটি সামগ্রিকভাবে ব্যবহার করা যেতে পারে। সীমাহীন জন্য ফাঁকা ছেড়ে দিন।"
+
+#: .\promotions\models.py:90
+msgid "Usage Limit Per User"
+msgstr "ব্যবহারকারী প্রতি ব্যবহারের সীমা"
+
+#: .\promotions\models.py:91
+msgid ""
+"The maximum number of times a single user can use this coupon. Leave blank "
+"for unlimited."
+msgstr ""
+"একক ব্যবহারকারী এই কুপনটি ব্যবহার করতে পারে এমন সর্বাধিক সংখ্যা। সীমাহীন "
+"জন্য ফাঁকা ছেড়ে দিন।"
+
+#: .\promotions\models.py:95
+msgid "Times Used"
+msgstr "সময় ব্যবহৃত"
+
+#: .\promotions\models.py:96
+msgid "The number of times this coupon has been successfully used."
+msgstr "এই কুপনটি সফলভাবে ব্যবহৃত হয়েছে।"
+
+#: .\promotions\models.py:102
+msgid "Users Who Used This Coupon"
+msgstr "ব্যবহারকারীরা যারা এই কুপন ব্যবহার করেছেন"
+
+#: .\promotions\models.py:103
+msgid "Users who have successfully applied this coupon."
+msgstr "ব্যবহারকারীরা যারা এই কুপনটি সফলভাবে প্রয়োগ করেছেন।"
+
+#: .\promotions\models.py:116
+msgid "Coupons"
+msgstr "কুপন"
+
+#: .\promotions\models.py:138
+msgid "Percentage discount cannot exceed 100%."
+msgstr "শতাংশ ছাড় 100%ছাড়িয়ে যেতে পারে না।"
+
+#: .\promotions\models.py:142
+msgid ""
+"Percentage coupons require a maximum discount amount (Max Discount Amount "
+"field)."
+msgstr ""
+"শতাংশ কুপনগুলির জন্য সর্বাধিক ছাড়ের পরিমাণ (সর্বাধিক ছাড়ের পরিমাণ ক্ষেত্র)"
+" প্রয়োজন।"
+
+#: .\promotions\models.py:147
+msgid "Fixed amount coupons should not have a maximum discount amount."
+msgstr "স্থির পরিমাণ কুপনগুলির সর্বাধিক ছাড়ের পরিমাণ থাকা উচিত নয়।"
+
+#: .\promotions\models.py:152
+msgid "Valid from date cannot be after valid until date."
+msgstr "তারিখ থেকে বৈধ তারিখ থেকে বৈধ হওয়ার পরে হতে পারে না।"
+
+#: .\promotions\serializers.py:13
+msgid "The number of unique users who have used this coupon."
+msgstr "এই কুপনটি ব্যবহার করেছেন এমন অনন্য ব্যবহারকারীর সংখ্যা।"
+
+#: .\promotions\services.py:41
+msgid "Invalid coupon code."
+msgstr "অবৈধ কুপন কোড।"
+
+#: .\promotions\services.py:46
+msgid "Coupon is not active."
+msgstr "কুপন সক্রিয় নয়।"
+
+#: .\promotions\services.py:51
+msgid "Coupon is not yet active."
+msgstr "কুপন এখনও সক্রিয় নয়।"
+
+#: .\promotions\services.py:55
+msgid "Coupon has expired."
+msgstr "কুপনের মেয়াদ শেষ হয়ে গেছে।"
+
+#: .\promotions\services.py:73
+msgid "This coupon has reached its maximum usage limit."
+msgstr "এই কুপনটি সর্বোচ্চ ব্যবহারের সীমাতে পৌঁছেছে।"
+
+#: .\promotions\services.py:106
+msgid "You've reached the usage limit for this coupon."
+msgstr "আপনি এই কুপনের ব্যবহারের সীমাতে পৌঁছেছেন।"
+
+#: .\shipping\admin.py:53
+msgid "Pricing & Calculations"
+msgstr "মূল্য এবং গণনা"
+
+#: .\shipping\admin.py:66 .\shipping\models.py:20 .\shipping\models.py:32
+msgid "Regions"
+msgstr "অঞ্চল"
+
+#: .\shipping\admin.py:80
+msgid "API Integration Details"
+msgstr "এপিআই ইন্টিগ্রেশন বিশদ"
+
+#: .\shipping\admin.py:106
+msgid "Delivery Information"
+msgstr "বিতরণ তথ্য"
+
+#: .\shipping\admin.py:109
+msgid "Weight & Dimensions Limits"
+msgstr "ওজন এবং মাত্রা সীমা"
+
+#: .\shipping\admin.py:123
+msgid "Zones"
+msgstr "অঞ্চল"
+
+#: .\shipping\admin.py:143
+msgid "Cost & Dimensions"
+msgstr "ব্যয় এবং মাত্রা"
+
+#: .\shipping\admin.py:146
+msgid "Proof of Delivery"
+msgstr "বিতরণ প্রমাণ"
+
+#: .\shipping\admin.py:150
+msgid "Carrier Integration Data"
+msgstr "ক্যারিয়ার ইন্টিগ্রেশন ডেটা"
+
+#: .\shipping\admin.py:168
+msgid "Request pickup for selected shipments"
+msgstr "নির্বাচিত শিপমেন্টের জন্য পিকআপের অনুরোধ করুন"
+
+#: .\shipping\admin.py:187
+msgid "Generate shipping label for selected shipments"
+msgstr "নির্বাচিত শিপমেন্টের জন্য শিপিং লেবেল তৈরি করুন"
+
+#: .\shipping\api\serializers.py:116
+msgid "UUID of the CustomOrder"
+msgstr "কাস্টম্ডার এর ইউআইডি"
+
+#: .\shipping\api\serializers.py:117
+msgid "ID of the ShippingMethod"
+msgstr "শিপিংমথোডের আইডি"
+
+#: .\shipping\api\views.py:67
+msgid "Shipping method and address are required for shipping calculation."
+msgstr "শিপিং গণনার জন্য শিপিং পদ্ধতি এবং ঠিকানা প্রয়োজন।"
+
+#: .\shipping\api\views.py:99
+msgid "Invalid shipping method or address selected."
+msgstr "অবৈধ শিপিং পদ্ধতি বা ঠিকানা নির্বাচিত।"
+
+#: .\shipping\api\views.py:183
+msgid "You do not have permission to book this shipment."
+msgstr "এই চালানটি বুক করার অনুমতি আপনার নেই।"
+
+#: .\shipping\api\views.py:214
+msgid "You do not have permission to track this shipment."
+msgstr "এই চালানটি ট্র্যাক করার অনুমতি আপনার নেই।"
+
+#: .\shipping\api\views.py:245
+msgid "You do not have permission to generate label for this shipment."
+msgstr "এই চালানের জন্য আপনার লেবেল তৈরি করার অনুমতি নেই।"
+
+#: .\shipping\api\views.py:253
+msgid "Failed to generate label."
+msgstr "লেবেল উত্পন্ন করতে ব্যর্থ।"
+
+#: .\shipping\api\views.py:278
+msgid "You do not have permission to request pickup for this shipment."
+msgstr "এই চালানের জন্য পিকআপের জন্য অনুরোধ করার অনুমতি আপনার নেই।"
+
+#: .\shipping\api\views.py:308
+msgid "You do not have permission to cancel this shipment."
+msgstr "এই চালান বাতিল করার অনুমতি আপনার নেই।"
+
+#: .\shipping\api\views.py:348
+msgid "Webhook processed successfully."
+msgstr "ওয়েবহুক সফলভাবে প্রক্রিয়াজাত করেছে।"
+
+#: .\shipping\api\views.py:350
+msgid "Failed to process webhook event."
+msgstr "ওয়েবহুক ইভেন্ট প্রক্রিয়া করতে ব্যর্থ।"
+
+#: .\shipping\apps.py:8
+msgid "Shipping Management"
+msgstr "শিপিং পরিচালনা"
+
+#: .\shipping\forms.py:12
+msgid "City for shipping destination."
+msgstr "শিপিং গন্তব্য জন্য শহর।"
+
+#: .\shipping\forms.py:13
+msgid "Region/State/Division for shipping destination."
+msgstr "শিপিং গন্তব্য জন্য অঞ্চল/রাজ্য/বিভাগ।"
+
+#: .\shipping\forms.py:14
+msgid "Country for shipping destination."
+msgstr "শিপিং গন্তব্য জন্য দেশ।"
+
+#: .\shipping\forms.py:15
+msgid "Postal code for more precise zone matching."
+msgstr "আরও সুনির্দিষ্ট অঞ্চল ম্যাচের জন্য ডাক কোড।"
+
+#: .\shipping\forms.py:20
+msgid "Weight of the package in kilograms."
+msgstr "কিলোগ্রামে প্যাকেজের ওজন।"
+
+#: .\shipping\forms.py:25
+msgid "Length of the package in centimeters."
+msgstr "সেন্টিমিটারে প্যাকেজের দৈর্ঘ্য।"
+
+#: .\shipping\forms.py:30
+msgid "Width of the package in centimeters."
+msgstr "সেন্টিমিটারে প্যাকেজের প্রস্থ।"
+
+#: .\shipping\forms.py:35
+msgid "Height of the package in centimeters."
+msgstr "সেন্টিমিটারে প্যাকেজের উচ্চতা।"
+
+#: .\shipping\forms.py:39
+msgid "Check if express shipping is desired."
+msgstr "এক্সপ্রেস শিপিং পছন্দসই কিনা তা পরীক্ষা করুন।"
+
+#: .\shipping\forms.py:55
+msgid ""
+"All dimensions (length, width, height) must be provided if any one is "
+"specified."
+msgstr ""
+"যদি কোনও নির্দিষ্ট করা থাকে তবে সমস্ত মাত্রা (দৈর্ঘ্য, প্রস্থ, উচ্চতা) "
+"সরবরাহ করতে হবে।"
+
+#: .\shipping\models.py:19
+msgid "Region"
+msgstr "অঞ্চল"
+
+#: .\shipping\models.py:31
+msgid "Zone Name"
+msgstr "জোনের নাম"
+
+#: .\shipping\models.py:37
+msgid "Base Cost"
+msgstr "বেস ব্যয়"
+
+#: .\shipping\models.py:43
+msgid "Free Shipping Threshold"
+msgstr "বিনামূল্যে শিপিং থ্রেশহোল্ড"
+
+#: .\shipping\models.py:44
+msgid "Order total above which shipping is free (0 for no free shipping)"
+msgstr ""
+"অর্ডার মোট উপরে অর্ডার কোন শিপিং বিনামূল্যে (বিনামূল্যে শিপিংয়ের জন্য 0)"
+
+#: .\shipping\models.py:49
+msgid "Volumetric Divisor"
+msgstr "ভলিউমেট্রিক বিভাজক"
+
+#: .\shipping\models.py:50
+msgid "Divisor for calculating volumetric weight (L*W*H / Divisor)"
+msgstr "ভলিউম্যাট্রিক ওজন গণনার জন্য বিভাজক (এল*ডাব্লু*এইচ / বিভাজক)"
+
+#: .\shipping\models.py:55
+msgid "Applicable Postal Codes"
+msgstr "প্রযোজ্য ডাক কোড"
+
+#: .\shipping\models.py:56
+msgid "JSON array of postal codes or ranges (e.g., ['1200', '1205-1210'])"
+msgstr "ডাক কোড বা রেঞ্জের জসন অ্যারে (উদাঃ, ['1200', '1205-1210']))"
+
+#: .\shipping\models.py:64
+msgid "Shipping Zone"
+msgstr "শিপিং জোন"
+
+#: .\shipping\models.py:65
+msgid "Shipping Zones"
+msgstr "শিপিং অঞ্চল"
+
+#: .\shipping\models.py:77
+msgid "None"
+msgstr "কিছুই না"
+
+#: .\shipping\models.py:78 .\shipping\models.py:94
+msgid "API Key"
+msgstr "এপিআই কী"
+
+#: .\shipping\models.py:79
+msgid "OAuth 2.0"
+msgstr "Oauth 2.0"
+
+#: .\shipping\models.py:80
+msgid "Basic Auth"
+msgstr "বেসিক লেখক"
+
+#: .\shipping\models.py:82
+msgid "Carrier Name"
+msgstr "ক্যারিয়ারের নাম"
+
+#: .\shipping\models.py:83
+msgid "Carrier Code"
+msgstr "ক্যারিয়ার কোড"
+
+#: .\shipping\models.py:84
+msgid "Unique code for API integration or internal reference"
+msgstr "এপিআই ইন্টিগ্রেশন বা অভ্যন্তরীণ রেফারেন্সের জন্য অনন্য কোড"
+
+#: .\shipping\models.py:86
+msgid "API Base URL"
+msgstr "এপিআই বেস ইউআরএল"
+
+#: .\shipping\models.py:87
+msgid "Base URL for the carrier's API (e.g., https://api.carrier.com/v1)"
+msgstr ""
+"ক্যারিয়ারের এপিআইয়ের জন্য বেস ইউআরএল (উদাঃ, https://api.carrier.com/v1)"
+
+#: .\shipping\models.py:92
+msgid "Authentication Type"
+msgstr "প্রমাণীকরণের ধরণ"
+
+#: .\shipping\models.py:95
+msgid "API key for integration with carrier's system (if API_KEY auth)"
+msgstr ""
+"ক্যারিয়ারের সিস্টেমের সাথে সংহতকরণের জন্য এপিআই কী (যদি এপিআই_কি অ্যাথ)"
+
+#: .\shipping\models.py:98
+msgid "API Credentials (JSON)"
+msgstr "এপিআই শংসাপত্র (জেএসএন)"
+
+#: .\shipping\models.py:99
+msgid ""
+"Additional API credentials in JSON format (e.g., {'client_id': '...', "
+"'client_secret': '...'}). Store securely."
+msgstr ""
+"জেএসএন ফর্ম্যাটে অতিরিক্ত এপিআই শংসাপত্রগুলি (উদাঃ, {'ক্লায়েন্ট_আইডি': "
+"'...', 'ক্লায়েন্ট_সেক্রেট': '...'})। নিরাপদে সঞ্চয় করুন।"
+
+#: .\shipping\models.py:101
+msgid "Tracking URL Template"
+msgstr "ট্র্যাকিং ইউআরএল টেমপ্লেট"
+
+#: .\shipping\models.py:102
+#, python-brace-format
+msgid ""
+"URL template for tracking shipments (e.g., "
+"https://carrier.com/track/{tracking_number})"
+msgstr "শিপমেন্টগুলি ট্র্যাক করার জন্য ইউআরএল টেম্পলেট (উদাঃ"
+
+#: .\shipping\models.py:104
+msgid "Webhook Secret"
+msgstr "ওয়েবহুক সিক্রেট"
+
+#: .\shipping\models.py:105
+msgid "Secret key for verifying incoming webhooks from this carrier."
+msgstr "এই বাহক থেকে আগত ওয়েবহুকগুলি যাচাই করার জন্য গোপন কী।"
+
+#: .\shipping\models.py:106
+msgid "Return API URL"
+msgstr "রিটার্ন এপিআই ইউআরএল"
+
+#: .\shipping\models.py:107
+msgid "API endpoint for initiating returns with this carrier."
+msgstr "এই ক্যারিয়ারের সাথে রিটার্ন শুরু করার জন্য এপিআই শেষ পয়েন্ট।"
+
+#: .\shipping\models.py:114
+msgid "Shipping Carrier"
+msgstr "শিপিং ক্যারিয়ার"
+
+#: .\shipping\models.py:115
+msgid "Shipping Carriers"
+msgstr "শিপিং ক্যারিয়ার"
+
+#: .\shipping\models.py:143
+msgid "Method Name"
+msgstr "পদ্ধতির নাম"
+
+#: .\shipping\models.py:148
+msgid "Carrier"
+msgstr "ক্যারিয়ার"
+
+#: .\shipping\models.py:153
+msgid "Applicable Zones"
+msgstr "প্রযোজ্য অঞ্চল"
+
+#: .\shipping\models.py:154
+msgid "The shipping zones where this method is available."
+msgstr "শিপিং অঞ্চলগুলি যেখানে এই পদ্ধতিটি উপলব্ধ।"
+
+#: .\shipping\models.py:160
+msgid "Price per KG"
+msgstr "প্রতি কেজি দাম"
+
+#: .\shipping\models.py:165
+msgid "Base Charge"
+msgstr "বেস চার্জ"
+
+#: .\shipping\models.py:166
+msgid "Fixed charge for this method, added to weight-based cost"
+msgstr "এই পদ্ধতির জন্য স্থির চার্জ, ওজন ভিত্তিক ব্যয় যুক্ত"
+
+#: .\shipping\models.py:170
+msgid "Estimated Delivery Days"
+msgstr "আনুমানিক বিতরণ দিন"
+
+#: .\shipping\models.py:171
+msgid "e.g., '3-5 business days', 'Next day'"
+msgstr "উদাহরণস্বরূপ, '3-5 ব্যবসায়িক দিন', 'পরের দিন'"
+
+#: .\shipping\models.py:174
+msgid "Guaranteed Delivery Days"
+msgstr "গ্যারান্টিযুক্ত বিতরণ দিন"
+
+#: .\shipping\models.py:175
+msgid "e.g., '2 business days' for guaranteed delivery services"
+msgstr "উদাহরণস্বরূপ, গ্যারান্টিযুক্ত বিতরণ পরিষেবার জন্য '2 ব্যবসায়িক দিন'"
+
+#: .\shipping\models.py:177
+msgid "Is Express"
+msgstr "এক্সপ্রেস হয়"
+
+#: .\shipping\models.py:183
+msgid "Minimum Weight (kg)"
+msgstr "সর্বনিম্ন ওজন (কেজি)"
+
+#: .\shipping\models.py:184
+msgid "Minimum weight for this shipping method"
+msgstr "এই শিপিং পদ্ধতির জন্য সর্বনিম্ন ওজন"
+
+#: .\shipping\models.py:189
+msgid "Maximum Weight (kg)"
+msgstr "সর্বোচ্চ ওজন (কেজি)"
+
+#: .\shipping\models.py:190
+msgid "Maximum weight for this shipping method"
+msgstr "এই শিপিং পদ্ধতির জন্য সর্বোচ্চ ওজন"
+
+#: .\shipping\models.py:194
+msgid "Minimum Dimensions (cm)"
+msgstr "ন্যূনতম মাত্রা (সেমি)"
+
+#: .\shipping\models.py:195
+msgid ""
+"JSON object: {'l': length, 'w': width, 'h': height}. Min dimensions for this"
+" method."
+msgstr ""
+"জসন অবজেক্ট: {'এল': দৈর্ঘ্য, 'ডাব্লু': প্রস্থ, 'এইচ': উচ্চতা}। এই পদ্ধতির "
+"জন্য ন্যূনতম মাত্রা।"
+
+#: .\shipping\models.py:199
+msgid "Maximum Dimensions (cm)"
+msgstr "সর্বাধিক মাত্রা (সেমি)"
+
+#: .\shipping\models.py:200
+msgid ""
+"JSON object: {'l': length, 'w': width, 'h': height}. Max dimensions for this"
+" method."
+msgstr ""
+"জসন অবজেক্ট: {'এল': দৈর্ঘ্য, 'ডাব্লু': প্রস্থ, 'এইচ': উচ্চতা}। এই পদ্ধতির "
+"জন্য সর্বোচ্চ মাত্রা।"
+
+#: .\shipping\models.py:203
+msgid "Carrier Service Code"
+msgstr "ক্যারিয়ার পরিষেবা কোড"
+
+#: .\shipping\models.py:204
+msgid "Carrier-specific code for this service (e.g., 'PRIORITY_OVERNIGHT')"
+msgstr "এই পরিষেবার জন্য ক্যারিয়ার-নির্দিষ্ট কোড (উদাঃ, 'অগ্রাধিকার_প্রতি')"
+
+#: .\shipping\models.py:212
+msgid "Shipping Methods"
+msgstr "শিপিং পদ্ধতি"
+
+#: .\shipping\models.py:226
+msgid "Booked"
+msgstr "বুকড"
+
+#: .\shipping\models.py:227
+msgid "In Transit"
+msgstr "ট্রানজিটে"
+
+#: .\shipping\models.py:228
+msgid "Out For Delivery"
+msgstr "প্রসবের জন্য আউট"
+
+#: .\shipping\models.py:232
+msgid "Returned"
+msgstr "ফিরে"
+
+#: .\shipping\models.py:248
+msgid "Tracking Number"
+msgstr "ট্র্যাকিং নম্বর"
+
+#: .\shipping\models.py:249
+msgid "Generated Tracking URL"
+msgstr "উত্পন্ন ট্র্যাকিং ইউআরএল"
+
+#: .\shipping\models.py:250
+msgid "The actual tracking URL generated by the carrier's API."
+msgstr "ক্যারিয়ারের এপিআই দ্বারা উত্পাদিত আসল ট্র্যাকিং ইউআরএল।"
+
+#: .\shipping\models.py:260
+msgid "Cost"
+msgstr "ব্যয়"
+
+#: .\shipping\models.py:265
+msgid "Weight (kg)"
+msgstr "ওজন (কেজি)"
+
+#: .\shipping\models.py:269
+msgid "Dimensions (cm)"
+msgstr "মাত্রা (সেমি)"
+
+#: .\shipping\models.py:270
+msgid "JSON object: {'l': length, 'w': width, 'h': height}"
+msgstr "Json অবজেক্ট: {'l': দৈর্ঘ্য, 'ডাব্লু': প্রস্থ, 'এইচ': উচ্চতা}"
+
+#: .\shipping\models.py:274
+msgid "Carrier API Response Data"
+msgstr "ক্যারিয়ার এপিআই প্রতিক্রিয়া ডেটা"
+
+#: .\shipping\models.py:275
+msgid "Raw JSON response from the carrier's API for booking/tracking."
+msgstr ""
+"বুকিং/ট্র্যাকিংয়ের জন্য ক্যারিয়ারের এপিআই থেকে কাঁচা জসন প্রতিক্রিয়া।"
+
+#: .\shipping\models.py:278
+msgid "Delivery Proof URL"
+msgstr "ডেলিভারি প্রুফ ইউআরএল"
+
+#: .\shipping\models.py:279
+msgid "URL to image/document proving delivery."
+msgstr "URL থেকে চিত্র/ডকুমেন্ট প্রোভিং ডেলিভারি।"
+
+#: .\shipping\models.py:280
+msgid "Delivery Signature URL"
+msgstr "বিতরণ স্বাক্ষর url"
+
+#: .\shipping\models.py:281
+msgid "URL to image of recipient's signature."
+msgstr "প্রাপকের স্বাক্ষরের চিত্র থেকে ইউআরএল।"
+
+#: .\shipping\models.py:288 .\shipping\models.py:314 .\shipping\models.py:348
+msgid "Shipment"
+msgstr "চালান"
+
+#: .\shipping\models.py:289
+msgid "Shipments"
+msgstr "চালান"
+
+#: .\shipping\models.py:332
+msgid "Shipment Status Update"
+msgstr "চালানের স্থিতি আপডেট"
+
+#: .\shipping\models.py:333
+msgid "Shipment Status Updates"
+msgstr "চালানের স্থিতি আপডেট"
+
+#: .\shipping\models.py:351
+msgid "e.g., 'SCAN', 'EXCEPTION', 'DELIVERY_ATTEMPT'"
+msgstr "উদাহরণস্বরূপ, 'স্ক্যান', 'ব্যতিক্রম', 'ডেলিভারি_টেম্পট'"
+
+#: .\shipping\models.py:353
+msgid "Location"
+msgstr "অবস্থান"
+
+#: .\shipping\models.py:354
+msgid "Event Timestamp"
+msgstr "ইভেন্ট টাইমস্ট্যাম্প"
+
+#: .\shipping\models.py:357
+msgid "Carrier Raw Event Data"
+msgstr "ক্যারিয়ার কাঁচা ইভেন্ট ডেটা"
+
+#: .\shipping\models.py:358
+msgid "Raw JSON data from the carrier's webhook/API for this event."
+msgstr "এই ইভেন্টের জন্য ক্যারিয়ারের ওয়েবহুক/এপিআই থেকে কাঁচা জসন ডেটা।"
+
+#: .\shipping\models.py:362
+msgid "Shipment Event"
+msgstr "চালানের ইভেন্ট"
+
+#: .\shipping\models.py:363
+msgid "Shipment Events"
+msgstr "চালানের ঘটনা"
+
+#: .\shipping\services.py:109
+msgid "No shipping zone found for your address."
+msgstr "আপনার ঠিকানার জন্য কোনও শিপিং জোন পাওয়া যায় নি।"
+
+#: .\shipping\services.py:115
+msgid "Selected shipping method is not available for your address's zone."
+msgstr "আপনার ঠিকানার জোনের জন্য নির্বাচিত শিপিং পদ্ধতিটি উপলব্ধ নয়।"
+
+#: .\shipping\services.py:194
+msgid "This order already has an associated shipment."
+msgstr "এই আদেশে ইতিমধ্যে একটি সম্পর্কিত চালান রয়েছে।"
+
+#: .\shipping\services.py:210
+msgid "Shipment created and pending booking."
+msgstr "চালান তৈরি এবং মুলতুবি বুকিং।"
+
+#: .\shipping\services.py:301 .\shipping\services.py:354
+#: .\shipping\services.py:417 .\shipping\services.py:464
+msgid "Shipment is not associated with a valid shipping method or carrier."
+msgstr "চালান কোনও বৈধ শিপিং পদ্ধতি বা ক্যারিয়ারের সাথে সম্পর্কিত নয়।"
+
+#: .\shipping\services.py:324
+msgid "Shipment successfully booked with carrier."
+msgstr "চালান সফলভাবে ক্যারিয়ারের সাথে বুক করা হয়েছে।"
+
+#: .\shipping\services.py:325
+msgid "Shipment booked with carrier."
+msgstr "চালান ক্যারিয়ারের সাথে বুক করা।"
+
+#: .\shipping\services.py:328
+msgid "Unknown booking error"
+msgstr "অজানা বুকিং ত্রুটি"
+
+#: .\shipping\services.py:356
+msgid "Shipment has no tracking number to fetch status."
+msgstr "চালানের স্থিতি আনতে কোনও ট্র্যাকিং নম্বর নেই।"
+
+#: .\shipping\services.py:373
+msgid "Status updated from carrier tracking."
+msgstr "ক্যারিয়ার ট্র্যাকিং থেকে স্থিতি আপডেট হয়েছে।"
+
+#: .\shipping\services.py:383
+msgid "No description"
+msgstr "কোন বিবরণ"
+
+#: .\shipping\services.py:384
+msgid "Unknown location"
+msgstr "অজানা অবস্থান"
+
+#: .\shipping\services.py:394
+msgid "Unknown tracking error"
+msgstr "অজানা ট্র্যাকিং ত্রুটি"
+
+#: .\shipping\services.py:419
+msgid "Pickup can only be requested for booked shipments."
+msgstr "পিকআপ কেবল বুকড শিপমেন্টের জন্য অনুরোধ করা যেতে পারে।"
+
+#: .\shipping\services.py:436 .\shipping\services.py:437
+msgid "Pickup requested from carrier."
+msgstr "ক্যারিয়ারের কাছ থেকে পিকআপ অনুরোধ করা হয়েছে।"
+
+#: .\shipping\services.py:441
+msgid "Unknown pickup request error"
+msgstr "অজানা পিকআপ অনুরোধ ত্রুটি"
+
+#: .\shipping\services.py:466
+msgid "Shipment has no tracking number; cannot generate label without it."
+msgstr "চালানের কোনও ট্র্যাকিং নম্বর নেই; এটি ছাড়া লেবেল তৈরি করতে পারে না।"
+
+#: .\shipping\services.py:494
+msgid "Unknown label generation error"
+msgstr "অজানা লেবেল প্রজন্মের ত্রুটি"
+
+#: .\shipping\services.py:517
+msgid "Cannot cancel a delivered or returned shipment."
+msgstr "বিতরণ বা ফেরত চালান বাতিল করতে পারে না।"
+
+#: .\shipping\services.py:526
+msgid "Carrier cancellation failed"
+msgstr "ক্যারিয়ার বাতিলকরণ ব্যর্থ হয়েছে"
+
+#: .\shipping\services.py:529
+msgid "Shipment cancelled by system/user."
+msgstr "চালান সিস্টেম/ব্যবহারকারী দ্বারা বাতিল করা হয়েছে।"
+
+#: .\shipping\services.py:530
+msgid "Shipment cancelled."
+msgstr "চালান বাতিল।"
+
+#: .\shipping\services.py:583
+msgid "Delivered via carrier webhook."
+msgstr "ক্যারিয়ার ওয়েবহুকের মাধ্যমে বিতরণ করা হয়েছে।"
+
+#: .\templates\account\account_inactive.html:5
+#: .\templates\account\account_inactive.html:12
+msgid "Account Inactive"
+msgstr "অ্যাকাউন্ট নিষ্ক্রিয়"
+
+#: .\templates\account\account_inactive.html:18
+msgid ""
+"This account is currently inactive. Please contact support for assistance."
+msgstr ""
+"এই অ্যাকাউন্টটি বর্তমানে নিষ্ক্রিয়। সহায়তার জন্য সহায়তার সাথে যোগাযোগ "
+"করুন।"
+
+#: .\templates\account\account_inactive.html:22
+#: .\templates\account\email_confirm.html:37
+#: .\templates\account\password_reset_done.html:26
+#: .\templates\account\password_reset_from_key_done.html:22
+#: .\templates\account\signup_closed.html:22
+#: .\templates\account\verification_sent.html:22
+#: .\templates\account\verified_email_required.html:22
+msgid "Return to Sign In"
+msgstr "সাইন ইন ফিরে"
+
+#: .\templates\account\base_confirm_code.html:13
+msgid "We've sent a code to"
+msgstr "আমরা একটি কোড পাঠিয়েছি"
+
+#: .\templates\account\base_confirm_code.html:13
+msgid "The code expires shortly, so please enter it soon."
+msgstr "কোডটি শীঘ্রই মেয়াদ শেষ হয়ে যায়, তাই শীঘ্রই এটি প্রবেশ করুন।"
+
+#: .\templates\account\base_confirm_code.html:35
+#: .\templates\account\email_confirm.html:28
+#: .\templates\account\reauthenticate.html:39
+msgid "Confirm"
+msgstr "নিশ্চিত করুন"
+
+#: .\templates\account\base_confirm_code.html:39
+msgid "Request new code"
+msgstr "নতুন কোড অনুরোধ"
+
+#: .\templates\account\base_confirm_code.html:44
+#: .\templates\account\base_confirm_code.html:48
+#: .\templates\account\logout.html:28
+#: .\templates\accounts\add_address.html:142
+#: .\templates\accounts\delete_address.html:42
+msgid "Cancel"
+msgstr "বাতিল"
+
+#: .\templates\account\base_manage.html:18 .\templates\account\email.html:4
+msgid "Email Addresses"
+msgstr "ইমেল ঠিকানা"
+
+#: .\templates\account\base_manage.html:22
+#: .\templates\account\password_change.html:5
+#: .\templates\account\password_change.html:40
+#: .\templates\account\password_reset_from_key.html:5
+#: .\templates\account\password_reset_from_key.html:47
+#: .\templates\accounts\partials\profile_section.html:72
+msgid "Change Password"
+msgstr "পাসওয়ার্ড পরিবর্তন করুন"
+
+#: .\templates\account\base_manage.html:26 .\templates\account\logout.html:5
+#: .\templates\account\logout.html:12 .\templates\account\logout.html:25
+#: .\templates\usersessions\usersession_list.html:76
+msgid "Sign Out"
+msgstr "সাইন আউট"
+
+#: .\templates\account\base_manage.html:37
+msgid "Hello,"
+msgstr "হ্যালো,"
+
+#: .\templates\account\base_reauthenticate.html:5
+#: .\templates\account\base_reauthenticate.html:13
+msgid "Confirm Access"
+msgstr "অ্যাক্সেস নিশ্চিত করুন"
+
+#: .\templates\account\base_reauthenticate.html:15
+msgid "Please reauthenticate to safeguard your account."
+msgstr "আপনার অ্যাকাউন্টটি সুরক্ষার জন্য দয়া করে পুনরায় অনুমোদন করুন।"
+
+#: .\templates\account\base_reauthenticate.html:28
+msgid "Alternative options"
+msgstr "বিকল্প বিকল্প"
+
+#: .\templates\account\confirm_email_verification_code.html:4
+msgid "Email Verification"
+msgstr "ইমেল যাচাইকরণ"
+
+#: .\templates\account\confirm_email_verification_code.html:7
+msgid "Enter Email Verification Code"
+msgstr "ইমেল যাচাইকরণ কোড লিখুন"
+
+#: .\templates\account\confirm_email_verification_code.html:15
+msgid "Use a different email address"
+msgstr "একটি ভিন্ন ইমেল ঠিকানা ব্যবহার করুন"
+
+#: .\templates\account\confirm_login_code.html:4
+#: .\templates\account\login.html:5 .\templates\account\login.html:48
+#: .\templates\account\request_login_code.html:5
+#: .\templates\socialaccount\login.html:6
+#: .\templates\socialaccount\login_redirect.html:4
+#: .\templates\socialaccount\signup.html:58
+msgid "Sign In"
+msgstr "সাইন ইন"
+
+#: .\templates\account\confirm_login_code.html:7
+msgid "Enter Sign-In Code"
+msgstr "সাইন-ইন কোড লিখুন"
+
+#: .\templates\account\confirm_password_reset_code.html:4
+#: .\templates\account\email\password_reset_subject.txt:3
+#: .\templates\account\password_reset.html:5
+msgid "Password Reset"
+msgstr "পাসওয়ার্ড পুনরায় সেট করুন"
+
+#: .\templates\account\confirm_password_reset_code.html:7
+msgid "Enter Password Reset Code"
+msgstr "পাসওয়ার্ড রিসেট কোড লিখুন"
+
+#: .\templates\account\confirm_phone_verification_code.html:4
+msgid "Phone Verification"
+msgstr "ফোন যাচাইকরণ"
+
+#: .\templates\account\confirm_phone_verification_code.html:7
+msgid "Enter Phone Verification Code"
+msgstr "ফোন যাচাইকরণ কোড লিখুন"
+
+#: .\templates\account\confirm_phone_verification_code.html:14
+msgid "Use a different phone number"
+msgstr "একটি আলাদা ফোন নম্বর ব্যবহার করুন"
+
+#: .\templates\account\email.html:9
+msgid "Manage Your Email Addresses"
+msgstr "আপনার ইমেল ঠিকানাগুলি পরিচালনা করুন"
+
+#: .\templates\account\email.html:10
+msgid "The following email addresses are associated with your account."
+msgstr "নিম্নলিখিত ইমেল ঠিকানাগুলি আপনার অ্যাকাউন্টের সাথে সম্পর্কিত।"
+
+#: .\templates\account\email.html:27
+#: .\templates\accounts\partials\profile_section.html:41
+msgid "Verified"
+msgstr "যাচাই করা হয়েছে"
+
+#: .\templates\account\email.html:29
+#: .\templates\accounts\partials\profile_section.html:37
+msgid "Unverified"
+msgstr "যাচাই করা"
+
+#: .\templates\account\email.html:32
+msgid "Primary"
+msgstr "প্রাথমিক"
+
+#: .\templates\account\email.html:43
+msgid "Make Primary"
+msgstr "প্রাথমিক করুন"
+
+#: .\templates\account\email.html:44 .\templates\account\email_change.html:51
+#: .\templates\account\phone_change.html:27
+msgid "Re-send Verification"
+msgstr "যাচাইকরণ পুনরায় প্রেরণ করুন"
+
+#: .\templates\account\email.html:45
+#: .\templates\socialaccount\connections.html:49
+msgid "Remove"
+msgstr "সরান"
+
+#: .\templates\account\email.html:55
+msgid "Add a New Email Address"
+msgstr "একটি নতুন ইমেল ঠিকানা যুক্ত করুন"
+
+#: .\templates\account\email.html:74
+msgid "Add Email"
+msgstr "ইমেল যুক্ত করুন"
+
+#: .\templates\account\email.html:91
+msgid "Do you really want to remove the selected email address?"
+msgstr "আপনি কি সত্যিই নির্বাচিত ইমেল ঠিকানাটি সরাতে চান?"
+
+#: .\templates\account\email\account_already_exists_message.txt:4
+#, python-format
+msgid ""
+"You are receiving this email because you or someone else tried to signup for an\n"
+"account using email address:\n"
+"\n"
+"%(email)s\n"
+"\n"
+"However, an account using that email address already exists.  In case you have\n"
+"forgotten about this, please use the password forgotten procedure to recover\n"
+"your account:\n"
+"\n"
+"%(password_reset_url)s"
+msgstr ""
+"আপনি এই ইমেলটি গ্রহণ করছেন কারণ আপনি বা অন্য কেউ একটি জন্য সাইনআপ করার চেষ্টা করেছেন\n"
+"ইমেল ঠিকানা ব্যবহার করে অ্যাকাউন্ট:\n"
+"\n"
+"%(ইমেল) গুলি\n"
+"\n"
+"তবে, সেই ইমেল ঠিকানাটি ব্যবহার করে একটি অ্যাকাউন্ট ইতিমধ্যে বিদ্যমান।  যদি আপনার আছে\n"
+"এই সম্পর্কে ভুলে গেছেন, পুনরুদ্ধার করতে দয়া করে পাসওয়ার্ড ভুলে যাওয়া পদ্ধতিটি ব্যবহার করুন\n"
+"আপনার অ্যাকাউন্ট:\n"
+"\n"
+"%(পাসওয়ার্ড_রেসেট_আরএল) এস"
+
+#: .\templates\account\email\account_already_exists_subject.txt:3
+msgid "Account Already Exists"
+msgstr "অ্যাকাউন্ট ইতিমধ্যে বিদ্যমান"
+
+#: .\templates\account\email\base_message.txt:1
+#, python-format
+msgid "Hello from %(site_name)s!"
+msgstr "হ্যালো %(সাইট_নাম) এর হ্যালো!"
+
+#: .\templates\account\email\base_message.txt:5
+#, python-format
+msgid ""
+"Thank you for using %(site_name)s!\n"
+"%(site_domain)s"
+msgstr ""
+"%(সাইট_নাম) এস ব্যবহারের জন্য আপনাকে ধন্যবাদ!\n"
+"%(সাইট_ডোমাইন) এস"
+
+#: .\templates\account\email\base_notification.txt:5
+msgid ""
+"You are receiving this mail because the following change was made to your "
+"account:"
+msgstr ""
+"আপনি এই মেলটি পাচ্ছেন কারণ নিম্নলিখিত পরিবর্তনটি আপনার অ্যাকাউন্টে করা "
+"হয়েছিল:"
+
+#: .\templates\account\email\base_notification.txt:10
+#, python-format
+msgid ""
+"If you do not recognize this change then please take proper security precautions immediately. The change to your account originates from:\n"
+"\n"
+"- IP address: %(ip)s\n"
+"- Browser: %(user_agent)s\n"
+"- Date: %(timestamp)s"
+msgstr ""
+"আপনি যদি এই পরিবর্তনটি স্বীকৃতি না দেন তবে দয়া করে অবিলম্বে যথাযথ সুরক্ষা সতর্কতা অবলম্বন করুন। আপনার অ্যাকাউন্টে পরিবর্তন থেকে উদ্ভূত:\n"
+"\n"
+"- আইপি ঠিকানা: %(আইপি) এস\n"
+"- ব্রাউজার: %(ব্যবহারকারী_জেন্ট) গুলি\n"
+"- তারিখ: %(টাইমস্ট্যাম্প) এস"
+
+#: .\templates\account\email\email_changed_message.txt:4
+#, python-format
+msgid "Your email has been changed from %(from_email)s to %(to_email)s."
+msgstr "আপনার ইমেলটি %(থেকে_মেইল) এস থেকে %(to_email) গুলি পরিবর্তিত হয়েছে।"
+
+#: .\templates\account\email\email_changed_subject.txt:3
+msgid "Email Changed"
+msgstr "ইমেল পরিবর্তন হয়েছে"
+
+#: .\templates\account\email\email_confirm_message.txt:4
+msgid "Your email has been confirmed."
+msgstr "আপনার ইমেল নিশ্চিত করা হয়েছে।"
+
+#: .\templates\account\email\email_confirm_subject.txt:3
+msgid "Email Confirmation"
+msgstr "ইমেল নিশ্চিতকরণ"
+
+#: .\templates\account\email\email_confirmation_subject.txt:3
+msgid "Please Confirm Your Email Address"
+msgstr "আপনার ইমেল ঠিকানা নিশ্চিত করুন"
+
+#: .\templates\account\email\email_deleted_message.txt:4
+#, python-format
+msgid "Email address %(deleted_email)s has been removed from your account."
+msgstr "ইমেল ঠিকানা %(মুছে ফেলা_মেইল) আপনার অ্যাকাউন্ট থেকে সরানো হয়েছে।"
+
+#: .\templates\account\email\email_deleted_subject.txt:3
+msgid "Email Removed"
+msgstr "ইমেল সরানো হয়েছে"
+
+#: .\templates\account\email\login_code_message.txt:5
+msgid ""
+"Your sign-in code is listed below. Please enter it in your open browser "
+"window."
+msgstr ""
+"আপনার সাইন-ইন কোডটি নীচে তালিকাভুক্ত করা হয়েছে। আপনার ওপেন ব্রাউজার "
+"উইন্ডোতে এটি প্রবেশ করুন।"
+
+#: .\templates\account\email\login_code_message.txt:9
+#: .\templates\account\email\password_reset_code_message.txt:9
+#: .\templates\account\email\unknown_account_message.txt:6
+msgid "This mail can be safely ignored if you did not initiate this action."
+msgstr ""
+"আপনি যদি এই ক্রিয়াটি শুরু না করেন তবে এই মেলটি নিরাপদে উপেক্ষা করা যেতে "
+"পারে।"
+
+#: .\templates\account\email\login_code_subject.txt:3
+msgid "Sign-In Code"
+msgstr "সাইন-ইন কোড"
+
+#: .\templates\account\email\password_changed_message.txt:4
+msgid "Your password has been changed."
+msgstr "আপনার পাসওয়ার্ড পরিবর্তন করা হয়েছে।"
+
+#: .\templates\account\email\password_changed_subject.txt:3
+#: .\templates\account\password_reset_from_key_done.html:5
+msgid "Password Changed"
+msgstr "পাসওয়ার্ড পরিবর্তন হয়েছে"
+
+#: .\templates\account\email\password_reset_code_message.txt:5
+msgid ""
+"Your password reset code is listed below. Please enter it in your open "
+"browser window."
+msgstr ""
+"আপনার পাসওয়ার্ড রিসেট কোডটি নীচে তালিকাভুক্ত করা হয়েছে। আপনার ওপেন "
+"ব্রাউজার উইন্ডোতে এটি প্রবেশ করুন।"
+
+#: .\templates\account\email\password_reset_code_subject.txt:3
+msgid "Password Reset Code"
+msgstr "পাসওয়ার্ড রিসেট কোড"
+
+#: .\templates\account\email\password_reset_key_message.txt:4
+msgid ""
+"You're receiving this email because you or someone else has requested a password reset for your user account.\n"
+"It can be safely ignored if you did not request a password reset. Click the link below to reset your password."
+msgstr ""
+"আপনি এই ইমেলটি গ্রহণ করছেন কারণ আপনি বা অন্য কেউ আপনার ব্যবহারকারীর অ্যাকাউন্টের জন্য একটি পাসওয়ার্ড রিসেটের জন্য অনুরোধ করেছেন।\n"
+"আপনি যদি কোনও পাসওয়ার্ড পুনরায় সেট করার জন্য অনুরোধ না করেন তবে এটি নিরাপদে উপেক্ষা করা যেতে পারে। আপনার পাসওয়ার্ডটি পুনরায় সেট করতে নীচের লিঙ্কটিতে ক্লিক করুন।"
+
+#: .\templates\account\email\password_reset_key_message.txt:9
+#, python-format
+msgid "In case you forgot, your username is %(username)s."
+msgstr ""
+"আপনি যদি ভুলে গেছেন তবে আপনার ব্যবহারকারীর নাম %(ব্যবহারকারীর নাম) এস।"
+
+#: .\templates\account\email\password_reset_key_subject.txt:3
+msgid "Password Reset Email"
+msgstr "পাসওয়ার্ড পুনরায় সেট ইমেল"
+
+#: .\templates\account\email\password_reset_message.txt:4
+msgid "Your password has been reset."
+msgstr "আপনার পাসওয়ার্ড পুনরায় সেট করা হয়েছে।"
+
+#: .\templates\account\email\password_set_message.txt:4
+msgid "Your password has been set."
+msgstr "আপনার পাসওয়ার্ড সেট করা হয়েছে।"
+
+#: .\templates\account\email\password_set_subject.txt:3
+msgid "Password Set"
+msgstr "পাসওয়ার্ড সেট"
+
+#: .\templates\account\email\unknown_account_message.txt:4
+#, python-format
+msgid ""
+"You are receiving this email because you, or someone else, tried to access "
+"an account with email %(email)s. However, we do not have any record of such "
+"an account in our database."
+msgstr ""
+"আপনি এই ইমেলটি গ্রহণ করছেন কারণ আপনি বা অন্য কেউ ইমেল %(ইমেল) এস দিয়ে কোনও "
+"অ্যাকাউন্ট অ্যাক্সেস করার চেষ্টা করেছেন। তবে, আমাদের ডাটাবেসে এ জাতীয় "
+"অ্যাকাউন্টের কোনও রেকর্ড নেই।"
+
+#: .\templates\account\email\unknown_account_message.txt:8
+msgid "If it was you, you can sign up for an account using the link below."
+msgstr ""
+"যদি এটি আপনি হন তবে আপনি নীচের লিঙ্কটি ব্যবহার করে কোনও অ্যাকাউন্টে সাইন আপ "
+"করতে পারেন।"
+
+#: .\templates\account\email\unknown_account_subject.txt:3
+msgid "Unknown Account"
+msgstr "অজানা অ্যাকাউন্ট"
+
+#: .\templates\account\email_change.html:12
+msgid "Change Your Email Address"
+msgstr "আপনার ইমেল ঠিকানা পরিবর্তন করুন"
+
+#: .\templates\account\email_change.html:15
+msgid "Use the form below to change your email address."
+msgstr "আপনার ইমেল ঠিকানা পরিবর্তন করতে নীচের ফর্মটি ব্যবহার করুন।"
+
+#: .\templates\account\email_change.html:32
+#: .\templates\account\email_change.html:43
+msgid "Current email"
+msgstr "বর্তমান ইমেল"
+
+#: .\templates\account\email_change.html:45
+msgid "Changing to"
+msgstr "পরিবর্তন"
+
+#: .\templates\account\email_change.html:48
+msgid "Your email address is still pending verification."
+msgstr "আপনার ইমেল ঠিকানা এখনও যাচাইকরণ মুলতুবি রয়েছে।"
+
+#: .\templates\account\email_change.html:55
+msgid "Cancel Change"
+msgstr "পরিবর্তন বাতিল করুন"
+
+#: .\templates\account\email_change.html:79
+msgid "Change Email"
+msgstr "ইমেল পরিবর্তন করুন"
+
+#: .\templates\account\email_confirm.html:5
+#: .\templates\account\email_confirm.html:12
+msgid "Confirm Email Address"
+msgstr "ইমেল ঠিকানা নিশ্চিত করুন"
+
+#: .\templates\account\email_confirm.html:21
+#, python-format
+msgid ""
+"Please confirm that <a href=\"mailto:%(email)s\" class=\"font-medium text-"
+"primary-600 hover:text-primary-700\">%(email)s</a> is an email address for "
+"your account."
+msgstr ""
+"দয়া করে নিশ্চিত করুন যে <a href = \"মেল্টো:%(ইমেল) গুলি\" শ্রেণি = "
+"\"ফন্ট-মিডিয়াম পাঠ্য-প্রাথমিক -600 হোভার: পাঠ্য-প্রাথমিক -700\">%(ইমেল) এস "
+"</a> আপনার অ্যাকাউন্টের জন্য একটি ইমেল ঠিকানা।"
+
+#: .\templates\account\email_confirm.html:33
+#, python-format
+msgid ""
+"Unable to confirm %(email)s because it is already in use by a different "
+"account."
+msgstr ""
+"%(ইমেল) গুলি নিশ্চিত করতে অক্ষম কারণ এটি ইতিমধ্যে একটি আলাদা অ্যাকাউন্ট "
+"দ্বারা ব্যবহৃত হয়েছে।"
+
+#: .\templates\account\email_confirm.html:44
+#, python-format
+msgid ""
+"This email confirmation link has expired or is invalid. Please <a "
+"href=\"%(email_url)s\" class=\"font-medium text-primary-600 hover:text-"
+"primary-700\">request a new confirmation link</a>."
+msgstr ""
+"এই ইমেল নিশ্চিতকরণ লিঙ্কটির মেয়াদ শেষ হয়ে গেছে বা অবৈধ। দয়া করে <একটি "
+"href = \"%(ইমেল_আরএল) এস\" ক্লাস = \"ফন্ট-মিডিয়াম পাঠ্য-প্রাথমিক -600 "
+"হোভার: পাঠ্য-প্রাথমিক -700\"> একটি নতুন নিশ্চিতকরণ লিঙ্কের জন্য অনুরোধ করুন "
+"</a>।"
+
+#: .\templates\account\login.html:12
+msgid "Welcome Back!"
+msgstr "স্বাগতম ফিরে!"
+
+#: .\templates\account\login.html:15
+msgid "Sign in to access your personalized dashboard."
+msgstr "আপনার ব্যক্তিগতকৃত ড্যাশবোর্ড অ্যাক্সেস করতে সাইন ইন করুন।"
+
+#: .\templates\account\login.html:41
+msgid "Forgot your password?"
+msgstr "আপনার পাসওয়ার্ড ভুলে গেছেন?"
+
+#: .\templates\account\login.html:53
+msgid "Don't have an account?"
+msgstr "অ্যাকাউন্ট নেই?"
+
+#: .\templates\account\login.html:55
+#: .\templates\account\signup_by_passkey.html:40
+#: .\templates\socialaccount\signup.html:15
+#: .\templates\socialaccount\signup.html:48
+msgid "Sign Up"
+msgstr "সাইন আপ করুন"
+
+#: .\templates\account\login.html:70
+#: .\templates\socialaccount\snippets\login.html:11
+msgid "Or continue with"
+msgstr "বা চালিয়ে যান"
+
+#: .\templates\account\login.html:83
+msgid "Sign in with a passkey"
+msgstr "একটি পাসকি দিয়ে সাইন ইন করুন"
+
+#: .\templates\account\login.html:92
+msgid "Email me a sign-in code"
+msgstr "আমাকে একটি সাইন-ইন কোড ইমেল করুন"
+
+#: .\templates\account\logout.html:15
+msgid "Are you sure you want to sign out of your account?"
+msgstr "আপনি কি নিশ্চিত যে আপনি আপনার অ্যাকাউন্ট থেকে সাইন আউট করতে চান?"
+
+#: .\templates\account\messages\cannot_delete_primary_email.txt:2
+#, python-format
+msgid "You cannot remove your primary email address (%(email)s)."
+msgstr "আপনি আপনার প্রাথমিক ইমেল ঠিকানা (%(ইমেল) গুলি) অপসারণ করতে পারবেন না।"
+
+#: .\templates\account\messages\email_confirmation_failed.txt:2
+#, python-format
+msgid ""
+"Unable to confirm %(email)s because it is already confirmed by a different "
+"account."
+msgstr ""
+"%(ইমেল) গুলি নিশ্চিত করতে অক্ষম কারণ এটি ইতিমধ্যে একটি পৃথক অ্যাকাউন্ট "
+"দ্বারা নিশ্চিত করা হয়েছে।"
+
+#: .\templates\account\messages\email_confirmation_sent.txt:2
+#, python-format
+msgid "Confirmation email sent to %(email)s."
+msgstr "নিশ্চিতকরণ ইমেল %(ইমেল) এ প্রেরণ করা হয়েছে।"
+
+#: .\templates\account\messages\email_confirmed.txt:2
+#, python-format
+msgid "You have confirmed %(email)s."
+msgstr "আপনি %(ইমেল) গুলি নিশ্চিত করেছেন।"
+
+#: .\templates\account\messages\email_deleted.txt:2
+#, python-format
+msgid "Removed email address %(email)s."
+msgstr "সরানো ইমেল ঠিকানা %(ইমেল) গুলি।"
+
+#: .\templates\account\messages\logged_in.txt:4
+#, python-format
+msgid "Successfully signed in as %(name)s."
+msgstr "সফলভাবে %(নাম) এস হিসাবে স্বাক্ষরিত।"
+
+#: .\templates\account\messages\logged_out.txt:2
+msgid "You have signed out."
+msgstr "আপনি সাইন আউট করেছেন।"
+
+#: .\templates\account\messages\login_code_sent.txt:2
+#, python-format
+msgid "A sign-in code has been sent to %(recipient)s."
+msgstr "একটি সাইন-ইন কোড %(প্রাপক) এ প্রেরণ করা হয়েছে।"
+
+#: .\templates\account\messages\password_changed.txt:2
+msgid "Password successfully changed."
+msgstr "পাসওয়ার্ড সফলভাবে পরিবর্তিত হয়েছে।"
+
+#: .\templates\account\messages\password_set.txt:2
+msgid "Password successfully set."
+msgstr "পাসওয়ার্ড সফলভাবে সেট।"
+
+#: .\templates\account\messages\phone_verification_sent.txt:2
+#, python-format
+msgid "A verification code has been sent to %(phone)s."
+msgstr "একটি যাচাইকরণ কোড %(ফোন) এ প্রেরণ করা হয়েছে।"
+
+#: .\templates\account\messages\phone_verified.txt:2
+#, python-format
+msgid "You have verified phone number %(phone)s."
+msgstr "আপনি ফোন নম্বর %(ফোন) এস যাচাই করেছেন।"
+
+#: .\templates\account\messages\primary_email_set.txt:2
+msgid "Primary email address set."
+msgstr "প্রাথমিক ইমেল ঠিকানা সেট।"
+
+#: .\templates\account\messages\unverified_primary_email.txt:2
+msgid "Your primary email address must be verified."
+msgstr "আপনার প্রাথমিক ইমেল ঠিকানা অবশ্যই যাচাই করা উচিত।"
+
+#: .\templates\account\password_change.html:12
+#: .\templates\account\password_reset_from_key.html:15
+msgid "Change Your Password"
+msgstr "আপনার পাসওয়ার্ড পরিবর্তন করুন"
+
+#: .\templates\account\password_change.html:15
+msgid "Use the form below to change the password for your account."
+msgstr ""
+"আপনার অ্যাকাউন্টের জন্য পাসওয়ার্ড পরিবর্তন করতে নীচের ফর্মটি ব্যবহার করুন।"
+
+#: .\templates\account\password_change.html:42
+msgid "Forgot Password?"
+msgstr "পাসওয়ার্ড ভুলে গেছেন?"
+
+#: .\templates\account\password_reset.html:12
+msgid "Reset Your Password"
+msgstr "আপনার পাসওয়ার্ড পুনরায় সেট করুন"
+
+#: .\templates\account\password_reset.html:15
+msgid ""
+"Enter your email address below, and we'll send you a link to reset your "
+"password."
+msgstr ""
+"নীচে আপনার ইমেল ঠিকানা লিখুন, এবং আমরা আপনাকে আপনার পাসওয়ার্ডটি পুনরায় সেট"
+" করতে একটি লিঙ্ক প্রেরণ করব।"
+
+#: .\templates\account\password_reset.html:46
+msgid "Reset My Password"
+msgstr "আমার পাসওয়ার্ড পুনরায় সেট করুন"
+
+#: .\templates\account\password_reset.html:53
+msgid ""
+"If you're having trouble, <a href=\"/contact\" class=\"font-medium text-"
+"primary-600 hover:text-primary-700 transition-colors duration-300\">contact "
+"us</a>."
+msgstr ""
+"যদি আপনার সমস্যা হয়, <a href = \"/যোগাযোগ\" শ্রেণি = \"ফন্ট-মিডিয়াম "
+"পাঠ্য-প্রাথমিক -600 হোভার: পাঠ্য-প্রাথমিক -700 ট্রানজিশন-কালারস সময়কাল "
+"-300\"> আমাদের সাথে যোগাযোগ করুন </a>।"
+
+#: .\templates\account\password_reset_done.html:5
+msgid "Password Reset Sent"
+msgstr "পাসওয়ার্ড রিসেট প্রেরণ"
+
+#: .\templates\account\password_reset_done.html:12
+msgid "Password Reset Email Sent"
+msgstr "পাসওয়ার্ড পুনরায় সেট ইমেল প্রেরণ"
+
+#: .\templates\account\password_reset_done.html:22
+msgid ""
+"We have sent you an email with a link to reset your password. Please check "
+"your inbox and spam folder. If you don't receive it within a few minutes, "
+"please <a href=\"/contact\" class=\"font-medium text-primary-600 hover:text-"
+"primary-700 transition-colors duration-300\">contact us</a>."
+msgstr ""
+"আমরা আপনার পাসওয়ার্ডটি পুনরায় সেট করতে একটি লিঙ্ক সহ একটি ইমেল প্রেরণ "
+"করেছি। আপনার ইনবক্স এবং স্প্যাম ফোল্ডারটি পরীক্ষা করুন। আপনি যদি কয়েক "
+"মিনিটের মধ্যে এটি না পান তবে দয়া করে <একটি href = \"/যোগাযোগ\" শ্রেণি = "
+"\"ফন্ট-মিডিয়াম পাঠ্য-প্রাথমিক -600 হোভার: পাঠ্য-প্রাথমিক -700 "
+"ট্রানজিশন-কালারস সময়কাল -300\"> আমাদের সাথে যোগাযোগ করুন </a>।"
+
+#: .\templates\account\password_reset_from_key.html:13
+msgid "Bad Token"
+msgstr "খারাপ টোকেন"
+
+#: .\templates\account\password_reset_from_key.html:23
+#, python-format
+msgid ""
+"The password reset link was invalid, possibly because it has already been "
+"used. Please request a <a href=\"%(passwd_reset_url)s\" class=\"font-medium "
+"text-primary-600 hover:text-primary-700 transition-colors duration-300\">new"
+" password reset</a>."
+msgstr ""
+"পাসওয়ার্ড রিসেট লিঙ্কটি অবৈধ ছিল, সম্ভবত এটি ইতিমধ্যে ব্যবহৃত হয়েছে। দয়া "
+"করে একটি <a href = \"%(PASSWD_RESET_URL) s\" ক্লাস = \"ফন্ট-মিডিয়াম "
+"পাঠ্য-প্রাথমিক -600 হোভার: পাঠ্য-প্রাথমিক -700 ট্রানজিশন-কালারস সময়কাল "
+"-300\"> নতুন পাসওয়ার্ড রিসেট </a> এর জন্য অনুরোধ করুন।"
+
+#: .\templates\account\password_reset_from_key_done.html:12
+msgid "Password Successfully Changed"
+msgstr "পাসওয়ার্ড সফলভাবে পরিবর্তিত হয়েছে"
+
+#: .\templates\account\password_reset_from_key_done.html:18
+msgid "You can now sign in with your new password."
+msgstr "আপনি এখন আপনার নতুন পাসওয়ার্ড দিয়ে সাইন ইন করতে পারেন।"
+
+#: .\templates\account\password_set.html:5
+#: .\templates\account\password_set.html:41
+msgid "Set Password"
+msgstr "পাসওয়ার্ড সেট করুন"
+
+#: .\templates\account\password_set.html:12
+msgid "Set Your Password"
+msgstr "আপনার পাসওয়ার্ড সেট করুন"
+
+#: .\templates\account\password_set.html:15
+msgid "Please set your new password."
+msgstr "আপনার নতুন পাসওয়ার্ড সেট করুন।"
+
+#: .\templates\account\phone_change.html:5
+#: .\templates\account\phone_change.html:43
+msgid "Change Phone"
+msgstr "ফোন পরিবর্তন করুন"
+
+#: .\templates\account\phone_change.html:13
+msgid "Change Your Phone Number"
+msgstr "আপনার ফোন নম্বর পরিবর্তন করুন"
+
+#: .\templates\account\phone_change.html:22
+msgid "Current phone"
+msgstr "বর্তমান ফোন"
+
+#: .\templates\account\phone_change.html:26
+msgid "Your phone number is still pending verification."
+msgstr "আপনার ফোন নম্বরটি এখনও যাচাইকরণ মুলতুবি রয়েছে।"
+
+#: .\templates\account\phone_change.html:34
+msgid "Change to"
+msgstr "পরিবর্তন"
+
+#: .\templates\account\reauthenticate.html:5
+#: .\templates\account\reauthenticate.html:12
+msgid "Reauthenticate"
+msgstr "পুনরায় অনুমোদন"
+
+#: .\templates\account\reauthenticate.html:15
+msgid "Enter your password to confirm access:"
+msgstr "অ্যাক্সেস নিশ্চিত করতে আপনার পাসওয়ার্ড লিখুন:"
+
+#: .\templates\account\request_login_code.html:13
+msgid "Request a Sign-in Code"
+msgstr "একটি সাইন-ইন কোড অনুরোধ করুন"
+
+#: .\templates\account\request_login_code.html:15
+msgid "You will receive a special code for a password-free sign-in."
+msgstr "আপনি একটি পাসওয়ার্ড-মুক্ত সাইন-ইন এর জন্য একটি বিশেষ কোড পাবেন।"
+
+#: .\templates\account\request_login_code.html:40
+msgid "Request Code"
+msgstr "অনুরোধ কোড"
+
+#: .\templates\account\request_login_code.html:46
+msgid "Other sign-in options"
+msgstr "অন্যান্য সাইন-ইন বিকল্প"
+
+#: .\templates\account\signup.html:169 .\templates\accounts\signup.html:169
+msgid "Or sign up with"
+msgstr "বা সাথে সাইন আপ করুন"
+
+#: .\templates\account\signup_by_passkey.html:5
+#: .\templates\socialaccount\signup.html:5
+msgid "Signup"
+msgstr "সাইনআপ"
+
+#: .\templates\account\signup_by_passkey.html:13
+msgid "Sign Up with a Passkey"
+msgstr "একটি পাসকি দিয়ে সাইন আপ করুন"
+
+#: .\templates\account\signup_by_passkey.html:15
+#, python-format
+msgid ""
+"Already have an account? Then please <a href=\"%(login_url)s\" class=\"font-"
+"medium text-primary hover:text-primary-dark\">sign in</a>."
+msgstr ""
+"ইতিমধ্যে একটি অ্যাকাউন্ট আছে? তারপরে দয়া করে <a href = \"%(লগইন_আরএল) এর\" "
+"ক্লাস = \"ফন্ট-মিডিয়াম পাঠ্য-প্রাথমিক হোভার: পাঠ্য-প্রাথমিক-অন্ধকার\"> সাইন"
+" ইন </a>।"
+
+#: .\templates\account\signup_by_passkey.html:46
+msgid "Other options"
+msgstr "অন্যান্য বিকল্প"
+
+#: .\templates\account\signup_closed.html:5
+msgid "Sign Up Closed"
+msgstr "সাইন আপ বন্ধ"
+
+#: .\templates\account\signup_closed.html:13
+msgid "Sign Up is Currently Closed"
+msgstr "সাইন আপ বর্তমানে বন্ধ রয়েছে"
+
+#: .\templates\account\signup_closed.html:18
+msgid ""
+"We are sorry, but we are not accepting new sign-ups at this time. Please "
+"check back later."
+msgstr ""
+"আমরা দুঃখিত, তবে আমরা এই মুহুর্তে নতুন সাইন-আপগুলি গ্রহণ করছি না। পরে আবার "
+"চেক করুন।"
+
+#: .\templates\account\snippets\already_logged_in.html:4
+msgid "Note"
+msgstr "দ্রষ্টব্য"
+
+#: .\templates\account\snippets\already_logged_in.html:5
+#, python-format
+msgid "You are already logged in as %(user_display)s."
+msgstr "আপনি ইতিমধ্যে %(ব্যবহারকারী_ডিসপ্লে) এস হিসাবে লগ ইন করেছেন।"
+
+#: .\templates\account\snippets\warn_no_email.html:3
+msgid "Warning"
+msgstr "সতর্কতা"
+
+#: .\templates\account\snippets\warn_no_email.html:4
+msgid ""
+"You currently do not have any email address set up. You should really add an"
+" email address so you can receive notifications, reset your password, etc."
+msgstr ""
+"আপনার বর্তমানে কোনও ইমেল ঠিকানা সেট আপ নেই। আপনার সত্যই একটি ইমেল ঠিকানা "
+"যুক্ত করা উচিত যাতে আপনি বিজ্ঞপ্তিগুলি পেতে পারেন, আপনার পাসওয়ার্ড পুনরায় "
+"সেট করতে পারেন ইত্যাদি"
+
+#: .\templates\account\verification_sent.html:5
+msgid "Verification Sent"
+msgstr "যাচাই করা হয়েছে"
+
+#: .\templates\account\verification_sent.html:12
+msgid "Check Your Email for a Verification Link"
+msgstr "একটি যাচাইকরণ লিঙ্কের জন্য আপনার ইমেল চেক করুন"
+
+#: .\templates\account\verification_sent.html:18
+msgid ""
+"We've sent a verification email to your address. Please click the link in "
+"the email to complete your registration. If you don't see it, check your "
+"spam folder. If you still haven't received it after a few minutes, please <a"
+" href=\"/contact\" class=\"font-medium text-primary-600 hover:text-"
+"primary-700\">contact us</a>."
+msgstr ""
+"আমরা আপনার ঠিকানায় একটি যাচাইকরণ ইমেল প্রেরণ করেছি। আপনার নিবন্ধকরণ "
+"সম্পূর্ণ করতে দয়া করে ইমেলের লিঙ্কটি ক্লিক করুন। আপনি যদি এটি না দেখেন তবে "
+"আপনার স্প্যাম ফোল্ডারটি পরীক্ষা করুন। আপনি যদি এখনও কয়েক মিনিটের পরে এটি না"
+" পেয়ে থাকেন তবে দয়া করে <একটি href = \"/যোগাযোগ\" ক্লাস = \"ফন্ট-মিডিয়াম "
+"পাঠ্য-প্রাথমিক -600 হোভার: পাঠ্য-প্রাথমিক -700\"> আমাদের সাথে যোগাযোগ করুন "
+"</a>।"
+
+#: .\templates\account\verified_email_required.html:5
+msgid "Verified Email Required"
+msgstr "যাচাই করা ইমেল প্রয়োজন"
+
+#: .\templates\account\verified_email_required.html:12
+msgid "Verify Your Email Address"
+msgstr "আপনার ইমেল ঠিকানা যাচাই করুন"
+
+#: .\templates\account\verified_email_required.html:18
+msgid ""
+"To access this page, you must first verify your email address. We've sent a "
+"verification link to your email. Please click the link to continue. If you "
+"don't see the email, check your spam folder or"
+msgstr ""
+"এই পৃষ্ঠাটি অ্যাক্সেস করতে আপনাকে প্রথমে আপনার ইমেল ঠিকানাটি যাচাই করতে হবে।"
+" আমরা আপনার ইমেলের একটি যাচাইকরণ লিঙ্ক প্রেরণ করেছি। চালিয়ে যেতে লিঙ্কটি "
+"ক্লিক করুন। আপনি যদি ইমেলটি না দেখেন তবে আপনার স্প্যাম ফোল্ডারটি পরীক্ষা "
+"করুন বা"
+
+#: .\templates\account\verified_email_required.html:18
+msgid "re-send the verification email"
+msgstr "যাচাইকরণ ইমেলটি পুনরায় প্রেরণ করুন"
+
+#: .\templates\accounts\add_address.html:24
+msgid "Add Shipping Address"
+msgstr "শিপিংয়ের ঠিকানা যুক্ত করুন"
+
+#: .\templates\accounts\add_address.html:27
+msgid "Back to Profile"
+msgstr "প্রোফাইল ফিরে"
+
+#: .\templates\accounts\add_address.html:76
+msgid "Select Division"
+msgstr "বিভাগ নির্বাচন করুন"
+
+#: .\templates\accounts\add_address.html:87
+msgid "Select District"
+msgstr "জেলা নির্বাচন করুন"
+
+#: .\templates\accounts\add_address.html:98
+msgid "Select Upazila"
+msgstr "উপজিলা নির্বাচন করুন"
+
+#: .\templates\accounts\add_address.html:103
+msgid "Upazila/Thana"
+msgstr "উপজিলা/থানা"
+
+#: .\templates\accounts\add_address.html:121
+msgid "Bangladesh"
+msgstr "বাংলাদেশ"
+
+#: .\templates\accounts\add_address.html:137
+msgid "Set as default shipping address"
+msgstr "ডিফল্ট শিপিং ঠিকানা হিসাবে সেট করুন"
+
+#: .\templates\accounts\add_address.html:144
+msgid "Save Address"
+msgstr "ঠিকানা সংরক্ষণ করুন"
+
+#: .\templates\accounts\delete_address.html:13
+#: .\templates\accounts\delete_address.html:43
+msgid "Delete Address"
+msgstr "ঠিকানা মুছুন"
+
+#: .\templates\accounts\delete_address.html:18
+#: .\templates\accounts\partials\profile_section.html:382
+msgid "Are you sure you want to delete this address?"
+msgstr "আপনি কি নিশ্চিত যে আপনি এই ঠিকানাটি মুছতে চান?"
+
+#: .\templates\accounts\delete_address.html:19
+msgid "This action cannot be undone."
+msgstr "এই ক্রিয়াটি পূর্বাবস্থায় ফিরে যেতে পারে না।"
+
+#: .\templates\accounts\delete_address.html:34
+msgid "Default Address"
+msgstr "ডিফল্ট ঠিকানা"
+
+#: .\templates\accounts\partials\profile_section.html:48
+msgid "Personal Info"
+msgstr "ব্যক্তিগত তথ্য"
+
+#: .\templates\accounts\partials\profile_section.html:51
+msgid "Custom Order Status"
+msgstr "কাস্টম অর্ডার স্থিতি"
+
+#: .\templates\accounts\partials\profile_section.html:55
+msgid "Create Shipping Address"
+msgstr "শিপিং ঠিকানা তৈরি করুন"
+
+#: .\templates\accounts\partials\profile_section.html:60
+msgid "(Max reached)"
+msgstr "(সর্বোচ্চ পৌঁছেছে)"
+
+#: .\templates\accounts\partials\profile_section.html:64
+msgid "Wishlist"
+msgstr "ইচ্ছার তালিকা"
+
+#: .\templates\accounts\partials\profile_section.html:66
+msgid "My Orders"
+msgstr "আমার আদেশ"
+
+#: .\templates\accounts\partials\profile_section.html:87
+msgid "Personal Information"
+msgstr "ব্যক্তিগত তথ্য"
+
+#: .\templates\accounts\partials\profile_section.html:208
+msgid "Date of Birth"
+msgstr "জন্মের তারিখ"
+
+#: .\templates\accounts\partials\profile_section.html:228
+msgid "Save Changes"
+msgstr "পরিবর্তনগুলি সংরক্ষণ করুন"
+
+#: .\templates\accounts\partials\profile_section.html:229
+#: .\templates\accounts\partials\profile_section.html:299
+msgid "Saving..."
+msgstr "সংরক্ষণ ..."
+
+#: .\templates\accounts\partials\profile_section.html:239
+msgid "User Preferences"
+msgstr "ব্যবহারকারী পছন্দ"
+
+#: .\templates\accounts\partials\profile_section.html:298
+msgid "Save Settings"
+msgstr "সেটিংস সংরক্ষণ করুন"
+
+#: .\templates\accounts\partials\profile_section.html:308
+msgid "Shipping Addresses"
+msgstr "শিপিং ঠিকানা"
+
+#: .\templates\accounts\partials\profile_section.html:311
+#: .\templates\accounts\partials\profile_section.html:315
+msgid "Add New"
+msgstr "নতুন যোগ করুন"
+
+#: .\templates\accounts\partials\profile_section.html:317
+msgid "Maximum of 4 addresses reached"
+msgstr "সর্বোচ্চ 4 টি ঠিকানা পৌঁছেছে"
+
+#: .\templates\accounts\partials\profile_section.html:324
+msgid ""
+"You've reached the maximum of 4 addresses. Delete an existing address to add"
+" a new one."
+msgstr ""
+"আপনি সর্বোচ্চ 4 টি ঠিকানা পৌঁছেছেন। একটি নতুন যুক্ত করতে একটি বিদ্যমান "
+"ঠিকানা মুছুন।"
+
+#: .\templates\accounts\partials\profile_section.html:344
+msgid "Edit"
+msgstr "সম্পাদনা"
+
+#: .\templates\accounts\partials\profile_section.html:347
+msgid "Delete"
+msgstr "মুছুন"
+
+#: .\templates\accounts\partials\profile_section.html:360
+msgid "Set Default"
+msgstr "ডিফল্ট সেট করুন"
+
+#: .\templates\accounts\partials\profile_section.html:369
+msgid "No shipping addresses saved yet."
+msgstr "কোনও শিপিং ঠিকানা এখনও সংরক্ষণ করা হয়নি।"
+
+#: .\templates\accounts\user_settings.html:11
+msgid "Your Preferences"
+msgstr "আপনার পছন্দ"
+
+#: .\templates\accounts\user_settings.html:14
+msgid "Manage your currency, language, country, and timezone settings."
+msgstr "আপনার মুদ্রা, ভাষা, দেশ এবং টাইমজোন সেটিংস পরিচালনা করুন।"
+
+#: .\templates\accounts\user_settings.html:22
+msgid "Oops!"
+msgstr "উফ!"
+
+#: .\templates\accounts\user_settings.html:23
+msgid "Please correct the following errors:"
+msgstr "নিম্নলিখিত ত্রুটিগুলি সংশোধন করুন:"
+
+#: .\templates\accounts\user_settings.html:90
+msgid "Save Preferences"
+msgstr "পছন্দগুলি সংরক্ষণ করুন"
+
+#: .\templates\payments\payment_status.html:11
+msgid "Payment Successful!"
+msgstr "পেমেন্ট সফল!"
+
+#: .\templates\payments\payment_status.html:16
+msgid "Payment Failed!"
+msgstr "পেমেন্ট ব্যর্থ!"
+
+#: .\templates\payments\payment_status.html:21
+msgid "Payment Cancelled"
+msgstr "পেমেন্ট বাতিল"
+
+#: .\templates\payments\payment_status.html:26
+msgid "Payment Details"
+msgstr "অর্থ প্রদানের বিবরণ"
+
+#: .\templates\payments\payment_status.html:28
+msgid "Payment ID"
+msgstr "পেমেন্ট আইডি"
+
+#: .\templates\payments\payment_status.html:32
+msgid "Method"
+msgstr "পদ্ধতি"
+
+#: .\templates\payments\payment_status.html:37
+msgid "Error"
+msgstr "ত্রুটি"
+
+#: .\templates\payments\payment_status.html:41
+msgid "Go to My Orders"
+msgstr "আমার আদেশে যান"
+
+#: .\templates\products\home.html:7
+msgid "Authentic Bangladeshi Products"
+msgstr "খাঁটি বাংলাদেশী পণ্য"
+
+#: .\templates\products\home.html:39
+msgid "Shop by Category"
+msgstr "বিভাগ দ্বারা কেনাকাটা"
+
+#: .\templates\products\home.html:40 .\templates\products\home.html:66
+#: .\templates\products\home.html:93
+msgid "View All"
+msgstr "সব দেখুন"
+
+#: .\templates\products\home.html:65
+msgid "Trending Products"
+msgstr "ট্রেন্ডিং পণ্য"
+
+#: .\templates\products\home.html:82
+msgid "No trending products available at the moment."
+msgstr "এই মুহুর্তে কোনও ট্রেন্ডিং পণ্য উপলব্ধ নেই।"
+
+#: .\templates\products\home.html:92
+msgid "New Arrivals"
+msgstr "নতুন আগমন"
+
+#: .\templates\products\home.html:106
+msgid "Festive Collection 2025"
+msgstr "উত্সব সংগ্রহ 2025"
+
+#: .\templates\products\home.html:107
+msgid "Special designs for your special occasions"
+msgstr "আপনার বিশেষ অনুষ্ঠানের জন্য বিশেষ ডিজাইন"
+
+#: .\templates\products\home.html:114
+msgid "View Full Collection"
+msgstr "সম্পূর্ণ সংগ্রহ দেখুন"
+
+#: .\templates\products\home.html:121
+msgid "What Our Customers Say"
+msgstr "আমাদের গ্রাহকরা কী বলে"
+
+#: .\templates\products\home.html:151
+msgid "Join Our VIP List"
+msgstr "আমাদের ভিআইপি তালিকায় যোগদান করুন"
+
+#: .\templates\products\home.html:154
+msgid ""
+"Get early access to <span class=\"text-yellow-500 font-semibold\">exclusive "
+"drops</span>, curated collections, and premium offers."
+msgstr ""
+"<স্প্যান ক্লাস = \"পাঠ্য-হলুদ -500 ফন্ট-সিমিবোল্ড\"> একচেটিয়া ড্রপ </span>,"
+" কিউরেটেড সংগ্রহ এবং প্রিমিয়াম অফারগুলিতে প্রাথমিক অ্যাক্সেস পান।"
+
+#: .\templates\products\home.html:159
+msgid "you@example.com"
+msgstr "আপনি@example.com"
+
+#: .\templates\products\home.html:163
+msgid "Subscribe"
+msgstr "সাবস্ক্রাইব করুন"
+
+#: .\templates\products\partials\product_card_home.html:41
+#: .\templates\products\partials\product_card_simple.html:46
+#: .\templates\products\partials\product_grid.html:55
+msgid "Product added to wishlist!"
+msgstr "প্রোডাক্ট যোগদানের সাথে যুক্ত!"
+
+#: .\templates\products\partials\product_card_home.html:41
+#: .\templates\products\partials\product_card_simple.html:46
+#: .\templates\products\partials\product_grid.html:55
+msgid "Product removed from wishlist!"
+msgstr "ইচ্ছার তালিকা থেকে পণ্য সরানো!"
+
+#: .\templates\products\partials\product_card_home.html:56
+#: .\templates\products\partials\product_card_simple.html:61
+#: .\templates\products\partials\product_grid.html:70
+msgid "Failed to update wishlist."
+msgstr "ইচ্ছার তালিকা আপডেট করতে ব্যর্থ।"
+
+#: .\templates\products\partials\product_card_home.html:77
+msgid "Quick View"
+msgstr "দ্রুত দৃশ্য"
+
+#: .\templates\products\partials\product_card_home.html:81
+#: .\templates\products\partials\product_grid.html:116
+msgid "Free Shipping"
+msgstr "বিনামূল্যে শিপিং"
+
+#: .\templates\products\partials\product_card_simple.html:15
+#: .\templates\products\partials\product_grid.html:22
+msgid "No Image"
+msgstr "কোন চিত্র নেই"
+
+#: .\templates\products\partials\product_card_simple.html:92
+msgid "View"
+msgstr "দেখুন"
+
+#: .\templates\products\partials\product_grid.html:83
+msgid "Eid"
+msgstr "Eid দ"
+
+#: .\templates\products\partials\product_grid.html:84
+msgid "Trending"
+msgstr "ট্রেন্ডিং"
+
+#: .\templates\products\partials\product_grid.html:85
+msgid "New"
+msgstr "নতুন"
+
+#: .\templates\products\partials\product_grid.html:86
+msgid "Featured"
+msgstr "বৈশিষ্ট্যযুক্ত"
+
+#: .\templates\products\partials\product_grid.html:87
+#: .\templates\products\product_detail.html:55
+msgid "Out of Stock"
+msgstr "স্টক বাইরে"
+
+#: .\templates\products\partials\product_grid.html:122
+msgid "No products found matching your filters."
+msgstr "কোনও পণ্য আপনার ফিল্টারগুলির সাথে মিলে যায় না।"
+
+#: .\templates\products\partials\reviews.html:4
+msgid "Customer Reviews"
+msgstr "গ্রাহক পর্যালোচনা"
+
+#: .\templates\products\partials\reviews.html:8
+msgid "Overall Rating"
+msgstr "সামগ্রিক রেটিং"
+
+#: .\templates\products\partials\reviews.html:16
+#, python-format
+msgid "0 reviews"
+msgid_plural "%(counter)s reviews"
+msgstr[0] ""
+msgstr[1] ""
+
+#: .\templates\products\partials\reviews.html:27
+msgid "Write a Review"
+msgstr "একটি পর্যালোচনা লিখুন"
+
+#: .\templates\products\partials\reviews.html:34
+msgid "Your Rating:"
+msgstr "আপনার রেটিং:"
+
+#: .\templates\products\partials\reviews.html:46
+msgid "Your Comment:"
+msgstr "আপনার মন্তব্য:"
+
+#: .\templates\products\partials\reviews.html:49
+msgid "Share your experience with this product..."
+msgstr "এই পণ্যটির সাথে আপনার অভিজ্ঞতা ভাগ করুন ..."
+
+#: .\templates\products\partials\reviews.html:53
+msgid "Upload Images (Max 5, JPG/PNG, 2MB each):"
+msgstr "চিত্রগুলি আপলোড করুন (সর্বোচ্চ 5, জেপিজি/পিএনজি, প্রতিটি 2 এমবি):"
+
+#: .\templates\products\partials\reviews.html:61
+msgid "Submit Review"
+msgstr "পর্যালোচনা জমা দিন"
+
+#: .\templates\products\partials\reviews.html:67
+msgid "Please"
+msgstr "দয়া করে"
+
+#: .\templates\products\partials\reviews.html:67
+msgid "log in"
+msgstr "লগ ইন"
+
+#: .\templates\products\partials\reviews.html:67
+msgid "to write a review."
+msgstr "একটি পর্যালোচনা লিখতে।"
+
+#: .\templates\products\partials\reviews.html:73
+msgid "All Reviews"
+msgstr "সমস্ত পর্যালোচনা"
+
+#: .\templates\products\partials\reviews.html:76
+msgid "No reviews yet. Be the first to review!"
+msgstr "এখনও কোন পর্যালোচনা। পর্যালোচনা প্রথম হতে!"
+
+#: .\templates\products\partials\reviews.html:81
+msgid "Load More Reviews"
+msgstr "আরও পর্যালোচনা লোড করুন"
+
+#: .\templates\products\product_detail.html:51
+msgid "Sale"
+msgstr "বিক্রয়"
+
+#: .\templates\products\product_detail.html:215
+#: .\templates\products\product_detail.html:244
+msgid "Add to Cart"
+msgstr "কার্টে যোগ করুন"
+
+#: .\templates\products\product_detail.html:254
+msgid "Secure Checkout"
+msgstr "সুরক্ষিত চেকআউট"
+
+#: .\templates\products\product_detail.html:258
+msgid "Fast Shipping"
+msgstr "দ্রুত শিপিং"
+
+#: .\templates\products\product_detail.html:262
+msgid "Easy Returns"
+msgstr "সহজ রিটার্ন"
+
+#: .\templates\products\product_detail.html:273
+msgid "You May Also Like"
+msgstr "আপনিও পছন্দ করতে পারেন"
+
+#: .\templates\products\product_list.html:28
+msgid "Filters"
+msgstr "ফিল্টার"
+
+#: .\templates\products\search_results.html:6
+#: .\templates\products\search_results.html:12
+msgid "Search Results"
+msgstr "অনুসন্ধান ফলাফল"
+
+#: .\templates\products\search_results.html:15
+#, python-format
+msgid "Found %(counter)s result for \"%(query)s\""
+msgid_plural "Found %(counter)s results for \"%(query)s\""
+msgstr[0] ""
+msgstr[1] ""
+
+#: .\templates\products\search_results.html:17
+msgid "No results found for"
+msgstr "কোন ফলাফল খুঁজে পাওয়া যায় না"
+
+#: .\templates\products\search_results.html:59
+msgid "No products match your search"
+msgstr "কোনও পণ্য আপনার অনুসন্ধানের সাথে মেলে না"
+
+#: .\templates\products\search_results.html:60
+msgid "Try different keywords or browse our"
+msgstr "বিভিন্ন কীওয়ার্ড চেষ্টা করুন বা আমাদের ব্রাউজ করুন"
+
+#: .\templates\products\search_results.html:60
+msgid "product catalog"
+msgstr "পণ্য ক্যাটালগ"
+
+#: .\templates\socialaccount\authentication_error.html:6
+#: .\templates\socialaccount\authentication_error.html:13
+msgid "Third-Party Login Failure"
+msgstr "তৃতীয় পক্ষের লগইন ব্যর্থতা"
+
+#: .\templates\socialaccount\authentication_error.html:16
+msgid ""
+"An error occurred while attempting to login via your third-party account."
+msgstr ""
+"আপনার তৃতীয় পক্ষের অ্যাকাউন্টের মাধ্যমে লগইন করার চেষ্টা করার সময় একটি "
+"ত্রুটি ঘটেছে।"
+
+#: .\templates\socialaccount\authentication_error.html:20
+msgid "Return to login"
+msgstr "লগইন ফিরে"
+
+#: .\templates\socialaccount\connections.html:6
+#: .\templates\socialaccount\connections.html:13
+msgid "Account Connections"
+msgstr "অ্যাকাউন্ট সংযোগ"
+
+#: .\templates\socialaccount\connections.html:18
+msgid ""
+"You can sign in to your account using any of the following third-party "
+"accounts:"
+msgstr ""
+"আপনি নিম্নলিখিত তৃতীয় পক্ষের যে কোনও অ্যাকাউন্ট ব্যবহার করে আপনার "
+"অ্যাকাউন্টে সাইন ইন করতে পারেন:"
+
+#: .\templates\socialaccount\connections.html:55
+msgid "You currently have no third-party accounts connected to this account."
+msgstr ""
+"আপনার বর্তমানে এই অ্যাকাউন্টের সাথে সংযুক্ত কোনও তৃতীয় পক্ষের অ্যাকাউন্ট "
+"নেই।"
+
+#: .\templates\socialaccount\connections.html:60
+msgid "Add a Third-Party Account"
+msgstr "একটি তৃতীয় পক্ষের অ্যাকাউন্ট যুক্ত করুন"
+
+#: .\templates\socialaccount\email\account_connected_message.txt:4
+#, python-format
+msgid ""
+"A third-party account from %(provider)s has been connected to your account."
+msgstr ""
+"%(সরবরাহকারী) এস থেকে তৃতীয় পক্ষের অ্যাকাউন্টটি আপনার অ্যাকাউন্টের সাথে "
+"সংযুক্ত হয়েছে।"
+
+#: .\templates\socialaccount\email\account_connected_subject.txt:3
+msgid "Third-Party Account Connected"
+msgstr "তৃতীয় পক্ষের অ্যাকাউন্ট সংযুক্ত"
+
+#: .\templates\socialaccount\email\account_disconnected_message.txt:4
+#, python-format
+msgid ""
+"A third-party account from %(provider)s has been disconnected from your "
+"account."
+msgstr ""
+"%(সরবরাহকারী) এর তৃতীয় পক্ষের অ্যাকাউন্টটি আপনার অ্যাকাউন্ট থেকে সংযোগ "
+"বিচ্ছিন্ন করা হয়েছে।"
+
+#: .\templates\socialaccount\email\account_disconnected_subject.txt:3
+msgid "Third-Party Account Disconnected"
+msgstr "তৃতীয় পক্ষের অ্যাকাউন্ট সংযোগ বিচ্ছিন্ন"
+
+#: .\templates\socialaccount\login.html:14
+#, python-format
+msgid "Connect %(provider)s"
+msgstr "সংযোগ %(সরবরাহকারী) s"
+
+#: .\templates\socialaccount\login.html:17
+#, python-format
+msgid "You are about to connect a new third-party account from %(provider)s."
+msgstr ""
+"আপনি %(সরবরাহকারী) এস থেকে একটি নতুন তৃতীয় পক্ষের অ্যাকাউন্ট সংযোগ করতে "
+"চলেছেন।"
+
+#: .\templates\socialaccount\login.html:21
+#, python-format
+msgid "Sign In Via %(provider)s"
+msgstr "%(সরবরাহকারী) এর মাধ্যমে সাইন ইন করুন"
+
+#: .\templates\socialaccount\login.html:24
+#, python-format
+msgid ""
+"You are about to sign in using a third-party account from %(provider)s."
+msgstr ""
+"আপনি %(সরবরাহকারী) এস থেকে তৃতীয় পক্ষের অ্যাকাউন্ট ব্যবহার করে সাইন ইন করতে"
+" চলেছেন।"
+
+#: .\templates\socialaccount\login.html:52
+#: .\templates\socialaccount\login_redirect.html:12
+msgid "Continue"
+msgstr "চালিয়ে যান"
+
+#: .\templates\socialaccount\login_cancelled.html:6
+#: .\templates\socialaccount\login_cancelled.html:13
+msgid "Login Cancelled"
+msgstr "লগইন বাতিল"
+
+#: .\templates\socialaccount\login_cancelled.html:17
+#, python-format
+msgid ""
+"You decided to cancel logging in to our site using one of your existing "
+"accounts. If this was a mistake, please proceed to <a href=\"%(login_url)s\""
+" class=\"font-medium text-indigo-600 hover:text-indigo-500 dark:text-"
+"indigo-400 dark:hover:text-indigo-300\">sign in</a>."
+msgstr ""
+"আপনি আপনার বিদ্যমান অ্যাকাউন্টগুলির মধ্যে একটি ব্যবহার করে আমাদের সাইটে লগ "
+"ইন বাতিল করার সিদ্ধান্ত নিয়েছেন। যদি এটি কোনও ভুল হয় তবে দয়া করে <একটি "
+"href = \"%(লগইন_আরএল) এর\" শ্রেণি = \"ফন্ট-মিডিয়াম পাঠ্য-ইন্ডিগো -600 "
+"হোভার: পাঠ্য-ইন্দিগো -500 ডার্ক: পাঠ্য-ইন্দিগো -400 অন্ধকার: হোভার: টেক্সট-"
+"ইন্ডিগো -300\"> </a> সাইন ইন করুন।"
+
+#: .\templates\socialaccount\login_redirect.html:9
+msgid "Redirecting..."
+msgstr "পুনর্নির্দেশ ..."
+
+#: .\templates\socialaccount\login_redirect.html:10
+msgid "You are being redirected to the application."
+msgstr "আপনাকে আবেদনে পুনঃনির্দেশ করা হচ্ছে।"
+
+#: .\templates\socialaccount\messages\account_connected.txt:2
+msgid "The third-party account has been connected."
+msgstr "তৃতীয় পক্ষের অ্যাকাউন্টটি সংযুক্ত করা হয়েছে।"
+
+#: .\templates\socialaccount\messages\account_connected_other.txt:2
+msgid "The third-party account is already connected to a different account."
+msgstr ""
+"তৃতীয় পক্ষের অ্যাকাউন্টটি ইতিমধ্যে একটি আলাদা অ্যাকাউন্টের সাথে সংযুক্ত "
+"রয়েছে।"
+
+#: .\templates\socialaccount\messages\account_disconnected.txt:2
+msgid "The third-party account has been disconnected."
+msgstr "তৃতীয় পক্ষের অ্যাকাউন্টটি সংযোগ বিচ্ছিন্ন হয়ে গেছে।"
+
+#: .\templates\socialaccount\signup.html:22
+#, python-format
+msgid ""
+"\n"
+"                    You are about to use your %(provider_name)s account to login to %(site_name)s. As a final step, please complete the following form:\n"
+"                "
+msgstr ""
+"আপনি %(সাইট_নাম) এস -তে লগইন করতে আপনার %(সরবরাহকারী_নাম) এর অ্যাকাউন্টটি "
+"ব্যবহার করতে চলেছেন। চূড়ান্ত পদক্ষেপ হিসাবে, দয়া করে নিম্নলিখিত ফর্মটি "
+"সম্পূর্ণ করুন:"
+
+#: .\templates\socialaccount\signup.html:56
+msgid "Already have an account?"
+msgstr "ইতিমধ্যে একটি অ্যাকাউন্ট আছে?"
+
+#: .\templates\usersessions\messages\sessions_logged_out.txt:2
+msgid "Signed out of all other sessions."
+msgstr "অন্যান্য সমস্ত সেশনের মধ্যে সাইন আউট।"
+
+#: .\templates\usersessions\usersession_list.html:6
+#: .\templates\usersessions\usersession_list.html:10
+msgid "Sessions"
+msgstr "সেশনস"
+
+#: .\templates\usersessions\usersession_list.html:24
+msgid "Started At"
+msgstr "শুরু"
+
+#: .\templates\usersessions\usersession_list.html:27
+msgid "IP Address"
+msgstr "আইপি ঠিকানা"
+
+#: .\templates\usersessions\usersession_list.html:30
+msgid "Browser"
+msgstr "ব্রাউজার"
+
+#: .\templates\usersessions\usersession_list.html:34
+msgid "Last seen at"
+msgstr "সর্বশেষ দেখা"
+
+#: .\templates\usersessions\usersession_list.html:59
+msgid "Current"
+msgstr "কারেন্ট"
+
+#: .\templates\usersessions\usersession_list.html:72
+msgid "Sign Out Other Sessions"
+msgstr "অন্যান্য সেশন সাইন আউট"

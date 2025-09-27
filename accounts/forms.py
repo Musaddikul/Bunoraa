@@ -6,11 +6,18 @@ from allauth.account.forms import (
 )
 from allauth.account.forms import SignupForm, LoginForm
 from allauth.socialaccount.forms import SignupForm as SocialSignupForm
-from .models import User, UserAddress
+from .models import User, UserAddress, UserSettings # Import UserSettings
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
 from .constants import GENDER_CHOICES
 import re
+from django_countries.fields import Country # Import Country for choices
+from currencies.models import Currency # Import Currency for choices
+from django.conf import settings # Import settings
+
+# Common Tailwind classes for form inputs
+TAILWIND_INPUT_CLASSES = "block w-full rounded-md border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+TAILWIND_SELECT_CLASSES = "block w-full rounded-md border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-2 px-3" # Added py-2 px-3 for select
 
 class UserProfileForm(forms.ModelForm):
     phone_number = forms.CharField(
@@ -19,7 +26,7 @@ class UserProfileForm(forms.ModelForm):
         required=True,
         widget=forms.TextInput(attrs={
             'placeholder': '+8801XXXXXXXXX',
-            'class': 'form-control'
+            'class': TAILWIND_INPUT_CLASSES # Changed from 'form-control'
         })
     )
 
@@ -33,10 +40,10 @@ class UserProfileForm(forms.ModelForm):
             'profile_picture',
         ]
         widgets = {
-            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'date_of_birth': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
-            'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
+            'first_name': forms.TextInput(attrs={'class': TAILWIND_INPUT_CLASSES}), # Changed
+            'last_name': forms.TextInput(attrs={'class': TAILWIND_INPUT_CLASSES}),  # Changed
+            'date_of_birth': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': TAILWIND_INPUT_CLASSES}), # Changed
+            'profile_picture': forms.FileInput(attrs={'class': TAILWIND_INPUT_CLASSES}), # Changed
         }
         labels = {
             'profile_picture': _('Profile Picture'),
@@ -68,7 +75,7 @@ class UserAddressForm(forms.ModelForm):
                 label=_("Phone Number"),
                 max_length=17,
                 required=True,
-                widget=forms.TextInput(attrs={'placeholder': '+8801XXXXXXXXX', 'class': 'form-control'})
+                widget=forms.TextInput(attrs={'placeholder': '+8801XXXXXXXXX', 'class': TAILWIND_INPUT_CLASSES})
             ),
     division = forms.CharField(required=False, widget=forms.HiddenInput())
     district = forms.CharField(required=False, widget=forms.HiddenInput())
@@ -89,13 +96,13 @@ class UserAddressForm(forms.ModelForm):
             'is_default': _('Set as default'),
         }
         widgets = {
-            'full_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Recipient name'}),
-            'address_line_1': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Street address or holding no'}),
-            'address_line_2': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Optional apartment, block, road'}),
-            'postal_code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '4-digit postal code'}),
+            'full_name': forms.TextInput(attrs={'class': TAILWIND_INPUT_CLASSES, 'placeholder': 'Recipient name'}),
+            'address_line_1': forms.TextInput(attrs={'class': TAILWIND_INPUT_CLASSES, 'placeholder': 'Street address or holding no'}),
+            'address_line_2': forms.TextInput(attrs={'class': TAILWIND_INPUT_CLASSES, 'placeholder': 'Optional apartment, block, road'}),
+            'postal_code': forms.TextInput(attrs={'class': TAILWIND_INPUT_CLASSES, 'placeholder': '4-digit postal code'}),
             'upazila': forms.HiddenInput(),
-            'country': forms.Select(attrs={'class': 'form-select'}),
-            'is_default': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'country': forms.Select(attrs={'class': TAILWIND_SELECT_CLASSES}),
+            'is_default': forms.CheckboxInput(attrs={'class': 'rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50'}), # Tailwind checkbox
         }
 
     def __init__(self, *args, **kwargs):
@@ -163,8 +170,7 @@ class CustomSignupForm(SignupForm):
         label=_('First Name'),
         widget=forms.TextInput(attrs={
             'placeholder': _('First Name'),
-            'class': 'form-control',
-            'autocomplete': 'given-name'
+            'class': TAILWIND_INPUT_CLASSES
         })
     )
     last_name = forms.CharField(
@@ -172,8 +178,7 @@ class CustomSignupForm(SignupForm):
         label=_('Last Name'),
         widget=forms.TextInput(attrs={
             'placeholder': _('Last Name'),
-            'class': 'form-control',
-            'autocomplete': 'family-name'
+            'class': TAILWIND_INPUT_CLASSES
         })
     )
     username = forms.CharField(
@@ -181,8 +186,7 @@ class CustomSignupForm(SignupForm):
         label=_('Username'),
         widget=forms.TextInput(attrs={
             'placeholder': _('Username'),
-            'class': 'form-control',
-            'autocomplete': 'username'
+            'class': TAILWIND_INPUT_CLASSES
         })
     )
     phone_number = forms.CharField(
@@ -190,8 +194,7 @@ class CustomSignupForm(SignupForm):
         label=_('Phone Number'),
         widget=forms.TextInput(attrs={
             'placeholder': _('+8801XXXXXXXXX'),
-            'class': 'form-control',
-            'autocomplete': 'tel'
+            'class': TAILWIND_INPUT_CLASSES
         }),
         help_text=_('We may use this for order updates')
     )
@@ -199,7 +202,7 @@ class CustomSignupForm(SignupForm):
         choices=GENDER_CHOICES,
         label=_('Gender'),
         widget=forms.Select(attrs={
-            'class': 'form-control',
+            'class': TAILWIND_SELECT_CLASSES,
         }),
         required=False
     )
@@ -209,7 +212,7 @@ class CustomSignupForm(SignupForm):
         error_messages={
             'required': _('You must accept the terms and conditions to register.')
         },
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+        widget=forms.CheckboxInput(attrs={'class': 'rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50'}) # Tailwind checkbox
     )
 
     def __init__(self, *args, **kwargs):
@@ -222,19 +225,19 @@ class CustomSignupForm(SignupForm):
         # Update widget attributes
         if 'email' in self.fields:
             self.fields['email'].widget.attrs.update({
-                'class': 'form-control',
+                'class': TAILWIND_INPUT_CLASSES,
                 'placeholder': _('Email address'),
                 'autocomplete': 'email'
             })
         if 'password1' in self.fields:
             self.fields['password1'].widget.attrs.update({
-                'class': 'form-control',
+                'class': TAILWIND_INPUT_CLASSES,
                 'placeholder': _('Password'),
                 'autocomplete': 'new-password'
             })
-        if 'password2' in self.fields:
+        if 'password2' in self.fields: # Added 'in self.fields' check
             self.fields['password2'].widget.attrs.update({
-                'class': 'form-control',
+                'class': TAILWIND_INPUT_CLASSES,
                 'placeholder': _('Confirm Password'),
                 'autocomplete': 'new-password'
             })
@@ -255,11 +258,10 @@ class CustomSignupForm(SignupForm):
     
     def save(self, request):
         user = super().save(request)
-        user.first_name = self.cleaned_data['first_name']
-        user.last_name = self.cleaned_data['last_name']
-        user.username = self.cleaned_data['username']
-        user.phone_number = self.cleaned_data['phone_number']
-        user.gender = self.cleaned_data['gender']
+        user.first_name = self.cleaned_data.get('first_name', '')
+        user.last_name = self.cleaned_data.get('last_name', '')
+        user.phone_number = self.cleaned_data.get('phone_number', '')
+        user.gender = self.cleaned_data.get('gender', '')
         user.save()
         return user
 
@@ -272,15 +274,15 @@ class CustomLoginForm(LoginForm):
         super().__init__(*args, **kwargs)
         
         # Customize the login field (email or username)
-        self.fields['login'].widget = forms.TextInput(attrs={
-            'class': 'form-control',
+        self.fields['login'].widget.attrs.update({
+            'class': TAILWIND_INPUT_CLASSES,
             'placeholder': _('Email or Username'),
             'autocomplete': 'username'
         })
         
         # Customize the password field
-        self.fields['password'].widget = forms.PasswordInput(attrs={
-            'class': 'form-control',
+        self.fields['password'].widget.attrs.update({
+            'class': TAILWIND_INPUT_CLASSES,
             'placeholder': _('Password'),
             'autocomplete': 'current-password'
         })
@@ -304,7 +306,7 @@ class CustomPasswordResetForm(AllauthPasswordResetForm):
         max_length=254,
         widget=forms.EmailInput(attrs={
             'autocomplete': 'email',
-            'class': 'form-control',
+            'class': TAILWIND_INPUT_CLASSES,
             'placeholder': _('Enter your email address')
         })
     )
@@ -318,7 +320,7 @@ class CustomSetPasswordForm(AllauthSetPasswordForm):
         label=_("New password"),
         widget=forms.PasswordInput(attrs={
             'autocomplete': 'new-password',
-            'class': 'form-control',
+            'class': TAILWIND_INPUT_CLASSES,
             'placeholder': _('New password')
         }),
         strip=False,
@@ -329,7 +331,7 @@ class CustomSetPasswordForm(AllauthSetPasswordForm):
         strip=False,
         widget=forms.PasswordInput(attrs={
             'autocomplete': 'new-password',
-            'class': 'form-control',
+            'class': TAILWIND_INPUT_CLASSES,
             'placeholder': _('Confirm new password')
         }),
     )
@@ -340,8 +342,7 @@ class CustomSocialSignupForm(SocialSignupForm):
         label=_('First Name'),
         widget=forms.TextInput(attrs={
             'placeholder': _('First Name'),
-            'class': 'form-control',
-            'autocomplete': 'given-name'
+            'class': TAILWIND_INPUT_CLASSES
         })
     )
     last_name = forms.CharField(
@@ -349,8 +350,7 @@ class CustomSocialSignupForm(SocialSignupForm):
         label=_('Last Name'),
         widget=forms.TextInput(attrs={
             'placeholder': _('Last Name'),
-            'class': 'form-control',
-            'autocomplete': 'family-name'
+            'class': TAILWIND_INPUT_CLASSES
         })
     )
     phone_number = forms.CharField(
@@ -358,8 +358,7 @@ class CustomSocialSignupForm(SocialSignupForm):
         label=_('Phone Number'),
         widget=forms.TextInput(attrs={
             'placeholder': _('+8801XXXXXXXXX'),
-            'class': 'form-control',
-            'autocomplete': 'tel'
+            'class': TAILWIND_INPUT_CLASSES
         }),
         help_text=_('We may use this for order updates')
     )
@@ -367,7 +366,7 @@ class CustomSocialSignupForm(SocialSignupForm):
         choices=GENDER_CHOICES,
         label=_('Gender'),
         widget=forms.Select(attrs={
-            'class': 'form-control',
+            'class': TAILWIND_SELECT_CLASSES,
         }),
         required=False
     )
@@ -378,13 +377,13 @@ class CustomSocialSignupForm(SocialSignupForm):
         # and apply styling
         if 'email' in self.fields:
             self.fields['email'].widget.attrs.update({
-                'class': 'form-control',
+                'class': TAILWIND_INPUT_CLASSES,
                 'placeholder': _('Email address'),
                 'autocomplete': 'email'
             })
         if 'username' in self.fields:
             self.fields['username'].widget.attrs.update({
-                'class': 'form-control',
+                'class': TAILWIND_INPUT_CLASSES,
                 'placeholder': _('Username'),
                 'autocomplete': 'username'
             })
@@ -397,3 +396,24 @@ class CustomSocialSignupForm(SocialSignupForm):
         user.gender = self.cleaned_data.get('gender', '')
         user.save()
         return user
+
+
+from core.models import Language # Import Language model
+
+class UserSettingsForm(forms.ModelForm):
+    language = forms.ModelChoiceField(
+        queryset=Language.objects.all(),
+        to_field_name='code', # Use 'code' as the value for the select options
+        empty_label=None, # Or provide a default empty label if desired
+        label=_('Preferred Language'),
+        widget=forms.Select(attrs={'class': TAILWIND_SELECT_CLASSES})
+    )
+
+    class Meta:
+        model = UserSettings
+        fields = ['currency', 'language', 'country', 'timezone']
+        widgets = {
+            'currency': forms.Select(attrs={'class': TAILWIND_SELECT_CLASSES}),
+            'country': forms.Select(attrs={'class': TAILWIND_SELECT_CLASSES}),
+            'timezone': forms.TextInput(attrs={'class': TAILWIND_INPUT_CLASSES}),
+        }

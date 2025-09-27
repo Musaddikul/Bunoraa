@@ -50,3 +50,5 @@ tailwindcss.config.js
 *.sh
 *.exe
 *.onnx
+*.zip
+*.tar.gz

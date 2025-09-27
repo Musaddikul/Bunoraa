@@ -66,3 +66,40 @@ class TaxSetting(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.vat_rate * 100:.2f}%)"
+
+class Language(models.Model):
+    code = models.CharField(
+        _("Language Code"),
+        max_length=10,
+        unique=True,
+        help_text=_("e.g., en, bn, fr. Must match Django's LANGUAGES setting.")
+    )
+    name = models.CharField(
+        _("Language Name"),
+        max_length=50,
+        help_text=_("Full name of the language, e.g., English, Bengali.")
+    )
+    is_active = models.BooleanField(
+        _("Active"),
+        default=True,
+        help_text=_("Is this language available for users to select?")
+    )
+    is_default = models.BooleanField(
+        _("Default"),
+        default=False,
+        help_text=_("Is this the default language for the site?")
+    )
+
+    class Meta:
+        verbose_name = _("Language")
+        verbose_name_plural = _("Languages")
+        ordering = ['name']
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+
+    def save(self, *args, **kwargs):
+        if self.is_default:
+            # Ensure only one language is the default
+            Language.objects.filter(is_default=True).exclude(pk=self.pk).update(is_default=False)
+        super().save(*args, **kwargs)

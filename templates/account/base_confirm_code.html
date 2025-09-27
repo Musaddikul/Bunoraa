@@ -9,9 +9,9 @@
             <img src="{% static 'images/logo.png' %}" alt="{{ site_name }} Logo" class="h-12 w-auto">
         </a>
         <h2 class="mt-6 text-3xl font-extrabold text-gray-900">{% block title %}{% endblock %}</h2>
-        <p class="mt-2 text-sm text-gray-600">
-            {% blocktranslate %}We've sent a code to {% block recipient %}{% endblock %}. The code expires shortly, so please enter it soon.{% endblocktranslate %}
-        </p>
+                    <p class="mt-2 text-sm text-gray-600">
+                {% translate "We've sent a code to" %} {% block recipient %}{% endblock %}. {% translate "The code expires shortly, so please enter it soon." %}
+            </p>
     </div>
 
     <form method="post" action="{% block action_url %}{% endblock %}" class="space-y-6">

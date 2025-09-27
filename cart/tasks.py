@@ -24,18 +24,15 @@ def send_abandoned_cart_notification(self, cart_id: int):
         # Only send if cart is not checked out, not converted, and not already abandoned
         # and if it has items.
         if cart.checked_out or cart.converted or cart.abandoned or cart.is_empty:
-            logger.info(f"Cart {cart_id} is not eligible for abandonment notification (checked out, converted, or empty).")
             return
 
         # Define abandonment threshold (e.g., 24 hours of inactivity)
         abandonment_threshold_hours = getattr(settings, 'CART_ABANDONMENT_THRESHOLD_HOURS', 24)
         if cart.updated_at > timezone.now() - timezone.timedelta(hours=abandonment_threshold_hours):
-            logger.info(f"Cart {cart_id} not yet abandoned (last updated {cart.updated_at}).")
             return
 
         # Mark the cart as abandoned
         cart.mark_abandoned()
-        logger.info(f"Cart {cart_id} marked as abandoned. Preparing notification.")
 
         # Prepare email content
         subject = _("Don't Miss Out! Your Cart Awaits at {site_name}").format(site_name=settings.SITE_NAME)
@@ -82,7 +79,6 @@ def send_abandoned_cart_notification(self, cart_id: int):
             html_message=html_message,
             fail_silently=False,
         )
-        logger.info(f"Abandoned cart notification sent for cart {cart_id} to {recipient_list}.")
 
     except Cart.DoesNotExist:
         logger.warning(f"Abandoned cart task: Cart {cart_id} does not exist. Skipping notification.")
@@ -103,8 +99,6 @@ def find_and_notify_abandoned_carts():
     from .models import Cart # Import inside task to avoid circular imports
     from django.utils import timezone
     from django.conf import settings
-
-    logger.info("Starting to find and notify abandoned carts.")
 
     abandonment_threshold_hours = getattr(settings, 'CART_ABANDONMENT_THRESHOLD_HOURS', 24)
     time_threshold = timezone.now() - timezone.timedelta(hours=abandonment_threshold_hours)
@@ -128,9 +122,6 @@ def find_and_notify_abandoned_carts():
     for cart in eligible_carts:
         # Dispatch the individual notification task for each eligible cart
         send_abandoned_cart_notification.delay(cart.id)
-        logger.info(f"Dispatched abandoned cart notification for Cart ID: {cart.id} (User: {cart.user.email if cart.user else 'Anonymous'}).")
-
-    logger.info(f"Finished finding and notifying abandoned carts. {eligible_carts.count()} tasks dispatched.")
 
 @shared_task
 def generate_invoice_task(order_id):

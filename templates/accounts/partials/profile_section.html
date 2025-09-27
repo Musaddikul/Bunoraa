@@ -34,40 +34,42 @@
       {% if not user.email_verified %}
       <a href="{% url 'account_email' %}?verify"
          class="mt-2 text-yellow-700 text-sm bg-yellow-100 px-3 py-1 rounded-full">
-        <i class="fas fa-exclamation-circle mr-1"></i> Unverified
+        <i class="fas fa-exclamation-circle mr-1"></i> {% translate "Unverified" %}
       </a>
       {% else %}
       <span class="mt-2 text-green-700 text-sm bg-green-100 px-3 py-1 rounded-full">
-        <i class="fas fa-check-circle mr-1"></i> Verified
+        <i class="fas fa-check-circle mr-1"></i> {% translate "Verified" %}
       </span>
       {% endif %}
     </div>
 
     <nav class="mt-8 space-y-3 w-full">
       <a href="#" class="block px-4 py-2 bg-indigo-100 text-indigo-700 rounded-md font-medium">
-        <i class="fas fa-user mr-2"></i> Personal Info
+        <i class="fas fa-user mr-2"></i> {% translate "Personal Info" %}
       </a>
       <a href="{% url 'custom_order:list' %}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md">
-        <i class="fas fa-tools mr-2"></i> Custom Order Status
+        <i class="fas fa-tools mr-2"></i> {% translate "Custom Order Status" %}
       </a>
       {% if request.user.addresses.count < 4 %}
         <a href="{% url 'accounts:add_address' %}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md">
-          <i class="fas fa-truck mr-2"></i> Create Shipping Address
+          <i class="fas fa-truck mr-2"></i> {% translate "Create Shipping Address" %}
         </a>
       {% else %}
         <span class="block px-4 py-2 text-gray-400 dark:text-gray-500 rounded-md cursor-not-allowed" title="Maximum of 4 addresses reached">
-          <i class="fas fa-truck mr-2"></i> Shipping Address
-          <span class="text-xs text-yellow-600 dark:text-yellow-400 ml-2">(Max reached)</span>
+          <i class="fas fa-truck mr-2"></i> {% translate "Shipping Address" %}
+          <span class="text-xs text-yellow-600 dark:text-yellow-400 ml-2">{% translate "(Max reached)" %}</span>
         </span>
       {% endif %}
       <a href="{% url 'wishlist:detail' %}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md">
-        <i class="fas fa-heart mr-2"></i> Wishlist
+        <i class="fas fa-heart mr-2"></i> {% translate "Wishlist" %}
       </a>
-      <a href="{% url 'orders:order_list' %}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md">
-        <i class="fas fa-shopping-bag mr-2"></i> My Orders
+      <i class="fas fa-shopping-bag mr-2"></i> {% translate "My Orders" %}
+      </a>
+      <a href="{% url 'accounts:user_settings' %}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md">
+        <i class="fas fa-cog mr-2"></i> {% translate "User Settings" %}
       </a>
       <a href="{% url 'account_reset_password' %}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md">
-        <i class="fas fa-key mr-2"></i> Change Password
+        <i class="fas fa-key mr-2"></i> {% translate "Change Password" %}
       </a>
     </nav>
   </aside>
@@ -82,17 +84,17 @@
             hx-target="#profile-section"
             hx-swap="outerHTML">
         {% csrf_token %}
-        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Personal Information</h2>
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{% translate "Personal Information" %}</h2>
 
-        {% if form.errors %}
+        {% if profile_form.errors %}
         <div class="mb-4 p-3 bg-red-100 text-red-700 rounded text-sm">
           <ul class="list-disc ml-5 space-y-1">
-            {% for field in form %}
+            {% for field in profile_form %}
               {% for error in field.errors %}
                 <li><strong>{{ field.label }}:</strong> {{ error }}</li>
               {% endfor %}
             {% endfor %}
-            {% for error in form.non_field_errors %}
+            {% for error in profile_form.non_field_errors %}
               <li>{{ error }}</li>
             {% endfor %}
           </ul>
@@ -105,25 +107,25 @@
           <div class="relative group">
             <input
               type="text"
-              name="{{ form.first_name.name }}"
-              id="{{ form.first_name.id_for_label }}"
-              value="{{ form.first_name.value|default_if_none:'' }}"
+              name="{{ profile_form.first_name.name }}"
+              id="{{ profile_form.first_name.id_for_label }}"
+              value="{{ profile_form.first_name.value|default_if_none:'' }}"
               placeholder=" "
               class="peer block w-full rounded-xl bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 px-4 pt-6 pb-2 shadow-md border border-gray-300 text-gray-800 placeholder-transparent transition-all duration-300
                     focus:outline-none focus:border-indigo-500 focus:shadow-lg focus:ring-4 focus:ring-indigo-100
                     group-hover:border-gray-400"
             />
             <label
-              for="{{ form.first_name.id_for_label }}"
+              for="{{ profile_form.first_name.id_for_label }}"
               class="absolute left-4 top-3.5 text-base text-gray-500 transition-all duration-300 pointer-events-none
                     peer-focus:top-[-0.75rem] peer-focus:left-3 peer-focus:text-sm peer-focus:text-indigo-600 peer-focus:bg-white peer-focus:px-1
                     peer-valid:top-[-0.75rem] peer-valid:left-3 peer-valid:text-sm peer-valid:text-indigo-600 peer-valid:bg-white peer-valid:px-1
                     peer-placeholder-shown:top-3.5 peer-placeholder-shown:left-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400"
             >
-              First Name
+              {% translate "First Name" %}
             </label>
-            {% if form.first_name.errors %}
-              <p class="mt-1 text-sm text-red-600">{{ form.first_name.errors.0 }}</p>
+            {% if profile_form.first_name.errors %}
+              <p class="mt-1 text-sm text-red-600">{{ profile_form.first_name.errors.0 }}</p>
             {% endif %}
           </div>
 
@@ -131,25 +133,25 @@
           <div class="relative group">
             <input
               type="text"
-              name="{{ form.last_name.name }}"
-              id="{{ form.last_name.id_for_label }}"
-              value="{{ form.last_name.value|default_if_none:'' }}"
+              name="{{ profile_form.last_name.name }}"
+              id="{{ profile_form.last_name.id_for_label }}"
+              value="{{ profile_form.last_name.value|default_if_none:'' }}"
               placeholder=" "
               class="peer block w-full rounded-xl bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 px-4 pt-6 pb-2 shadow-md border border-gray-300 text-gray-800 placeholder-transparent transition-all duration-300
                     focus:outline-none focus:border-indigo-500 focus:shadow-lg focus:ring-4 focus:ring-indigo-100
                     group-hover:border-gray-400"
             />
             <label
-              for="{{ form.last_name.id_for_label }}"
+              for="{{ profile_form.last_name.id_for_label }}"
               class="absolute left-4 top-3.5 text-base text-gray-500 transition-all duration-300 pointer-events-none
                     peer-focus:top-[-0.75rem] peer-focus:left-3 peer-focus:text-sm peer-focus:text-indigo-600 peer-focus:bg-white peer-focus:px-1
                     peer-valid:top-[-0.75rem] peer-valid:left-3 peer-valid:text-sm peer-valid:text-indigo-600 peer-valid:bg-white peer-valid:px-1
                     peer-placeholder-shown:top-3.5 peer-placeholder-shown:left-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400"
             >
-              Last Name
+              {% translate "Last Name" %}
             </label>
-            {% if form.last_name.errors %}
-              <p class="mt-1 text-sm text-red-600">{{ form.last_name.errors.0 }}</p>
+            {% if profile_form.last_name.errors %}
+              <p class="mt-1 text-sm text-red-600">{{ profile_form.last_name.errors.0 }}</p>
             {% endif %}
           </div>
 
@@ -157,25 +159,25 @@
           <div class="relative group">
             <input
               type="tel"
-              name="{{ form.phone_number.name }}"
-              id="{{ form.phone_number.id_for_label }}"
-              value="{{ form.phone_number.value|default_if_none:'' }}"
+              name="{{ profile_form.phone_number.name }}"
+              id="{{ profile_form.phone_number.id_for_label }}"
+              value="{{ profile_form.phone_number.value|default_if_none:'' }}"
               placeholder=" "
               class="peer block w-full rounded-xl bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 px-4 pt-6 pb-2 shadow-md border border-gray-300 text-gray-800 placeholder-transparent transition-all duration-300
                     focus:outline-none focus:border-indigo-500 focus:shadow-lg focus:ring-4 focus:ring-indigo-100
                     group-hover:border-gray-400"
             />
             <label
-              for="{{ form.phone_number.id_for_label }}"
+              for="{{ profile_form.phone_number.id_for_label }}"
               class="absolute left-4 top-3.5 text-base text-gray-500 transition-all duration-300 pointer-events-none
                     peer-focus:top-[-0.75rem] peer-focus:left-3 peer-focus:text-sm peer-focus:text-indigo-600 peer-focus:bg-white peer-focus:px-1
                     peer-valid:top-[-0.75rem] peer-valid:left-3 peer-valid:text-sm peer-valid:text-indigo-600 peer-valid:bg-white peer-valid:px-1
                     peer-placeholder-shown:top-3.5 peer-placeholder-shown:left-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400"
             >
-              Phone Number
+              {% translate "Phone Number" %}
             </label>
-            {% if form.phone_number.errors %}
-              <p class="mt-1 text-sm text-red-600">{{ form.phone_number.errors.0 }}</p>
+            {% if profile_form.phone_number.errors %}
+              <p class="mt-1 text-sm text-red-600">{{ profile_form.phone_number.errors.0 }}</p>
             {% endif %}
           </div>
 
@@ -187,9 +189,9 @@
           <div class="relative group">
             <input
               type="date"
-              name="{{ form.date_of_birth.name }}"
-              id="{{ form.date_of_birth.id_for_label }}"
-              value="{{ form.date_of_birth.value|date:'Y-m-d' }}"
+              name="{{ profile_form.date_of_birth.name }}"
+              id="{{ profile_form.date_of_birth.id_for_label }}"
+              value="{{ profile_form.date_of_birth.value|date:'Y-m-d' }}"
               placeholder=" "
               required
               class="peer block w-full rounded-xl bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 px-4 pt-6 pb-2 shadow-md border border-gray-300 text-gray-800 placeholder-transparent transition-all duration-300
@@ -197,16 +199,16 @@
                     group-hover:border-gray-400"
             />
             <label
-              for="{{ form.date_of_birth.id_for_label }}"
+              for="{{ profile_form.date_of_birth.id_for_label }}"
               class="absolute left-4 top-3.5 text-base text-gray-500 transition-all duration-300 pointer-events-none
                     peer-focus:top-[-0.75rem] peer-focus:left-3 peer-focus:text-sm peer-focus:text-indigo-600 peer-focus:bg-white peer-focus:px-1
                     peer-valid:top-[-0.75rem] peer-valid:left-3 peer-valid:text-sm peer-valid:text-indigo-600 peer-valid:bg-white peer-valid:px-1
                     peer-placeholder-shown:top-3.5 peer-placeholder-shown:left-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400"
             >
-              Date of Birth
+              {% translate "Date of Birth" %}
             </label>
-            {% if form.date_of_birth.errors %}
-              <p class="mt-1 text-sm text-red-600">{{ form.date_of_birth.errors.0 }}</p>
+            {% if profile_form.date_of_birth.errors %}
+              <p class="mt-1 text-sm text-red-600">{{ profile_form.date_of_birth.errors.0 }}</p>
             {% endif %}
           </div>
 
@@ -214,17 +216,87 @@
 
         <!-- Email (disabled) -->
         <div class="relative mt-6">
-          <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Email</label>
+          <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{% translate "Email" %}</label>
           <input type="email" value="{{ user.email }}" disabled
-                 class="w-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-md py-2 px-3 cursor-not-allowed">
+                 class="w-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-md py-2 px-3 cursor-not-allowed">
         </div>
 
         <div class="mt-6 flex justify-end">
-          <button type="submit"
+          <button type="submit" name="profile_submit" # Add name attribute
                   class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md shadow-sm relative"
                   hx-indicator="#saving-label">
-            <span class="htmx-request:hidden">Save Changes</span>
-            <span id="saving-label" class="hidden htmx-request:inline-block">Saving...</span>
+            <span class="htmx-request:hidden">{% translate "Save Changes" %}</span>
+            <span id="saving-label" class="hidden htmx-request:inline-block">{% translate "Saving..." %}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- User Settings Form -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+      <form method="post" hx-post="{% url 'accounts:profile' %}" hx-target="#profile-section" hx-swap="outerHTML">
+        {% csrf_token %}
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{% translate "User Preferences" %}</h2>
+
+        {% if settings_form.errors %}
+        <div class="mb-4 p-3 bg-red-100 text-red-700 rounded text-sm">
+          <ul class="list-disc ml-5 space-y-1">
+            {% for field in settings_form %}
+              {% for error in field.errors %}
+                <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+              {% endfor %}
+            {% endfor %}
+            {% for error in settings_form.non_field_errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {# Currency Field #}
+          <div class="relative group">
+            <label for="{{ settings_form.currency.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ settings_form.currency.label }}</label>
+            {{ settings_form.currency }}
+            {% if settings_form.currency.errors %}
+              <p class="mt-1 text-sm text-red-600">{{ settings_form.currency.errors.0 }}</p>
+            {% endif %}
+          </div>
+
+          {# Language Field #}
+          <div class="relative group">
+            <label for="{{ settings_form.language.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ settings_form.language.label }}</label>
+            {{ settings_form.language }}
+            {% if settings_form.language.errors %}
+              <p class="mt-1 text-sm text-red-600">{{ settings_form.language.errors.0 }}</p>
+            {% endif %}
+          </div>
+
+          {# Country Field #}
+          <div class="relative group">
+            <label for="{{ settings_form.country.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ settings_form.country.label }}</label>
+            {{ settings_form.country }}
+            {% if settings_form.country.errors %}
+              <p class="mt-1 text-sm text-red-600">{{ settings_form.country.errors.0 }}</p>
+            {% endif %}
+          </div>
+
+          {# Timezone Field #}
+          <div class="relative group">
+            <label for="{{ settings_form.timezone.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ settings_form.timezone.label }}</label>
+            {{ settings_form.timezone }}
+            {% if settings_form.timezone.errors %}
+              <p class="mt-1 text-sm text-red-600">{{ settings_form.timezone.errors.0 }}</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="mt-6 flex justify-end">
+          <button type="submit" name="settings_submit" # Add name attribute
+                  class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md shadow-sm relative"
+                  hx-indicator="#saving-label-settings">
+            <span class="htmx-request:hidden">{% translate "Save Settings" %}</span>
+            <span id="saving-label-settings" class="hidden htmx-request:inline-block">{% translate "Saving..." %}</span>
           </button>
         </div>
       </form>
@@ -233,23 +305,23 @@
     <!-- Shipping Address Section -->
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Shipping Addresses</h2>
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{% translate "Shipping Addresses" %}</h2>
         {% if addresses|length < 4 %}
           <a href="{% url 'accounts:add_address' %}" class="btn btn-sm btn-primary">
-            <i class="fas fa-plus mr-1"></i> Add New
+            <i class="fas fa-plus mr-1"></i> {% translate "Add New" %}
           </a>
         {% else %}
           <button class="btn btn-sm btn-primary opacity-50 cursor-not-allowed" disabled>
-            <i class="fas fa-plus mr-1"></i> Add New
+            <i class="fas fa-plus mr-1"></i> {% translate "Add New" %}
           </button>
-          <span class="sr-only">Maximum of 4 addresses reached</span>
+          <span class="sr-only">{% translate "Maximum of 4 addresses reached" %}</span>
         {% endif %}
       </div>
 
       {% if addresses|length >= 4 %}
         <div class="mb-4 p-3 bg-yellow-100 text-yellow-800 rounded text-sm">
           <i class="fas fa-info-circle mr-1"></i>
-          You've reached the maximum of 4 addresses. Delete an existing address to add a new one.
+          {% translate "You've reached the maximum of 4 addresses. Delete an existing address to add a new one." %}
         </div>
       {% endif %}
 
@@ -260,7 +332,7 @@
           <div class="flex justify-between items-center">
             <h4 class="font-semibold text-gray-900 dark:text-gray-200">{{ address.full_name }}</h4>
             {% if address.is_default %}
-            <span class="text-xs bg-indigo-100 text-indigo-800 rounded-full px-2 py-0.5">Default</span>
+            <span class="text-xs bg-indigo-100 text-indigo-800 rounded-full px-2 py-0.5">{% translate "Default" %}</span>
             {% endif %}
           </div>
           <p class="text-sm text-gray-600 dark:text-gray-300">{{ address.address_line_1 }}</p>
@@ -269,10 +341,10 @@
           <p class="text-sm text-gray-600 dark:text-gray-300">Phone: {{ address.phone_number }}</p>
 
           <div class="flex gap-3 mt-4">
-            <a href="{% url 'accounts:edit_address' address.id %}" class="btn btn-sm btn-outline">Edit</a>
+            <a href="{% url 'accounts:edit_address' address.id %}" class="btn btn-sm btn-outline">{% translate "Edit" %}</a>
             <a href="#" data-url="{% url 'accounts:delete_address' address.pk %}" 
               class="delete-address btn btn-sm btn-outline text-red-600 hover:text-red-900">
-              Delete
+              {% translate "Delete" %}
             </a>
             <!-- <button hx-post="{% url 'accounts:delete_address' address.id %}"
                     hx-confirm="Are you sure you want to delete this address?"
@@ -285,7 +357,7 @@
             {% if not address.is_default %}
             <form method="post" action="{% url 'accounts:set_default_address' address.id %}">
               {% csrf_token %}
-              <button type="submit" class="btn btn-sm btn-secondary">Set Default</button>
+              <button type="submit" class="btn btn-sm btn-secondary">{% translate "Set Default" %}</button>
             </form>
             {% endif %}
           </div>
@@ -294,7 +366,7 @@
       </div>
       {% else %}
       <div class="text-sm text-gray-500 dark:text-gray-400 mt-4">
-        <i class="fas fa-info-circle mr-1"></i> No shipping addresses saved yet.
+        <i class="fas fa-info-circle mr-1"></i> {% translate "No shipping addresses saved yet." %}
       </div>
       {% endif %}
     </div>
@@ -307,7 +379,7 @@
       document.querySelectorAll('.delete-address').forEach(button => {
           button.addEventListener('click', function(e) {
               e.preventDefault();
-              if (confirm('Are you sure you want to delete this address?')) {
+              if (confirm('{% translate "Are you sure you want to delete this address?" %}')) {
                   const form = document.createElement('form');
                   form.method = 'POST';
                   form.action = this.dataset.url;

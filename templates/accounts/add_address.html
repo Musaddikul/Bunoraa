@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load i18n %}
 
 {% block title %}Add Shipping Address - {{ site_name }}{% endblock %}
 
@@ -20,12 +21,10 @@
 
     <!-- Header -->
     <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Add Shipping Address</h1>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{% translate "Add Shipping Address" %}</h1>
       <a href="{% url 'accounts:profile' %}" class="inline-flex items-center text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
-        <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
         </svg>
-        Back to Profile
+        {% translate "Back to Profile" %}
       </a>
     </div>
 
@@ -44,8 +43,7 @@
           <input type="text" name="full_name" id="id_full_name" placeholder=" " required 
                  value="{{ form.full_name.value|default:'' }}"
                  class="peer w-full px-3 pt-5 pb-2 bg-transparent border border-gray-300 dark:border-gray-600 text-gray-900 dark:bg-gray-900 dark:text-gray-200 rounded-md placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <label for="id_full_name" class="absolute left-3 top-2 text-sm text-gray-600 dark:text-gray-400 peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-focus:top-2 peer-focus:text-sm peer-focus:text-blue-500">
-            Full Name
+          {% translate "Full Name" %}
           </label>
         </div>
 
@@ -54,7 +52,8 @@
                  pattern="\+8801[3-9]\d{8}" value="{{ form.phone_number.value|default:'' }}"
                  class="peer w-full px-3 pt-5 pb-2 bg-transparent border border-gray-300 dark:border-gray-600 text-gray-900 dark:bg-gray-900 dark:text-gray-200 rounded-md placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500" />
           <label for="id_phone_number" class="absolute left-3 top-2 text-sm text-gray-600 dark:text-gray-400 peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-focus:top-2 peer-focus:text-sm peer-focus:text-blue-500">
-            Phone Number
+            {% translate "Phone Number" %}
+          </label>
           </label>
         </div>
       </div>
@@ -65,7 +64,7 @@
                value="{{ form.address_line_1.value|default:'' }}"
                class="peer w-full px-3 pt-5 pb-2 bg-transparent border border-gray-300 dark:border-gray-600 text-gray-900 dark:bg-gray-900 dark:text-gray-200 rounded-md placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500" />
         <label for="id_address_line_1" class="absolute left-3 top-2 text-sm text-gray-600 dark:text-gray-400 peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-focus:top-2 peer-focus:text-sm peer-focus:text-blue-500">
-          Address Line
+          {% translate "Address Line" %}
         </label>
       </div>
 
@@ -74,34 +73,34 @@
         <div class="relative">
           <select name="division" x-model="shippingInfo.division" @change="shippingInfo.district = ''; shippingInfo.upazila = ''"
                   class="w-full pt-5 pb-2 px-3 bg-transparent border border-gray-300 dark:border-gray-600 text-gray-900 dark:bg-gray-900 dark:text-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-            <option value="" disabled selected>Select Division</option>
+            <option value="" disabled selected>{% translate "Select Division" %}</option>
             <template x-for="d in availableDivisions" :key="d">
               <option :value="d" x-text="d" :selected="d === shippingInfo.division"></option>
             </template>
           </select>
-          <label class="absolute left-3 top-2 text-sm text-gray-600 dark:text-gray-400">Division</label>
+          <label class="absolute left-3 top-2 text-sm text-gray-600 dark:text-gray-400">{% translate "Division" %}</label>
         </div>
 
         <div class="relative">
           <select name="district" x-model="shippingInfo.district" @change="shippingInfo.upazila = ''" :disabled="!shippingInfo.division"
                   class="w-full pt-5 pb-2 px-3 bg-transparent border border-gray-300 dark:border-gray-600 text-gray-900 dark:bg-gray-900 dark:text-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-            <option value="" disabled selected>Select District</option>
+            <option value="" disabled selected>{% translate "Select District" %}</option>
             <template x-for="d in availableDistricts" :key="d">
               <option :value="d" x-text="d" :selected="d === shippingInfo.district"></option>
             </template>
           </select>
-          <label class="absolute left-3 top-2 text-sm text-gray-600 dark:text-gray-400">District</label>
+          <label class="absolute left-3 top-2 text-sm text-gray-600 dark:text-gray-400">{% translate "District" %}</label>
         </div>
 
         <div class="relative">
           <select name="upazila_select" x-model="shippingInfo.upazila" @change="$dispatch('input', shippingInfo.upazila)"
                   class="w-full pt-5 pb-2 px-3 bg-transparent border border-gray-300 dark:border-gray-600 text-gray-900 dark:bg-gray-900 dark:text-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="" disabled selected>Select Upazila</option>
+            <option value="" disabled selected>{% translate "Select Upazila" %}</option>
             <template x-for="u in availableUpazilas" :key="u">
               <option :value="u" x-text="u" :selected="u === shippingInfo.upazila"></option>
             </template>
           </select>
-          <label class="absolute left-3 top-2 text-sm text-gray-600 dark:text-gray-400">Upazila/Thana</label>
+          <label class="absolute left-3 top-2 text-sm text-gray-600 dark:text-gray-400">{% translate "Upazila/Thana" %}</label>
         </div>
       </div>
 
@@ -112,22 +111,21 @@
           <input type="text" name="postal_code" id="id_postal_code" placeholder=" " required 
                  pattern="\d{4}" value="{{ form.postal_code.value|default:'' }}"
                  class="peer w-full px-3 pt-5 pb-2 bg-transparent border border-gray-300 dark:border-gray-600 text-gray-900 dark:bg-gray-900 dark:text-gray-200 rounded-md placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <label for="id_postal_code" class="absolute left-3 top-2 text-sm text-gray-600 dark:text-gray-400 peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-focus:top-2 peer-focus:text-sm peer-focus:text-blue-500">
-            Postal Code
+          {% translate "Postal Code" %}
           </label>
         </div>
 
         <div class="relative">
           <select name="country" id="id_country"
                   class="w-full pt-5 pb-2 px-3 bg-transparent border border-gray-300 dark:border-gray-600 text-gray-900 dark:bg-gray-900 dark:text-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-            <option value="BD" selected>Bangladesh</option>
+            <option value="BD" selected>{% translate "Bangladesh" %}</option>
             {% for code, name in countries %}
               {% if code != "BD" %}
               <option value="{{ code }}" {% if form.country.value == code %}selected{% endif %}>{{ name }}</option>
               {% endif %}
             {% endfor %}
           </select>
-          <label class="absolute left-3 top-2 text-sm text-gray-600 dark:text-gray-400">Country</label>
+          <label class="absolute left-3 top-2 text-sm text-gray-600 dark:text-gray-400">{% translate "Country" %}</label>
         </div>
       </div>
 
@@ -136,14 +134,14 @@
         <input type="checkbox" name="is_default" id="id_is_default" 
                {% if form.is_default.value %}checked{% endif %}
                class="h-5 w-5 text-blue-600 dark:bg-gray-900 focus:ring-blue-500 border-gray-300 rounded" />
-        <label for="id_is_default" class="ml-2 text-sm text-gray-700 dark:text-gray-300">Set as default shipping address</label>
+        <label for="id_is_default" class="ml-2 text-sm text-gray-700 dark:text-gray-300">{% translate "Set as default shipping address" %}</label>
       </div>
 
       <!-- Buttons -->
       <div class="flex justify-end gap-4 pt-6">
-        <a href="{% url 'accounts:profile' %}" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</a>
+        <a href="{% url 'accounts:profile' %}" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">{% translate "Cancel" %}</a>
         <button type="submit" class="px-6 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-md font-semibold shadow-sm transition">
-          Save Address
+          {% translate "Save Address" %}
         </button>
       </div>
     </form>

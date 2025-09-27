@@ -4,17 +4,12 @@ from django.template import Template, Context
 from django.core.exceptions import PermissionDenied
 from django.conf import settings
 from django.utils import timezone
+from django.db import transaction
 from .models import (
     Notification, NotificationTemplate, NotificationPreference, NotificationChannel
 )
 from .selectors import get_unread_count
-
-# Celery task stub (should live in tasks.py)
-def send_notification_task(notification_id):
-    from .models import Notification
-    notif = Notification.objects.get(pk=notification_id)
-    # integrate with external providers here (email/SMS/push)
-    notif.mark_delivered()
+from .tasks import send_notification_task
 
 def send_notification(user, notif_type, context, channels=None, priority=0, link=None, payload=None):
     """
@@ -56,8 +51,7 @@ def send_notification(user, notif_type, context, channels=None, priority=0, link
             priority=priority
         )
         # enqueue send
-        from .tasks import send_notification_task
-        send_notification_task.delay(notif.id)
+        transaction.on_commit(lambda: send_notification_task.delay(notif.id))
 
     # invalidate unread count cache
     cache_key = f"notif_unread_count_{user.pk}"

@@ -28,9 +28,5 @@
 {% endblock %}
 
 {% block extra_js %}
-{# Include your new JavaScript file for cart interactions #}
-<script src="{% static 'js/utils.js' %}"></script> {# Ensure utils.js is loaded first #}
-<script src="{% static 'js/cart_js_interactions.js' %}"></script> {# Core cart logic #}
-<script src="{% static 'js/cart.js' %}"></script> {# Sidebar and quick view logic #}
-<script src="{% static 'js/app.js' %}"></script> {# Main application initializer #}
+{# All necessary scripts are now loaded in base.html #}
 {% endblock %}

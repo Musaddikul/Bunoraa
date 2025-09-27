@@ -1,4 +1,6 @@
+{% load i18n %}
 {% load static %}
+{% load currency_filters %}
 
 <div x-data="{ isWishlisted: true }"
      class="product-card bg-white dark:bg-dark/70 rounded-3xl shadow-xl overflow-hidden transform transition duration-300 hover:scale-[1.02] hover:shadow-2xl flex flex-col justify-between animate-fadeIn">
@@ -10,7 +12,7 @@
         <img src="{{ product.image.url|default:'https://placehold.co/600x400/E0E0E0/4A4A4A?text=No+Image' }}"
              alt="{{ product.name }}"
              class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-             onerror="this.onerror=null;this.src='https://placehold.co/600x400/E0E0E0/4A4A4A?text=No+Image';">
+             onerror="this.onerror=null;this.src='https://placehold.co/600x400/E0E0E0/4A4A4A?text={% translate 'No Image' %}';">
 
         <!-- Wishlist -->
         <div x-data="{
@@ -41,7 +43,7 @@
                 
                 // Dispatch the 'wishlist-count-updated' event with all necessary details
                 const message = data.message || 
-                                (data.added ? 'Product added to wishlist!' : 'Product removed from wishlist!');
+                                (data.added ? '{% translate 'Product added to wishlist!' %}' : '{% translate 'Product removed from wishlist!' %}');
 
                 document.dispatchEvent(new CustomEvent('wishlist-count-updated', {
                     bubbles: true, // Ensure event bubbles up
@@ -56,14 +58,14 @@
             })
             .catch(error => {
                 console.error('Product Grid: Error toggling wishlist:', error);
-                showToast(error.message || 'Failed to update wishlist.', 'error');
+                showToast(error.message || '{% translate 'Failed to update wishlist.' %}', 'error');
             });
             }
         }" 
         x-init="wished = {{ product.is_wished|yesno:'true,false' }}"
         class="absolute top-2 right-2 z-20">
         <button type="button" aria-label="Add to wishlist" x-on:click.prevent.stop="toggle()">
-            <i :class="wished ? 'fas fa-heart text-red-600' : 'far fa-heart text-gray-400 dark:text-gray-500'" class="text-lg transition"></i>
+            <i :class="wished ? 'fas fa-heart text-red-600' : 'far fa-heart text-gray-900 dark:text-gray-800'" class="text-lg transition"></i>
         </button>
         </div>
     </a>
@@ -77,17 +79,17 @@
         <div class="flex items-center justify-between">
             {% if product.is_discounted %}
             <div class="flex flex-col">
-                <span class="text-sm text-gray-500 dark:text-gray-400 line-through">${{ product.price }}</span>
-                <span class="text-2xl font-bold text-primary dark:text-accent">${{ product.discounted_price }}</span>
+                <span class="text-sm text-gray-500 dark:text-gray-400 line-through">{{ product.price|convert_price:selected_currency }}</span>
+                <span class="text-2xl font-bold text-primary dark:text-accent">{{ product.discounted_price|convert_price:selected_currency }}</span>
             </div>
             {% else %}
-            <span class="text-2xl font-bold text-primary dark:text-accent">${{ product.price }}</span>
+            <span class="text-2xl font-bold text-primary dark:text-accent">{{ product.price|convert_price:selected_currency }}</span>
             {% endif %}
 
             {% with product_url=product.get_absolute_url %}
             <a href="{% if product_url %}{{ product_url }}{% else %}{% url 'products:all_products' %}{% endif %}"
                class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-secondary hover:bg-secondary-700 text-white shadow transition duration-200">
-                View
+                {% translate "View" %}
                 <svg class="ml-2 w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" clip-rule="evenodd"
                           d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" />
