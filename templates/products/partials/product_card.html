@@ -15,52 +15,20 @@
     {% endif %}
 
     <!-- Wishlist -->
-    <div x-data="{
-        wished: {{ product.is_wished|yesno:'true,false' }},
-        toggle() {
-          fetch('{% url 'wishlist:toggle' product.id %}', {
-            method: 'POST',
-            headers: {
-              'X-CSRFToken': '{{ csrf_token }}',
-              'X-Requested-With': 'XMLHttpRequest'
-            }
-          })
-          .then(res => {
-              if (!res.ok) {
-                  return res.json().then(err => { 
-                      throw new Error(err.error || `HTTP error! status: ${res.status}`); 
-                  }).catch(() => {
-                      throw new Error(`HTTP error! status: ${res.status} - ${res.statusText}`);
-                  });
-              }
-              return res.json();
-          })
-          .then(data => {
-            this.wished = data.added;
-            
-            const message = data.message || 
-                            (data.added ? 'Product added to wishlist!' : 'Product removed from wishlist!');
-
-            document.dispatchEvent(new CustomEvent('wishlist-count-updated', {
-                bubbles: true,
-                detail: {
-                    count: data.wishlist_count,
-                    productId: {{ product.id }},
-                    added: data.added,
-                    message: message
-                }
-            }));
-            showToast(message, 'success');
-          })
-          .catch(error => {
-              console.error('Product Grid: Error toggling wishlist:', error);
-              showToast(error.message || 'Failed to update wishlist.', 'error');
-          });
-        }
-      }"
-      class="absolute top-2 right-2 z-20">
-      <button type="button" aria-label="Add to wishlist" x-on:click.prevent.stop="toggle()">
-        <i :class="wished ? 'fas fa-heart text-red-600' : 'far fa-heart text-gray-900 dark:text-gray-800'" class="text-lg transition"></i>
+    <div class="absolute top-2 right-2 z-20">
+      <button type="button" 
+              class="wishlist-toggle p-2 rounded-full bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 transition-all shadow-sm"
+              data-product-id="{{ product.id }}"
+              aria-label="Add to wishlist">
+        {% if product.is_wished %}
+        <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+        </svg>
+        {% else %}
+        <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+        </svg>
+        {% endif %}
       </button>
     </div>
   </div>
@@ -81,11 +49,11 @@
       {% with rating=product.average_rating|default:0 %}
       {% for i in "12345"|make_list %}
       {% if rating >= forloop.counter %}
-      <i class="fas fa-star"></i>
+      <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
       {% elif rating >= forloop.counter0|add:"0.5" %}
-      <i class="fas fa-star-half-alt"></i>
+      <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" fill-opacity="0.5"/></svg>
       {% else %}
-      <i class="far fa-star"></i>
+      <svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
       {% endif %}
       {% endfor %}
       {% endwith %}
@@ -106,18 +74,19 @@
   <!-- Actions -->
   <div class="p-4 pt-0 flex justify-between items-center relative z-20">
     {% if product.available %}
-    <form class="add-to-cart-form" data-product-id="{{ product.id }}">
-      {% csrf_token %}
-      <input type="hidden" name="quantity" value="1">
-      <button type="submit"
-        class="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-8 py-3 rounded-lg shadow transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-        {% if product.stock == 0 %}disabled{% endif %}>
-        {% if product.stock == 0 %}Out of Stock{% else %}
-          <span id="add-to-cart-text-{{ product.id }}">Add to Cart</span>
-          <i id="add-to-cart-spinner-{{ product.id }}" class="fas fa-spinner fa-spin ml-2" style="display: none;"></i>
-        {% endif %}
-      </button>
-    </form>
+    <button type="button"
+            class="add-to-cart-btn bg-pink-600 hover:bg-pink-700 text-white font-semibold px-6 py-2.5 rounded-lg shadow transition flex items-center justify-center {% if product.stock == 0 %}opacity-50 cursor-not-allowed{% endif %}"
+            data-product-id="{{ product.id }}"
+            {% if product.stock == 0 %}disabled{% endif %}>
+      {% if product.stock == 0 %}
+        Out of Stock
+      {% else %}
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+        </svg>
+        Add to Cart
+      {% endif %}
+    </button>
     {% else %}
     <span class="text-sm text-red-500 font-medium">Unavailable</span>
     {% endif %}
@@ -125,10 +94,13 @@
     <!-- Quick View -->
     <button
       type="button"
-      class="text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 text-sm transition"
-      onclick="showQuickView({{ product.id }})"
+      class="quick-view-btn p-2 text-gray-500 hover:text-pink-600 dark:hover:text-pink-400 transition"
+      data-product-slug="{{ product.slug }}"
       aria-label="Quick View">
-      <i class="fas fa-eye"></i>
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+      </svg>
     </button>
   </div>
 </div>

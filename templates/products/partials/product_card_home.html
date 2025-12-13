@@ -10,58 +10,21 @@
         class="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105">
 
         <!-- Wishlist -->
-        <div x-data="{
-            is_wished: {{ product.is_wished|yesno:'true,false' }},
-            toggle() {
-            fetch('{% url 'wishlist:toggle' product.id %}', {
-                method: 'POST',
-                headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(res => {
-                // Crucial: Check if response is OK before parsing JSON
-                if (!res.ok) {
-                    // Attempt to parse JSON error message, or use generic error
-                    return res.json().then(err => { 
-                        throw new Error(err.error || `HTTP error! status: ${res.status}`); 
-                    }).catch(() => {
-                        // Fallback if response is not JSON or parsing fails
-                        throw new Error(`HTTP error! status: ${res.status} - ${res.statusText}`);
-                    });
-                }
-                return res.json();
-            })
-            .then(data => {
-                this.is_wished = data.added;
-                
-                // Dispatch the 'wishlist-count-updated' event with all necessary details
-                const message = data.message || 
-                                (data.added ? '{% translate 'Product added to wishlist!' %}' : '{% translate 'Product removed from wishlist!' %}');
-
-                document.dispatchEvent(new CustomEvent('wishlist-count-updated', {
-                    bubbles: true,
-                    detail: {
-                        count: data.wishlist_count,
-                        productId: {{ product.id }},
-                        added: data.added,
-                        message: message
-                    }
-                }));
-                showToast(message, 'success');
-            })
-            .catch(error => {
-                console.error('Product Grid: Error toggling wishlist:', error);
-                showToast(error.message || '{% translate 'Failed to update wishlist.' %}', 'error');
-            });
-            }
-        }" 
-        x-init="is_wished = {{ product.is_wished|yesno:'true,false' }}"
-        class="absolute top-2 right-2 z-20">
-        <button type="button" aria-label="Add to wishlist" x-on:click.prevent.stop="toggle()">
-            <i :class="is_wished ? 'fas fa-heart text-red-600' : 'far fa-heart text-gray-900 dark:text-gray-800'" class="text-lg transition"></i>
-        </button>
+        <div class="absolute top-2 right-2 z-20">
+          <button type="button" 
+                  class="wishlist-toggle p-2 rounded-full bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 transition-all shadow-sm"
+                  data-product-id="{{ product.id }}"
+                  aria-label="Add to wishlist">
+            {% if product.is_wished %}
+            <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+            </svg>
+            {% else %}
+            <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+            </svg>
+            {% endif %}
+          </button>
         </div>
     </div>
   </a>
@@ -72,9 +35,15 @@
       {% if product.category %}
       <p class="text-xs text-center uppercase tracking-wide text-gray-400 dark:text-gray-500">{{ product.category.name }}</p>
       {% endif %}
-      <button type="button" aria-label="Quick View" onclick="showQuickView({{ product.id }})" class="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 text-lg transition-opacity duration-300">
-        <i class="fas fa-eye"></i>
-        <span class="ml-1 text-base font-semibold text-yellow-500">{% translate "Quick View" %}</span>
+      <button type="button" 
+              class="quick-view-btn opacity-0 group-hover:opacity-100 flex items-center text-gray-500 hover:text-pink-600 dark:hover:text-pink-400 transition-opacity duration-300"
+              data-product-slug="{{ product.slug }}"
+              aria-label="Quick View">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+        </svg>
+        <span class="ml-1 text-sm font-medium">{% translate "Quick View" %}</span>
       </button>
     </div>
     {% if product.free_shipping %}

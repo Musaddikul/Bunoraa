@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{{ category.name|default:"Category" }} - {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Breadcrumb -->
+    <div class="bg-white border-b">
+        <div class="container mx-auto px-4 py-4">
+            <nav class="flex items-center text-sm text-gray-600">
+                <a href="{% url 'home' %}" class="hover:text-primary">{% trans "Home" %}</a>
+                <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+                <span id="breadcrumb-category" class="text-gray-900">{% trans "Category" %}</span>
+            </nav>
+        </div>
+    </div>
+    
+    <!-- Category Header -->
+    <div class="bg-white">
+        <div class="container mx-auto px-4 py-8">
+            <div id="category-header">
+                <h1 id="category-name" class="text-3xl font-bold text-gray-900">{% trans "Loading..." %}</h1>
+                <p id="category-description" class="text-gray-600 mt-2"></p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Filters Sidebar -->
+            <aside class="lg:w-64 flex-shrink-0">
+                <div class="bg-white rounded-lg shadow-sm p-6 sticky top-4">
+                    <h3 class="font-semibold text-gray-900 mb-4">{% trans "Filters" %}</h3>
+                    
+                    <!-- Subcategories -->
+                    <div id="subcategories-section" class="mb-6 hidden">
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">{% trans "Subcategories" %}</h4>
+                        <div id="subcategories-list" class="space-y-2">
+                            <!-- Subcategories loaded dynamically -->
+                        </div>
+                    </div>
+                    
+                    <!-- Price Range -->
+                    <div class="mb-6">
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">{% trans "Price Range" %}</h4>
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="min-price" placeholder="{% trans 'Min' %}" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded text-sm">
+                            <span class="text-gray-400">-</span>
+                            <input type="number" id="max-price" placeholder="{% trans 'Max' %}" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded text-sm">
+                        </div>
+                    </div>
+                    
+                    <!-- Brands -->
+                    <div id="brands-section" class="mb-6">
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">{% trans "Brands" %}</h4>
+                        <div id="brands-list" class="space-y-2 max-h-48 overflow-y-auto">
+                            <!-- Brands loaded dynamically -->
+                        </div>
+                    </div>
+                    
+                    <!-- Rating -->
+                    <div class="mb-6">
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">{% trans "Rating" %}</h4>
+                        <div class="space-y-2">
+                            {% for i in "54321" %}
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="rating" value="{{ i }}" class="mr-2">
+                                <div class="flex items-center">
+                                    {% for star in "12345" %}
+                                    <svg class="w-4 h-4 {% if forloop.counter <= i|add:'0' %}text-yellow-400{% else %}text-gray-300{% endif %}" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                    </svg>
+                                    {% endfor %}
+                                    <span class="ml-1 text-sm text-gray-600">{% trans "& Up" %}</span>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Availability -->
+                    <div class="mb-6">
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">{% trans "Availability" %}</h4>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" id="in-stock" class="mr-2 rounded text-primary focus:ring-primary">
+                            <span class="text-sm text-gray-600">{% trans "In Stock Only" %}</span>
+                        </label>
+                    </div>
+                    
+                    <!-- Apply Filters -->
+                    <button id="apply-filters" class="w-full py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">
+                        {% trans "Apply Filters" %}
+                    </button>
+                    <button id="clear-filters" class="w-full py-2 mt-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        {% trans "Clear All" %}
+                    </button>
+                </div>
+            </aside>
+            
+            <!-- Products Grid -->
+            <main class="flex-1">
+                <!-- Toolbar -->
+                <div class="flex items-center justify-between mb-6">
+                    <p id="products-count" class="text-gray-600">{% trans "Loading products..." %}</p>
+                    
+                    <div class="flex items-center gap-4">
+                        <select id="sort-select" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                            <option value="">{% trans "Sort by" %}</option>
+                            <option value="-created_at">{% trans "Newest" %}</option>
+                            <option value="price">{% trans "Price: Low to High" %}</option>
+                            <option value="-price">{% trans "Price: High to Low" %}</option>
+                            <option value="-rating">{% trans "Top Rated" %}</option>
+                            <option value="-sales_count">{% trans "Best Selling" %}</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Products Grid -->
+                <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <!-- Products loaded dynamically -->
+                </div>
+                
+                <!-- Loading State -->
+                <div id="loading-state" class="flex justify-center py-16">
+                    <div class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+                </div>
+                
+                <!-- Empty State -->
+                <div id="empty-state" class="hidden text-center py-16">
+                    <svg class="w-24 h-24 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">{% trans "No products found" %}</h3>
+                    <p class="text-gray-600">{% trans "Try adjusting your filters" %}</p>
+                </div>
+                
+                <!-- Pagination -->
+                <div id="pagination" class="mt-8 flex justify-center"></div>
+            </main>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module">
+    import { categoriesAPI } from '{% static "js/api/categories.js" %}';
+    import { productsAPI } from '{% static "js/api/products.js" %}';
+    
+    const categorySlug = '{{ slug }}';
+    let currentPage = 1;
+    let currentCategory = null;
+    
+    async function loadCategory() {
+        try {
+            const response = await categoriesAPI.getBySlug(categorySlug);
+            if (response.success) {
+                currentCategory = response.data;
+                document.getElementById('category-name').textContent = currentCategory.name;
+                document.getElementById('breadcrumb-category').textContent = currentCategory.name;
+                document.getElementById('category-description').textContent = currentCategory.description || '';
+                document.title = `${currentCategory.name} - {{ SITE_NAME }}`;
+                
+                // Load subcategories if any
+                if (currentCategory.children && currentCategory.children.length > 0) {
+                    const section = document.getElementById('subcategories-section');
+                    const list = document.getElementById('subcategories-list');
+                    section.classList.remove('hidden');
+                    
+                    currentCategory.children.forEach(sub => {
+                        const link = document.createElement('a');
+                        link.href = `/category/${sub.slug}/`;
+                        link.className = 'block text-sm text-gray-600 hover:text-primary';
+                        link.textContent = sub.name;
+                        list.appendChild(link);
+                    });
+                }
+                
+                loadProducts();
+            }
+        } catch (error) {
+            console.error('Failed to load category:', error);
+        }
+    }
+    
+    async function loadProducts() {
+        const grid = document.getElementById('products-grid');
+        const loading = document.getElementById('loading-state');
+        const empty = document.getElementById('empty-state');
+        const count = document.getElementById('products-count');
+        
+        loading.classList.remove('hidden');
+        grid.innerHTML = '';
+        empty.classList.add('hidden');
+        
+        try {
+            const params = {
+                category: categorySlug,
+                page: currentPage,
+                limit: 24
+            };
+            
+            // Get filter values
+            const sort = document.getElementById('sort-select').value;
+            if (sort) params.ordering = sort;
+            
+            const minPrice = document.getElementById('min-price').value;
+            const maxPrice = document.getElementById('max-price').value;
+            if (minPrice) params.min_price = minPrice;
+            if (maxPrice) params.max_price = maxPrice;
+            
+            const rating = document.querySelector('input[name="rating"]:checked');
+            if (rating) params.min_rating = rating.value;
+            
+            if (document.getElementById('in-stock').checked) {
+                params.in_stock = true;
+            }
+            
+            const response = await productsAPI.list(params);
+            loading.classList.add('hidden');
+            
+            if (response.success && response.data.length > 0) {
+                const total = response.meta?.pagination?.count || response.data.length;
+                count.textContent = `${total} {% trans "products" %}`;
+                
+                response.data.forEach(product => {
+                    grid.appendChild(createProductCard(product));
+                });
+            } else {
+                count.textContent = '{% trans "0 products" %}';
+                empty.classList.remove('hidden');
+            }
+        } catch (error) {
+            loading.classList.add('hidden');
+            console.error('Failed to load products:', error);
+        }
+    }
+    
+    function createProductCard(product) {
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow group';
+        
+        const discount = product.sale_price 
+            ? Math.round((1 - product.sale_price / product.price) * 100) 
+            : 0;
+        
+        card.innerHTML = `
+            <a href="/product/${product.slug}/" class="block">
+                <div class="aspect-square bg-gray-100 relative overflow-hidden">
+                    <img src="${product.primary_image || '/static/images/placeholder.png'}" 
+                         alt="${product.name}" 
+                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    ${discount > 0 ? `<span class="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">-${discount}%</span>` : ''}
+                    ${product.stock <= 0 ? '<span class="absolute top-2 right-2 bg-gray-500 text-white text-xs px-2 py-1 rounded">{% trans "Out of Stock" %}</span>' : ''}
+                </div>
+                <div class="p-4">
+                    <h3 class="font-medium text-gray-900 truncate group-hover:text-primary transition-colors">${product.name}</h3>
+                    <div class="flex items-center gap-1 mt-1">
+                        ${renderStars(product.average_rating || 0)}
+                        <span class="text-sm text-gray-500">(${product.review_count || 0})</span>
+                    </div>
+                    <div class="mt-2 flex items-center gap-2">
+                        ${product.sale_price 
+                            ? `<span class="font-bold text-primary">৳${parseFloat(product.sale_price).toLocaleString()}</span>
+                               <span class="text-sm text-gray-400 line-through">৳${parseFloat(product.price).toLocaleString()}</span>`
+                            : `<span class="font-bold text-gray-900">৳${parseFloat(product.price).toLocaleString()}</span>`
+                        }
+                    </div>
+                </div>
+            </a>
+        `;
+        return card;
+    }
+    
+    function renderStars(rating) {
+        let stars = '';
+        for (let i = 1; i <= 5; i++) {
+            const color = i <= Math.round(rating) ? 'text-yellow-400' : 'text-gray-300';
+            stars += `<svg class="w-4 h-4 ${color}" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+            </svg>`;
+        }
+        return stars;
+    }
+    
+    // Event Listeners
+    document.getElementById('sort-select').addEventListener('change', () => {
+        currentPage = 1;
+        loadProducts();
+    });
+    
+    document.getElementById('apply-filters').addEventListener('click', () => {
+        currentPage = 1;
+        loadProducts();
+    });
+    
+    document.getElementById('clear-filters').addEventListener('click', () => {
+        document.getElementById('min-price').value = '';
+        document.getElementById('max-price').value = '';
+        document.getElementById('in-stock').checked = false;
+        document.querySelectorAll('input[name="rating"]').forEach(r => r.checked = false);
+        currentPage = 1;
+        loadProducts();
+    });
+    
+    // Initialize
+    loadCategory();
+</script>
+{% endblock %}

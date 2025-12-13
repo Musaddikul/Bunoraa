@@ -1,38 +1,42 @@
 {% extends "base.html" %}
 {% load static %}
+{% load i18n %}
+{% load currency_filters %}
 
-{% block title %}Order Confirmed - {{ site_name }}{% endblock %}
+{% block title %}{% translate "Order Confirmed" %} - {{ site_name }}{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
     <div class="max-w-3xl w-full bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 md:p-10 text-center">
-        <div class="text-green-500 dark:text-green-400 text-6xl mb-6">
-            <i class="fas fa-check-circle"></i>
+        <div class="text-green-500 dark:text-green-400 mb-6">
+            <svg class="w-20 h-20 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
         </div>
         <h1 class="text-4xl font-extrabold text-gray-900 dark:text-gray-100 mb-4">
-            Order Confirmed!
+            {% translate "Order Confirmed!" %}
         </h1>
         <p class="text-lg text-gray-700 dark:text-gray-300 mb-6">
-            Thank you for your purchase. Your order has been successfully placed.
+            {% translate "Thank you for your purchase. Your order has been successfully placed." %}
         </p>
 
         <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg mb-8 shadow-inner">
-            <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Order Summary</h2>
+            <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">{% translate "Order Summary" %}</h2>
             <div class="space-y-3 text-left">
                 <p class="flex justify-between text-gray-700 dark:text-gray-300">
-                    <span class="font-medium">Order Number:</span>
-                    <span class="font-bold text-blue-600 dark:text-blue-400">{{ order.order_number }}</span>
+                    <span class="font-medium">{% translate "Order Number" %}:</span>
+                    <span class="font-bold text-pink-600 dark:text-pink-400">{{ order.order_number }}</span>
                 </p>
                 <p class="flex justify-between text-gray-700 dark:text-gray-300">
-                    <span class="font-medium">Order Date:</span>
+                    <span class="font-medium">{% translate "Order Date" %}:</span>
                     <span>{{ order.created_at|date:"F j, Y, P" }}</span>
                 </p>
                 <p class="flex justify-between text-gray-700 dark:text-gray-300">
-                    <span class="font-medium">Total Amount:</span>
-                    <span class="text-xl font-bold text-green-600 dark:text-green-400">৳{{ order.grand_total|floatformat:2 }}</span>
+                    <span class="font-medium">{% translate "Total Amount" %}:</span>
+                    <span class="text-xl font-bold text-green-600 dark:text-green-400">{{ order.grand_total|convert_price:selected_currency }}</span>
                 </p>
                 <p class="flex justify-between text-gray-700 dark:text-gray-300">
-                    <span class="font-medium">Payment Status:</span>
+                    <span class="font-medium">{% translate "Payment Status" %}:</span>
                     <span class="font-semibold text-purple-600 dark:text-purple-400">{{ order.payment.status }}</span>
                 </p>
             </div>
@@ -40,12 +44,19 @@
 
         <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
             <a href="{% url 'orders:order_detail' order_id=order.id %}"
-               class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300 transform hover:scale-105">
-                <i class="fas fa-eye mr-2"></i> View Order Details
+               class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition duration-300 transform hover:scale-105">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+                {% translate "View Order Details" %}
             </a>
             <a href="{% url 'products:all_products' %}"
-               class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-full shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300 transform hover:scale-105">
-                <i class="fas fa-shopping-bag mr-2"></i> Continue Shopping
+               class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-full shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition duration-300 transform hover:scale-105">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                </svg>
+                {% translate "Continue Shopping" %}
             </a>
         </div>
     </div>

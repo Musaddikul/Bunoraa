@@ -1,0 +1,15 @@
+# apps/products/apps.py
+"""
+Products App Configuration
+"""
+from django.apps import AppConfig
+
+
+class ProductsConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'apps.products'
+    label = 'products'
+    verbose_name = 'Products'
+    
+    def ready(self):
+        from . import signals  # noqa

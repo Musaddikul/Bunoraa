@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>{% block title %}{{ site_name }}{% endblock %}</title>
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
+    <style>
+        /* Reset */
+        body, table, td, p, a, li, blockquote {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+        table, td {
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+        img {
+            -ms-interpolation-mode: bicubic;
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+        }
+        body {
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            background-color: #f4f4f5;
+        }
+        
+        /* Client-specific styles */
+        .ReadMsgBody { width: 100%; }
+        .ExternalClass { width: 100%; }
+        .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div {
+            line-height: 100%;
+        }
+        
+        /* Typography */
+        .email-body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+            color: #374151;
+        }
+        
+        /* Links */
+        a {
+            color: #e5604d;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Button */
+        .btn {
+            display: inline-block;
+            padding: 14px 28px;
+            background-color: #e5604d;
+            color: #ffffff !important;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            border-radius: 8px;
+            mso-padding-alt: 0;
+        }
+        .btn:hover {
+            background-color: #d14d3b;
+            text-decoration: none;
+        }
+        
+        /* Button Outline */
+        .btn-outline {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: transparent;
+            color: #e5604d !important;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            border: 2px solid #e5604d;
+            border-radius: 8px;
+        }
+        
+        /* Card */
+        .card {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Responsive */
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            .padding-mobile {
+                padding-left: 20px !important;
+                padding-right: 20px !important;
+            }
+            .stack-column {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            .center-mobile {
+                text-align: center !important;
+            }
+        }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f5;">
+    <center style="width: 100%; background-color: #f4f4f5;">
+        <!--[if mso | IE]>
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f5;">
+        <tr>
+        <td>
+        <![endif]-->
+        
+        <!-- Preheader (hidden preview text) -->
+        <div style="display: none; font-size: 1px; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; mso-hide: all;">
+            {% block preheader %}{{ site_name }}{% endblock %}
+        </div>
+        
+        <!-- Email Container -->
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: auto;" class="email-container">
+            
+            <!-- Header -->
+            <tr>
+                <td style="padding: 30px 0; text-align: center;">
+                    <a href="{{ site_url }}" style="display: inline-block;">
+                        <img src="{{ site_url }}/static/images/logo.png" alt="{{ site_name }}" width="150" style="height: auto; display: block;">
+                    </a>
+                </td>
+            </tr>
+            
+            <!-- Main Content -->
+            <tr>
+                <td class="padding-mobile" style="padding: 0 20px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" class="card">
+                        <tr>
+                            <td style="padding: 40px 40px 30px 40px;" class="email-body">
+                                {% block content %}{% endblock %}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            
+            <!-- Footer -->
+            <tr>
+                <td style="padding: 30px 20px; text-align: center;">
+                    <!-- Social Links -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: auto;">
+                        <tr>
+                            <td style="padding: 0 10px;">
+                                <a href="https://facebook.com/bunoraa" style="display: inline-block;">
+                                    <img src="{{ site_url }}/static/images/email/facebook.png" alt="Facebook" width="24" height="24">
+                                </a>
+                            </td>
+                            <td style="padding: 0 10px;">
+                                <a href="https://instagram.com/bunoraa" style="display: inline-block;">
+                                    <img src="{{ site_url }}/static/images/email/instagram.png" alt="Instagram" width="24" height="24">
+                                </a>
+                            </td>
+                            <td style="padding: 0 10px;">
+                                <a href="https://twitter.com/bunoraa" style="display: inline-block;">
+                                    <img src="{{ site_url }}/static/images/email/twitter.png" alt="Twitter" width="24" height="24">
+                                </a>
+                            </td>
+                        </tr>
+                    </table>
+                    
+                    <!-- Footer Text -->
+                    <p style="margin: 20px 0 10px 0; font-size: 14px; color: #6b7280;">
+                        © {{ current_year }} {{ site_name }}. All rights reserved.
+                    </p>
+                    <p style="margin: 0 0 10px 0; font-size: 12px; color: #9ca3af;">
+                        House 123, Road 45, Gulshan-2, Dhaka 1212, Bangladesh
+                    </p>
+                    
+                    <!-- Footer Links -->
+                    <p style="margin: 20px 0 0 0; font-size: 12px; color: #9ca3af;">
+                        <a href="{{ site_url }}/legal/privacy/" style="color: #9ca3af; text-decoration: underline;">Privacy Policy</a>
+                        &nbsp;•&nbsp;
+                        <a href="{{ site_url }}/legal/terms/" style="color: #9ca3af; text-decoration: underline;">Terms of Service</a>
+                        &nbsp;•&nbsp;
+                        <a href="{{ site_url }}/contacts/" style="color: #9ca3af; text-decoration: underline;">Contact Us</a>
+                    </p>
+                    
+                    {% block unsubscribe %}
+                    <p style="margin: 15px 0 0 0; font-size: 11px; color: #9ca3af;">
+                        If you no longer wish to receive these emails,
+                        <a href="{{ unsubscribe_url }}" style="color: #9ca3af; text-decoration: underline;">unsubscribe here</a>.
+                    </p>
+                    {% endblock %}
+                </td>
+            </tr>
+            
+        </table>
+        
+        <!--[if mso | IE]>
+        </td>
+        </tr>
+        </table>
+        <![endif]-->
+    </center>
+</body>
+</html>

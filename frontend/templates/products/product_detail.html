@@ -1,0 +1,508 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+{% load currency_tags %}
+
+{% block title %}{{ product.name }}{% endblock %}
+{% block page_name %}product-detail{% endblock %}
+{% block body_data %}data-product-id="{{ product.id }}"{% endblock %}
+
+{% block meta_description %}{{ product.meta_description|default:product.short_description }}{% endblock %}
+{% block og_image %}{{ product.primary_image.url }}{% endblock %}
+
+{% block breadcrumb %}
+<nav class="container mx-auto px-4 py-4" aria-label="Breadcrumb">
+    <ol class="breadcrumb">
+        <li><a href="{% url 'storefront:home' %}" class="breadcrumb-item">{% trans "Home" %}</a></li>
+        <span class="breadcrumb-separator">/</span>
+        {% if product.category.parent %}
+        <li><a href="{{ product.category.parent.get_absolute_url }}" class="breadcrumb-item">{{ product.category.parent.name }}</a></li>
+        <span class="breadcrumb-separator">/</span>
+        {% endif %}
+        <li><a href="{{ product.category.get_absolute_url }}" class="breadcrumb-item">{{ product.category.name }}</a></li>
+        <span class="breadcrumb-separator">/</span>
+        <li class="breadcrumb-current">{{ product.name }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Product Main Section -->
+    <div class="grid lg:grid-cols-2 gap-8 lg:gap-12 mb-16">
+        <!-- Product Images -->
+        <div class="space-y-4">
+            <!-- Main Image -->
+            <div id="main-image-container" class="aspect-square bg-secondary-100 rounded-2xl overflow-hidden relative">
+                {% if product.primary_image %}
+                <img 
+                    id="main-image"
+                    src="{{ product.primary_image.url }}" 
+                    alt="{{ product.name }}" 
+                    class="w-full h-full object-cover cursor-zoom-in"
+                    data-gallery
+                >
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center">
+                    <svg class="w-24 h-24 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                {% endif %}
+                
+                <!-- Badges -->
+                <div class="absolute top-4 left-4 flex flex-col gap-2">
+                    {% if product.is_new %}
+                    <span class="badge badge-primary">{% trans "New" %}</span>
+                    {% endif %}
+                    {% if product.is_on_sale %}
+                    <span class="badge badge-error text-sm px-3 py-1">-{{ product.discount_percentage }}%</span>
+                    {% endif %}
+                </div>
+                
+                <!-- Zoom button -->
+                <button 
+                    type="button" 
+                    class="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-secondary-50 transition-colors"
+                    data-gallery-trigger
+                >
+                    <svg class="w-5 h-5 text-secondary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Thumbnails -->
+            {% if product.images.count > 1 %}
+            <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-thin" id="product-thumbnails">
+                {% for image in product.images.all %}
+                <button 
+                    type="button"
+                    class="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors {% if forloop.first %}border-primary-600{% else %}border-transparent hover:border-secondary-300{% endif %}"
+                    data-thumbnail="{{ image.url }}"
+                >
+                    <img 
+                        src="{{ image.url }}" 
+                        alt="{{ product.name }} - Image {{ forloop.counter }}" 
+                        class="w-full h-full object-cover"
+                        loading="lazy"
+                    >
+                </button>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Product Info -->
+        <div>
+            <!-- Category & Brand -->
+            <div class="flex items-center gap-4 text-sm text-secondary-500 mb-2">
+                <a href="{{ product.category.get_absolute_url }}" class="hover:text-primary-600">{{ product.category.name }}</a>
+                {% if product.brand %}
+                <span>|</span>
+                <a href="{% url 'storefront:products' %}?brand={{ product.brand.slug }}" class="hover:text-primary-600">{{ product.brand.name }}</a>
+                {% endif %}
+            </div>
+            
+            <!-- Title -->
+            <h1 class="text-2xl md:text-3xl font-bold text-secondary-900 mb-4">{{ product.name }}</h1>
+            
+            <!-- Rating & Reviews -->
+            {% if product.review_count > 0 %}
+            <div class="flex items-center gap-4 mb-6">
+                <div class="flex items-center gap-1">
+                    <div class="rating">
+                        {% with rating_floor=product.rating_average|floatformat:0 %}
+                        {% for i in "12345" %}
+                        <svg class="{% if forloop.counter <= rating_floor %}rating-star{% else %}rating-star-empty{% endif %}" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                        {% endfor %}
+                        {% endwith %}
+                    </div>
+                    <span class="text-sm text-secondary-700">{{ product.rating_average|floatformat:1 }}</span>
+                </div>
+                <a href="#reviews" class="text-sm text-secondary-500 hover:text-primary-600">{{ product.review_count }} {% trans "reviews" %}</a>
+            </div>
+            {% endif %}
+            
+            <!-- Price -->
+            <div class="mb-6">
+                {% if product.is_on_sale %}
+                <div class="flex items-baseline gap-3">
+                    <span class="text-3xl font-bold text-error-600">{{ product.sale_price|currency }}</span>
+                    <span class="text-xl text-secondary-400 line-through">{{ product.price|currency }}</span>
+                    <span class="badge badge-error">{% trans "Save" %} {{ product.discount_percentage }}%</span>
+                </div>
+                {% else %}
+                <span class="text-3xl font-bold text-secondary-900">{{ product.price|currency }}</span>
+                {% endif %}
+                <p class="text-sm text-secondary-500 mt-1">{% trans "Tax included." %} <a href="{% url 'shipping_info' %}" class="underline hover:no-underline">{% trans "Shipping" %}</a> {% trans "calculated at checkout." %}</p>
+            </div>
+            
+            <!-- Short Description -->
+            {% if product.short_description %}
+            <div class="text-secondary-600 mb-6">
+                {{ product.short_description }}
+            </div>
+            {% endif %}
+            
+            <!-- Variants -->
+            <form id="add-to-cart-form" class="space-y-6 mb-8">
+                {% csrf_token %}
+                
+                <!-- Color Variants -->
+                {% if product.color_variants %}
+                <div>
+                    <label class="label mb-3">{% trans "Color:" %} <span id="selected-color" class="font-normal">{{ product.color_variants.0.name }}</span></label>
+                    <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="{% trans 'Color options' %}">
+                        {% for color in product.color_variants %}
+                        <label class="cursor-pointer">
+                            <input 
+                                type="radio" 
+                                name="color" 
+                                value="{{ color.id }}" 
+                                class="sr-only peer" 
+                                {% if forloop.first %}checked{% endif %}
+                                data-color-name="{{ color.name }}"
+                            >
+                            <span 
+                                class="block w-10 h-10 rounded-full border-2 border-secondary-200 peer-checked:border-secondary-900 peer-focus:ring-2 peer-focus:ring-primary-500 peer-focus:ring-offset-2 transition-all"
+                                style="background-color: {{ color.hex_code }}"
+                                title="{{ color.name }}"
+                            ></span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Size Variants -->
+                {% if product.size_variants %}
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <label class="label mb-0">{% trans "Size:" %} <span id="selected-size" class="font-normal">{{ product.size_variants.0.name }}</span></label>
+                        <button type="button" class="text-sm text-secondary-500 hover:text-secondary-700 underline" data-size-guide>{% trans "Size guide" %}</button>
+                    </div>
+                    <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="{% trans 'Size options' %}">
+                        {% for size in product.size_variants %}
+                        <label class="cursor-pointer">
+                            <input 
+                                type="radio" 
+                                name="size" 
+                                value="{{ size.id }}" 
+                                class="sr-only peer"
+                                {% if forloop.first %}checked{% endif %}
+                                {% if not size.in_stock %}disabled{% endif %}
+                                data-size-name="{{ size.name }}"
+                            >
+                            <span class="block px-4 py-2 text-sm font-medium border rounded-lg transition-all
+                                {% if size.in_stock %}
+                                    border-secondary-300 peer-checked:border-secondary-900 peer-checked:bg-secondary-900 peer-checked:text-white hover:border-secondary-400
+                                {% else %}
+                                    border-secondary-200 text-secondary-300 cursor-not-allowed line-through
+                                {% endif %}
+                                peer-focus:ring-2 peer-focus:ring-primary-500 peer-focus:ring-offset-2"
+                            >
+                                {{ size.name }}
+                            </span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Quantity -->
+                <div>
+                    <label class="label mb-3">{% trans "Quantity" %}</label>
+                    <div class="quantity-input" data-quantity-input>
+                        <button type="button" class="quantity-btn" data-action="decrease" aria-label="{% trans 'Decrease quantity' %}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                            </svg>
+                        </button>
+                        <input 
+                            type="number" 
+                            name="quantity" 
+                            id="quantity" 
+                            value="1" 
+                            min="1" 
+                            max="{{ product.stock_quantity }}" 
+                            class="quantity-value"
+                            aria-label="{% trans 'Quantity' %}"
+                        >
+                        <button type="button" class="quantity-btn" data-action="increase" aria-label="{% trans 'Increase quantity' %}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                        </button>
+                    </div>
+                    {% if product.stock_quantity <= 10 and product.stock_quantity > 0 %}
+                    <p class="text-sm text-warning-600 mt-2">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        {% trans "Only" %} {{ product.stock_quantity }} {% trans "left in stock!" %}
+                    </p>
+                    {% endif %}
+                </div>
+                
+                <!-- Add to Cart Button -->
+                <div class="flex gap-4">
+                    {% if product.in_stock %}
+                    <button 
+                        type="submit" 
+                        class="btn btn-primary btn-lg flex-1"
+                        data-add-to-cart
+                        data-product-id="{{ product.id }}"
+                    >
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                        </svg>
+                        {% trans "Add to Cart" %}
+                    </button>
+                    {% else %}
+                    <button type="button" class="btn btn-secondary btn-lg flex-1" disabled>
+                        {% trans "Out of Stock" %}
+                    </button>
+                    <button type="button" class="btn btn-outline btn-lg" data-notify-stock="{{ product.id }}">
+                        {% trans "Notify Me" %}
+                    </button>
+                    {% endif %}
+                    
+                    <!-- Wishlist -->
+                    <button 
+                        type="button" 
+                        class="btn btn-outline btn-lg btn-icon"
+                        data-wishlist-toggle
+                        data-product-id="{{ product.id }}"
+                        aria-label="{% trans 'Add to wishlist' %}"
+                    >
+                        <svg class="w-5 h-5" fill="{% if product.in_wishlist %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Product Meta -->
+            <div class="border-t border-secondary-100 pt-6 space-y-3">
+                {% if product.sku %}
+                <p class="text-sm text-secondary-600">
+                    <span class="font-medium">{% trans "SKU:" %}</span> {{ product.sku }}
+                </p>
+                {% endif %}
+                <p class="text-sm text-secondary-600">
+                    <span class="font-medium">{% trans "Category:" %}</span> 
+                    <a href="{{ product.category.get_absolute_url }}" class="hover:text-primary-600">{{ product.category.name }}</a>
+                </p>
+                {% if product.tags.exists %}
+                <p class="text-sm text-secondary-600">
+                    <span class="font-medium">{% trans "Tags:" %}</span>
+                    {% for tag in product.tags.all %}
+                    <a href="{% url 'storefront:products' %}?tag={{ tag.slug }}" class="hover:text-primary-600">{{ tag.name }}{% if not forloop.last %}, {% endif %}</a>
+                    {% endfor %}
+                </p>
+                {% endif %}
+            </div>
+            
+            <!-- Trust Badges -->
+            <div class="border-t border-secondary-100 pt-6 mt-6">
+                <div class="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                        <svg class="w-8 h-8 mx-auto mb-2 text-secondary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                        </svg>
+                        <p class="text-xs text-secondary-600">{% trans "Free Shipping" %}</p>
+                    </div>
+                    <div>
+                        <svg class="w-8 h-8 mx-auto mb-2 text-secondary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        <p class="text-xs text-secondary-600">{% trans "30-Day Returns" %}</p>
+                    </div>
+                    <div>
+                        <svg class="w-8 h-8 mx-auto mb-2 text-secondary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                        <p class="text-xs text-secondary-600">{% trans "Secure Checkout" %}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Product Tabs -->
+    <div class="mb-16">
+        <div class="tabs" role="tablist">
+            <button type="button" class="tab active" role="tab" aria-selected="true" data-tab="description">{% trans "Description" %}</button>
+            <button type="button" class="tab" role="tab" aria-selected="false" data-tab="specifications">{% trans "Specifications" %}</button>
+            <button type="button" class="tab" role="tab" aria-selected="false" data-tab="reviews">{% trans "Reviews" %} ({{ product.review_count }})</button>
+            <button type="button" class="tab" role="tab" aria-selected="false" data-tab="shipping">{% trans "Shipping & Returns" %}</button>
+        </div>
+        
+        <!-- Description Tab -->
+        <div class="tab-panel" id="tab-description" role="tabpanel">
+            <div class="prose prose-secondary max-w-none">
+                {{ product.description|safe }}
+            </div>
+        </div>
+        
+        <!-- Specifications Tab -->
+        <div class="tab-panel hidden" id="tab-specifications" role="tabpanel">
+            {% if product.specifications %}
+            <div class="table-wrapper">
+                <table class="table">
+                    <tbody>
+                        {% for spec in product.specifications %}
+                        <tr>
+                            <td class="font-medium w-1/3">{{ spec.name }}</td>
+                            <td>{{ spec.value }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-secondary-500">{% trans "No specifications available." %}</p>
+            {% endif %}
+        </div>
+        
+        <!-- Reviews Tab -->
+        <div class="tab-panel hidden" id="tab-reviews" role="tabpanel">
+            <div id="reviews">
+                {% include 'components/reviews-section.html' with product=product reviews=reviews %}
+            </div>
+        </div>
+        
+        <!-- Shipping Tab -->
+        <div class="tab-panel hidden" id="tab-shipping" role="tabpanel">
+            <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">{% trans "Shipping Information" %}</h3>
+                    <ul class="space-y-3 text-secondary-600">
+                        <li class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-success-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            {% trans "Free standard shipping on orders over $50" %}
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-success-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            {% trans "Standard shipping: 5-7 business days" %}
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-success-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            {% trans "Express shipping: 2-3 business days" %}
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">{% trans "Return Policy" %}</h3>
+                    <ul class="space-y-3 text-secondary-600">
+                        <li class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-success-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            {% trans "30-day return policy" %}
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-success-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            {% trans "Items must be unworn and in original packaging" %}
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-success-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            {% trans "Free returns for store credit" %}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Related Products -->
+    {% if related_products %}
+    <section>
+        <div class="flex items-center justify-between mb-8">
+            <h2 class="text-2xl font-bold text-secondary-900">{% trans "You May Also Like" %}</h2>
+            <a href="{{ product.category.get_absolute_url }}" class="btn btn-outline hidden md:inline-flex">{% trans "View More" %}</a>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+            {% for product in related_products %}
+            {% include 'components/product-card.html' with product=product %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+
+<!-- Size Guide Modal -->
+<div id="size-guide-modal" class="hidden">
+    <!-- Modal content loaded dynamically -->
+</div>
+
+<!-- Gallery Modal -->
+<div id="gallery-modal" class="hidden">
+    <!-- Gallery content loaded dynamically -->
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Tab functionality
+    document.querySelectorAll('[data-tab]').forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Update tabs
+            document.querySelectorAll('[data-tab]').forEach(t => {
+                t.classList.remove('active');
+                t.setAttribute('aria-selected', 'false');
+            });
+            tab.classList.add('active');
+            tab.setAttribute('aria-selected', 'true');
+            
+            // Update panels
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.add('hidden');
+            });
+            document.getElementById(`tab-${tab.dataset.tab}`).classList.remove('hidden');
+        });
+    });
+    
+    // Thumbnail gallery
+    document.querySelectorAll('[data-thumbnail]').forEach(thumb => {
+        thumb.addEventListener('click', () => {
+            const mainImage = document.getElementById('main-image');
+            if (mainImage) {
+                mainImage.src = thumb.dataset.thumbnail;
+            }
+            document.querySelectorAll('[data-thumbnail]').forEach(t => {
+                t.classList.remove('border-primary-600');
+                t.classList.add('border-transparent');
+            });
+            thumb.classList.remove('border-transparent');
+            thumb.classList.add('border-primary-600');
+        });
+    });
+    
+    // Variant selection
+    document.querySelectorAll('input[name="color"]').forEach(input => {
+        input.addEventListener('change', () => {
+            document.getElementById('selected-color').textContent = input.dataset.colorName;
+        });
+    });
+    
+    document.querySelectorAll('input[name="size"]').forEach(input => {
+        input.addEventListener('change', () => {
+            document.getElementById('selected-size').textContent = input.dataset.sizeName;
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,217 @@
+{% extends 'emails/base_email.html' %}
+{% load i18n humanize %}
+
+{% block title %}Your Order Has Shipped - #{{ order.order_number }}{% endblock %}
+
+{% block preheader %}Great news! Your order #{{ order.order_number }} is on its way. Track your package here.{% endblock %}
+
+{% block content %}
+<!-- Shipped Icon -->
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+    <tr>
+        <td style="text-align: center; padding-bottom: 20px;">
+            <div style="display: inline-block; width: 64px; height: 64px; background-color: #dbeafe; border-radius: 50%; line-height: 64px;">
+                <span style="color: #2563eb; font-size: 28px;">🚚</span>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<!-- Heading -->
+<h1 style="margin: 0 0 10px 0; font-size: 24px; font-weight: 700; color: #111827; text-align: center;">
+    Your Order is On Its Way!
+</h1>
+<p style="margin: 0 0 30px 0; font-size: 16px; color: #6b7280; text-align: center;">
+    Great news, {{ order.user.first_name|default:"there" }}! Your order has been shipped.
+</p>
+
+<!-- Tracking Box -->
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; margin-bottom: 30px;">
+    <tr>
+        <td style="padding: 25px; text-align: center;">
+            <p style="margin: 0 0 8px 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">
+                Tracking Number
+            </p>
+            <p style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: #1d4ed8; font-family: monospace;">
+                {{ shipment.tracking_number }}
+            </p>
+            <a href="{{ shipment.tracking_url }}" class="btn" style="display: inline-block; padding: 14px 28px; background-color: #2563eb; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px; border-radius: 8px;">
+                Track Your Package
+            </a>
+        </td>
+    </tr>
+</table>
+
+<!-- Shipment Details -->
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f9fafb; border-radius: 8px; margin-bottom: 30px;">
+    <tr>
+        <td style="padding: 20px;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                    <td width="33%" style="vertical-align: top; text-align: center; padding: 10px;">
+                        <p style="margin: 0 0 5px 0; font-size: 12px; color: #6b7280; text-transform: uppercase;">Order</p>
+                        <p style="margin: 0; font-size: 14px; font-weight: 600; color: #111827;">#{{ order.order_number }}</p>
+                    </td>
+                    <td width="33%" style="vertical-align: top; text-align: center; padding: 10px; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
+                        <p style="margin: 0 0 5px 0; font-size: 12px; color: #6b7280; text-transform: uppercase;">Carrier</p>
+                        <p style="margin: 0; font-size: 14px; font-weight: 600; color: #111827;">{{ shipment.carrier|default:"Standard Courier" }}</p>
+                    </td>
+                    <td width="33%" style="vertical-align: top; text-align: center; padding: 10px;">
+                        <p style="margin: 0 0 5px 0; font-size: 12px; color: #6b7280; text-transform: uppercase;">Est. Delivery</p>
+                        <p style="margin: 0; font-size: 14px; font-weight: 600; color: #111827;">{{ shipment.estimated_delivery|date:"M d, Y"|default:"2-4 days" }}</p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+
+<!-- Delivery Progress -->
+<h2 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #111827;">
+    Delivery Progress
+</h2>
+
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 30px;">
+    <tr>
+        <td>
+            <!-- Progress Bar -->
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                    <td width="25%" style="text-align: center;">
+                        <div style="width: 40px; height: 40px; background-color: #dcfce7; border-radius: 50%; margin: 0 auto 8px auto; line-height: 40px;">
+                            <span style="color: #16a34a; font-size: 18px;">✓</span>
+                        </div>
+                        <p style="margin: 0; font-size: 12px; color: #16a34a; font-weight: 600;">Order Placed</p>
+                    </td>
+                    <td width="25%" style="text-align: center;">
+                        <div style="width: 40px; height: 40px; background-color: #dcfce7; border-radius: 50%; margin: 0 auto 8px auto; line-height: 40px;">
+                            <span style="color: #16a34a; font-size: 18px;">✓</span>
+                        </div>
+                        <p style="margin: 0; font-size: 12px; color: #16a34a; font-weight: 600;">Processing</p>
+                    </td>
+                    <td width="25%" style="text-align: center;">
+                        <div style="width: 40px; height: 40px; background-color: #dbeafe; border-radius: 50%; margin: 0 auto 8px auto; line-height: 40px;">
+                            <span style="color: #2563eb; font-size: 18px;">🚚</span>
+                        </div>
+                        <p style="margin: 0; font-size: 12px; color: #2563eb; font-weight: 600;">Shipped</p>
+                    </td>
+                    <td width="25%" style="text-align: center;">
+                        <div style="width: 40px; height: 40px; background-color: #f3f4f6; border-radius: 50%; margin: 0 auto 8px auto; line-height: 40px;">
+                            <span style="color: #9ca3af; font-size: 18px;">📦</span>
+                        </div>
+                        <p style="margin: 0; font-size: 12px; color: #9ca3af;">Delivered</p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+
+<!-- Divider -->
+<hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+
+<!-- Items Shipped -->
+<h2 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #111827;">
+    Items in This Shipment
+</h2>
+
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+    {% for item in shipment_items %}
+    <tr>
+        <td style="padding: 12px 0; border-bottom: 1px solid #f3f4f6;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                    <td width="60" style="vertical-align: top;">
+                        <img src="{{ site_url }}{{ item.product.primary_image.url }}" alt="{{ item.product.name }}" width="50" height="50" style="border-radius: 6px; object-fit: cover; background-color: #f3f4f6;">
+                    </td>
+                    <td style="vertical-align: top; padding-left: 12px;">
+                        <p style="margin: 0 0 3px 0; font-size: 14px; font-weight: 600; color: #111827;">
+                            {{ item.product.name }}
+                        </p>
+                        <p style="margin: 0; font-size: 13px; color: #6b7280;">
+                            Qty: {{ item.quantity }}
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<!-- Divider -->
+<hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+
+<!-- Delivery Address -->
+<h2 style="margin: 0 0 15px 0; font-size: 16px; font-weight: 600; color: #111827;">
+    Delivery Address
+</h2>
+<p style="margin: 0; font-size: 14px; color: #374151; line-height: 1.6;">
+    {{ order.shipping_address.full_name }}<br>
+    {{ order.shipping_address.address_line_1 }}<br>
+    {% if order.shipping_address.address_line_2 %}{{ order.shipping_address.address_line_2 }}<br>{% endif %}
+    {{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{ order.shipping_address.postal_code }}<br>
+    {{ order.shipping_address.country.name }}
+</p>
+{% if order.shipping_address.phone %}
+<p style="margin: 10px 0 0 0; font-size: 14px; color: #6b7280;">
+    Phone: {{ order.shipping_address.phone }}
+</p>
+{% endif %}
+
+<!-- Important Note -->
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #fef3c7; border-radius: 8px; margin-top: 30px;">
+    <tr>
+        <td style="padding: 20px;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                    <td style="vertical-align: top; padding-right: 15px;">
+                        <span style="font-size: 24px;">💡</span>
+                    </td>
+                    <td style="vertical-align: top;">
+                        <p style="margin: 0 0 5px 0; font-size: 14px; font-weight: 600; color: #92400e;">
+                            Delivery Tip
+                        </p>
+                        <p style="margin: 0; font-size: 13px; color: #a16207; line-height: 1.5;">
+                            Please ensure someone is available to receive the package. Our delivery partner will contact you before delivery.
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+
+<!-- CTA Buttons -->
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-top: 30px;">
+    <tr>
+        <td style="text-align: center;">
+            <a href="{{ shipment.tracking_url }}" class="btn" style="display: inline-block; padding: 14px 28px; background-color: #e5604d; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px; border-radius: 8px; margin-right: 10px;">
+                Track Package
+            </a>
+            <a href="{{ site_url }}/orders/{{ order.order_number }}/" class="btn-outline" style="display: inline-block; padding: 12px 24px; background-color: transparent; color: #e5604d; text-decoration: none; font-weight: 600; font-size: 14px; border: 2px solid #e5604d; border-radius: 8px;">
+                View Order
+            </a>
+        </td>
+    </tr>
+</table>
+
+<!-- Help Section -->
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f9fafb; border-radius: 8px; margin-top: 30px;">
+    <tr>
+        <td style="padding: 20px; text-align: center;">
+            <p style="margin: 0 0 10px 0; font-size: 14px; color: #374151;">
+                Questions about your delivery?
+            </p>
+            <a href="{{ site_url }}/support/" style="font-size: 14px; color: #e5604d; text-decoration: underline;">
+                Contact Support
+            </a>
+        </td>
+    </tr>
+</table>
+
+{% endblock %}
+
+{% block unsubscribe %}
+<!-- No unsubscribe for transactional emails -->
+{% endblock %}

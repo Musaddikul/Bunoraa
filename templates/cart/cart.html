@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+{% load currency_tags %}
+
+{% block title %}{% trans "Shopping Cart" %}{% endblock %}
+{% block page_name %}cart{% endblock %}
+
+{% block breadcrumb %}
+<nav class="container mx-auto px-4 py-4" aria-label="Breadcrumb">
+    <ol class="breadcrumb">
+        <li><a href="{% url 'storefront:home' %}" class="breadcrumb-item">{% trans "Home" %}</a></li>
+        <span class="breadcrumb-separator">/</span>
+        <li class="breadcrumb-current">{% trans "Shopping Cart" %}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-secondary-900 mb-8">{% trans "Shopping Cart" %}</h1>
+    
+    <div id="cart-content">
+        {% if cart.items.count > 0 %}
+        <div class="lg:grid lg:grid-cols-12 lg:gap-8">
+            <!-- Cart Items -->
+            <div class="lg:col-span-8">
+                <!-- Cart Header (Desktop) -->
+                <div class="hidden md:grid md:grid-cols-12 gap-4 pb-4 border-b border-secondary-200 text-sm font-medium text-secondary-600">
+                    <div class="col-span-6">{% trans "Product" %}</div>
+                    <div class="col-span-2 text-center">{% trans "Price" %}</div>
+                    <div class="col-span-2 text-center">{% trans "Quantity" %}</div>
+                    <div class="col-span-2 text-right">{% trans "Total" %}</div>
+                </div>
+                
+                <!-- Cart Items List -->
+                <div id="cart-items" class="divide-y divide-secondary-100">
+                    {% for item in cart.items.all %}
+                    <div class="py-6 cart-item" data-item-id="{{ item.id }}">
+                        <div class="md:grid md:grid-cols-12 md:gap-4 md:items-center">
+                            <!-- Product Info -->
+                            <div class="md:col-span-6 flex gap-4">
+                                <div class="w-24 h-24 flex-shrink-0 bg-secondary-100 rounded-lg overflow-hidden">
+                                    {% if item.product.primary_image %}
+                                    <img 
+                                        src="{{ item.product.primary_image.url }}" 
+                                        alt="{{ item.product.name }}"
+                                        class="w-full h-full object-cover"
+                                    >
+                                    {% endif %}
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="font-medium text-secondary-900 line-clamp-2">
+                                        <a href="{{ item.product.get_absolute_url }}" class="hover:text-primary-600">{{ item.product.name }}</a>
+                                    </h3>
+                                    {% if item.variant %}
+                                    <p class="text-sm text-secondary-500 mt-1">
+                                        {% if item.variant.color %}{{ item.variant.color }}{% endif %}
+                                        {% if item.variant.color and item.variant.size %} / {% endif %}
+                                        {% if item.variant.size %}{{ item.variant.size }}{% endif %}
+                                    </p>
+                                    {% endif %}
+                                    <button 
+                                        type="button" 
+                                        class="text-sm text-error-600 hover:text-error-700 mt-2 md:hidden"
+                                        data-remove-item="{{ item.id }}"
+                                    >
+                                        {% trans "Remove" %}
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Price -->
+                            <div class="md:col-span-2 mt-4 md:mt-0 text-center">
+                                {% if item.product.is_on_sale %}
+                                <span class="text-error-600 font-medium">{{ item.product.sale_price|currency }}</span>
+                                <span class="text-sm text-secondary-400 line-through block">{{ item.product.price|currency }}</span>
+                                {% else %}
+                                <span class="font-medium">{{ item.unit_price|currency }}</span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Quantity -->
+                            <div class="md:col-span-2 mt-4 md:mt-0 flex justify-center">
+                                <div class="quantity-input" data-quantity-input>
+                                    <button 
+                                        type="button" 
+                                        class="quantity-btn" 
+                                        data-action="decrease"
+                                        data-item-id="{{ item.id }}"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                                        </svg>
+                                    </button>
+                                    <input 
+                                        type="number" 
+                                        value="{{ item.quantity }}" 
+                                        min="1" 
+                                        max="{{ item.product.stock_quantity }}" 
+                                        class="quantity-value"
+                                        data-item-id="{{ item.id }}"
+                                    >
+                                    <button 
+                                        type="button" 
+                                        class="quantity-btn" 
+                                        data-action="increase"
+                                        data-item-id="{{ item.id }}"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Total -->
+                            <div class="md:col-span-2 mt-4 md:mt-0 flex items-center justify-between md:justify-end">
+                                <span class="md:hidden text-secondary-600">{% trans "Total:" %}</span>
+                                <span class="font-bold text-secondary-900" data-line-total>{{ item.line_total|currency }}</span>
+                                <button 
+                                    type="button" 
+                                    class="hidden md:block ml-4 text-secondary-400 hover:text-error-600 transition-colors"
+                                    data-remove-item="{{ item.id }}"
+                                    aria-label="{% trans 'Remove item' %}"
+                                >
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Cart Actions -->
+                <div class="flex flex-wrap items-center justify-between gap-4 mt-6 pt-6 border-t border-secondary-200">
+                    <a href="{% url 'products:list' %}" class="btn btn-outline">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                        {% trans "Continue Shopping" %}
+                    </a>
+                    <button type="button" class="btn btn-ghost text-error-600" data-clear-cart>
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        {% trans "Clear Cart" %}
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Order Summary -->
+            <div class="lg:col-span-4 mt-8 lg:mt-0">
+                <div class="card sticky top-24">
+                    <div class="card-header">
+                        <h2 class="text-lg font-semibold">{% trans "Order Summary" %}</h2>
+                    </div>
+                    <div class="card-body space-y-4">
+                        <!-- Subtotal -->
+                        <div class="flex justify-between">
+                            <span class="text-secondary-600">{% trans "Subtotal" %}</span>
+                            <span class="font-medium" data-subtotal>{{ cart.subtotal|currency }}</span>
+                        </div>
+                        
+                        <!-- Discount -->
+                        {% if cart.discount_amount > 0 %}
+                        <div class="flex justify-between text-success-600">
+                            <span>{% trans "Discount" %}</span>
+                            <span>-{{ cart.discount_amount|currency }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Coupon Code -->
+                        <div class="pt-4 border-t border-secondary-100">
+                            <form id="coupon-form" class="flex gap-2">
+                                {% csrf_token %}
+                                <input 
+                                    type="text" 
+                                    name="coupon_code" 
+                                    placeholder="{% trans 'Coupon code' %}" 
+                                    class="input flex-1"
+                                    value="{{ cart.coupon.code|default:'' }}"
+                                >
+                                <button type="submit" class="btn btn-secondary">{% trans "Apply" %}</button>
+                            </form>
+                            {% if cart.coupon %}
+                            <div class="flex items-center justify-between mt-2 p-2 bg-success-50 rounded-lg text-sm">
+                                <span class="text-success-700">{{ cart.coupon.code }} {% trans "applied" %}</span>
+                                <button type="button" class="text-success-600 hover:text-success-700" data-remove-coupon>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Shipping -->
+                        <div class="flex justify-between pt-4 border-t border-secondary-100">
+                            <span class="text-secondary-600">{% trans "Shipping" %}</span>
+                            <span class="text-secondary-600">{% trans "Calculated at checkout" %}</span>
+                        </div>
+                        
+                        <!-- Total -->
+                        <div class="flex justify-between pt-4 border-t border-secondary-200">
+                            <span class="text-lg font-semibold">{% trans "Total" %}</span>
+                            <span class="text-lg font-bold" data-total>{{ cart.total|currency }}</span>
+                        </div>
+                        
+                        <!-- Checkout Button -->
+                        <a href="{% url 'checkout:checkout' %}" class="btn btn-primary btn-lg w-full">
+                            {% trans "Proceed to Checkout" %}
+                        </a>
+                        
+                        <!-- Payment Icons -->
+                        <div class="text-center pt-4">
+                            <p class="text-xs text-secondary-500 mb-2">{% trans "We accept" %}</p>
+                            <img src="{% static 'images/payment-methods.svg' %}" alt="{% trans 'Payment methods' %}" class="h-6 mx-auto">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- Empty Cart -->
+        <div class="empty-state py-16">
+            <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+            </svg>
+            <h2 class="empty-state-title">{% trans "Your cart is empty" %}</h2>
+            <p class="empty-state-text">{% trans "Looks like you haven't added anything to your cart yet." %}</p>
+            <a href="{% url 'products:list' %}" class="btn btn-primary btn-lg">
+                {% trans "Start Shopping" %}
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recently Viewed (if any) -->
+{% if recently_viewed %}
+<section class="bg-secondary-50 py-12 mt-12">
+    <div class="container mx-auto px-4">
+        <h2 class="text-2xl font-bold text-secondary-900 mb-8">{% trans "Recently Viewed" %}</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {% for product in recently_viewed %}
+            {% include 'components/product-card.html' with product=product %}
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}
