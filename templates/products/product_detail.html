@@ -5,6 +5,8 @@
 {% load i18n %}
 {% load currency_filters %}
 
+{% block page_name %}product-detail{% endblock %}
+
 {% block meta %}
 <title>{{ product.name }} | {{ site_name }}</title>
 <meta name="description" content="{{ product.short_description }}">
@@ -40,11 +42,10 @@
     <div class="lg:w-1/2 flex flex-col gap-4">
       <div
         class="relative rounded-xl overflow-hidden shadow-lg bg-gray-100 dark:bg-gray-800 aspect-[4/5] flex items-center justify-center group"
-        x-data="{ zoom: false }">
+        id="main-image-container">
         <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}"
           class="object-contain w-full h-full transition-transform duration-500 group-hover:scale-105 cursor-zoom-in"
-          id="mainImage" loading="eager" x-on:mouseenter="zoom = true" x-on:mouseleave="zoom = false"
-          :class="{ 'scale-125': zoom }">
+          id="mainImage" loading="eager">
         <!-- Animated Badges -->
         {% if product.is_discounted %}
         <span
@@ -55,55 +56,21 @@
           class="absolute top-4 right-4 bg-gray-700 text-white text-xs font-bold px-3 py-1 rounded-full shadow animate-pulse">{% translate "Out of Stock" %}</span>
         {% endif %}
         <!-- Wishlist Button -->
-        <button type="button" aria-label="Add to wishlist"
-          class="absolute bottom-4 right-4 z-20 p-2 rounded-full bg-white dark:bg-gray-800 shadow hover:bg-red-100 dark:hover:bg-red-900 transition-colors"
-          data-product-id="{{ product.id }}" data-action="toggle-wishlist" aria-pressed="false"
-          x-data="{
-                              wished: {{ product.is_wished|yesno:'true,false' }},
-                              toggle() {
-                                fetch('{% url 'wishlist:toggle' product.id %}', {
-                                  method: 'POST',
-                                  headers: {
-                                    'X-CSRFToken': '{{ csrf_token }}',
-                                    'X-Requested-With': 'XMLHttpRequest'
-                                  }
-                                })
-                                .then(res => {
-                                    if (!res.ok) {
-                                        // If response is not OK, parse error message from body if available
-                                        return res.json().then(err => { throw new Error(err.error || `HTTP error! status: ${res.status}`); });
-                                    }
-                                    return res.json();
-                                })
-                                .then(data => {
-                                  this.wished = data.added; // Update Alpine.js local state
-                                  
-                                  // Dispatch a custom event for the navbar to update the wishlist count
-                                  const message = data.message || 
-                                                  (data.added ? 'Product added to wishlist!' : 'Product removed from wishlist!');
-          
-                                  document.dispatchEvent(new CustomEvent('wishlist-count-updated', {
-                                      bubbles: true, // Ensure event bubbles up
-                                      detail: {
-                                          count: data.wishlist_count,
-                                          productId: {{ product.id }}, // Pass the product ID
-                                          added: data.added, // Pass the new wished status
-                                          message: message // Pass the message for the toast
-                                      }
-                                  }));
-                                  showToast(message, 'success'); // Use showToast for feedback
-                                })
-                                .catch(error => {
-                                    console.error('Product Detail: Error toggling wishlist:', error);
-                                    showToast(error.message || 'Failed to update wishlist.', 'error');
-                                });
-                              }
-                            }" x-on:click="toggle()" :aria-pressed="wished">
-          <svg class="w-7 h-7 transition-colors" :class="wished ? 'text-red-600' : 'text-gray-400'" fill="none"
-            stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <button type="button" 
+          class="wishlist-toggle absolute bottom-4 right-4 z-20 p-2 rounded-full bg-white dark:bg-gray-800 shadow hover:bg-red-100 dark:hover:bg-red-900 transition-colors"
+          data-product-id="{{ product.id }}"
+          aria-label="{% translate 'Add to wishlist' %}">
+          {% if product.is_wished %}
+          <svg class="w-7 h-7 text-red-600" fill="currentColor" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round"
               d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 21.364l-7.682-7.682a4.5 4.5 0 010-6.364z" />
           </svg>
+          {% else %}
+          <svg class="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 21.364l-7.682-7.682a4.5 4.5 0 010-6.364z" />
+          </svg>
+          {% endif %}
         </button>
       </div>
       <!-- Thumbnails Carousel -->
@@ -209,11 +176,15 @@
               class="w-24 rounded border border-gray-300 dark:border-gray-700 px-3 py-2 focus:ring-2 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-100">
           </div>
           <button type="submit"
-            class="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-8 py-3 rounded-lg shadow transition disabled:opacity-50 disabled:cursor-not-allowed mt-4 sm:mt-0 flex items-center justify-center"
+            class="add-to-cart-btn bg-primary-600 hover:bg-primary-700 text-white font-semibold px-8 py-3 rounded-lg shadow transition disabled:opacity-50 disabled:cursor-not-allowed mt-4 sm:mt-0 flex items-center justify-center"
+            data-product-id="{{ product.id }}"
             {% if product.stock == 0 %}disabled{% endif %}>
-            {% if product.stock == 0 %}Out of Stock{% else %}
-              <span id="add-to-cart-text">{% translate "Add to Cart" %}</span>
-              <i id="add-to-cart-spinner" class="fas fa-spinner fa-spin ml-2" style="display: none;"></i>
+            {% if product.stock == 0 %}{% translate "Out of Stock" %}{% else %}
+              <span>{% translate "Add to Cart" %}</span>
+              <svg class="add-to-cart-spinner hidden ml-2 w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
             {% endif %}
           </button>
         </div>
@@ -226,39 +197,40 @@
       </form>
       <!-- Floating Add-to-Cart for Mobile -->
       <div
-        class="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-900 shadow-lg p-4 flex justify-between items-center lg:hidden transition-transform duration-300"
-        x-data="{ show: false }" x-show="show" x-transition style="display: none;" id="mobileAddToCartBar">
+        class="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-900 shadow-lg p-4 flex justify-between items-center lg:hidden transition-transform duration-300 hidden"
+        id="mobileAddToCartBar">
         <span class="font-bold text-lg text-gray-900 dark:text-white">{{ product.discounted_price|default:product.price|convert_price:selected_currency }}</span>
-        <form id="mobile-add-to-cart-form" data-product-id="{{ product.id }}" class="add-to-cart-form">
-          {% csrf_token %}
-          <input type="hidden" name="quantity" value="1">
-          <input type="hidden" name="color" id="selected-color-mobile">
-          <input type="hidden" name="size" id="selected-size-mobile">
-          <input type="hidden" name="fabric" id="selected-fabric-mobile">
-          <input type="hidden" name="override" value="false">
-          <input type="hidden" name="saved_for_later" value="false">
-          <button type="submit"
-            class="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-6 py-2 rounded shadow transition flex items-center justify-center"
-            {% if product.stock == 0 %}disabled{% endif %}>
-            {% if product.stock == 0 %}Out of Stock{% else %}
-              <span id="mobile-add-to-cart-text">{% translate "Add to Cart" %}</span>
-              <i id="mobile-add-to-cart-spinner" class="fas fa-spinner fa-spin ml-2" style="display: none;"></i>
-            {% endif %}
-          </button>
-        </form>
+        <button type="button" 
+          class="add-to-cart-btn bg-primary-600 hover:bg-primary-700 text-white font-semibold px-6 py-2 rounded shadow transition flex items-center justify-center"
+          data-product-id="{{ product.id }}"
+          {% if product.stock == 0 %}disabled{% endif %}>
+          {% if product.stock == 0 %}{% translate "Out of Stock" %}{% else %}
+            <span>{% translate "Add to Cart" %}</span>
+            <svg class="add-to-cart-spinner hidden ml-2 w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          {% endif %}
+        </button>
       </div>
       <!-- Trust Badges -->
       <div class="flex gap-4 mt-6">
         <div class="flex items-center gap-2">
-          <i class="fas fa-shield-alt text-green-500"></i>
+          <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
           <span class="text-xs text-gray-600 dark:text-gray-300">{% translate "Secure Checkout" %}</span>
         </div>
         <div class="flex items-center gap-2">
-          <i class="fas fa-truck text-blue-500"></i>
+          <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
+          </svg>
           <span class="text-xs text-gray-600 dark:text-gray-300">{% translate "Fast Shipping" %}</span>
         </div>
         <div class="flex items-center gap-2">
-          <i class="fas fa-undo text-yellow-500"></i>
+          <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+          </svg>
           <span class="text-xs text-gray-600 dark:text-gray-300">{% translate "Easy Returns" %}</span>
         </div>
       </div>
@@ -402,15 +374,15 @@
 
   // Floating Add-to-Cart bar on mobile
   document.addEventListener('scroll', function () {
-    const addToCartForm = document.querySelector('form.add-to-cart-form'); // Target by class
+    const addToCartForm = document.getElementById('add-to-cart-form-detail');
     const mobileBar = document.getElementById('mobileAddToCartBar');
     if (!addToCartForm || !mobileBar) return;
     const rect = addToCartForm.getBoundingClientRect();
     // Show the mobile bar if the main add-to-cart form is out of view (scrolled past)
     if (rect.bottom < 0) {
-      mobileBar.style.display = 'flex';
+      mobileBar.classList.remove('hidden');
     } else {
-      mobileBar.style.display = 'none';
+      mobileBar.classList.add('hidden');
     }
   });
 

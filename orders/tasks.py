@@ -3,13 +3,24 @@ from celery import shared_task
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
-from weasyprint import HTML
 from django.utils import timezone
 from datetime import timedelta
 from .models import Order, OrderStatus
 from payments.models import Payment
 import tempfile
 import logging
+
+# Lazy import WeasyPrint to avoid errors on Windows without GTK
+HTML = None
+def get_weasyprint_html():
+    global HTML
+    if HTML is None:
+        try:
+            from weasyprint import HTML as _HTML
+            HTML = _HTML
+        except OSError:
+            HTML = None
+    return HTML
 
 logger = logging.getLogger(__name__)
 

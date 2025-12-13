@@ -44,6 +44,7 @@ DEFAULT_HOST = 'www'
 
 # Application definition
 INSTALLED_APPS = [
+    # Django core apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -52,66 +53,94 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'django.contrib.humanize',
+    'django.contrib.sitemaps',
+    
+    # Third-party apps - Infrastructure
     'django_hosts',
     'django_extensions',
     'django_browser_reload',
+    'channels',
+    'corsheaders',
+    'storages',
+    
+    # Third-party apps - REST API
+    'rest_framework',
+    'rest_framework.authtoken',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
+    'django_filters',
+    
+    # Third-party apps - Admin enhancements
+    'debug_toolbar',
     'django_admin_listfilter_dropdown',
     'rangefilter',
-    'channels',
-    'rest_framework',
-
-    # Tailwind support
+    
+    # Third-party apps - Tailwind & Forms
     'tailwind',
     'theme',
+    'crispy_forms',
+    'crispy_tailwind',
+    'widget_tweaks',
     
-    # Third-party apps
+    # Third-party apps - Authentication
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.facebook',
     'allauth.socialaccount.providers.microsoft',
-    'crispy_forms',
-    'crispy_tailwind',
+    
+    # Third-party apps - Features
     'django_countries',
-    'django_celery_beat',
     'phonenumber_field',
-    'django_filters',
-    'widget_tweaks',
     'django_ckeditor_5',
     'django_htmx',
-    'storages',
     'taggit',
-    'corsheaders',
-    'celery',
-    'rosetta',
-
-    # Automation
-    'rembg',
-    'openai',
+    'mptt',
     
-    # Local apps
+    # Third-party apps - Tasks & Scheduling
+    'django_celery_beat',
+    
+    # Third-party apps - Internationalization
+    'rosetta',
+    
+    # Local apps - Core
     'core',
-    'products',
     'accounts',
-    'locations',
-    'orders',
-    'custom_order',
-    'contacts',
+    
+    # Local apps - Products & Catalog
+    'products',
+    'reviews',
+    
+    # Local apps - Shopping
     'cart',
     'wishlist',
+    'orders',
+    'custom_order',
+    
+    # Local apps - Payments & Shipping
     'payments',
     'shipping',
     'returns',
-    'reviews',
+    
+    # Local apps - Marketing
     'promotions',
     'notifications',
+    
+    # Local apps - Content & Support
     'cms',
     'faq',
     'legal',
     'support',
+    'contacts',
+    
+    # Local apps - Analytics & Settings
     'analytics',
     'currencies',
+    'locations',
+    
+    # Storefront
+    'storefront',
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
@@ -171,35 +200,63 @@ else:
     }
 
 REST_FRAMEWORK = {
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle'
-    ],
-    'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/day',
-        'user': '1000/day',
-        'standard': '60/minute',
-        # Add other scopes and their rates as needed
-    },
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'reviews.pagination.ReviewPagination',
-    'PAGE_SIZE': 10,
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.ScopedRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/hour',
+        'user': '1000/hour',
+        'standard': '60/minute',
+        'burst': '10/second',
+    },
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'core.pagination.StandardResultsPagination',
+    'PAGE_SIZE': 20,
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
-    ],
+    ] + (['rest_framework.renderers.BrowsableAPIRenderer'] if DEBUG else []),
     'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',
         'rest_framework.parsers.FormParser',
-        'rest_framework.parsers.MultiPartParser'
+        'rest_framework.parsers.MultiPartParser',
     ],
-    
+    'EXCEPTION_HANDLER': 'core.exceptions.handlers.custom_exception_handler',
+    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
+    'DEFAULT_VERSION': 'v1',
+    'ALLOWED_VERSIONS': ['v1'],
+    'VERSION_PARAM': 'version',
+}
+
+# Simple JWT Configuration
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+    'JTI_CLAIM': 'jti',
 }
 
 customColorPalette = [
@@ -300,17 +357,29 @@ MIDDLEWARE = [
     'django_hosts.middleware.HostsResponseMiddleware',
 ]
 
+# Add debug toolbar middleware in development
+if DEBUG:
+    MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+    MIDDLEWARE.append('django_browser_reload.middleware.BrowserReloadMiddleware')
+
 ROOT_URLCONF = 'core.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'templates'),
+            os.path.join(BASE_DIR, 'backend', 'frontend', 'templates'),
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.tz',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'products.context_processors.categories',
@@ -319,11 +388,13 @@ TEMPLATES = [
                 'currencies.context_processors.currency_context',
                 'accounts.context_processors.user_settings_context',
                 'core.context_processors.active_languages',
+                'core.context_processors.bunoraa_config',
             ],
         },
     },
 ]
 
+ASGI_APPLICATION = 'core.asgi.application'
 WSGI_APPLICATION = 'core.wsgi.application'
 
 # Database
@@ -376,7 +447,13 @@ ROSETTA_GOOGLE_TRANSLATE = True
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, 'backend', 'frontend', 'static'),
+]
+
+# WhiteNoise for static file serving
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
 MEDIA_URL = '/media/'
@@ -785,4 +862,106 @@ if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 else:
-    pass
+    # Development security settings
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+
+
+# =============================================================================
+# Additional Feature Configurations
+# =============================================================================
+
+# Session Configuration
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # 30 days
+SESSION_COOKIE_NAME = 'bunoraa_session'
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_SAVE_EVERY_REQUEST = True
+
+# Phone Number Configuration
+PHONENUMBER_DEFAULT_REGION = 'BD'
+PHONENUMBER_DB_FORMAT = 'NATIONAL'
+
+# Taggit Configuration
+TAGGIT_CASE_INSENSITIVE = True
+
+# Django Countries Configuration
+COUNTRIES_FIRST = ['BD', 'US', 'GB', 'CA', 'AU']
+COUNTRIES_FIRST_SORT = False
+
+# Messages Configuration
+MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
+
+# File Upload Configuration
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
+
+# Django Debug Toolbar Configuration
+DEBUG_TOOLBAR_CONFIG = {
+    'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG,
+    'INTERCEPT_REDIRECTS': False,
+}
+
+# MPTT Configuration
+MPTT_ADMIN_LEVEL_INDENT = 20
+
+# Currency Settings
+DEFAULT_CURRENCY = 'BDT'
+SUPPORTED_CURRENCIES = ['BDT', 'USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR']
+
+# Shipping Settings
+FREE_SHIPPING_THRESHOLD = 5000  # In default currency (BDT)
+DEFAULT_SHIPPING_COST = 60  # In default currency (BDT)
+
+# Order Settings
+ORDER_ID_PREFIX = 'BNR'
+MIN_ORDER_AMOUNT = 100  # Minimum order amount in default currency
+
+# Review Settings
+REVIEW_REQUIRE_PURCHASE = True
+REVIEW_REQUIRE_MODERATION = False
+REVIEW_ALLOW_ANONYMOUS = False
+
+# Notification Settings
+NOTIFICATION_CHANNELS = ['email', 'sms', 'push', 'in_app']
+NOTIFICATION_DEFAULT_SENDER = 'Bunoraa <noreply@bunoraa.com>'
+
+# Analytics Settings
+ANALYTICS_ENABLED = True
+ANALYTICS_TRACKING_ID = env('ANALYTICS_TRACKING_ID', default='')
+
+# Feature Flags
+FEATURES = {
+    'ENABLE_REVIEWS': True,
+    'ENABLE_WISHLIST': True,
+    'ENABLE_COMPARE': True,
+    'ENABLE_MULTI_CURRENCY': True,
+    'ENABLE_MULTI_LANGUAGE': True,
+    'ENABLE_SOCIAL_LOGIN': True,
+    'ENABLE_GUEST_CHECKOUT': True,
+    'ENABLE_COUPONS': True,
+    'ENABLE_FLASH_SALES': True,
+    'ENABLE_PRODUCT_RECOMMENDATIONS': True,
+    'ENABLE_RECENTLY_VIEWED': True,
+    'ENABLE_SMS_NOTIFICATIONS': False,
+    'ENABLE_PUSH_NOTIFICATIONS': False,
+}
+
+# API Rate Limiting (per user)
+API_RATE_LIMITS = {
+    'default': '1000/hour',
+    'search': '100/minute',
+    'checkout': '10/minute',
+    'auth': '20/minute',
+}
+
+# Cache Timeouts (in seconds)
+CACHE_TIMEOUTS = {
+    'categories': 60 * 60,  # 1 hour
+    'products': 60 * 15,     # 15 minutes
+    'settings': 60 * 60,     # 1 hour
+    'exchange_rates': 60 * 60 * 24,  # 24 hours
+    'user_cart': 60 * 5,     # 5 minutes
+}

@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block title %}{% trans "Terms of Service" %} - {{ site_name }}{% endblock %}
+
+{% block meta_description %}{% trans "Read our Terms of Service to understand the rules and guidelines for using Bunoraa's e-commerce platform." %}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-primary-600 to-primary-700 py-16">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-white mb-4">
+                {% trans "Terms of Service" %}
+            </h1>
+            <p class="text-primary-100 text-lg">
+                {% trans "Last updated:" %} {{ terms.last_updated|default:"January 1, 2025" }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="bg-white rounded-xl shadow-sm p-8 md:p-12">
+            <!-- Quick Navigation -->
+            <nav class="mb-12 p-6 bg-gray-50 rounded-lg">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">{% trans "Quick Navigation" %}</h2>
+                <ul class="grid md:grid-cols-2 gap-2">
+                    <li>
+                        <a href="#acceptance" class="text-primary-600 hover:text-primary-700 hover:underline">
+                            1. {% trans "Acceptance of Terms" %}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#accounts" class="text-primary-600 hover:text-primary-700 hover:underline">
+                            2. {% trans "User Accounts" %}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#orders" class="text-primary-600 hover:text-primary-700 hover:underline">
+                            3. {% trans "Orders & Payments" %}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#shipping" class="text-primary-600 hover:text-primary-700 hover:underline">
+                            4. {% trans "Shipping & Delivery" %}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#returns" class="text-primary-600 hover:text-primary-700 hover:underline">
+                            5. {% trans "Returns & Refunds" %}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#intellectual" class="text-primary-600 hover:text-primary-700 hover:underline">
+                            6. {% trans "Intellectual Property" %}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#prohibited" class="text-primary-600 hover:text-primary-700 hover:underline">
+                            7. {% trans "Prohibited Activities" %}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#limitation" class="text-primary-600 hover:text-primary-700 hover:underline">
+                            8. {% trans "Limitation of Liability" %}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#indemnification" class="text-primary-600 hover:text-primary-700 hover:underline">
+                            9. {% trans "Indemnification" %}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#changes" class="text-primary-600 hover:text-primary-700 hover:underline">
+                            10. {% trans "Changes to Terms" %}
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- Terms Content -->
+            <div class="prose prose-gray max-w-none">
+                <section id="acceptance" class="mb-10">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                        <span class="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm font-bold mr-3">1</span>
+                        {% trans "Acceptance of Terms" %}
+                    </h2>
+                    <p class="text-gray-600 mb-4">
+                        {% trans "By accessing and using Bunoraa.com (the \"Website\"), you accept and agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our Website." %}
+                    </p>
+                    <p class="text-gray-600">
+                        {% trans "These terms apply to all users, including browsers, customers, merchants, and contributors of content. Please read these terms carefully before using our services." %}
+                    </p>
+                </section>
+
+                <section id="accounts" class="mb-10">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                        <span class="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm font-bold mr-3">2</span>
+                        {% trans "User Accounts" %}
+                    </h2>
+                    <ul class="list-disc list-inside text-gray-600 space-y-2">
+                        <li>{% trans "You must be at least 18 years old to create an account." %}</li>
+                        <li>{% trans "You are responsible for maintaining the confidentiality of your account credentials." %}</li>
+                        <li>{% trans "You must provide accurate and complete registration information." %}</li>
+                        <li>{% trans "You are responsible for all activities under your account." %}</li>
+                        <li>{% trans "We reserve the right to suspend or terminate accounts that violate these terms." %}</li>
+                    </ul>
+                </section>
+
+                <section id="orders" class="mb-10">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                        <span class="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm font-bold mr-3">3</span>
+                        {% trans "Orders & Payments" %}
+                    </h2>
+                    <p class="text-gray-600 mb-4">
+                        {% trans "When you place an order on our Website:" %}
+                    </p>
+                    <ul class="list-disc list-inside text-gray-600 space-y-2">
+                        <li>{% trans "All prices are displayed in your selected currency and include applicable taxes unless otherwise stated." %}</li>
+                        <li>{% trans "We reserve the right to refuse or cancel orders for any reason." %}</li>
+                        <li>{% trans "Product availability is subject to change without notice." %}</li>
+                        <li>{% trans "Payment must be received in full before order processing." %}</li>
+                        <li>{% trans "We use secure payment processors and do not store your payment card details." %}</li>
+                    </ul>
+                </section>
+
+                <section id="shipping" class="mb-10">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                        <span class="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm font-bold mr-3">4</span>
+                        {% trans "Shipping & Delivery" %}
+                    </h2>
+                    <p class="text-gray-600 mb-4">
+                        {% trans "Please refer to our" %} <a href="{% url 'legal:shipping_info' %}" class="text-primary-600 hover:underline">{% trans "Shipping Information" %}</a> {% trans "page for detailed shipping policies." %}
+                    </p>
+                    <ul class="list-disc list-inside text-gray-600 space-y-2">
+                        <li>{% trans "Delivery times are estimates and not guaranteed." %}</li>
+                        <li>{% trans "Risk of loss transfers to you upon delivery." %}</li>
+                        <li>{% trans "Additional customs or import duties may apply for international orders." %}</li>
+                    </ul>
+                </section>
+
+                <section id="returns" class="mb-10">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                        <span class="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm font-bold mr-3">5</span>
+                        {% trans "Returns & Refunds" %}
+                    </h2>
+                    <p class="text-gray-600 mb-4">
+                        {% trans "Please refer to our" %} <a href="{% url 'legal:returns_policy' %}" class="text-primary-600 hover:underline">{% trans "Returns Policy" %}</a> {% trans "page for detailed information about returns and refunds." %}
+                    </p>
+                </section>
+
+                <section id="intellectual" class="mb-10">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                        <span class="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm font-bold mr-3">6</span>
+                        {% trans "Intellectual Property" %}
+                    </h2>
+                    <p class="text-gray-600 mb-4">
+                        {% trans "All content on this Website, including text, graphics, logos, images, and software, is the property of Bunoraa or its content suppliers and is protected by copyright laws." %}
+                    </p>
+                    <ul class="list-disc list-inside text-gray-600 space-y-2">
+                        <li>{% trans "You may not reproduce, distribute, or create derivative works without written permission." %}</li>
+                        <li>{% trans "Trademarks and logos may not be used without prior authorization." %}</li>
+                        <li>{% trans "User-submitted content grants us a non-exclusive license to use such content." %}</li>
+                    </ul>
+                </section>
+
+                <section id="prohibited" class="mb-10">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                        <span class="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm font-bold mr-3">7</span>
+                        {% trans "Prohibited Activities" %}
+                    </h2>
+                    <p class="text-gray-600 mb-4">{% trans "You agree not to:" %}</p>
+                    <ul class="list-disc list-inside text-gray-600 space-y-2">
+                        <li>{% trans "Use the Website for any unlawful purpose" %}</li>
+                        <li>{% trans "Attempt to gain unauthorized access to our systems" %}</li>
+                        <li>{% trans "Interfere with or disrupt the Website's functionality" %}</li>
+                        <li>{% trans "Transmit viruses or malicious code" %}</li>
+                        <li>{% trans "Engage in fraudulent activities" %}</li>
+                        <li>{% trans "Scrape or collect data without permission" %}</li>
+                        <li>{% trans "Impersonate others or provide false information" %}</li>
+                    </ul>
+                </section>
+
+                <section id="limitation" class="mb-10">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                        <span class="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm font-bold mr-3">8</span>
+                        {% trans "Limitation of Liability" %}
+                    </h2>
+                    <p class="text-gray-600 mb-4">
+                        {% trans "To the fullest extent permitted by law, Bunoraa shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Website or services." %}
+                    </p>
+                    <p class="text-gray-600">
+                        {% trans "Our total liability for any claims shall not exceed the amount paid by you for the relevant products or services." %}
+                    </p>
+                </section>
+
+                <section id="indemnification" class="mb-10">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                        <span class="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm font-bold mr-3">9</span>
+                        {% trans "Indemnification" %}
+                    </h2>
+                    <p class="text-gray-600">
+                        {% trans "You agree to indemnify and hold harmless Bunoraa, its officers, directors, employees, and agents from any claims, damages, or expenses arising from your use of the Website or violation of these terms." %}
+                    </p>
+                </section>
+
+                <section id="changes" class="mb-10">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                        <span class="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm font-bold mr-3">10</span>
+                        {% trans "Changes to Terms" %}
+                    </h2>
+                    <p class="text-gray-600">
+                        {% trans "We reserve the right to modify these terms at any time. Changes will be effective immediately upon posting. Your continued use of the Website constitutes acceptance of the modified terms." %}
+                    </p>
+                </section>
+
+                <!-- Contact Section -->
+                <section class="mt-12 p-6 bg-gray-50 rounded-lg">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">{% trans "Questions?" %}</h2>
+                    <p class="text-gray-600 mb-4">
+                        {% trans "If you have any questions about these Terms of Service, please contact us:" %}
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <a href="{% url 'contacts:contact' %}" class="inline-flex items-center justify-center px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                            {% trans "Contact Us" %}
+                        </a>
+                        <a href="mailto:legal@bunoraa.com" class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                            legal@bunoraa.com
+                        </a>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

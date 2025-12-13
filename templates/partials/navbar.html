@@ -5,7 +5,7 @@
         <nav class="flex items-center justify-between h-16">
             <!-- Logo -->
             <div class="flex-shrink-0">
-                <a href="{% url 'home' %}" aria-label="BunonMart Home">
+                <a href="{% url 'home' %}" aria-label="Bunoraa Home">
                     <img src="{{ site_logo.url }}" alt="{{ site_name }}" class="w-24 h-16" loading="lazy">
                 </a>
             </div>
@@ -24,7 +24,7 @@
                                 {{ category.name }}
                             </a>
 
-                            <!-- Submenu: full fix applied -->
+                            <!-- Submenu -->
                             <div
                                 class="absolute top-full left-0 pt-2 w-48 invisible group-hover:visible group-hover:pointer-events-auto opacity-0 group-hover:opacity-100 transition-all duration-200 z-50">
                                 <div class="bg-white dark:bg-gray-700 rounded-md shadow-lg ring-1 ring-black ring-opacity-5"
@@ -55,7 +55,10 @@
                     <a href="{% url 'custom_order:create' %}"
                         class="relative inline-flex items-center px-4 py-2 rounded-full text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-blue-500 shadow-lg hover:shadow-xl transition-all duration-300 ml-4"
                         aria-label="Place a custom order">
-                        <i class="fas fa-tools mr-2" aria-hidden="true"></i>
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
                         <span class="hidden sm:inline">Custom Order</span>
                         <span class="inline sm:hidden">Custom</span>
                     </a>
@@ -64,19 +67,25 @@
 
             <!-- Right Side Icons -->
             <div class="hidden md:block">
-                <div class="ml-4 flex items-center md:ml-4 space-x-8">
+                <div class="ml-4 flex items-center md:ml-4 space-x-6">
                     <!-- Search Form -->
                     <form id="searchForm" class="flex" action="{% url 'products:search' %}" method="GET" role="search"
                         aria-label="Search products">
                         <div class="relative rounded-md shadow-sm">
-                            <input type="search" name="q" placeholder="Search products..."
+                            <input type="search" name="q" id="desktop-search-input" placeholder="Search products..." autocomplete="off"
                                 class="block w-full pl-4 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
                                 aria-label="Search products">
                             <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
                                 <button type="submit" class="text-gray-400 hover:text-gray-500"
                                     aria-label="Submit search">
-                                    <i class="fas fa-search" aria-hidden="true"></i>
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
                                 </button>
+                            </div>
+                            <!-- Search Autocomplete Dropdown -->
+                            <div id="search-autocomplete" class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden z-50 max-h-96 overflow-y-auto">
+                                <div id="search-results-container"></div>
                             </div>
                         </div>
                     </form>
@@ -85,7 +94,7 @@
                     <form action="{% url 'set_language' %}" method="post" class="inline-flex items-center">
                         {% csrf_token %}
                         <select name="language" onchange="this.form.submit()"
-                                class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md py-1 px-2 text-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500">
+                                class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md py-1 px-2 text-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 cursor-pointer">
                             {% for lang in active_languages %}
                                 <option value="{{ lang.code }}" {% if lang.code == request.LANGUAGE_CODE %}selected{% endif %}>
                                     {{ lang.name }}
@@ -95,93 +104,126 @@
                     </form>
 
                     <!-- Theme Toggle -->
-                    <button id="themeToggle" class="btn header-icon" aria-label="Toggle theme">
-                        <i class="fas fa-sun"></i>
+                    <button class="theme-toggle p-2 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none transition-colors" aria-label="Toggle theme">
+                        <!-- Sun icon (shown in dark mode) -->
+                        <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                        <!-- Moon icon (shown in light mode) -->
+                        <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
                     </button>
 
                     <!-- Accounts Dropdown -->
-                    <div class="relative ml-3" tabindex="0">
-                        <button id="user-menu-button"
-                            class="p-2 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none"
-                            aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-user-circle" aria-hidden="true"></i>
+                    <div class="relative" tabindex="0">
+                        <button id="user-menu-btn"
+                            class="p-2 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none transition-colors"
+                            aria-haspopup="true" aria-expanded="false" aria-label="User menu">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
                         </button>
-                        <div id="user-menu"
-                            class="absolute top-full left-0 pt-2 w-40 hidden z-50 bg-white dark:bg-gray-700 rounded-md shadow-lg ring-1 ring-black ring-opacity-5"
+                        <div id="user-dropdown"
+                            class="absolute right-0 top-full mt-2 w-48 hidden z-50 bg-white dark:bg-gray-700 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 py-1"
                             role="menu">
                             {% if request.user.is_authenticated %}
+                            <div class="px-4 py-2 border-b border-gray-100 dark:border-gray-600">
+                                <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ request.user.get_full_name|default:request.user.username }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ request.user.email }}</p>
+                            </div>
                             <a href="{% url 'accounts:profile' %}"
-                                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
-                                role="menuitem" tabindex="-1">
-                                <i class="fas fa-user mr-2" aria-hidden="true"></i>Profile
+                                class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                                role="menuitem">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                                My Profile
                             </a>
-                            <div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+                            <a href="{% url 'accounts:orders' %}"
+                                class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                                role="menuitem">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                                </svg>
+                                My Orders
+                            </a>
+                            <div class="border-t border-gray-100 dark:border-gray-600 my-1"></div>
                             <a href="{% url 'account_logout' %}"
-                                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
-                                role="menuitem" tabindex="-1">
-                                <i class="fas fa-sign-out-alt mr-2" aria-hidden="true"></i>Logout
+                                class="flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                                role="menuitem">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                </svg>
+                                Logout
                             </a>
                             {% else %}
                             <a href="{% url 'account_login' %}"
-                                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
-                                role="menuitem" tabindex="-1">
-                                <i class="fas fa-sign-in-alt mr-2" aria-hidden="true"></i>Login
+                                class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                                role="menuitem">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                                </svg>
+                                Login
                             </a>
                             <a href="{% url 'account_signup' %}"
-                                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
-                                role="menuitem" tabindex="-1">
-                                <i class="fas fa-user-plus mr-2" aria-hidden="true"></i>Signup
+                                class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                                role="menuitem">
+                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                                </svg>
+                                Sign Up
                             </a>
                             {% endif %}
                         </div>
                     </div>
 
                     <!-- Wishlist -->
-                    <a href="{% url 'wishlist:detail' %}"
-                        class="p-1 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 relative"
+                    <a href="{% url 'wishlist:detail' %}" id="wishlist-btn"
+                        class="p-2 rounded-full text-gray-400 hover:text-pink-500 dark:hover:text-pink-400 relative transition-colors"
                         aria-label="Wishlist">
-                        <i class="far fa-heart" aria-hidden="true"></i>
-                        <span id="wishlist-count-navbar"
-                            x-data="{ count: {{ request.user.wishlist.products.count|default:0 }} }"
-                            x-init="
-                                // Listen for the custom event dispatched from wishlist/detail.html or product cards
-                                window.addEventListener('wishlist-count-updated', (event) => {
-                                    count = event.detail.count;
-                                });
-                            "
-                            class="absolute -top-2 -right-2 inline-block w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center"
-                            aria-live="polite"
-                            x-text="count"
-                            :class="{ 'hidden': count === 0 }">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                        </svg>
+                        <span id="wishlist-count" class="wishlist-count absolute -top-1 -right-1 w-5 h-5 bg-pink-500 text-white text-xs rounded-full flex items-center justify-center font-medium {% if not request.user.wishlist.products.count %}hidden{% endif %}">
+                            {{ request.user.wishlist.products.count|default:0 }}
                         </span>
                     </a>
 
                     <!-- Cart -->
-                    <button id="desktop-cart-trigger"
-                        class="p-1 rounded-full text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 relative navbar-cart-trigger"
-                        hx-get="{% url 'cart:sidebar' %}"
-                        hx-target="#quick-cart-content"
-                        hx-swap="innerHTML"
-                        hx-trigger="click, refreshCartSidebar from body" {# 'refreshCartSidebar' is a custom event #}
-                    >
-                        <i class="fas fa-shopping-cart text-xl"></i>
-                        <span class="absolute -top-2 -right-2 inline-block w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center"
-                            id="cart-item-count">
-                        {{ request.user_cart.total_items|default:"0" }}
+                    <button id="cart-btn"
+                        class="p-2 rounded-full text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 relative transition-colors"
+                        aria-label="Shopping cart">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        <span class="cart-count absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                            {{ request.user_cart.total_items|default:0 }}
                         </span>
                     </button>
                 </div>
             </div>
 
             <!-- Mobile menu button -->
-            <div class="md:hidden flex items-center">
-                <button id="mobile-menu-button"
-                    class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
+            <div class="md:hidden flex items-center space-x-2">
+                <!-- Mobile Cart -->
+                <button id="mobile-cart-btn"
+                    class="p-2 rounded-full text-gray-400 hover:text-blue-500 relative transition-colors"
+                    aria-label="Shopping cart">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    <span class="cart-count absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                        {{ request.user_cart.total_items|default:0 }}
+                    </span>
+                </button>
+
+                <!-- Mobile Menu Toggle -->
+                <button id="mobile-menu-btn"
+                    class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none transition-colors"
                     aria-label="Toggle mobile menu" aria-expanded="false">
-                    <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 6h16M4 12h16M4 18h16" />
+                    <svg class="block h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
             </div>
@@ -189,24 +231,28 @@
     </div>
 
     <!-- Mobile menu -->
-    <div id="mobile-menu" class="md:hidden hidden bg-white dark:bg-gray-800 shadow-lg">
-        <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+    <div id="mobile-menu" class="md:hidden hidden bg-white dark:bg-gray-800 shadow-lg transform transition-all duration-300">
+        <div class="px-4 pt-2 pb-3 space-y-1">
             {% for category in all_categories %}
             {% if category.children.all.count %}
-            <div class="relative">
+            <div class="mobile-category">
                 <button
-                    class="mobile-category-toggle text-gray-700 dark:text-gray-300 hover:text-pink-600 dark:hover:text-pink-400 block px-3 py-2 rounded-md text-base font-medium w-full text-left flex justify-between items-center"
-                    aria-expanded="false" aria-controls="submenu-{{ forloop.counter }}">
-                    {{ category.name }}
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    class="mobile-category-toggle text-gray-700 dark:text-gray-300 hover:text-pink-600 dark:hover:text-pink-400 block px-3 py-2 rounded-md text-base font-medium w-full text-left flex justify-between items-center transition-colors"
+                    aria-expanded="false" data-target="submenu-{{ forloop.counter }}">
+                    <span>{{ category.name }}</span>
+                    <svg class="w-5 h-5 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                     </svg>
                 </button>
-                <div id="submenu-{{ forloop.counter }}" class="mobile-submenu hidden pl-4" role="region"
+                <div id="submenu-{{ forloop.counter }}" class="mobile-submenu hidden pl-4 mt-1" role="region"
                     aria-label="{{ category.name }} submenu">
+                    <a href="{{ category.get_absolute_url }}"
+                        class="block px-3 py-2 rounded-md text-base font-medium text-pink-600 dark:text-pink-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+                        View All {{ category.name }}
+                    </a>
                     {% for child in category.children.all %}
                     <a href="{{ child.get_absolute_url }}"
-                        class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 dark:text-gray-400 hover:text-pink-600 dark:hover:text-pink-400">
+                        class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 dark:text-gray-400 hover:text-pink-600 dark:hover:text-pink-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                         {{ child.name }}
                     </a>
                     {% endfor %}
@@ -214,40 +260,47 @@
             </div>
             {% else %}
             <a href="{{ category.get_absolute_url }}"
-                class="text-gray-700 dark:text-gray-300 hover:text-pink-600 dark:hover:text-pink-400 block px-3 py-2 rounded-md text-base font-medium">
+                class="text-gray-700 dark:text-gray-300 hover:text-pink-600 dark:hover:text-pink-400 block px-3 py-2 rounded-md text-base font-medium transition-colors">
                 {{ category.name }}
             </a>
             {% endif %}
             {% endfor %}
 
             <a href="{% url 'custom_order:create' %}"
-                class="block px-3 py-2 rounded-md text-base font-medium text-white bg-gradient-to-r from-purple-600 to-blue-500 mt-2 text-center"
+                class="flex items-center justify-center px-3 py-2 rounded-md text-base font-medium text-white bg-gradient-to-r from-purple-600 to-blue-500 mt-3"
                 aria-label="Place a custom order">
-                <i class="fas fa-tools mr-2" aria-hidden="true"></i>Custom Order
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                Custom Order
             </a>
         </div>
 
-        <div class="pt-4 pb-3 border-t border-gray-200 dark:border-gray-700 px-4 flex flex-col space-y-3">
-            <!-- Search Form -->
-            <form id="mobile-search" class="flex-1" action="{% url 'products:search' %}" method="GET" role="search"
+        <div class="pt-4 pb-3 border-t border-gray-200 dark:border-gray-700 px-4 space-y-4">
+            <!-- Mobile Search Form -->
+            <form id="mobile-search-form" class="w-full" action="{% url 'products:search' %}" method="GET" role="search"
                 aria-label="Search products">
                 <div class="relative rounded-md shadow-sm">
-                    <input type="search" name="q" placeholder="Search products..."
-                        class="block w-full pl-4 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
+                    <input type="search" name="q" id="mobile-search-input" placeholder="Search products..." autocomplete="off"
+                        class="block w-full pl-4 pr-10 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 text-base"
                         aria-label="Search products">
                     <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                        <button type="submit" class="text-gray-400 hover:text-gray-500" aria-label="Submit search">
-                            <i class="fas fa-search" aria-hidden="true"></i>
+                        <button type="submit" class="text-gray-400 hover:text-pink-500 transition-colors" aria-label="Submit search">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
                         </button>
                     </div>
                 </div>
             </form>
 
             <!-- Language Switcher (Mobile) -->
-            <form action="{% url 'set_language' %}" method="post" class="inline-flex items-center w-full">
+            <form action="{% url 'set_language' %}" method="post" class="w-full">
                 {% csrf_token %}
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Language</label>
                 <select name="language" onchange="this.form.submit()"
-                        class="block w-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md py-2 px-3 text-base focus:outline-none focus:ring-pink-500 focus:border-pink-500">
+                        class="block w-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg py-2.5 px-3 text-base focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 cursor-pointer">
                     {% for lang in active_languages %}
                         <option value="{{ lang.code }}" {% if lang.code == request.LANGUAGE_CODE %}selected{% endif %}>
                             {{ lang.name }}
@@ -256,75 +309,154 @@
                 </select>
             </form>
 
-            <div class="flex items-center justify-between">
+            <!-- Mobile Actions Row -->
+            <div class="flex items-center justify-between pt-2">
                 <!-- Theme Toggle -->
-                <button id="mobile-theme-toggle"
-                    class="p-2 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none"
+                <button class="theme-toggle flex items-center space-x-2 p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     aria-label="Toggle theme">
-                    <i class="fas fa-sun dark:hidden" aria-hidden="true"></i>
-                    <i class="fas fa-moon hidden dark:inline" aria-hidden="true"></i>
+                    <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                    <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                    <span class="text-sm">Theme</span>
                 </button>
 
-                <!-- Accounts -->
-                <div class="flex space-x-3">
+                <!-- Account Links -->
+                <div class="flex items-center space-x-1">
                     {% if request.user.is_authenticated %}
                     <a href="{% url 'accounts:profile' %}"
-                        class="p-2 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                        class="flex items-center space-x-1 p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                         aria-label="Profile">
-                        <i class="fas fa-user-circle" aria-hidden="true"></i>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
                     </a>
                     <a href="{% url 'account_logout' %}"
-                        class="p-2 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                        class="flex items-center space-x-1 p-2 rounded-lg text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                         aria-label="Logout">
-                        <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
                     </a>
                     {% else %}
                     <a href="{% url 'account_login' %}"
-                        class="p-2 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
-                        aria-label="Login">
-                        <i class="fas fa-sign-in-alt" aria-hidden="true"></i>
+                        class="flex items-center space-x-1 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                        </svg>
+                        <span>Login</span>
                     </a>
-                    <a href="{% url 'account_signup'}"
-                        class="p-2 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
-                        aria-label="Signup">
-                        <i class="fas fa-user-plus" aria-hidden="true"></i>
+                    <a href="{% url 'account_signup' %}"
+                        class="flex items-center space-x-1 px-3 py-2 rounded-lg text-white bg-pink-500 hover:bg-pink-600 transition-colors text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                        </svg>
+                        <span>Sign Up</span>
                     </a>
                     {% endif %}
                 </div>
 
                 <!-- Wishlist -->
                 <a href="{% url 'wishlist:detail' %}"
-                    class="p-2 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 relative"
+                    class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-pink-500 relative transition-colors"
                     aria-label="Wishlist">
-                    <i class="far fa-heart" aria-hidden="true"></i>
-                    <span
-                        x-data="{ count: {{ request.user.wishlist.products.count|default:0 }} }"
-                        x-init="
-                            // Listen for the custom event dispatched from wishlist/detail.html or product cards
-                            window.addEventListener('wishlist-count-updated', (event) => {
-                                count = event.detail.count;
-                            });
-                        "
-                        class="absolute top-0 right-0 inline-block w-5 h-5 transform translate-x-1/2 -translate-y-1/2 bg-red-500 text-white text-xs rounded-full flex items-center justify-center"
-                        aria-live="polite"
-                        x-text="count"
-                        :class="{ 'hidden': count === 0 }">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                    </svg>
+                    <span class="wishlist-count absolute -top-1 -right-1 w-4 h-4 bg-pink-500 text-white text-xs rounded-full flex items-center justify-center {% if not request.user.wishlist.products.count %}hidden{% endif %}">
+                        {{ request.user.wishlist.products.count|default:0 }}
                     </span>
                 </a>
-
-                <!-- Cart -->
-                <button id="mobile-cart-trigger"
-                    class="p-2 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 relative navbar-cart-trigger"
-                    aria-label="Shopping cart">
-                    <i class="fas fa-shopping-cart" aria-hidden="true"></i>
-                    <span
-                        id="mobile-cart-count"
-                        class="absolute top-0 right-0 inline-block w-5 h-5 transform translate-x-1/2 -translate-y-1/2 bg-red-500 text-white text-xs rounded-full flex items-center justify-center"
-                        aria-live="polite">
-                        {{ cart_count|default:0 }}
-                    </span>
-                </button>
             </div>
         </div>
     </div>
 </header>
+
+<!-- Navbar JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mobile menu toggle
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    
+    if (mobileMenuBtn && mobileMenu) {
+        mobileMenuBtn.addEventListener('click', function() {
+            const isExpanded = this.getAttribute('aria-expanded') === 'true';
+            this.setAttribute('aria-expanded', !isExpanded);
+            mobileMenu.classList.toggle('hidden');
+        });
+    }
+    
+    // Mobile category toggles
+    document.querySelectorAll('.mobile-category-toggle').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const targetId = this.dataset.target;
+            const submenu = document.getElementById(targetId);
+            const isExpanded = this.getAttribute('aria-expanded') === 'true';
+            
+            this.setAttribute('aria-expanded', !isExpanded);
+            
+            // Toggle chevron rotation
+            const chevron = this.querySelector('svg');
+            if (chevron) {
+                chevron.classList.toggle('rotate-180');
+            }
+            
+            // Toggle submenu
+            if (submenu) {
+                submenu.classList.toggle('hidden');
+            }
+        });
+    });
+    
+    // User dropdown toggle
+    const userMenuBtn = document.getElementById('user-menu-btn');
+    const userDropdown = document.getElementById('user-dropdown');
+    
+    if (userMenuBtn && userDropdown) {
+        userMenuBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const isExpanded = this.getAttribute('aria-expanded') === 'true';
+            this.setAttribute('aria-expanded', !isExpanded);
+            userDropdown.classList.toggle('hidden');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!userMenuBtn.contains(e.target) && !userDropdown.contains(e.target)) {
+                userMenuBtn.setAttribute('aria-expanded', 'false');
+                userDropdown.classList.add('hidden');
+            }
+        });
+    }
+    
+    // Cart buttons - trigger cart sidebar
+    const cartButtons = document.querySelectorAll('#cart-btn, #mobile-cart-btn');
+    cartButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Dispatch event for app.js to handle
+            window.dispatchEvent(new CustomEvent('open-cart-sidebar'));
+        });
+    });
+    
+    // Listen for cart count updates
+    window.addEventListener('cart-updated', function(e) {
+        const count = e.detail?.count ?? e.detail?.total_items ?? 0;
+        document.querySelectorAll('.cart-count').forEach(el => {
+            el.textContent = count;
+            el.classList.toggle('hidden', count === 0);
+        });
+    });
+    
+    // Listen for wishlist count updates
+    window.addEventListener('wishlist-updated', function(e) {
+        const count = e.detail?.count ?? 0;
+        document.querySelectorAll('.wishlist-count').forEach(el => {
+            el.textContent = count;
+            el.classList.toggle('hidden', count === 0);
+        });
+    });
+});
+</script>

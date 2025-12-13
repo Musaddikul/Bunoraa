@@ -1,53 +1,168 @@
-# Node.js dependencies
-node_modules/
+# ============================================
+# Bunoraa E-Commerce Platform
+# Git Ignore Configuration
+# ============================================
 
-# Jupyter Notebook checkpoints
-.ipynb_checkpoints/
-
-# Virtual environments
-venv/
-
-# IDE settings (e.g., VSCode, PyCharm)
-.idea/
-.vscode/
-
-# OS-specific files
-.DS_Store
-Thumbs.db
-
-# Environment variables file
-.env
-
-# Build directories (e.g., for production or testing)
-dist/
-build/
-
-# Log files
-*.log
-
-# Python-specific files
+# ============================================
+# Python
+# ============================================
 __pycache__/
 *.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ============================================
+# Virtual Environments
+# ============================================
+venv/
+ENV/
+env/
+.venv/
+
+# ============================================
+# Django
+# ============================================
+*.log
+local_settings.py
 db.sqlite3
-
-# Tailwind CSS configuration (can be ignored if not needed in version control)
-tailwind.config.js
-tailwindcss.config.js
-
-# SQLite database (if used)
 *.sqlite3
-*.db
 
-# Database backups
+# Media files (uploaded by users)
+media/
+
+# Collected static files
+staticfiles/
+
+# Celery beat schedule files
+celerybeat-schedule
+celerybeat-schedule-shm
+celerybeat-schedule-wal
+celerybeat.pid
+
+# ============================================
+# Environment Variables
+# ============================================
+.env
+.env.local
+.env.*.local
+.envrc
+
+# ============================================
+# Node.js
+# ============================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.pnpm-debug.log*
+
+# ============================================
+# IDE & Editors
+# ============================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-workspace
+*.sublime-project
+
+# ============================================
+# OS Files
+# ============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ============================================
+# Jupyter Notebooks
+# ============================================
+.ipynb_checkpoints/
+*.ipynb
+
+# ============================================
+# Testing
+# ============================================
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# ============================================
+# Build & Distribution
+# ============================================
+dist/
+build/
+*.manifest
+*.spec
+
+# ============================================
+# Logs & Databases
+# ============================================
+logs/
+*.log
 *.sql
+*.db
 *.db-shm
 *.db-wal
 
-# Cache files
-*.pyc
+# ============================================
+# Secrets & Credentials
+# ============================================
+*.pem
+*.key
+secrets.json
+credentials.json
 
-# Miscellaneous config files
-*.sh
+# ============================================
+# Temporary Files
+# ============================================
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# ============================================
+# Docker
+# ============================================
+.docker/
+
+# ============================================
+# Misc
+# ============================================
+*.pyc
+.mypy_cache/
+.dmypy.json
+dmypy.json
+pyrightconfig.json
+
 *.exe
 *.onnx
 *.zip

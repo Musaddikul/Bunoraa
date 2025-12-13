@@ -1,0 +1,568 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+{% load currency_tags %}
+
+{% block title %}{% trans "Checkout" %}{% endblock %}
+{% block page_name %}checkout{% endblock %}
+
+{% block header %}
+<!-- Minimal checkout header -->
+<header class="bg-white border-b border-secondary-100">
+    <div class="container mx-auto px-4">
+        <div class="flex items-center justify-between h-16">
+            <a href="{% url 'storefront:home' %}">
+                <img src="{% static 'images/logo.svg' %}" alt="Bunoraa" class="h-8 w-auto">
+            </a>
+            <div class="flex items-center gap-6 text-sm">
+                <span class="text-secondary-600">{% trans "Secure Checkout" %}</span>
+                <svg class="w-5 h-5 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+</header>
+{% endblock %}
+
+{% block content %}
+<div class="bg-secondary-50 min-h-screen py-8">
+    <div class="container mx-auto px-4">
+        <div class="lg:grid lg:grid-cols-12 lg:gap-8">
+            <!-- Main Content -->
+            <div class="lg:col-span-7">
+                <form id="checkout-form" method="POST" action="{% url 'checkout:process' %}">
+                    {% csrf_token %}
+                    
+                    <!-- Progress Steps -->
+                    <div class="flex items-center justify-between mb-8">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-medium">1</div>
+                            <span class="ml-2 text-sm font-medium text-secondary-900">{% trans "Contact" %}</span>
+                        </div>
+                        <div class="flex-1 h-px bg-secondary-300 mx-4"></div>
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-secondary-300 text-secondary-600 rounded-full flex items-center justify-center text-sm font-medium" id="step-2">2</div>
+                            <span class="ml-2 text-sm text-secondary-600" id="step-2-label">{% trans "Shipping" %}</span>
+                        </div>
+                        <div class="flex-1 h-px bg-secondary-300 mx-4"></div>
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-secondary-300 text-secondary-600 rounded-full flex items-center justify-center text-sm font-medium" id="step-3">3</div>
+                            <span class="ml-2 text-sm text-secondary-600" id="step-3-label">{% trans "Payment" %}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Contact Information -->
+                    <div class="card mb-6" id="section-contact">
+                        <div class="card-header flex items-center justify-between">
+                            <h2 class="text-lg font-semibold">{% trans "Contact Information" %}</h2>
+                            {% if not user.is_authenticated %}
+                            <p class="text-sm text-secondary-600">
+                                {% trans "Already have an account?" %}
+                                <a href="{% url 'accounts:login' %}?next={% url 'checkout:checkout' %}" class="text-primary-600 hover:underline">{% trans "Log in" %}</a>
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div class="card-body">
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="email" class="label">{% trans "Email" %}</label>
+                                    <input 
+                                        type="email" 
+                                        id="email" 
+                                        name="email" 
+                                        value="{{ user.email|default:'' }}"
+                                        class="input"
+                                        required
+                                        autocomplete="email"
+                                    >
+                                </div>
+                                <div>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" name="subscribe" class="rounded border-secondary-300 text-primary-600 focus:ring-primary-500">
+                                        <span class="text-sm text-secondary-600">{% trans "Email me with news and offers" %}</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Shipping Address -->
+                    <div class="card mb-6" id="section-shipping">
+                        <div class="card-header">
+                            <h2 class="text-lg font-semibold">{% trans "Shipping Address" %}</h2>
+                        </div>
+                        <div class="card-body">
+                            {% if user.is_authenticated and user.addresses.exists %}
+                            <!-- Saved Addresses -->
+                            <div class="mb-6">
+                                <label class="label mb-3">{% trans "Select an address" %}</label>
+                                <div class="space-y-2">
+                                    {% for address in user.addresses.all %}
+                                    <label class="flex items-start gap-3 p-4 border rounded-lg cursor-pointer hover:border-secondary-400 transition-colors has-[:checked]:border-primary-600 has-[:checked]:bg-primary-50">
+                                        <input 
+                                            type="radio" 
+                                            name="saved_address" 
+                                            value="{{ address.id }}"
+                                            class="mt-1"
+                                            {% if address.is_default %}checked{% endif %}
+                                        >
+                                        <div class="flex-1">
+                                            <p class="font-medium text-secondary-900">
+                                                {{ address.first_name }} {{ address.last_name }}
+                                                {% if address.is_default %}<span class="badge badge-primary ml-2">{% trans "Default" %}</span>{% endif %}
+                                            </p>
+                                            <p class="text-sm text-secondary-600">
+                                                {{ address.address_line_1 }}{% if address.address_line_2 %}, {{ address.address_line_2 }}{% endif %}<br>
+                                                {{ address.city }}, {{ address.state }} {{ address.postal_code }}<br>
+                                                {{ address.country }}
+                                            </p>
+                                        </div>
+                                    </label>
+                                    {% endfor %}
+                                    <label class="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:border-secondary-400 transition-colors has-[:checked]:border-primary-600">
+                                        <input type="radio" name="saved_address" value="new">
+                                        <span class="text-secondary-700">{% trans "Use a different address" %}</span>
+                                    </label>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- New Address Form -->
+                            <div id="new-address-form" {% if user.is_authenticated and user.addresses.exists %}class="hidden"{% endif %}>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="first_name" class="label">{% trans "First name" %}</label>
+                                        <input 
+                                            type="text" 
+                                            id="first_name" 
+                                            name="first_name" 
+                                            value="{{ user.first_name|default:'' }}"
+                                            class="input"
+                                            autocomplete="given-name"
+                                        >
+                                    </div>
+                                    <div>
+                                        <label for="last_name" class="label">{% trans "Last name" %}</label>
+                                        <input 
+                                            type="text" 
+                                            id="last_name" 
+                                            name="last_name" 
+                                            value="{{ user.last_name|default:'' }}"
+                                            class="input"
+                                            autocomplete="family-name"
+                                        >
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <label for="company" class="label">{% trans "Company" %} <span class="text-secondary-400">{% trans "(optional)" %}</span></label>
+                                    <input type="text" id="company" name="company" class="input" autocomplete="organization">
+                                </div>
+                                <div class="mt-4">
+                                    <label for="address_line_1" class="label">{% trans "Address" %}</label>
+                                    <input 
+                                        type="text" 
+                                        id="address_line_1" 
+                                        name="address_line_1" 
+                                        class="input"
+                                        autocomplete="address-line1"
+                                    >
+                                </div>
+                                <div class="mt-4">
+                                    <label for="address_line_2" class="label">{% trans "Apartment, suite, etc." %} <span class="text-secondary-400">{% trans "(optional)" %}</span></label>
+                                    <input type="text" id="address_line_2" name="address_line_2" class="input" autocomplete="address-line2">
+                                </div>
+                                <div class="grid grid-cols-3 gap-4 mt-4">
+                                    <div>
+                                        <label for="city" class="label">{% trans "City" %}</label>
+                                        <input type="text" id="city" name="city" class="input" autocomplete="address-level2">
+                                    </div>
+                                    <div>
+                                        <label for="state" class="label">{% trans "State/Province" %}</label>
+                                        <input type="text" id="state" name="state" class="input" autocomplete="address-level1">
+                                    </div>
+                                    <div>
+                                        <label for="postal_code" class="label">{% trans "Postal code" %}</label>
+                                        <input type="text" id="postal_code" name="postal_code" class="input" autocomplete="postal-code">
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <label for="country" class="label">{% trans "Country" %}</label>
+                                    <select id="country" name="country" class="input" autocomplete="country">
+                                        {% for country in countries %}
+                                        <option value="{{ country.code }}" {% if country.code == 'US' %}selected{% endif %}>{{ country.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mt-4">
+                                    <label for="phone" class="label">{% trans "Phone" %}</label>
+                                    <input type="tel" id="phone" name="phone" class="input" autocomplete="tel">
+                                    <p class="help-text">{% trans "For delivery updates" %}</p>
+                                </div>
+                                {% if user.is_authenticated %}
+                                <div class="mt-4">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" name="save_address" class="rounded border-secondary-300 text-primary-600 focus:ring-primary-500" checked>
+                                        <span class="text-sm text-secondary-600">{% trans "Save this address for future orders" %}</span>
+                                    </label>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Shipping Method -->
+                    <div class="card mb-6" id="section-shipping-method">
+                        <div class="card-header">
+                            <h2 class="text-lg font-semibold">{% trans "Shipping Method" %}</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="space-y-3" id="shipping-methods">
+                                {% for method in shipping_methods %}
+                                <label class="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:border-secondary-400 transition-colors has-[:checked]:border-primary-600 has-[:checked]:bg-primary-50">
+                                    <div class="flex items-center gap-3">
+                                        <input 
+                                            type="radio" 
+                                            name="shipping_method" 
+                                            value="{{ method.id }}"
+                                            data-price="{{ method.price }}"
+                                            {% if forloop.first %}checked{% endif %}
+                                        >
+                                        <div>
+                                            <p class="font-medium text-secondary-900">{{ method.name }}</p>
+                                            <p class="text-sm text-secondary-500">{{ method.estimated_days }}</p>
+                                        </div>
+                                    </div>
+                                    <span class="font-medium">{% if method.price == 0 %}{% trans "Free" %}{% else %}{{ method.price|currency }}{% endif %}</span>
+                                </label>
+                                {% empty %}
+                                <p class="text-secondary-600">{% trans "Enter your shipping address to see available methods." %}</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Method -->
+                    <div class="card mb-6" id="section-payment">
+                        <div class="card-header">
+                            <h2 class="text-lg font-semibold">{% trans "Payment" %}</h2>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-sm text-secondary-600 mb-4">{% trans "All transactions are secure and encrypted." %}</p>
+                            
+                            <div class="space-y-3">
+                                <!-- Credit Card -->
+                                <div class="border rounded-lg overflow-hidden">
+                                    <label class="flex items-center gap-3 p-4 cursor-pointer has-[:checked]:bg-primary-50">
+                                        <input type="radio" name="payment_method" value="card" checked>
+                                        <span class="font-medium">{% trans "Credit card" %}</span>
+                                        <div class="ml-auto flex gap-1">
+                                            <img src="{% static 'images/visa.svg' %}" alt="Visa" class="h-6">
+                                            <img src="{% static 'images/mastercard.svg' %}" alt="Mastercard" class="h-6">
+                                            <img src="{% static 'images/amex.svg' %}" alt="Amex" class="h-6">
+                                        </div>
+                                    </label>
+                                    <div id="card-details" class="p-4 border-t bg-secondary-50">
+                                        <div>
+                                            <label for="card_number" class="label">{% trans "Card number" %}</label>
+                                            <input 
+                                                type="text" 
+                                                id="card_number" 
+                                                name="card_number" 
+                                                class="input"
+                                                placeholder="1234 5678 9012 3456"
+                                                autocomplete="cc-number"
+                                            >
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-4 mt-4">
+                                            <div>
+                                                <label for="card_expiry" class="label">{% trans "Expiration" %}</label>
+                                                <input 
+                                                    type="text" 
+                                                    id="card_expiry" 
+                                                    name="card_expiry" 
+                                                    class="input"
+                                                    placeholder="MM/YY"
+                                                    autocomplete="cc-exp"
+                                                >
+                                            </div>
+                                            <div>
+                                                <label for="card_cvv" class="label">{% trans "Security code" %}</label>
+                                                <input 
+                                                    type="text" 
+                                                    id="card_cvv" 
+                                                    name="card_cvv" 
+                                                    class="input"
+                                                    placeholder="CVV"
+                                                    autocomplete="cc-csc"
+                                                >
+                                            </div>
+                                        </div>
+                                        <div class="mt-4">
+                                            <label for="card_name" class="label">{% trans "Name on card" %}</label>
+                                            <input 
+                                                type="text" 
+                                                id="card_name" 
+                                                name="card_name" 
+                                                class="input"
+                                                autocomplete="cc-name"
+                                            >
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- PayPal -->
+                                <label class="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:border-secondary-400 transition-colors has-[:checked]:border-primary-600 has-[:checked]:bg-primary-50">
+                                    <input type="radio" name="payment_method" value="paypal">
+                                    <img src="{% static 'images/paypal.svg' %}" alt="PayPal" class="h-6">
+                                </label>
+                                
+                                <!-- Cash on Delivery (if available) -->
+                                {% if cod_available %}
+                                <label class="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:border-secondary-400 transition-colors has-[:checked]:border-primary-600 has-[:checked]:bg-primary-50">
+                                    <input type="radio" name="payment_method" value="cod">
+                                    <div>
+                                        <span class="font-medium">{% trans "Cash on Delivery" %}</span>
+                                        <p class="text-sm text-secondary-500">{% trans "Pay when you receive your order" %}</p>
+                                    </div>
+                                </label>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Billing Address -->
+                    <div class="card mb-6" id="section-billing">
+                        <div class="card-header">
+                            <h2 class="text-lg font-semibold">{% trans "Billing Address" %}</h2>
+                        </div>
+                        <div class="card-body">
+                            <label class="flex items-center gap-3 cursor-pointer mb-4">
+                                <input type="radio" name="billing_same" value="same" checked>
+                                <span class="text-secondary-700">{% trans "Same as shipping address" %}</span>
+                            </label>
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="radio" name="billing_same" value="different">
+                                <span class="text-secondary-700">{% trans "Use a different billing address" %}</span>
+                            </label>
+                            
+                            <div id="billing-address-form" class="hidden mt-4 pt-4 border-t border-secondary-100">
+                                <!-- Same fields as shipping address -->
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="billing_first_name" class="label">{% trans "First name" %}</label>
+                                        <input type="text" id="billing_first_name" name="billing_first_name" class="input">
+                                    </div>
+                                    <div>
+                                        <label for="billing_last_name" class="label">{% trans "Last name" %}</label>
+                                        <input type="text" id="billing_last_name" name="billing_last_name" class="input">
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <label for="billing_address_line_1" class="label">{% trans "Address" %}</label>
+                                    <input type="text" id="billing_address_line_1" name="billing_address_line_1" class="input">
+                                </div>
+                                <div class="mt-4">
+                                    <label for="billing_address_line_2" class="label">{% trans "Apartment, suite, etc." %} <span class="text-secondary-400">{% trans "(optional)" %}</span></label>
+                                    <input type="text" id="billing_address_line_2" name="billing_address_line_2" class="input">
+                                </div>
+                                <div class="grid grid-cols-3 gap-4 mt-4">
+                                    <div>
+                                        <label for="billing_city" class="label">{% trans "City" %}</label>
+                                        <input type="text" id="billing_city" name="billing_city" class="input">
+                                    </div>
+                                    <div>
+                                        <label for="billing_state" class="label">{% trans "State/Province" %}</label>
+                                        <input type="text" id="billing_state" name="billing_state" class="input">
+                                    </div>
+                                    <div>
+                                        <label for="billing_postal_code" class="label">{% trans "Postal code" %}</label>
+                                        <input type="text" id="billing_postal_code" name="billing_postal_code" class="input">
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <label for="billing_country" class="label">{% trans "Country" %}</label>
+                                    <select id="billing_country" name="billing_country" class="input">
+                                        {% for country in countries %}
+                                        <option value="{{ country.code }}" {% if country.code == 'US' %}selected{% endif %}>{{ country.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Order Note -->
+                    <div class="card mb-6">
+                        <div class="card-header">
+                            <h2 class="text-lg font-semibold">{% trans "Order Notes" %} <span class="text-secondary-400 font-normal">{% trans "(optional)" %}</span></h2>
+                        </div>
+                        <div class="card-body">
+                            <textarea 
+                                name="notes" 
+                                rows="3" 
+                                class="input"
+                                placeholder="{% trans 'Special instructions for your order...' %}"
+                            ></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Button (Mobile) -->
+                    <div class="lg:hidden">
+                        <button type="submit" class="btn btn-primary btn-lg w-full" id="submit-btn">
+                            {% trans "Complete Order" %}
+                        </button>
+                        <p class="text-xs text-center text-secondary-500 mt-4">
+                            {% trans "By placing your order, you agree to our" %}
+                            <a href="{% url 'legal:terms' %}" class="underline">{% trans "Terms of Service" %}</a>
+                            {% trans "and" %}
+                            <a href="{% url 'legal:privacy' %}" class="underline">{% trans "Privacy Policy" %}</a>.
+                        </p>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Order Summary Sidebar -->
+            <div class="lg:col-span-5 mt-8 lg:mt-0">
+                <div class="card sticky top-8">
+                    <div class="card-header flex items-center justify-between">
+                        <h2 class="text-lg font-semibold">{% trans "Order Summary" %}</h2>
+                        <a href="{% url 'cart:cart' %}" class="text-sm text-primary-600 hover:underline">{% trans "Edit" %}</a>
+                    </div>
+                    <div class="card-body">
+                        <!-- Cart Items -->
+                        <div class="max-h-64 overflow-y-auto space-y-4 mb-6">
+                            {% for item in cart.items.all %}
+                            <div class="flex gap-4">
+                                <div class="w-16 h-16 flex-shrink-0 bg-secondary-100 rounded-lg overflow-hidden relative">
+                                    {% if item.product.primary_image %}
+                                    <img src="{{ item.product.primary_image.url }}" alt="{{ item.product.name }}" class="w-full h-full object-cover">
+                                    {% endif %}
+                                    <span class="absolute -top-1 -right-1 w-5 h-5 bg-secondary-700 text-white text-xs rounded-full flex items-center justify-center">{{ item.quantity }}</span>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-secondary-900 line-clamp-1">{{ item.product.name }}</p>
+                                    {% if item.variant %}
+                                    <p class="text-xs text-secondary-500">{{ item.variant.name }}</p>
+                                    {% endif %}
+                                </div>
+                                <span class="text-sm font-medium">{{ item.line_total|currency }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Coupon Code -->
+                        <div class="border-t border-secondary-100 pt-4 mb-4">
+                            <form id="checkout-coupon-form" class="flex gap-2">
+                                <input 
+                                    type="text" 
+                                    name="coupon_code" 
+                                    placeholder="{% trans 'Discount code' %}" 
+                                    class="input flex-1"
+                                    value="{{ cart.coupon.code|default:'' }}"
+                                >
+                                <button type="submit" class="btn btn-secondary">{% trans "Apply" %}</button>
+                            </form>
+                        </div>
+                        
+                        <!-- Totals -->
+                        <div class="space-y-3 border-t border-secondary-100 pt-4">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-secondary-600">{% trans "Subtotal" %}</span>
+                                <span data-subtotal>{{ cart.subtotal|currency }}</span>
+                            </div>
+                            {% if cart.discount_amount > 0 %}
+                            <div class="flex justify-between text-sm text-success-600">
+                                <span>{% trans "Discount" %}</span>
+                                <span>-{{ cart.discount_amount|currency }}</span>
+                            </div>
+                            {% endif %}
+                            <div class="flex justify-between text-sm">
+                                <span class="text-secondary-600">{% trans "Shipping" %}</span>
+                                <span data-shipping>{% trans "Calculated next" %}</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-secondary-600">{% trans "Taxes" %}</span>
+                                <span data-tax>{{ cart.tax_amount|currency }}</span>
+                            </div>
+                            <div class="flex justify-between text-lg font-bold pt-3 border-t border-secondary-200">
+                                <span>{% trans "Total" %}</span>
+                                <span data-total>{{ cart.total|currency }}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button (Desktop) -->
+                        <div class="hidden lg:block mt-6">
+                            <button type="submit" form="checkout-form" class="btn btn-primary btn-lg w-full" id="desktop-submit-btn">
+                                {% trans "Complete Order" %}
+                            </button>
+                            <p class="text-xs text-center text-secondary-500 mt-4">
+                                {% trans "By placing your order, you agree to our" %}
+                                <a href="{% url 'legal:terms' %}" class="underline">{% trans "Terms of Service" %}</a>
+                                {% trans "and" %}
+                                <a href="{% url 'legal:privacy' %}" class="underline">{% trans "Privacy Policy" %}</a>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<!-- Minimal footer -->
+<footer class="bg-white border-t border-secondary-100 py-6">
+    <div class="container mx-auto px-4">
+        <div class="flex flex-wrap items-center justify-between gap-4 text-sm text-secondary-500">
+            <div class="flex items-center gap-4">
+                <a href="{% url 'legal:privacy' %}" class="hover:text-secondary-700">{% trans "Privacy Policy" %}</a>
+                <a href="{% url 'legal:terms' %}" class="hover:text-secondary-700">{% trans "Terms of Service" %}</a>
+                <a href="{% url 'contact' %}" class="hover:text-secondary-700">{% trans "Contact" %}</a>
+            </div>
+            <span>&copy; {{ current_year }} Bunoraa</span>
+        </div>
+    </div>
+</footer>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Toggle new address form
+    document.querySelectorAll('input[name="saved_address"]').forEach(input => {
+        input.addEventListener('change', () => {
+            const form = document.getElementById('new-address-form');
+            if (input.value === 'new') {
+                form.classList.remove('hidden');
+            } else {
+                form.classList.add('hidden');
+            }
+        });
+    });
+    
+    // Toggle billing address form
+    document.querySelectorAll('input[name="billing_same"]').forEach(input => {
+        input.addEventListener('change', () => {
+            const form = document.getElementById('billing-address-form');
+            if (input.value === 'different') {
+                form.classList.remove('hidden');
+            } else {
+                form.classList.add('hidden');
+            }
+        });
+    });
+    
+    // Toggle card details
+    document.querySelectorAll('input[name="payment_method"]').forEach(input => {
+        input.addEventListener('change', () => {
+            const cardDetails = document.getElementById('card-details');
+            if (input.value === 'card') {
+                cardDetails.classList.remove('hidden');
+            } else {
+                cardDetails.classList.add('hidden');
+            }
+        });
+    });
+</script>
+{% endblock %}

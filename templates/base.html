@@ -1,136 +1,489 @@
-<!-- templates/base.html -->
-<!DOCTYPE html>
 {% load static %}
-<html lang="en" data-theme="{{ theme }}">
-
+{% load i18n %}
+{% load currency_tags %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}" dir="{{ LANGUAGE_BIDI|yesno:'rtl,ltr' }}">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="csrf-token" content="{{ csrf_token }}">
-
-  <title>{% block title %}{{ site_name }} - Authentic Bangladeshi Products{% endblock %}</title>
-
-  <!-- Favicon -->
-  <link href="{% static 'images/favicon.ico' %}" rel="icon" type="image/x-icon" />
-
-  <!-- Styles -->
-  <link href="{% static 'css/tailwind.css' %}" rel="stylesheet" />
-  <link href="{% static 'css/utils.css' %}" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css" rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" rel="stylesheet" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Tiro+Bangla&family=Noto+Serif+Bengali:wght@400;500;600;700&family=Galada&family=Mina:wght@400;700&family=Atma:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@400;700&family=Lato:wght@400;700&family=Raleway:wght@400;700&family=Oswald:wght@400;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&family=Nunito:wght@400;700&family=Cabin:wght@400;700&family=Quicksand:wght@400;700&family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
-
-  {% block extra_css %}{% endblock %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    
+    <!-- SEO Meta Tags -->
+    <title>{% block title %}Bunoraa{% endblock %} | Premium Shopping</title>
+    <meta name="description" content="{% block meta_description %}Discover premium products at Bunoraa. Shop the latest collections with free shipping on orders over $50.{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}shopping, premium, fashion, lifestyle{% endblock %}">
+    <meta name="author" content="Bunoraa">
+    <meta name="robots" content="{% block robots %}index, follow{% endblock %}">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{% block canonical %}{{ request.build_absolute_uri }}{% endblock %}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:title" content="{% block og_title %}{{ block.super }}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ block.super }}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{% static 'images/og-default.jpg' %}{% endblock %}">
+    <meta property="og:site_name" content="Bunoraa">
+    <meta property="og:locale" content="{{ LANGUAGE_CODE|default:'en_US' }}">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}{{ block.super }}{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}{{ block.super }}{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{% static 'images/og-default.jpg' %}{% endblock %}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/apple-touch-icon.png' %}">
+    <link rel="manifest" href="{% static 'site.webmanifest' %}">
+    <meta name="theme-color" content="#e5604d">
+    
+    <!-- Preconnect to external resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    {% block extra_css %}{% endblock %}
+    
+    <!-- CSRF Token for JavaScript -->
+    <script>
+        window.BUNORAA = {
+            csrfToken: '{{ csrf_token }}',
+            apiBaseUrl: '/api/v1',
+            currency: '{{ current_currency.code|default:"USD" }}',
+            currencySymbol: '{{ current_currency.symbol|default:"$" }}',
+            isAuthenticated: {% if user.is_authenticated %}true{% else %}false{% endif %},
+            user: {% if user.is_authenticated %}{ id: {{ user.id }}, email: '{{ user.email }}', firstName: '{{ user.first_name }}' }{% else %}null{% endif %}
+        };
+    </script>
 </head>
-
-<body class="
-  {% if request.LANGUAGE_CODE == 'bn' %}
-    font-hind-siliguri
-  {% else %}
-    font-inter
-  {% endif %}
-  bg-white text-[#333] dark:bg-[#181A1B] dark:text-[#DDD] transition-colors duration-300
-">
-
-  {% include 'partials/navbar.html' %}
-  <main class="min-h-screen py-6">{% block content %}{% endblock %}</main>
-  {% include 'partials/footer.html' %}
-
-  <!-- Back to Top Button -->
-  <button id="backToTop"
-    class="fixed bottom-5 right-5 bg-pink-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700">
-    <i class="fas fa-arrow-up"></i>
-  </button>
-
-  <!-- Quick Cart Sidebar + Overlay -->
-  <div id="quick-cart-sidebar" class="fixed top-0 right-0 h-full w-80 bg-white dark:bg-gray-800 shadow-lg z-50 transform translate-x-full transition-transform duration-300 ease-in-out">
-    <div class="flex justify-between items-center p-4 border-b dark:border-gray-700">
-      <h2 class="text-xl font-semibold">Your Cart</h2>
-      <button onclick="closeCartSidebar()" class="text-gray-500 hover:text-gray-800 dark:hover:text-white">
-        <i class="fas fa-times text-xl"></i>
-      </button>
-    </div>
-    <div class="p-4 overflow-y-auto h-[calc(100%-60px)]" id="quick-cart-content">
-      <div id="cart-sidebar-content-wrapper">
-        <!-- Cart content will be loaded here by cart.js -->
-        <div class="text-center text-gray-500 py-10">
-          <i class="fas fa-spinner fa-spin text-2xl"></i>
-          <p>Loading cart...</p>
+<body 
+    data-page="{% block page_name %}default{% endblock %}"
+    {% block body_data %}{% endblock %}
+    class="min-h-screen flex flex-col {% block body_class %}{% endblock %}"
+>
+    <!-- Skip to content link -->
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-primary-600 text-white px-4 py-2 rounded-lg z-50">
+        {% trans "Skip to content" %}
+    </a>
+    
+    <!-- Announcement Bar -->
+    {% block announcement_bar %}
+    {% if announcement %}
+    <div id="announcement-bar" class="bg-primary-600 text-white text-center text-sm py-2 px-4">
+        <div class="container mx-auto flex items-center justify-center gap-2">
+            <span>{{ announcement.text }}</span>
+            {% if announcement.link %}
+            <a href="{{ announcement.link }}" class="underline hover:no-underline">{% trans "Shop Now" %}</a>
+            {% endif %}
+            <button type="button" onclick="this.closest('#announcement-bar').remove()" class="ml-4 hover:opacity-75">
+                <span class="sr-only">{% trans "Close" %}</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
         </div>
-      </div>
     </div>
-  </div>
-  <div id="sidebar-backdrop" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden"></div>
-
-  <!-- Product Quick View Modal -->
-  <div id="product-quick-view-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60] hidden">
-    <div id="product-quick-view-backdrop" class="absolute inset-0"></div>
-    <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full m-4 max-h-[90vh] overflow-y-auto">
-      <button class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 dark:hover:text-white text-2xl close-modal-btn">
-        <i class="fas fa-times"></i>
-      </button>
-      <div id="product-quick-view-content" class="min-h-[200px] flex items-center justify-center">
-        <div class="text-center text-gray-500 py-10">Loading product details...</div>
-      </div>
+    {% endif %}
+    {% endblock %}
+    
+    <!-- Header -->
+    {% block header %}
+    <header class="sticky top-0 bg-white z-40 transition-all duration-300" data-sticky="true">
+        <!-- Top Bar -->
+        <div class="hidden lg:block border-b border-secondary-100">
+            <div class="container mx-auto px-4 py-2">
+                <div class="flex items-center justify-between text-xs text-secondary-600">
+                    <div class="flex items-center gap-4">
+                        <span>{% trans "Free shipping on orders over $50" %}</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <!-- Currency Selector -->
+                        <div class="dropdown" id="currency-dropdown">
+                            <button type="button" data-dropdown-toggle class="flex items-center gap-1 hover:text-secondary-900">
+                                {{ current_currency.code|default:"USD" }}
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div class="dropdown-menu" data-dropdown-menu>
+                                {% for currency in currencies %}
+                                <a href="?currency={{ currency.code }}" class="dropdown-item {% if currency.code == current_currency.code %}font-semibold{% endif %}">
+                                    {{ currency.code }} ({{ currency.symbol }})
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Language Selector -->
+                        <div class="dropdown" id="language-dropdown">
+                            <button type="button" data-dropdown-toggle class="flex items-center gap-1 hover:text-secondary-900">
+                                {{ LANGUAGE_CODE|upper }}
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div class="dropdown-menu" data-dropdown-menu>
+                                {% get_available_languages as languages %}
+                                {% for lang_code, lang_name in languages %}
+                                <a href="{% url 'set_language' %}?language={{ lang_code }}" class="dropdown-item {% if lang_code == LANGUAGE_CODE %}font-semibold{% endif %}">
+                                    {{ lang_name }}
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Contact -->
+                        <a href="{% url 'contact' %}" class="hover:text-secondary-900">{% trans "Contact" %}</a>
+                        
+                        <!-- Help -->
+                        <a href="{% url 'faq_list' %}" class="hover:text-secondary-900">{% trans "Help" %}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Header -->
+        <div class="border-b border-secondary-100">
+            <div class="container mx-auto px-4">
+                <div class="flex items-center justify-between h-16 lg:h-20">
+                    <!-- Mobile Menu Toggle -->
+                    <button type="button" id="mobile-menu-toggle" class="lg:hidden p-2 -ml-2 text-secondary-600 hover:text-secondary-900" aria-expanded="false" aria-controls="mobile-menu">
+                        <span class="sr-only">{% trans "Open menu" %}</span>
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    
+                    <!-- Logo -->
+                    <a href="{% url 'storefront:home' %}" class="flex-shrink-0">
+                        <img src="{% static 'images/logo.svg' %}" alt="Bunoraa" class="h-8 lg:h-10 w-auto">
+                    </a>
+                    
+                    <!-- Desktop Navigation -->
+                    <nav class="hidden lg:flex items-center gap-8" aria-label="Main navigation">
+                        {% for category in root_categories %}
+                        <div class="dropdown group" data-dropdown>
+                            <a href="{{ category.get_absolute_url }}" class="flex items-center gap-1 py-6 text-sm font-medium text-secondary-700 hover:text-primary-600 transition-colors" data-dropdown-toggle>
+                                {{ category.name }}
+                                {% if category.children.exists %}
+                                <svg class="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                                {% endif %}
+                            </a>
+                            {% if category.children.exists %}
+                            <div class="dropdown-menu w-56 left-0" data-dropdown-menu>
+                                {% for child in category.children.all %}
+                                <a href="{{ child.get_absolute_url }}" class="dropdown-item">{{ child.name }}</a>
+                                {% endfor %}
+                                <div class="dropdown-divider"></div>
+                                <a href="{{ category.get_absolute_url }}" class="dropdown-item font-medium">{% trans "View All" %} {{ category.name }}</a>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                        
+                        <!-- Sale link -->
+                        <a href="{% url 'products:sale' %}" class="py-6 text-sm font-medium text-error-600 hover:text-error-700 transition-colors">
+                            {% trans "Sale" %}
+                        </a>
+                    </nav>
+                    
+                    <!-- Right Actions -->
+                    <div class="flex items-center gap-2 lg:gap-4">
+                        <!-- Search -->
+                        <button type="button" id="search-toggle" class="p-2 text-secondary-600 hover:text-secondary-900" aria-label="{% trans 'Search' %}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                        </button>
+                        
+                        <!-- Account -->
+                        <div class="dropdown" id="user-dropdown">
+                            <button type="button" data-dropdown-toggle class="p-2 text-secondary-600 hover:text-secondary-900" aria-label="{% trans 'Account' %}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                            </button>
+                            <div class="dropdown-menu right-0" data-dropdown-menu>
+                                {% if user.is_authenticated %}
+                                <div class="px-4 py-2 border-b border-secondary-100">
+                                    <p class="text-sm font-medium text-secondary-900" data-user-name>{{ user.first_name|default:user.email }}</p>
+                                    <p class="text-xs text-secondary-500">{{ user.email }}</p>
+                                </div>
+                                <a href="{% url 'accounts:dashboard' %}" class="dropdown-item">{% trans "Dashboard" %}</a>
+                                <a href="{% url 'accounts:orders' %}" class="dropdown-item">{% trans "Orders" %}</a>
+                                <a href="{% url 'accounts:profile' %}" class="dropdown-item">{% trans "Profile" %}</a>
+                                <a href="{% url 'wishlist:list' %}" class="dropdown-item">{% trans "Wishlist" %}</a>
+                                <div class="dropdown-divider"></div>
+                                <button type="button" data-logout class="dropdown-item w-full text-left text-error-600">{% trans "Sign Out" %}</button>
+                                {% else %}
+                                <a href="{% url 'accounts:login' %}" class="dropdown-item">{% trans "Sign In" %}</a>
+                                <a href="{% url 'accounts:register' %}" class="dropdown-item">{% trans "Create Account" %}</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Wishlist -->
+                        <a href="{% url 'wishlist:list' %}" class="hidden lg:block p-2 text-secondary-600 hover:text-secondary-900 relative" aria-label="{% trans 'Wishlist' %}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                            </svg>
+                            {% if wishlist_count %}
+                            <span class="absolute -top-1 -right-1 w-4 h-4 bg-primary-600 text-white text-xs font-medium rounded-full flex items-center justify-center" data-wishlist-count>{{ wishlist_count }}</span>
+                            {% endif %}
+                        </a>
+                        
+                        <!-- Cart -->
+                        <button type="button" id="cart-toggle" class="p-2 text-secondary-600 hover:text-secondary-900 relative" aria-label="{% trans 'Cart' %}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                            </svg>
+                            <span class="absolute -top-1 -right-1 w-4 h-4 bg-primary-600 text-white text-xs font-medium rounded-full flex items-center justify-center {% if not cart_item_count %}hidden{% endif %}" data-cart-count>{{ cart_item_count|default:0 }}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden lg:hidden fixed inset-0 z-50 bg-white">
+            <div class="flex flex-col h-full">
+                <div class="flex items-center justify-between p-4 border-b border-secondary-100">
+                    <a href="{% url 'storefront:home' %}">
+                        <img src="{% static 'images/logo.svg' %}" alt="Bunoraa" class="h-8 w-auto">
+                    </a>
+                    <button type="button" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="p-2 text-secondary-600 hover:text-secondary-900">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <nav class="flex-1 overflow-y-auto p-4">
+                    {% for category in root_categories %}
+                    <a href="{{ category.get_absolute_url }}" class="block py-3 text-lg font-medium text-secondary-900 border-b border-secondary-100">{{ category.name }}</a>
+                    {% endfor %}
+                    <a href="{% url 'products:sale' %}" class="block py-3 text-lg font-medium text-error-600 border-b border-secondary-100">{% trans "Sale" %}</a>
+                </nav>
+                <div class="p-4 border-t border-secondary-100 space-y-2">
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'accounts:dashboard' %}" class="btn btn-secondary w-full">{% trans "My Account" %}</a>
+                    {% else %}
+                    <a href="{% url 'accounts:login' %}" class="btn btn-primary w-full">{% trans "Sign In" %}</a>
+                    <a href="{% url 'accounts:register' %}" class="btn btn-secondary w-full">{% trans "Create Account" %}</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+    {% endblock %}
+    
+    <!-- Search Overlay -->
+    {% block search_overlay %}
+    <div id="search-overlay" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
+        <div class="bg-white py-4 px-4">
+            <div class="container mx-auto">
+                <div class="flex items-center gap-4">
+                    <div class="flex-1 relative" data-search-autocomplete>
+                        <input 
+                            type="search" 
+                            id="search-input"
+                            name="q" 
+                            placeholder="{% trans 'Search products...' %}"
+                            class="input pl-10 text-lg"
+                            autocomplete="off"
+                        >
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+                    <button type="button" onclick="document.getElementById('search-overlay').classList.add('hidden'); document.getElementById('search-input').value = '';" class="p-2 text-secondary-600 hover:text-secondary-900">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div id="search-results" class="mt-4 hidden"></div>
+            </div>
+        </div>
     </div>
-  </div>
-
-
-  <!-- Notification Toast -->
-  <div class="fixed bottom-4 right-4 z-50">
-      <div id="notification"
-            class="hidden bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg"
-            x-data="{ show: false, message: '' }"
-            x-show="show"
-            x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 translate-y-2"
-            x-transition:enter-end="opacity-100 translate-y-0"
-            x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100 translate-y-0"
-            x-transition:leave-end="opacity-0 translate-y-2"
-            @notification.window="
-              message = $event.detail.message;
-              show = true;
-              setTimeout(() => show = false, 3000)">
-          <span x-text="message"></span>
-      </div>
-  </div>
-
-
-  <!-- Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.1/dist/cdn.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/imask@6.4.3/dist/imask.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
-
-  <!-- Modular JS -->
-  <script src="{% static 'js/utils.js' %}"></script>
-  <script src="{% static 'js/theme.js' %}"></script>
-  <script src="{% static 'js/mobileMenu.js' %}"></script>
-  <script src="{% static 'js/userDropdown.js' %}"></script>
-  <script src="{% static 'js/swiperInit.js' %}"></script>
-  <script src="{% static 'js/backToTop.js' %}"></script>
-  <script src="{% static 'js/cart_js_interactions.js' %}"></script>
-  <script src="{% static 'js/cart.js' %}"></script>
-  <script src="{% static 'js/products.js' %}"></script>
-  <script src="{% static 'js/wishlist.js' %}"></script>
-  <script src="{% static 'js/app.js' %}"></script>
-
-  <script>
-    window.CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-  </script>
-
-  {% block extra_js %}{% endblock %}
+    {% endblock %}
+    
+    <!-- Main Content -->
+    <main id="main-content" class="flex-1">
+        {% block breadcrumb %}{% endblock %}
+        
+        {% block messages %}
+        {% if messages %}
+        <div class="container mx-auto px-4 py-4">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} mb-2" role="alert">
+                <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    {% if message.tags == 'success' %}
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    {% elif message.tags == 'error' %}
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    {% elif message.tags == 'warning' %}
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    {% else %}
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                    {% endif %}
+                </svg>
+                <span>{{ message }}</span>
+                <button type="button" onclick="this.parentElement.remove()" class="ml-auto hover:opacity-75">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endblock %}
+        
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    {% block footer %}
+    <footer class="bg-secondary-900 text-secondary-400 mt-auto">
+        <!-- Main Footer -->
+        <div class="container mx-auto px-4 py-12 lg:py-16">
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8">
+                <!-- Logo & About -->
+                <div class="col-span-2">
+                    <a href="{% url 'storefront:home' %}" class="inline-block mb-4">
+                        <img src="{% static 'images/logo-white.svg' %}" alt="Bunoraa" class="h-8 w-auto">
+                    </a>
+                    <p class="text-sm mb-6">{% trans "Premium shopping experience with curated collections of the finest products. Quality meets style at Bunoraa." %}</p>
+                    <div class="flex gap-4">
+                        {% if social_links.facebook %}
+                        <a href="{{ social_links.facebook }}" class="hover:text-white transition-colors" target="_blank" rel="noopener">
+                            <span class="sr-only">Facebook</span>
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.77,7.46H14.5v-1.9c0-.9.6-1.1,1-1.1h3V.5L14.17.5C10.24.5,9.25,3.11,9.25,5.08V7.46H6v4h3.25V22h5.25V11.5h3.54l.46-4Z"/></svg>
+                        </a>
+                        {% endif %}
+                        {% if social_links.instagram %}
+                        <a href="{{ social_links.instagram }}" class="hover:text-white transition-colors" target="_blank" rel="noopener">
+                            <span class="sr-only">Instagram</span>
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12,2.16c3.2,0,3.58,0,4.85.07,3.25.15,4.77,1.69,4.92,4.92.06,1.27.07,1.65.07,4.85s0,3.59-.07,4.85c-.15,3.23-1.66,4.77-4.92,4.92-1.27.06-1.65.07-4.85.07s-3.59,0-4.85-.07c-3.26-.15-4.77-1.7-4.92-4.92-.06-1.27-.07-1.65-.07-4.85s0-3.58.07-4.85C2.38,3.92,3.9,2.38,7.15,2.23,8.41,2.17,8.8,2.16,12,2.16ZM12,0C8.74,0,8.33,0,7.05.07c-4.27.2-6.78,2.71-7,7C0,8.33,0,8.74,0,12s0,3.67.07,4.95c.2,4.27,2.71,6.78,7,7C8.33,24,8.74,24,12,24s3.67,0,4.95-.07c4.27-.2,6.78-2.71,7-7C24,15.67,24,15.26,24,12s0-3.67-.07-4.95c-.2-4.27-2.71-6.78-7-7C15.67,0,15.26,0,12,0Zm0,5.84A6.16,6.16,0,1,0,18.16,12,6.16,6.16,0,0,0,12,5.84ZM12,16a4,4,0,1,1,4-4A4,4,0,0,1,12,16ZM18.41,4.15a1.44,1.44,0,1,0,1.44,1.44A1.44,1.44,0,0,0,18.41,4.15Z"/></svg>
+                        </a>
+                        {% endif %}
+                        {% if social_links.twitter %}
+                        <a href="{{ social_links.twitter }}" class="hover:text-white transition-colors" target="_blank" rel="noopener">
+                            <span class="sr-only">Twitter</span>
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                        </a>
+                        {% endif %}
+                        {% if social_links.youtube %}
+                        <a href="{{ social_links.youtube }}" class="hover:text-white transition-colors" target="_blank" rel="noopener">
+                            <span class="sr-only">YouTube</span>
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.5,6.19a3.02,3.02,0,0,0-2.12-2.14C19.5,3.5,12,3.5,12,3.5s-7.5,0-9.38.55A3.02,3.02,0,0,0,.5,6.19,31.66,31.66,0,0,0,0,12a31.66,31.66,0,0,0,.5,5.81,3.02,3.02,0,0,0,2.12,2.14c1.88.55,9.38.55,9.38.55s7.5,0,9.38-.55a3.02,3.02,0,0,0,2.12-2.14A31.66,31.66,0,0,0,24,12,31.66,31.66,0,0,0,23.5,6.19ZM9.55,15.57V8.43L15.82,12Z"/></svg>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Shop -->
+                <div>
+                    <h4 class="text-white font-semibold mb-4">{% trans "Shop" %}</h4>
+                    <ul class="space-y-3 text-sm">
+                        {% for category in root_categories|slice:":5" %}
+                        <li><a href="{{ category.get_absolute_url }}" class="hover:text-white transition-colors">{{ category.name }}</a></li>
+                        {% endfor %}
+                        <li><a href="{% url 'products:sale' %}" class="hover:text-white transition-colors">{% trans "Sale" %}</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Customer Service -->
+                <div>
+                    <h4 class="text-white font-semibold mb-4">{% trans "Customer Service" %}</h4>
+                    <ul class="space-y-3 text-sm">
+                        <li><a href="{% url 'contact' %}" class="hover:text-white transition-colors">{% trans "Contact Us" %}</a></li>
+                        <li><a href="{% url 'faq_list' %}" class="hover:text-white transition-colors">{% trans "FAQ" %}</a></li>
+                        <li><a href="{% url 'shipping_info' %}" class="hover:text-white transition-colors">{% trans "Shipping Info" %}</a></li>
+                        <li><a href="{% url 'returns_policy' %}" class="hover:text-white transition-colors">{% trans "Returns" %}</a></li>
+                        <li><a href="{% url 'order_tracking' %}" class="hover:text-white transition-colors">{% trans "Track Order" %}</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Company -->
+                <div>
+                    <h4 class="text-white font-semibold mb-4">{% trans "Company" %}</h4>
+                    <ul class="space-y-3 text-sm">
+                        <li><a href="{% url 'cms:page' 'about' %}" class="hover:text-white transition-colors">{% trans "About Us" %}</a></li>
+                        <li><a href="{% url 'cms:page' 'careers' %}" class="hover:text-white transition-colors">{% trans "Careers" %}</a></li>
+                        <li><a href="{% url 'cms:page' 'sustainability' %}" class="hover:text-white transition-colors">{% trans "Sustainability" %}</a></li>
+                        <li><a href="{% url 'cms:page' 'press' %}" class="hover:text-white transition-colors">{% trans "Press" %}</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Newsletter -->
+                <div class="col-span-2 md:col-span-4 lg:col-span-1">
+                    <h4 class="text-white font-semibold mb-4">{% trans "Newsletter" %}</h4>
+                    <p class="text-sm mb-4">{% trans "Subscribe to get special offers, free giveaways, and updates." %}</p>
+                    <form action="{% url 'newsletter:subscribe' %}" method="POST" class="space-y-2">
+                        {% csrf_token %}
+                        <input type="email" name="email" placeholder="{% trans 'Your email' %}" required class="input bg-secondary-800 border-secondary-700 text-white placeholder:text-secondary-500">
+                        <button type="submit" class="btn btn-primary w-full">{% trans "Subscribe" %}</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bottom Footer -->
+        <div class="border-t border-secondary-800">
+            <div class="container mx-auto px-4 py-6">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="flex flex-wrap items-center justify-center gap-4 text-sm">
+                        <span>&copy; {{ current_year }} Bunoraa. {% trans "All rights reserved." %}</span>
+                        <a href="{% url 'legal:privacy' %}" class="hover:text-white transition-colors">{% trans "Privacy Policy" %}</a>
+                        <a href="{% url 'legal:terms' %}" class="hover:text-white transition-colors">{% trans "Terms of Service" %}</a>
+                        <a href="{% url 'legal:cookies' %}" class="hover:text-white transition-colors">{% trans "Cookie Policy" %}</a>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm">{% trans "We accept:" %}</span>
+                        <img src="{% static 'images/payment-methods.svg' %}" alt="{% trans 'Payment methods' %}" class="h-6">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    {% endblock %}
+    
+    <!-- Cart Drawer -->
+    {% block cart_drawer %}
+    <div id="cart-drawer"></div>
+    {% endblock %}
+    
+    <!-- Back to Top Button -->
+    <button type="button" id="back-to-top" class="hidden fixed bottom-6 right-6 w-12 h-12 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-700 transition-all duration-300 opacity-0 z-30" aria-label="{% trans 'Back to top' %}">
+        <svg class="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+        </svg>
+    </button>
+    
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+    
+    <!-- JavaScript -->
+    <script type="module" src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+    
+    <!-- Search toggle script -->
+    <script>
+        document.getElementById('search-toggle')?.addEventListener('click', function() {
+            const overlay = document.getElementById('search-overlay');
+            overlay.classList.remove('hidden');
+            document.getElementById('search-input').focus();
+        });
+    </script>
 </body>
-
 </html>

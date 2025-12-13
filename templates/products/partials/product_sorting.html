@@ -8,17 +8,19 @@
     </p>
 
     <!-- Premium Filters Toggle Button -->
-    <button @click="sidebarOpen = true"
+    <button id="open-filter-sidebar"
             type="button"
             class="inline-flex items-center gap-2
-                bg-gray-200 dark:bg-gray-800 from-indigo-500 via-purple-600 to-pink-500
-                hover:from-indigo-600 hover:via-purple-700 hover:to-pink-600
-                text-gray-800 dark:text-gray-200 font-semibold px-4 py-1 rounded-full shadow-md
+                bg-gray-200 dark:bg-gray-800
+                hover:bg-gray-300 dark:hover:bg-gray-700
+                text-gray-800 dark:text-gray-200 font-semibold px-4 py-2 rounded-full shadow-md
                 transition duration-300 ease-in-out
                 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-400
                 dark:focus:ring-offset-gray-900 hover:shadow-lg">
-    <i class="fas fa-sliders-h"></i>
-    <span>Filters</span>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+      </svg>
+      <span>Filters</span>
     </button>
 </div>
 

@@ -1,0 +1,420 @@
+{% extends 'base.html' %}
+{% load i18n static currency_tags %}
+
+{% block title %}{% trans "Returns & Refunds Policy" %} - {{ site_name }}{% endblock %}
+
+{% block meta_description %}{% trans "Learn about Bunoraa's returns and refunds policy. Easy returns within 7 days of delivery." %}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-primary-600 to-primary-700 py-16">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-white mb-4">
+                {% trans "Returns & Refunds Policy" %}
+            </h1>
+            <p class="text-primary-100 text-lg">
+                {% trans "Hassle-free returns for your peace of mind" %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <!-- Quick Info Cards -->
+        <div class="grid md:grid-cols-3 gap-6 mb-12">
+            <div class="bg-white rounded-xl shadow-sm p-6 text-center">
+                <div class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-gray-900 mb-2">{% trans "7-Day Returns" %}</h3>
+                <p class="text-sm text-gray-600">{% trans "Return within 7 days of delivery" %}</p>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm p-6 text-center">
+                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-gray-900 mb-2">{% trans "Full Refund" %}</h3>
+                <p class="text-sm text-gray-600">{% trans "For eligible returns" %}</p>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm p-6 text-center">
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-gray-900 mb-2">{% trans "Easy Exchange" %}</h3>
+                <p class="text-sm text-gray-600">{% trans "Quick product exchange" %}</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-8 md:p-12">
+            <!-- Return Eligibility -->
+            <section class="mb-12">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <svg class="w-6 h-6 text-primary-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    {% trans "Return Eligibility" %}
+                </h2>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Eligible -->
+                    <div class="p-6 bg-green-50 border border-green-200 rounded-lg">
+                        <h3 class="font-semibold text-green-800 mb-4 flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            {% trans "Eligible for Return" %}
+                        </h3>
+                        <ul class="space-y-2 text-green-700">
+                            <li class="flex items-start">
+                                <svg class="w-4 h-4 mr-2 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                {% trans "Defective or damaged products" %}
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="w-4 h-4 mr-2 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                {% trans "Wrong item received" %}
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="w-4 h-4 mr-2 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                {% trans "Missing parts or accessories" %}
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="w-4 h-4 mr-2 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                {% trans "Product significantly differs from description" %}
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="w-4 h-4 mr-2 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                {% trans "Unused and in original packaging" %}
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Not Eligible -->
+                    <div class="p-6 bg-red-50 border border-red-200 rounded-lg">
+                        <h3 class="font-semibold text-red-800 mb-4 flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            {% trans "Not Eligible for Return" %}
+                        </h3>
+                        <ul class="space-y-2 text-red-700">
+                            <li class="flex items-start">
+                                <svg class="w-4 h-4 mr-2 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                {% trans "Products used, washed, or altered" %}
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="w-4 h-4 mr-2 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                {% trans "Items without original tags/packaging" %}
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="w-4 h-4 mr-2 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                {% trans "Personalized or custom-made items" %}
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="w-4 h-4 mr-2 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                {% trans "Sale/clearance items (unless defective)" %}
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="w-4 h-4 mr-2 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                {% trans "Returns requested after 7 days" %}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- How to Return -->
+            <section class="mb-12">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <svg class="w-6 h-6 text-primary-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    {% trans "How to Return" %}
+                </h2>
+                
+                <div class="space-y-6">
+                    <!-- Step 1 -->
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center mr-4">
+                            <span class="text-primary-600 font-bold">1</span>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900 mb-2">{% trans "Initiate Return Request" %}</h3>
+                            <p class="text-gray-600 mb-3">{% trans "Log in to your account, go to your order history, select the order, and click 'Request Return'. Alternatively, contact our customer support." %}</p>
+                            <a href="{% url 'accounts:orders' %}" class="text-primary-600 hover:text-primary-700 font-medium inline-flex items-center">
+                                {% trans "Go to My Orders" %}
+                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center mr-4">
+                            <span class="text-primary-600 font-bold">2</span>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900 mb-2">{% trans "Await Approval" %}</h3>
+                            <p class="text-gray-600">{% trans "Our team will review your request within 24-48 hours. You'll receive an email with the return instructions and a return authorization number." %}</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center mr-4">
+                            <span class="text-primary-600 font-bold">3</span>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900 mb-2">{% trans "Pack the Item" %}</h3>
+                            <p class="text-gray-600">{% trans "Pack the item securely in its original packaging with all tags, accessories, and documentation. Include the return authorization number." %}</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center mr-4">
+                            <span class="text-primary-600 font-bold">4</span>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900 mb-2">{% trans "Ship or Schedule Pickup" %}</h3>
+                            <p class="text-gray-600">{% trans "Ship the item to our return address or schedule a pickup (available in select areas). For defective items, return shipping is free." %}</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 5 -->
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900 mb-2">{% trans "Receive Refund" %}</h3>
+                            <p class="text-gray-600">{% trans "Once we receive and inspect the item, your refund will be processed within 5-7 business days to your original payment method." %}</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Refund Options -->
+            <section class="mb-12">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <svg class="w-6 h-6 text-primary-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                    {% trans "Refund Options" %}
+                </h2>
+                
+                <div class="space-y-4">
+                    <div class="p-6 border border-gray-200 rounded-lg">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900 mb-1">{% trans "Original Payment Method" %}</h3>
+                                <p class="text-gray-600">{% trans "Refund to your original payment method (credit card, debit card, bKash, etc.). Processing time: 5-7 business days after approval." %}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-6 border border-green-200 bg-green-50 rounded-lg">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900 mb-1">{% trans "Store Credit" %} <span class="text-green-600 text-sm font-normal">{% trans "(Recommended - 10% bonus!)" %}</span></h3>
+                                <p class="text-gray-600">{% trans "Receive store credit with a 10% bonus! Use it on any future purchase. Instant processing." %}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-6 border border-gray-200 rounded-lg">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900 mb-1">{% trans "Exchange" %}</h3>
+                                <p class="text-gray-600">{% trans "Exchange for a different size, color, or product. If the new item costs more, you'll pay the difference. If it costs less, we'll credit the remainder." %}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Refund Timeline -->
+            <section class="mb-12">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <svg class="w-6 h-6 text-primary-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    {% trans "Refund Timeline" %}
+                </h2>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Payment Method" %}</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Refund Time" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{% trans "Credit/Debit Card" %}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{% trans "5-10 business days" %}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">bKash / Nagad</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{% trans "2-3 business days" %}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{% trans "Bank Transfer" %}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{% trans "3-5 business days" %}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{% trans "Store Credit" %}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{% trans "Instant" %}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{% trans "Cash on Delivery" %}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{% trans "3-5 business days (via bKash/Bank)" %}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Damaged Items -->
+            <section class="mb-12">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <svg class="w-6 h-6 text-primary-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    {% trans "Damaged or Defective Items" %}
+                </h2>
+                
+                <div class="p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p class="text-yellow-800 mb-4">
+                        {% trans "If you received a damaged or defective item:" %}
+                    </p>
+                    <ol class="list-decimal list-inside space-y-2 text-yellow-700">
+                        <li>{% trans "Do NOT discard the packaging or product" %}</li>
+                        <li>{% trans "Take clear photos of the damage and packaging" %}</li>
+                        <li>{% trans "Report within 48 hours of delivery for priority processing" %}</li>
+                        <li>{% trans "Contact our support with your order number and photos" %}</li>
+                    </ol>
+                    <p class="text-yellow-800 mt-4 font-medium">
+                        {% trans "For damaged items, we cover all return shipping costs and provide a full refund or free replacement." %}
+                    </p>
+                </div>
+            </section>
+
+            <!-- Cancellation Policy -->
+            <section class="mb-12">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <svg class="w-6 h-6 text-primary-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    {% trans "Order Cancellation" %}
+                </h2>
+                
+                <div class="space-y-4">
+                    <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
+                        <h3 class="font-semibold text-green-800 mb-2">{% trans "Before Shipping" %}</h3>
+                        <p class="text-green-700">{% trans "You can cancel your order anytime before it ships. Full refund will be processed immediately." %}</p>
+                    </div>
+                    
+                    <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <h3 class="font-semibold text-yellow-800 mb-2">{% trans "After Shipping" %}</h3>
+                        <p class="text-yellow-700">{% trans "Once shipped, you cannot cancel but can return the item after delivery following our return policy." %}</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Return Address -->
+            <section class="mb-12">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <svg class="w-6 h-6 text-primary-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    {% trans "Return Address" %}
+                </h2>
+                
+                <div class="p-6 bg-gray-50 rounded-lg">
+                    <p class="font-medium text-gray-900 mb-1">Bunoraa Returns Center</p>
+                    <p class="text-gray-600">
+                        House 123, Road 45<br>
+                        Gulshan-2, Dhaka 1212<br>
+                        Bangladesh
+                    </p>
+                    <p class="mt-4 text-sm text-gray-500">
+                        {% trans "Please include your Return Authorization Number on the package." %}
+                    </p>
+                </div>
+            </section>
+
+            <!-- Contact Section -->
+            <section class="p-6 bg-gray-50 rounded-lg">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">{% trans "Need Help with a Return?" %}</h2>
+                <p class="text-gray-600 mb-4">
+                    {% trans "Our customer support team is ready to assist you with any return-related questions." %}
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <a href="{% url 'returns:create' %}" class="inline-flex items-center justify-center px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        {% trans "Start a Return" %}
+                    </a>
+                    <a href="{% url 'contacts:contact' %}" class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        {% trans "Contact Support" %}
+                    </a>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}

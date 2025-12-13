@@ -1,0 +1,157 @@
+{% extends 'accounts/dashboard.html' %}
+{% load static %}
+{% load i18n %}
+{% load currency_tags %}
+
+{% block title %}{% trans "My Orders" %} - {% trans "My Account" %}{% endblock %}
+
+{% block account_content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-secondary-900">{% trans "My Orders" %}</h1>
+    </div>
+    
+    <!-- Orders Filter -->
+    <div class="flex flex-wrap items-center gap-4">
+        <div class="flex flex-wrap gap-2">
+            <a href="?status=" class="btn {% if not status %}btn-primary{% else %}btn-outline{% endif %} btn-sm">
+                {% trans "All" %}
+            </a>
+            <a href="?status=pending" class="btn {% if status == 'pending' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">
+                {% trans "Pending" %}
+            </a>
+            <a href="?status=processing" class="btn {% if status == 'processing' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">
+                {% trans "Processing" %}
+            </a>
+            <a href="?status=shipped" class="btn {% if status == 'shipped' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">
+                {% trans "Shipped" %}
+            </a>
+            <a href="?status=delivered" class="btn {% if status == 'delivered' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">
+                {% trans "Delivered" %}
+            </a>
+            <a href="?status=cancelled" class="btn {% if status == 'cancelled' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">
+                {% trans "Cancelled" %}
+            </a>
+        </div>
+    </div>
+    
+    {% if orders %}
+    <!-- Orders List -->
+    <div class="space-y-4">
+        {% for order in orders %}
+        <div class="card">
+            <div class="card-body">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4 pb-4 border-b border-secondary-200">
+                    <div class="flex flex-wrap items-center gap-4">
+                        <div>
+                            <p class="text-sm text-secondary-500">{% trans "Order" %}</p>
+                            <p class="font-semibold text-secondary-900">#{{ order.order_number }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-secondary-500">{% trans "Date" %}</p>
+                            <p class="font-medium text-secondary-900">{{ order.created_at|date:"M d, Y" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-secondary-500">{% trans "Total" %}</p>
+                            <p class="font-semibold text-secondary-900">{{ order.total|currency }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-secondary-500">{% trans "Status" %}</p>
+                            <span class="badge badge-{{ order.status_color }}">{{ order.get_status_display }}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        {% if order.can_track %}
+                        <a href="{% url 'orders:track' order.order_number %}" class="btn btn-outline btn-sm">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                            {% trans "Track" %}
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'orders:detail' order.order_number %}" class="btn btn-primary btn-sm">
+                            {% trans "View Details" %}
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Order Items Preview -->
+                <div class="flex flex-wrap gap-4">
+                    {% for item in order.items.all|slice:":4" %}
+                    <div class="flex items-center gap-3">
+                        <img 
+                            src="{{ item.product.primary_image.url }}" 
+                            alt="{{ item.product.name }}" 
+                            class="w-16 h-16 object-cover rounded-lg"
+                        >
+                        <div>
+                            <p class="text-sm font-medium text-secondary-900 line-clamp-1">{{ item.product.name }}</p>
+                            <p class="text-xs text-secondary-500">{% trans "Qty:" %} {{ item.quantity }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% if order.items.count > 4 %}
+                    <div class="flex items-center justify-center w-16 h-16 bg-secondary-100 rounded-lg">
+                        <span class="text-sm font-medium text-secondary-600">+{{ order.items.count|add:"-4" }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if orders.has_other_pages %}
+    <nav class="pagination-container">
+        <ul class="pagination">
+            {% if orders.has_previous %}
+            <li>
+                <a href="?page={{ orders.previous_page_number }}{% if status %}&status={{ status }}{% endif %}" class="pagination-prev">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for num in orders.paginator.page_range %}
+                {% if orders.number == num %}
+                <li><span class="pagination-current">{{ num }}</span></li>
+                {% elif num > orders.number|add:'-3' and num < orders.number|add:'3' %}
+                <li><a href="?page={{ num }}{% if status %}&status={{ status }}{% endif %}" class="pagination-link">{{ num }}</a></li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if orders.has_next %}
+            <li>
+                <a href="?page={{ orders.next_page_number }}{% if status %}&status={{ status }}{% endif %}" class="pagination-next">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    
+    {% else %}
+    <!-- Empty State -->
+    <div class="card">
+        <div class="card-body text-center py-16">
+            <div class="w-20 h-20 rounded-full bg-secondary-100 flex items-center justify-center mx-auto mb-4">
+                <svg class="w-10 h-10 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-secondary-900 mb-2">{% trans "No orders yet" %}</h3>
+            <p class="text-secondary-600 mb-6">{% trans "Start shopping and your orders will appear here." %}</p>
+            <a href="{% url 'storefront:home' %}" class="btn btn-primary">
+                {% trans "Start Shopping" %}
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
