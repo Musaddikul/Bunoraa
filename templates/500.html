@@ -1,66 +1,41 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load static %}
-{% load i18n %}
 
-{% block title %}{% trans "Server Error" %}{% endblock %}
-{% block page_name %}error-500{% endblock %}
+{% block title %}Server Error - Bunoraa{% endblock %}
 
 {% block content %}
-<div class="min-h-[60vh] flex items-center justify-center py-16">
-    <div class="container">
-        <div class="max-w-lg mx-auto text-center">
-            <div class="mb-8">
-                <span class="text-9xl font-bold text-primary-600">500</span>
-            </div>
-            <h1 class="text-3xl font-bold text-secondary-900 mb-4">{% trans "Something Went Wrong" %}</h1>
-            <p class="text-lg text-secondary-600 mb-8">
-                {% trans "We're sorry, something went wrong on our end. Our team has been notified and is working on it." %}
-            </p>
-            <div class="flex flex-wrap justify-center gap-4">
-                <a href="{% url 'storefront:home' %}" class="btn btn-primary">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                    </svg>
-                    {% trans "Go Home" %}
-                </a>
-                <button type="button" onclick="location.reload()" class="btn btn-outline">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                    </svg>
-                    {% trans "Try Again" %}
-                </button>
-            </div>
-            
-            <div class="mt-12 p-6 bg-secondary-50 rounded-xl text-left">
-                <h3 class="font-semibold text-secondary-900 mb-3">{% trans "What can you do?" %}</h3>
-                <ul class="text-secondary-600 space-y-2">
-                    <li class="flex items-start gap-2">
-                        <svg class="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        {% trans "Try refreshing the page" %}
-                    </li>
-                    <li class="flex items-start gap-2">
-                        <svg class="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        {% trans "Clear your browser cache and cookies" %}
-                    </li>
-                    <li class="flex items-start gap-2">
-                        <svg class="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        {% trans "Come back later" %}
-                    </li>
-                    <li class="flex items-start gap-2">
-                        <svg class="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        <a href="{% url 'support:contact' %}" class="text-primary-600 hover:underline">{% trans "Contact our support team" %}</a>
-                    </li>
-                </ul>
-            </div>
+<main class="min-h-screen flex items-center justify-center px-4">
+    <div class="text-center">
+        <!-- 500 Illustration -->
+        <div class="mb-8">
+            <h1 class="text-9xl font-bold text-gray-200">500</h1>
+        </div>
+        
+        <h2 class="text-3xl font-bold text-gray-900 mb-4">Server Error</h2>
+        <p class="text-lg text-gray-600 mb-8 max-w-md mx-auto">
+            Something went wrong on our end. We're working to fix it. Please try again later.
+        </p>
+        
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{% url 'home' %}" class="inline-flex items-center justify-center px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 transition">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                Go Home
+            </a>
+            <button onclick="window.location.reload()" class="inline-flex items-center justify-center px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:border-gray-400 transition">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Try Again
+            </button>
+        </div>
+
+        <!-- Support -->
+        <div class="mt-12 text-sm text-gray-500">
+            <p>If this problem persists, please <a href="{% url 'contacts:contact' %}" class="text-black underline hover:no-underline">contact support</a>.</p>
         </div>
     </div>
-</div>
+</main>
 {% endblock %}

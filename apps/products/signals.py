@@ -1,44 +1,37 @@
-# apps/products/signals.py
 """
-Product Signals
-Signal handlers for product-related events.
+Product signals
 """
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save, m2m_changed
 from django.dispatch import receiver
-from django.contrib.postgres.search import SearchVector
-from .models import Product, ProductImage
+from .models import Product
+
+
+@receiver(m2m_changed, sender=Product.categories.through)
+def product_categories_changed(sender, instance, action, pk_set, **kwargs):
+    """
+    When a product is assigned to a category, also associate it with
+    all ancestor categories.
+    """
+    if action == 'post_add' and pk_set:
+        from apps.categories.models import Category
+        
+        ancestor_ids = set()
+        for category_id in pk_set:
+            try:
+                category = Category.objects.get(pk=category_id)
+                for ancestor in category.get_ancestors():
+                    ancestor_ids.add(ancestor.id)
+            except Category.DoesNotExist:
+                pass
+        
+        # Add ancestor categories (this won't trigger the signal again for existing ones)
+        if ancestor_ids:
+            instance.categories.add(*ancestor_ids)
 
 
 @receiver(post_save, sender=Product)
-def update_product_search_vector(sender, instance, **kwargs):
-    """Update search vector when product is saved."""
-    # Avoid recursion
-    if kwargs.get('update_fields') and 'search_vector' in kwargs['update_fields']:
-        return
-    
-    Product.objects.filter(pk=instance.pk).update(
-        search_vector=SearchVector('name', weight='A') +
-                     SearchVector('short_description', weight='B') +
-                     SearchVector('description', weight='C') +
-                     SearchVector('sku', weight='A')
-    )
-
-
-@receiver(post_save, sender=ProductImage)
-def ensure_primary_image(sender, instance, created, **kwargs):
-    """Ensure product always has a primary image if images exist."""
-    if not ProductImage.objects.filter(product=instance.product, is_primary=True).exists():
-        first_image = ProductImage.objects.filter(product=instance.product).first()
-        if first_image:
-            first_image.is_primary = True
-            first_image.save(update_fields=['is_primary'])
-
-
-@receiver(post_delete, sender=ProductImage)
-def reassign_primary_image(sender, instance, **kwargs):
-    """Reassign primary image when primary is deleted."""
-    if instance.is_primary:
-        first_image = ProductImage.objects.filter(product=instance.product).first()
-        if first_image:
-            first_image.is_primary = True
-            first_image.save(update_fields=['is_primary'])
+def product_post_save(sender, instance, created, **kwargs):
+    """Handle product creation/update."""
+    if created:
+        # Track analytics event
+        pass

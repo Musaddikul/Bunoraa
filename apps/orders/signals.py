@@ -1,15 +1,16 @@
-# apps/orders/signals.py
 """
-Order Signals
+Orders signals
 """
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
+from django.utils import timezone
+
 from .models import Order, OrderStatusHistory
 
 
 @receiver(pre_save, sender=Order)
 def track_status_change(sender, instance, **kwargs):
-    """Track when order status changes."""
+    """Track status changes before saving."""
     if instance.pk:
         try:
             old_instance = Order.objects.get(pk=instance.pk)
@@ -22,31 +23,54 @@ def track_status_change(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Order)
 def create_status_history(sender, instance, created, **kwargs):
-    """Create status history entry when status changes."""
+    """Create status history entry on status change."""
+    old_status = getattr(instance, '_old_status', None)
+    
     if created:
+        # New order
         OrderStatusHistory.objects.create(
             order=instance,
-            status=instance.status,
-            previous_status='',
-            note='Order created'
+            old_status='',
+            new_status=instance.status,
+            notes='Order created'
         )
-    elif hasattr(instance, '_old_status') and instance._old_status != instance.status:
+    elif old_status and old_status != instance.status:
+        # Status changed
         OrderStatusHistory.objects.create(
             order=instance,
-            status=instance.status,
-            previous_status=instance._old_status or ''
+            old_status=old_status,
+            new_status=instance.status
         )
+        
+        # Update timestamp fields based on status
+        if instance.status == Order.STATUS_CONFIRMED and not instance.confirmed_at:
+            Order.objects.filter(pk=instance.pk).update(confirmed_at=timezone.now())
+        elif instance.status == Order.STATUS_SHIPPED and not instance.shipped_at:
+            Order.objects.filter(pk=instance.pk).update(shipped_at=timezone.now())
+        elif instance.status == Order.STATUS_DELIVERED and not instance.delivered_at:
+            Order.objects.filter(pk=instance.pk).update(delivered_at=timezone.now())
+        elif instance.status == Order.STATUS_CANCELLED and not instance.cancelled_at:
+            Order.objects.filter(pk=instance.pk).update(cancelled_at=timezone.now())
 
 
 @receiver(post_save, sender=Order)
-def send_order_notifications(sender, instance, created, **kwargs):
-    """Send notifications on order events."""
-    from apps.notifications.tasks import send_order_notification
+def update_coupon_usage(sender, instance, created, **kwargs):
+    """Update coupon usage count when order is created."""
+    if created and instance.coupon:
+        instance.coupon.times_used += 1
+        instance.coupon.save(update_fields=['times_used'])
+
+
+@receiver(post_save, sender=Order)
+def restore_stock_on_cancel(sender, instance, **kwargs):
+    """Restore stock when order is cancelled."""
+    old_status = getattr(instance, '_old_status', None)
     
-    try:
-        if created:
-            send_order_notification.delay(instance.id, 'created')
-        elif hasattr(instance, '_old_status') and instance._old_status != instance.status:
-            send_order_notification.delay(instance.id, instance.status)
-    except:
-        pass  # Notification service unavailable
+    if old_status and old_status != Order.STATUS_CANCELLED and instance.status == Order.STATUS_CANCELLED:
+        for item in instance.items.all():
+            if item.variant:
+                item.variant.stock_quantity += item.quantity
+                item.variant.save(update_fields=['stock_quantity'])
+            elif item.product:
+                item.product.stock_quantity += item.quantity
+                item.product.save(update_fields=['stock_quantity'])

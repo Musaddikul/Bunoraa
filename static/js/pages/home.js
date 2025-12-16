@@ -1,401 +1,346 @@
 /**
- * Home Page Module
- * Handles home page functionality including featured products, categories, and banners.
+ * Home Page
+ * @module pages/home
  */
 
-import { productsApi } from '../api/products.js';
-import { categoriesApi } from '../api/categories.js';
-import { storefrontApi } from '../api/storefront.js';
-import { Toast } from '../components/toast.js';
-import { Slider } from '../components/slider.js';
-import { LazyLoad } from '../components/lazyload.js';
+const HomePage = (function() {
+    'use strict';
 
-class HomePage {
-    constructor() {
-        this.bannerSlider = null;
-        this.featuredProducts = [];
-        this.newArrivals = [];
-        this.categories = [];
-        
-        this.elements = {
-            bannerContainer: document.getElementById('hero-banners'),
-            featuredGrid: document.getElementById('featured-products'),
-            newArrivalsGrid: document.getElementById('new-arrivals'),
-            categoriesGrid: document.getElementById('shop-by-category'),
-            testimonialsSlider: document.getElementById('testimonials'),
-        };
+    let heroSliderInterval = null;
+
+    async function init() {
+        await Promise.all([
+            loadHeroBanners(),
+            loadFeaturedProducts(),
+            loadCategoriesShowcase(),
+            loadNewArrivals(),
+            loadPromotions()
+        ]);
+        initNewsletterForm();
     }
 
-    /**
-     * Initialize the home page
-     */
-    async init() {
+    async function loadHeroBanners() {
+        const container = document.getElementById('hero-slider');
+        if (!container) return;
+
+        Loader.show(container, 'skeleton');
+
         try {
-            // Load all data in parallel
-            await Promise.all([
-                this.loadBanners(),
-                this.loadFeaturedProducts(),
-                this.loadNewArrivals(),
-                this.loadCategories(),
-            ]);
+            const response = await PagesApi.getBanners('home_hero');
+            const banners = response.data || [];
 
-            // Initialize components
-            this.initSliders();
-            this.initLazyLoad();
-            this.bindEvents();
+            if (banners.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
 
-        } catch (error) {
-            console.error('Failed to initialize home page:', error);
-            Toast.show({
-                message: 'Failed to load page content',
-                type: 'error'
-            });
-        }
-    }
-
-    /**
-     * Load hero banners
-     */
-    async loadBanners() {
-        try {
-            const response = await storefrontApi.getBanners();
-            this.renderBanners(response.results || response);
-        } catch (error) {
-            console.error('Failed to load banners:', error);
-        }
-    }
-
-    /**
-     * Render hero banners
-     */
-    renderBanners(banners) {
-        if (!this.elements.bannerContainer || !banners.length) return;
-
-        const html = banners.map((banner, index) => `
-            <div class="banner-slide swiper-slide relative" data-banner-id="${banner.id}">
-                <a href="${banner.link || '#'}" class="block relative aspect-[21/9] md:aspect-[3/1]">
-                    <img 
-                        src="${banner.image}" 
-                        alt="${banner.alt_text || banner.title}"
-                        class="w-full h-full object-cover"
-                        loading="${index === 0 ? 'eager' : 'lazy'}"
-                    >
-                    ${banner.title || banner.subtitle ? `
-                        <div class="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent flex items-center">
-                            <div class="container mx-auto px-6">
-                                <div class="max-w-lg text-white">
-                                    ${banner.title ? `<h2 class="text-3xl md:text-5xl font-bold mb-4">${banner.title}</h2>` : ''}
-                                    ${banner.subtitle ? `<p class="text-lg md:text-xl mb-6 opacity-90">${banner.subtitle}</p>` : ''}
-                                    ${banner.button_text ? `
-                                        <a href="${banner.link || '#'}" class="inline-flex items-center px-8 py-3 bg-white text-gray-900 font-semibold rounded-full hover:bg-gray-100 transition-colors">
-                                            ${banner.button_text}
-                                            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                                            </svg>
-                                        </a>
+            container.innerHTML = `
+                <div class="relative overflow-hidden rounded-2xl">
+                    <div class="hero-slides relative">
+                        ${banners.map((banner, index) => `
+                            <div class="hero-slide ${index === 0 ? '' : 'hidden'}" data-index="${index}">
+                                <a href="${banner.link_url || '#'}" class="block relative aspect-[21/9]">
+                                    <img 
+                                        src="${banner.image}" 
+                                        alt="${Templates.escapeHtml(banner.title || '')}"
+                                        class="w-full h-full object-cover"
+                                        loading="${index === 0 ? 'eager' : 'lazy'}"
+                                    >
+                                    ${banner.title || banner.subtitle ? `
+                                        <div class="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent flex items-center">
+                                            <div class="px-8 md:px-16 max-w-xl">
+                                                ${banner.title ? `<h2 class="text-3xl md:text-5xl font-bold text-white mb-4">${Templates.escapeHtml(banner.title)}</h2>` : ''}
+                                                ${banner.subtitle ? `<p class="text-lg text-white/90 mb-6">${Templates.escapeHtml(banner.subtitle)}</p>` : ''}
+                                                ${banner.button_text ? `
+                                                    <span class="inline-flex items-center px-6 py-3 bg-white text-gray-900 font-semibold rounded-lg hover:bg-gray-100 transition-colors">
+                                                        ${Templates.escapeHtml(banner.button_text)}
+                                                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                                                        </svg>
+                                                    </span>
+                                                ` : ''}
+                                            </div>
+                                        </div>
                                     ` : ''}
-                                </div>
+                                </a>
                             </div>
+                        `).join('')}
+                    </div>
+                    ${banners.length > 1 ? `
+                        <button class="hero-prev absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-colors" aria-label="Previous slide">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+                        <button class="hero-next absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-colors" aria-label="Next slide">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                        <div class="hero-dots absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                            ${banners.map((_, index) => `
+                                <button class="w-3 h-3 rounded-full transition-colors ${index === 0 ? 'bg-white' : 'bg-white/50 hover:bg-white/75'}" data-slide="${index}" aria-label="Go to slide ${index + 1}"></button>
+                            `).join('')}
                         </div>
                     ` : ''}
-                </a>
-            </div>
-        `).join('');
+                </div>
+            `;
 
-        this.elements.bannerContainer.innerHTML = `
-            <div class="swiper hero-swiper">
-                <div class="swiper-wrapper">${html}</div>
-                <div class="swiper-pagination"></div>
-                <div class="swiper-button-prev"></div>
-                <div class="swiper-button-next"></div>
-            </div>
-        `;
+            if (banners.length > 1) {
+                initHeroSlider(banners.length);
+            }
+        } catch (error) {
+            console.error('Failed to load hero banners:', error);
+            container.innerHTML = '';
+        }
     }
 
-    /**
-     * Load featured products
-     */
-    async loadFeaturedProducts() {
+    function initHeroSlider(totalSlides) {
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.hero-slide');
+        const dots = document.querySelectorAll('.hero-dots button');
+        const prevBtn = document.querySelector('.hero-prev');
+        const nextBtn = document.querySelector('.hero-next');
+
+        function goToSlide(index) {
+            slides[currentSlide].classList.add('hidden');
+            dots[currentSlide]?.classList.remove('bg-white');
+            dots[currentSlide]?.classList.add('bg-white/50');
+
+            currentSlide = (index + totalSlides) % totalSlides;
+
+            slides[currentSlide].classList.remove('hidden');
+            dots[currentSlide]?.classList.add('bg-white');
+            dots[currentSlide]?.classList.remove('bg-white/50');
+        }
+
+        prevBtn?.addEventListener('click', () => {
+            goToSlide(currentSlide - 1);
+            resetAutoplay();
+        });
+
+        nextBtn?.addEventListener('click', () => {
+            goToSlide(currentSlide + 1);
+            resetAutoplay();
+        });
+
+        dots.forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                goToSlide(index);
+                resetAutoplay();
+            });
+        });
+
+        function resetAutoplay() {
+            if (heroSliderInterval) {
+                clearInterval(heroSliderInterval);
+            }
+            heroSliderInterval = setInterval(() => goToSlide(currentSlide + 1), 5000);
+        }
+
+        resetAutoplay();
+    }
+
+    async function loadFeaturedProducts() {
+        const container = document.getElementById('featured-products');
+        if (!container) return;
+
+        const grid = container.querySelector('.products-grid') || container;
+        Loader.show(grid, 'skeleton');
+
         try {
-            const response = await productsApi.getFeaturedProducts(8);
-            this.featuredProducts = response.results || response;
-            this.renderProducts(this.featuredProducts, this.elements.featuredGrid);
+            const response = await ProductsApi.getFeatured(8);
+            const products = response.data?.results || response.data || [];
+
+            if (products.length === 0) {
+                grid.innerHTML = '<p class="text-gray-500 text-center py-8">No featured products available.</p>';
+                return;
+            }
+
+            grid.innerHTML = products.map(product => ProductCard.render(product)).join('');
+            ProductCard.bindEvents(grid);
         } catch (error) {
             console.error('Failed to load featured products:', error);
+            grid.innerHTML = '<p class="text-red-500 text-center py-8">Failed to load products. Please try again later.</p>';
         }
     }
 
-    /**
-     * Load new arrivals
-     */
-    async loadNewArrivals() {
-        try {
-            const response = await productsApi.getNewArrivals(8);
-            this.newArrivals = response.results || response;
-            this.renderProducts(this.newArrivals, this.elements.newArrivalsGrid);
-        } catch (error) {
-            console.error('Failed to load new arrivals:', error);
-        }
-    }
+    async function loadCategoriesShowcase() {
+        const container = document.getElementById('categories-showcase');
+        if (!container) return;
 
-    /**
-     * Load categories
-     */
-    async loadCategories() {
+        Loader.show(container, 'skeleton');
+
         try {
-            const response = await categoriesApi.getFeaturedCategories();
-            this.categories = response.results || response;
-            this.renderCategories(this.categories);
+            const response = await CategoriesApi.getCategories({ pageSize: 6, featured: true });
+            const categories = response.data?.results || response.data || [];
+
+            if (categories.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    ${categories.map(category => `
+                        <a href="/categories/${category.slug}/" class="group block">
+                            <div class="relative aspect-square rounded-xl overflow-hidden bg-gray-100">
+                                ${category.image ? `
+                                    <img 
+                                        src="${category.image}" 
+                                        alt="${Templates.escapeHtml(category.name)}"
+                                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                        loading="lazy"
+                                    >
+                                ` : `
+                                    <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-200">
+                                        <svg class="w-12 h-12 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                                        </svg>
+                                    </div>
+                                `}
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                            </div>
+                            <h3 class="mt-3 text-sm font-medium text-gray-900 group-hover:text-primary-600 transition-colors text-center">
+                                ${Templates.escapeHtml(category.name)}
+                            </h3>
+                            ${category.product_count ? `
+                                <p class="text-xs text-gray-500 text-center">${category.product_count} products</p>
+                            ` : ''}
+                        </a>
+                    `).join('')}
+                </div>
+            `;
         } catch (error) {
             console.error('Failed to load categories:', error);
+            container.innerHTML = '';
         }
     }
 
-    /**
-     * Render products grid
-     */
-    renderProducts(products, container) {
-        if (!container || !products.length) return;
+    async function loadNewArrivals() {
+        const container = document.getElementById('new-arrivals');
+        if (!container) return;
 
-        const html = products.map(product => this.createProductCard(product)).join('');
-        container.innerHTML = html;
+        const grid = container.querySelector('.products-grid') || container;
+        Loader.show(grid, 'skeleton');
+
+        try {
+            const response = await ProductsApi.getNewArrivals(4);
+            const products = response.data?.results || response.data || [];
+
+            if (products.length === 0) {
+                grid.innerHTML = '<p class="text-gray-500 text-center py-8">No new products available.</p>';
+                return;
+            }
+
+            grid.innerHTML = products.map(product => ProductCard.render(product, { showBadge: true, badge: 'New' })).join('');
+            ProductCard.bindEvents(grid);
+        } catch (error) {
+            console.error('Failed to load new arrivals:', error);
+            grid.innerHTML = '<p class="text-red-500 text-center py-8">Failed to load products.</p>';
+        }
     }
 
-    /**
-     * Create product card HTML
-     */
-    createProductCard(product) {
-        const discount = product.compare_at_price 
-            ? Math.round((1 - product.price / product.compare_at_price) * 100)
-            : 0;
+    async function loadPromotions() {
+        const container = document.getElementById('promotions-banner') || document.getElementById('promotion-banners');
+        if (!container) return;
 
-        return `
-            <div class="product-card group bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden" data-product-id="${product.id}">
-                <div class="relative aspect-square overflow-hidden">
-                    <a href="/products/${product.slug}/" class="block">
-                        <img 
-                            data-src="${product.image || product.images?.[0]?.url || '/static/images/placeholder.jpg'}"
-                            alt="${product.name}"
-                            class="lazy-image w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
-                        >
-                    </a>
-                    
-                    ${discount > 0 ? `
-                        <span class="absolute top-3 left-3 px-3 py-1 bg-red-500 text-white text-sm font-medium rounded-full">
-                            -${discount}%
-                        </span>
-                    ` : ''}
-                    
-                    ${product.is_new ? `
-                        <span class="absolute top-3 ${discount > 0 ? 'left-20' : 'left-3'} px-3 py-1 bg-green-500 text-white text-sm font-medium rounded-full">
-                            New
-                        </span>
-                    ` : ''}
-                    
-                    <div class="absolute bottom-0 inset-x-0 p-3 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div class="flex gap-2 justify-center">
-                            <button 
-                                class="quick-view-btn p-2 bg-white rounded-full hover:bg-gray-100 transition-colors"
-                                data-product-slug="${product.slug}"
-                                aria-label="Quick view"
-                            >
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                </svg>
-                            </button>
-                            <button 
-                                class="add-to-cart-btn p-2 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors"
-                                data-product-id="${product.id}"
-                                aria-label="Add to cart"
-                            >
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                </svg>
-                            </button>
-                            <button 
-                                class="wishlist-btn p-2 bg-white rounded-full hover:bg-gray-100 transition-colors"
-                                data-product-id="${product.id}"
-                                aria-label="Add to wishlist"
-                            >
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="p-4">
-                    <a href="/products/${product.slug}/" class="block">
-                        <h3 class="font-medium text-gray-900 dark:text-white truncate group-hover:text-primary-600 transition-colors">
-                            ${product.name}
-                        </h3>
-                    </a>
-                    
-                    ${product.category ? `
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                            ${product.category.name}
-                        </p>
-                    ` : ''}
-                    
-                    <div class="flex items-center justify-between mt-3">
-                        <div class="flex items-center gap-2">
-                            <span class="text-lg font-bold text-gray-900 dark:text-white">
-                                ৳${parseFloat(product.price).toLocaleString()}
+        try {
+            const response = await PagesApi.getPromotions();
+            const promotions = response.data?.results || response.data || [];
+
+            if (promotions.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const promo = promotions[0];
+            container.innerHTML = `
+                <div class="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl overflow-hidden">
+                    <div class="px-6 py-8 md:px-12 md:py-12 flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div class="text-center md:text-left">
+                            <span class="inline-block px-3 py-1 bg-white/20 text-white text-sm font-medium rounded-full mb-3">
+                                Limited Time Offer
                             </span>
-                            ${product.compare_at_price ? `
-                                <span class="text-sm text-gray-400 line-through">
-                                    ৳${parseFloat(product.compare_at_price).toLocaleString()}
-                                </span>
+                            <h3 class="text-2xl md:text-3xl font-bold text-white mb-2">
+                                ${Templates.escapeHtml(promo.title || promo.name)}
+                            </h3>
+                            ${promo.description ? `
+                                <p class="text-white/90 max-w-lg">${Templates.escapeHtml(promo.description)}</p>
+                            ` : ''}
+                            ${promo.discount_value ? `
+                                <p class="text-3xl font-bold text-white mt-4">
+                                    ${promo.discount_type === 'percentage' ? `${promo.discount_value}% OFF` : `Save ${Templates.formatPrice(promo.discount_value)}`}
+                                </p>
                             ` : ''}
                         </div>
-                        
-                        ${product.rating ? `
-                            <div class="flex items-center gap-1">
-                                <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        <div class="flex flex-col items-center gap-4">
+                            ${promo.code ? `
+                                <div class="bg-white/10 backdrop-blur-sm px-6 py-3 rounded-lg border-2 border-dashed border-white/30">
+                                    <p class="text-sm text-white/80 mb-1">Use code:</p>
+                                    <p class="text-2xl font-mono font-bold text-white tracking-wider">${Templates.escapeHtml(promo.code)}</p>
+                                </div>
+                            ` : ''}
+                            <a href="/products/?promotion=${promo.id}" class="inline-flex items-center px-6 py-3 bg-white text-primary-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors">
+                                Shop Now
+                                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
                                 </svg>
-                                <span class="text-sm text-gray-600 dark:text-gray-400">${product.rating.toFixed(1)}</span>
-                            </div>
-                        ` : ''}
+                            </a>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `;
-    }
-
-    /**
-     * Render categories grid
-     */
-    renderCategories(categories) {
-        if (!this.elements.categoriesGrid || !categories.length) return;
-
-        const html = categories.map(category => `
-            <a href="/category/${category.slug}/" class="group relative aspect-square rounded-2xl overflow-hidden shadow-lg">
-                <img 
-                    data-src="${category.image || '/static/images/category-placeholder.jpg'}"
-                    alt="${category.name}"
-                    class="lazy-image w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
-                >
-                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
-                <div class="absolute bottom-0 inset-x-0 p-6">
-                    <h3 class="text-xl font-bold text-white mb-1">${category.name}</h3>
-                    <p class="text-sm text-gray-200">${category.product_count || 0} Products</p>
-                </div>
-            </a>
-        `).join('');
-
-        this.elements.categoriesGrid.innerHTML = html;
-    }
-
-    /**
-     * Initialize sliders
-     */
-    initSliders() {
-        // Hero banner slider
-        if (document.querySelector('.hero-swiper')) {
-            this.bannerSlider = new Swiper('.hero-swiper', {
-                loop: true,
-                autoplay: {
-                    delay: 5000,
-                    disableOnInteraction: false,
-                },
-                pagination: {
-                    el: '.swiper-pagination',
-                    clickable: true,
-                },
-                navigation: {
-                    nextEl: '.swiper-button-next',
-                    prevEl: '.swiper-button-prev',
-                },
-                effect: 'fade',
-                fadeEffect: {
-                    crossFade: true
-                }
-            });
+            `;
+        } catch (error) {
+            console.error('Failed to load promotions:', error);
+            container.innerHTML = '';
         }
     }
 
-    /**
-     * Initialize lazy loading
-     */
-    initLazyLoad() {
-        LazyLoad.init();
-    }
+    function initNewsletterForm() {
+        const form = document.getElementById('newsletter-form');
+        if (!form) return;
 
-    /**
-     * Bind event handlers
-     */
-    bindEvents() {
-        // Quick view buttons
-        document.addEventListener('click', (e) => {
-            const quickViewBtn = e.target.closest('.quick-view-btn');
-            if (quickViewBtn) {
-                e.preventDefault();
-                const slug = quickViewBtn.dataset.productSlug;
-                this.showQuickView(slug);
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const emailInput = form.querySelector('input[type="email"]');
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const email = emailInput?.value?.trim();
+
+            if (!email) {
+                Toast.error('Please enter your email address.');
+                return;
             }
-        });
 
-        // Add to cart buttons
-        document.addEventListener('click', (e) => {
-            const addToCartBtn = e.target.closest('.add-to-cart-btn');
-            if (addToCartBtn) {
-                e.preventDefault();
-                const productId = addToCartBtn.dataset.productId;
-                this.addToCart(productId);
-            }
-        });
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
 
-        // Wishlist buttons
-        document.addEventListener('click', (e) => {
-            const wishlistBtn = e.target.closest('.wishlist-btn');
-            if (wishlistBtn) {
-                e.preventDefault();
-                const productId = wishlistBtn.dataset.productId;
-                this.toggleWishlist(productId, wishlistBtn);
+            try {
+                await SupportApi.submitContactForm({ email, type: 'newsletter' });
+                Toast.success('Thank you for subscribing!');
+                emailInput.value = '';
+            } catch (error) {
+                Toast.error(error.message || 'Failed to subscribe. Please try again.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
             }
         });
     }
 
-    /**
-     * Show product quick view modal
-     */
-    async showQuickView(slug) {
-        const { QuickViewModal } = await import('../components/quickViewModal.js');
-        QuickViewModal.show(slug);
-    }
-
-    /**
-     * Add product to cart
-     */
-    async addToCart(productId) {
-        const { cartService } = await import('../api/cart.js');
-        await cartService.addItem(productId);
-    }
-
-    /**
-     * Toggle wishlist
-     */
-    async toggleWishlist(productId, button) {
-        const { wishlistService } = await import('../api/wishlist.js');
-        const result = await wishlistService.toggle(productId);
-        
-        if (result.added) {
-            button.querySelector('svg').setAttribute('fill', 'currentColor');
-            button.classList.add('text-red-500');
-        } else {
-            button.querySelector('svg').setAttribute('fill', 'none');
-            button.classList.remove('text-red-500');
+    function destroy() {
+        if (heroSliderInterval) {
+            clearInterval(heroSliderInterval);
+            heroSliderInterval = null;
         }
     }
-}
 
-// Initialize on DOM ready
-document.addEventListener('DOMContentLoaded', () => {
-    const homePage = new HomePage();
-    homePage.init();
-});
+    return {
+        init,
+        destroy
+    };
+})();
 
-export { HomePage };
+window.HomePage = HomePage;

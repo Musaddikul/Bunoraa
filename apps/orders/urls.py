@@ -1,18 +1,18 @@
-# apps/orders/urls.py
 """
-Order URLs
+Orders URL configuration
 """
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import OrderViewSet, AdminOrderViewSet, CreateOrderView
+from django.urls import path
+from . import views
+
 
 app_name = 'orders'
 
-router = DefaultRouter()
-router.register('my-orders', OrderViewSet, basename='my-orders')
-router.register('admin', AdminOrderViewSet, basename='admin-orders')
-
 urlpatterns = [
-    path('', include(router.urls)),
-    path('checkout/', CreateOrderView.as_view(), name='checkout'),
+    path('', views.OrderListView.as_view(), name='list'),
+    path('track/', views.OrderTrackView.as_view(), name='track'),
+    path('<uuid:pk>/', views.OrderDetailView.as_view(), name='detail'),
+    path('<str:order_number>/track/', views.OrderTrackView.as_view(), name='track_detail'),
+    
+    # Placeholder URLs - implement views as needed
+    # path('<str:order_number>/invoice/', views.OrderInvoiceView.as_view(), name='invoice'),
 ]

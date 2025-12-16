@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_id %}checkout{% endblock %}
+{% block title %}Review Order - Checkout - Bunoraa{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Progress Steps -->
+    <div class="mb-8">
+        <div class="flex items-center justify-center">
+            <div class="flex items-center">
+                <div class="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <span class="ml-2 text-gray-500">Shipping</span>
+            </div>
+            <div class="w-16 h-0.5 mx-4 bg-green-600"></div>
+            <div class="flex items-center">
+                <div class="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <span class="ml-2 text-gray-500">Payment</span>
+            </div>
+            <div class="w-16 h-0.5 mx-4 bg-primary-600"></div>
+            <div class="flex items-center">
+                <div class="w-10 h-10 rounded-full bg-primary-600 text-white flex items-center justify-center font-semibold">3</div>
+                <span class="ml-2 font-medium text-gray-900">Review</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-2xl font-bold text-gray-900 mb-8">Review Your Order</h1>
+        
+        <!-- Order Details -->
+        <div class="bg-white rounded-lg shadow-sm mb-6">
+            <!-- Shipping Address -->
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h2 class="font-semibold text-gray-900 mb-2">Shipping Address</h2>
+                        <p class="text-gray-600">
+                            {{ checkout.shipping_address.full_name }}<br>
+                            {{ checkout.shipping_address.address_line1 }}<br>
+                            {% if checkout.shipping_address.address_line2 %}
+                            {{ checkout.shipping_address.address_line2 }}<br>
+                            {% endif %}
+                            {{ checkout.shipping_address.city }}, {{ checkout.shipping_address.state }} {{ checkout.shipping_address.postal_code }}<br>
+                            {{ checkout.shipping_address.country }}<br>
+                            {{ checkout.shipping_address.phone }}
+                        </p>
+                    </div>
+                    <a href="{% url 'checkout:shipping' %}" class="text-sm text-primary-600 hover:text-primary-700">Edit</a>
+                </div>
+            </div>
+            
+            <!-- Shipping Method -->
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h2 class="font-semibold text-gray-900 mb-2">Shipping Method</h2>
+                        <p class="text-gray-600">
+                            {{ checkout.shipping_method.name }}<br>
+                            <span class="text-sm">{{ checkout.shipping_method.description }}</span><br>
+                            <span class="text-sm">Estimated: {{ checkout.shipping_method.estimated_days }} business days</span>
+                        </p>
+                    </div>
+                    <span class="font-medium text-gray-900">
+                        {% if checkout.shipping_method.price == 0 %}Free{% else %}{{ currency_symbol }}{{ checkout.shipping_method.price }}{% endif %}
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Payment Method -->
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h2 class="font-semibold text-gray-900 mb-2">Payment Method</h2>
+                        <div class="flex items-center">
+                            <img src="{% static 'images/payments/' %}{{ checkout.payment_method.brand|lower }}.svg" 
+                                 alt="{{ checkout.payment_method.brand }}" class="h-8 mr-3">
+                            <p class="text-gray-600">
+                                {{ checkout.payment_method.brand }} •••• {{ checkout.payment_method.last4 }}<br>
+                                <span class="text-sm">Expires {{ checkout.payment_method.exp_month }}/{{ checkout.payment_method.exp_year }}</span>
+                            </p>
+                        </div>
+                    </div>
+                    <a href="{% url 'checkout:payment' %}" class="text-sm text-primary-600 hover:text-primary-700">Edit</a>
+                </div>
+            </div>
+            
+            <!-- Billing Address -->
+            {% if checkout.billing_address %}
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h2 class="font-semibold text-gray-900 mb-2">Billing Address</h2>
+                        <p class="text-gray-600">
+                            {{ checkout.billing_address.address_line1 }}<br>
+                            {% if checkout.billing_address.address_line2 %}
+                            {{ checkout.billing_address.address_line2 }}<br>
+                            {% endif %}
+                            {{ checkout.billing_address.city }}, {{ checkout.billing_address.state }} {{ checkout.billing_address.postal_code }}<br>
+                            {{ checkout.billing_address.country }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Order Items -->
+            <div class="p-6">
+                <h2 class="font-semibold text-gray-900 mb-4">Order Items ({{ cart_items|length }})</h2>
+                <div class="space-y-4">
+                    {% for item in cart_items %}
+                    <div class="flex items-center space-x-4 py-4 {% if not forloop.last %}border-b border-gray-100{% endif %}">
+                        <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.jpg' }}" 
+                             alt="{{ item.product.name }}"
+                             class="w-20 h-20 object-cover rounded-lg">
+                        <div class="flex-1">
+                            <h3 class="font-medium text-gray-900">{{ item.product.name }}</h3>
+                            {% if item.variant %}
+                            <p class="text-sm text-gray-500">{{ item.variant.name }}</p>
+                            {% endif %}
+                            <p class="text-sm text-gray-500">Qty: {{ item.quantity }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-medium text-gray-900">{{ currency_symbol }}{{ item.total_price }}</p>
+                            {% if item.product.sale_price %}
+                            <p class="text-sm text-gray-400 line-through">{{ currency_symbol }}{{ item.original_price }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Notes -->
+        {% if checkout.notes %}
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <h2 class="font-semibold text-gray-900 mb-2">Order Notes</h2>
+            <p class="text-gray-600">{{ checkout.notes }}</p>
+        </div>
+        {% endif %}
+        
+        <!-- Order Summary -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <h2 class="font-semibold text-gray-900 mb-4">Order Summary</h2>
+            <div class="space-y-3">
+                <div class="flex justify-between text-gray-600">
+                    <span>Subtotal ({{ cart_items|length }} items)</span>
+                    <span>{{ currency_symbol }}{{ cart.subtotal }}</span>
+                </div>
+                {% if cart.discount > 0 %}
+                <div class="flex justify-between text-green-600">
+                    <span>Discount{% if checkout.coupon %} ({{ checkout.coupon.code }}){% endif %}</span>
+                    <span>-{{ currency_symbol }}{{ cart.discount }}</span>
+                </div>
+                {% endif %}
+                <div class="flex justify-between text-gray-600">
+                    <span>Shipping</span>
+                    <span>{% if checkout.shipping_method.price == 0 %}Free{% else %}{{ currency_symbol }}{{ checkout.shipping_method.price }}{% endif %}</span>
+                </div>
+                <div class="flex justify-between text-gray-600">
+                    <span>Tax</span>
+                    <span>{{ currency_symbol }}{{ cart.tax|default:'0.00' }}</span>
+                </div>
+                <div class="flex justify-between text-xl font-bold text-gray-900 border-t border-gray-200 pt-3">
+                    <span>Total</span>
+                    <span>{{ currency_symbol }}{{ checkout.total }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Terms and Place Order -->
+        <form id="place-order-form" method="POST" action="{% url 'checkout:place_order' %}">
+            {% csrf_token %}
+            
+            <div class="mb-6">
+                <label class="flex items-start">
+                    <input type="checkbox" name="terms_accepted" required
+                           class="mt-1 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                    <span class="ml-2 text-sm text-gray-600">
+                        I have read and agree to the 
+                        <a href="{% url 'legal:terms' %}" class="text-primary-600 hover:underline" target="_blank">Terms & Conditions</a> 
+                        and 
+                        <a href="{% url 'legal:privacy' %}" class="text-primary-600 hover:underline" target="_blank">Privacy Policy</a>.
+                    </span>
+                </label>
+            </div>
+            
+            <div class="flex justify-between items-center">
+                <a href="{% url 'checkout:payment' %}" class="flex items-center text-gray-600 hover:text-gray-800">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    Back to Payment
+                </a>
+                <button type="submit" id="place-order-btn" 
+                        class="bg-primary-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span id="btn-text">Place Order - {{ currency_symbol }}{{ checkout.total }}</span>
+                    <span id="btn-spinner" class="hidden">
+                        <svg class="animate-spin inline w-5 h-5" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                    </span>
+                </button>
+            </div>
+        </form>
+        
+        <!-- Security Notice -->
+        <div class="mt-8 text-center">
+            <div class="flex items-center justify-center text-sm text-gray-500 mb-4">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+                Secure 256-bit SSL Encrypted Payment
+            </div>
+            <div class="flex items-center justify-center space-x-4">
+                <img src="{% static 'images/payments/visa.svg' %}" alt="Visa" class="h-8">
+                <img src="{% static 'images/payments/mastercard.svg' %}" alt="Mastercard" class="h-8">
+                <img src="{% static 'images/payments/amex.svg' %}" alt="Amex" class="h-8">
+                <img src="{% static 'images/payments/paypal.svg' %}" alt="PayPal" class="h-8">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const form = document.getElementById('place-order-form');
+    const btn = document.getElementById('place-order-btn');
+    const btnText = document.getElementById('btn-text');
+    const btnSpinner = document.getElementById('btn-spinner');
+    
+    form.addEventListener('submit', function() {
+        btn.disabled = true;
+        btnText.classList.add('hidden');
+        btnSpinner.classList.remove('hidden');
+    });
+</script>
+{% endblock %}

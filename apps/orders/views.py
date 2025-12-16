@@ -1,193 +1,95 @@
-# apps/orders/views.py
 """
-Order Views
+Orders views
 """
-from rest_framework import viewsets, generics, status, permissions
-from rest_framework.decorators import action
-from rest_framework.response import Response
-# get_object_or_404 and transaction available when needed
+from django.shortcuts import render, get_object_or_404, redirect
+from django.views.generic import ListView, DetailView, TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib import messages
 
-from core.permissions import IsOwner
-from .models import Order, OrderNote
-from .serializers import (
-    OrderSerializer, OrderListSerializer, OrderDetailSerializer,
-    CreateOrderSerializer, UpdateOrderStatusSerializer, OrderNoteSerializer
-)
+from .models import Order
 from .services import OrderService
 
 
-class OrderViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    Customer order viewset.
-    """
-    permission_classes = [permissions.IsAuthenticated, IsOwner]
+class OrderListView(LoginRequiredMixin, ListView):
+    """User order list."""
+    model = Order
+    template_name = 'accounts/orders.html'
+    context_object_name = 'orders'
+    paginate_by = 10
     
-    def get_serializer_class(self):
-        if self.action == 'retrieve':
-            return OrderDetailSerializer
-        return OrderListSerializer
+    def get_queryset(self):
+        queryset = Order.objects.filter(
+            user=self.request.user,
+            is_deleted=False
+        ).prefetch_related('items')
+        
+        # Filter by status
+        status = self.request.GET.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'My Orders'
+        context['status_choices'] = Order.STATUS_CHOICES
+        context['current_status'] = self.request.GET.get('status', '')
+        return context
+
+
+class OrderDetailView(LoginRequiredMixin, DetailView):
+    """Order detail page."""
+    model = Order
+    template_name = 'accounts/order_detail.html'
+    context_object_name = 'order'
     
     def get_queryset(self):
         return Order.objects.filter(
-            user=self.request.user
-        ).prefetch_related('items')
+            user=self.request.user,
+            is_deleted=False
+        ).prefetch_related('items', 'status_history')
     
-    @action(detail=True, methods=['post'])
-    def cancel(self, request, pk=None):
-        """Cancel an order."""
-        order = self.get_object()
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = f'Order {self.object.order_number}'
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        """Handle order cancellation."""
+        self.object = self.get_object()
         
-        if not order.can_cancel:
-            return Response(
-                {'error': 'This order cannot be cancelled'},
-                status=status.HTTP_400_BAD_REQUEST
+        if 'cancel_order' in request.POST:
+            reason = request.POST.get('cancel_reason', '')
+            success, message = OrderService.cancel_order(
+                self.object,
+                reason=reason,
+                cancelled_by=request.user
             )
+            
+            if success:
+                messages.success(request, message)
+            else:
+                messages.error(request, message)
         
-        reason = request.data.get('reason', '')
-        order.cancel(reason)
-        
-        return Response({
-            'message': 'Order cancelled successfully',
-            'order': OrderSerializer(order).data
-        })
-    
-    @action(detail=True, methods=['get'])
-    def track(self, request, pk=None):
-        """Get order tracking info."""
-        order = self.get_object()
-        
-        return Response({
-            'order_number': order.order_number,
-            'status': order.status,
-            'status_display': order.get_status_display(),
-            'tracking_number': order.tracking_number,
-            'carrier': order.shipping_carrier,
-            'estimated_delivery': order.estimated_delivery,
-            'shipped_at': order.shipped_at,
-            'delivered_at': order.delivered_at,
-            'history': [
-                {
-                    'status': h.status,
-                    'timestamp': h.created_at,
-                    'note': h.note
-                }
-                for h in order.status_history.all()
-            ]
-        })
+        return redirect('orders:detail', pk=self.object.pk)
 
 
-class CreateOrderView(generics.CreateAPIView):
-    """
-    Create order from cart.
-    """
-    serializer_class = CreateOrderSerializer
-    permission_classes = [permissions.IsAuthenticated]
+class OrderTrackView(TemplateView):
+    """Public order tracking page."""
+    template_name = 'accounts/orders.html'
     
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        order_number = self.kwargs.get('order_number')
         
-        try:
-            order = OrderService.create_from_cart(
-                request.user,
-                serializer.validated_data
-            )
-            return Response({
-                'message': 'Order created successfully',
-                'order': OrderDetailSerializer(order).data
-            }, status=status.HTTP_201_CREATED)
-        except ValueError as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-
-class AdminOrderViewSet(viewsets.ModelViewSet):
-    """
-    Admin order management.
-    """
-    permission_classes = [permissions.IsAdminUser]
-    queryset = Order.objects.all().prefetch_related('items', 'status_history', 'notes')
-    
-    def get_serializer_class(self):
-        if self.action in ['list']:
-            return OrderListSerializer
-        return OrderDetailSerializer
-    
-    @action(detail=True, methods=['post'])
-    def update_status(self, request, pk=None):
-        """Update order status."""
-        order = self.get_object()
-        serializer = UpdateOrderStatusSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        
-        old_status = order.status
-        new_status = serializer.validated_data['status']
-        
-        order.status = new_status
-        
-        # Handle specific status changes
-        if new_status == Order.Status.SHIPPED:
-            order.mark_shipped(
-                serializer.validated_data.get('tracking_number'),
-                serializer.validated_data.get('carrier')
-            )
-        elif new_status == Order.Status.DELIVERED:
-            order.mark_delivered()
-        elif new_status == Order.Status.CONFIRMED:
-            order.mark_confirmed()
-        else:
-            order.save()
-        
-        return Response({
-            'message': f'Order status updated from {old_status} to {new_status}',
-            'order': OrderDetailSerializer(order).data
-        })
-    
-    @action(detail=True, methods=['post'])
-    def add_note(self, request, pk=None):
-        """Add note to order."""
-        order = self.get_object()
-        
-        note = OrderNote.objects.create(
-            order=order,
-            note=request.data.get('note'),
-            is_customer_visible=request.data.get('is_customer_visible', False),
-            created_by=request.user
+        order = get_object_or_404(
+            Order.objects.prefetch_related('status_history'),
+            order_number=order_number,
+            is_deleted=False
         )
         
-        return Response({
-            'message': 'Note added',
-            'note': OrderNoteSerializer(note).data
-        })
-    
-    @action(detail=False, methods=['get'])
-    def statistics(self, request):
-        """Get order statistics."""
-        from django.db.models import Sum, Count, Avg
-        from django.utils import timezone
-        from datetime import timedelta
+        context['page_title'] = f'Track Order {order_number}'
+        context['order'] = order
         
-        today = timezone.now().date()
-        thirty_days_ago = today - timedelta(days=30)
-        
-        stats = {
-            'total_orders': Order.objects.count(),
-            'pending_orders': Order.objects.filter(status=Order.Status.PENDING).count(),
-            'processing_orders': Order.objects.filter(status=Order.Status.PROCESSING).count(),
-            'completed_orders': Order.objects.filter(status=Order.Status.DELIVERED).count(),
-            'cancelled_orders': Order.objects.filter(status=Order.Status.CANCELLED).count(),
-            'total_revenue': Order.objects.filter(
-                payment_status=Order.PaymentStatus.PAID
-            ).aggregate(Sum('total'))['total__sum'] or 0,
-            'orders_last_30_days': Order.objects.filter(
-                created_at__date__gte=thirty_days_ago
-            ).count(),
-            'revenue_last_30_days': Order.objects.filter(
-                created_at__date__gte=thirty_days_ago,
-                payment_status=Order.PaymentStatus.PAID
-            ).aggregate(Sum('total'))['total__sum'] or 0,
-            'average_order_value': Order.objects.filter(
-                payment_status=Order.PaymentStatus.PAID
-            ).aggregate(Avg('total'))['total__avg'] or 0,
-        }
-        
-        return Response(stats)
+        return context

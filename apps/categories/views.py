@@ -1,128 +1,82 @@
-# apps/categories/views.py
 """
-Category Views
-API views for category browsing and management.
+Category views - Frontend pages
 """
-from rest_framework import viewsets, generics, permissions
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
+from urllib.parse import urlencode
 
-from core.permissions import IsAdminOrReadOnly
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
+from django.views.generic import ListView, DetailView
+from django.core.paginator import Paginator
 from .models import Category
-from .serializers import (
-    CategorySerializer,
-    CategoryTreeSerializer,
-    CategoryDetailSerializer,
-    CategoryCreateSerializer,
-)
+from .services import CategoryService
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for category CRUD operations.
-    - List: All active categories
-    - Retrieve: Category details with children
-    - Create/Update/Delete: Admin only
-    """
-    permission_classes = [IsAdminOrReadOnly]
-    lookup_field = 'slug'
+class CategoryListView(ListView):
+    """Category listing page."""
+    model = Category
+    template_name = 'categories/list.html'
+    context_object_name = 'categories'
     
     def get_queryset(self):
-        queryset = Category.objects.filter(is_active=True)
-        
-        # Filter by parent
-        parent_slug = self.request.query_params.get('parent')
-        if parent_slug:
-            if parent_slug == 'root':
-                queryset = queryset.filter(parent=None)
-            else:
-                parent = get_object_or_404(Category, slug=parent_slug)
-                queryset = queryset.filter(parent=parent)
-        
-        # Filter featured
-        featured = self.request.query_params.get('featured')
-        if featured:
-            queryset = queryset.filter(is_featured=True)
-        
-        return queryset.select_related('parent')
+        return CategoryService.get_root_categories()
     
-    def get_serializer_class(self):
-        if self.action == 'retrieve':
-            return CategoryDetailSerializer
-        if self.action in ['create', 'update', 'partial_update']:
-            return CategoryCreateSerializer
-        return CategorySerializer
-    
-    @action(detail=False, methods=['get'])
-    def tree(self, request):
-        """Get full category tree structure."""
-        root_categories = Category.objects.filter(
-            is_active=True,
-            parent=None
-        ).order_by('display_order', 'name')
-        
-        serializer = CategoryTreeSerializer(root_categories, many=True)
-        return Response(serializer.data)
-    
-    @action(detail=False, methods=['get'])
-    def menu(self, request):
-        """Get categories for navigation menu."""
-        categories = Category.get_menu_categories()
-        serializer = CategorySerializer(categories, many=True)
-        return Response(serializer.data)
-    
-    @action(detail=True, methods=['get'])
-    def products(self, request, slug=None):
-        """Get products in this category."""
-        category = self.get_object()
-        include_subcategories = request.query_params.get('include_subcategories', 'true').lower() == 'true'
-        
-        products = category.get_products(include_descendants=include_subcategories)
-        
-        # Import here to avoid circular import
-        from apps.products.serializers import ProductListSerializer
-        from core.pagination import StandardResultsPagination
-        
-        paginator = StandardResultsPagination()
-        page = paginator.paginate_queryset(products, request)
-        serializer = ProductListSerializer(page, many=True, context={'request': request})
-        
-        return paginator.get_paginated_response(serializer.data)
-    
-    @action(detail=True, methods=['get'])
-    def ancestors(self, request, slug=None):
-        """Get ancestor categories (for breadcrumbs)."""
-        category = self.get_object()
-        ancestors = category.get_ancestors(include_self=True)
-        serializer = CategorySerializer(ancestors, many=True)
-        return Response(serializer.data)
-    
-    @action(detail=True, methods=['get'])
-    def descendants(self, request, slug=None):
-        """Get all descendant categories."""
-        category = self.get_object()
-        descendants = category.get_descendants()
-        serializer = CategorySerializer(descendants, many=True)
-        return Response(serializer.data)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'All Categories'
+        context['meta_description'] = 'Browse all product categories at Bunoraa.'
+        context['category_tree'] = CategoryService.get_category_tree()
+        return context
 
 
-class CategoryByPathView(generics.RetrieveAPIView):
-    """
-    Retrieve category by full path (e.g., /clothing/men/shirts).
-    """
-    serializer_class = CategoryDetailSerializer
-    permission_classes = [permissions.AllowAny]
+class CategoryDetailView(DetailView):
+    """Category detail page with products."""
+    model = Category
+    template_name = 'categories/detail.html'
+    context_object_name = 'category'
+    slug_url_kwarg = 'slug'
     
-    def get_object(self):
-        category_path = self.kwargs.get('category_path', '')
-        slugs = category_path.strip('/').split('/')
+    def get_queryset(self):
+        return Category.objects.filter(is_active=True, is_deleted=False)
+    
+    def get(self, request, *args, **kwargs):
+        """Redirect category detail to the product list with prefilled filters."""
+        self.object = self.get_object()
+        params = request.GET.copy()
+        params['category'] = self.object.slug
+        params.setdefault('sort', 'popular')
+        destination = f"{reverse('products:list')}?{urlencode(params, doseq=True)}"
+        return redirect(destination)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        category = self.object
         
-        category = None
-        for slug in slugs:
-            if category is None:
-                category = get_object_or_404(Category, slug=slug, parent=None, is_active=True)
-            else:
-                category = get_object_or_404(Category, slug=slug, parent=category, is_active=True)
+        # Get products with pagination
+        products = CategoryService.get_category_products(category, include_descendants=True)
         
-        return category
+        # Apply filters
+        sort = self.request.GET.get('sort', '-created_at')
+        min_price = self.request.GET.get('min_price')
+        max_price = self.request.GET.get('max_price')
+        
+        if min_price:
+            products = products.filter(price__gte=min_price)
+        if max_price:
+            products = products.filter(price__lte=max_price)
+        
+        products = products.order_by(sort)
+        
+        # Pagination
+        paginator = Paginator(products, 20)
+        page_number = self.request.GET.get('page', 1)
+        page_obj = paginator.get_page(page_number)
+        
+        context['products'] = page_obj
+        context['page_obj'] = page_obj
+        context['page_title'] = category.meta_title or category.name
+        context['meta_description'] = category.meta_description or f'Shop {category.name} at Bunoraa.'
+        context['breadcrumbs'] = category.get_breadcrumbs()
+        context['children'] = category.children.filter(is_active=True, is_deleted=False)
+        context['siblings'] = category.get_siblings()
+        
+        return context

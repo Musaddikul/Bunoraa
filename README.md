@@ -6,19 +6,27 @@ A premium, robust, production-ready single-store e-commerce platform built with 
 
 ### Backend
 - **Django 5.x** with Django REST Framework
-- **RESTful API** under `/api/v1/` with standardized response format
+- **RESTful API** under `/api/v1/` with standardized response format:
+  ```json
+  {
+    "success": boolean,
+    "message": string,
+    "data": any,
+    "meta": object?
+  }
+  ```
 - **Modular Architecture** with clean separation of concerns
-- **Authentication** with JWT, social auth (Google, Facebook)
+- **Authentication** with JWT (SimpleJWT), social auth (Google, Facebook)
 - **Multi-currency** support with real-time exchange rates
 - **Comprehensive Admin** with Django admin customizations
 - **Celery** for async tasks and scheduled jobs
 - **Redis** for caching and Celery broker
 
 ### Frontend
-- **Pure ES6 JavaScript** modules (no build step required)
+- **Pure ES6 JavaScript** modules (no framework dependencies)
 - **TailwindCSS** with custom design system
 - **Responsive Design** mobile-first approach
-- **Modern UI Components** (modals, tabs, accordions, etc.)
+- **Modern UI Components** (modals, tabs, accordions, toasts, etc.)
 - **Progressive Enhancement** works without JavaScript
 
 ### E-Commerce
@@ -35,40 +43,44 @@ A premium, robust, production-ready single-store e-commerce platform built with 
 
 ```
 bunoraa/
-├── backend/
-│   ├── accounts/          # User authentication & profiles
-│   ├── products/          # Product catalog
-│   ├── categories/        # Category management
-│   ├── cart/             # Shopping cart
-│   ├── orders/           # Order processing
-│   ├── payments/         # Payment integrations
-│   ├── shipping/         # Shipping methods
-│   ├── promotions/       # Coupons & campaigns
-│   ├── reviews/          # Product reviews
-│   ├── wishlist/         # User wishlists
-│   ├── notifications/    # Email & push notifications
-│   ├── analytics/        # Business analytics
-│   ├── cms/             # Content management
-│   ├── currencies/       # Multi-currency
-│   ├── frontend/         # Frontend templates & assets
-│   │   ├── static/
-│   │   │   ├── js/       # ES6 modules
-│   │   │   ├── css/      # TailwindCSS
-│   │   │   └── images/   # Static images
-│   │   ├── templates/    # Django templates
-│   │   └── templatetags/ # Custom template tags
-│   └── core/            # Core settings & utilities
-├── static/              # Collected static files
-├── media/               # User uploads
-├── locale/              # Translations
-└── requirements.txt     # Python dependencies
+├── accounts/              # User authentication & profiles
+├── products/              # Product catalog
+├── cart/                  # Shopping cart
+├── orders/                # Order processing
+├── payments/              # Payment integrations
+├── shipping/              # Shipping methods & zones
+├── promotions/            # Coupons & campaigns
+├── reviews/               # Product reviews
+├── wishlist/              # User wishlists
+├── notifications/         # Email & push notifications
+├── analytics/             # Business analytics
+├── cms/                   # Homepage, banners, pages
+├── contacts/              # Contact forms, FAQ, newsletter
+├── support/               # Support tickets
+├── core/                  # Project settings
+│   ├── settings/          # Environment-based settings
+│   ├── utils/             # Utilities (response helpers)
+│   ├── exceptions/        # Custom exception handlers
+│   ├── urls.py            # URL configuration
+│   └── urls_api.py        # API v1 URL configuration
+├── static/                # Static assets
+│   ├── js/               # ES6 JavaScript modules
+│   │   ├── api/         # API client modules
+│   │   ├── components/  # UI components
+│   │   ├── pages/       # Page-specific logic
+│   │   └── utils/       # Utilities
+│   └── css/             # TailwindCSS styles
+├── templates/             # Django templates
+├── media/                 # User uploads
+├── locale/                # Translations
+└── requirements.txt       # Python dependencies
 ```
 
 ## 🛠️ Installation
 
 ### Prerequisites
 - Python 3.11+
-- PostgreSQL 14+
+- PostgreSQL 14+ (or SQLite for development)
 - Redis 7+
 - Node.js 18+ (for TailwindCSS CLI)
 

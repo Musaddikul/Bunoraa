@@ -1,6 +1,4 @@
-# apps/analytics/__init__.py
 """
-Analytics App
-Site analytics and reporting.
+Analytics app
 """
 default_app_config = 'apps.analytics.apps.AnalyticsConfig'

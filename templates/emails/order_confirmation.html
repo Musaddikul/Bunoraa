@@ -1,308 +1,87 @@
-{% extends 'emails/base_email.html' %}
-{% load i18n humanize %}
+{% extends "emails/base.html" %}
 
-{% block title %}Order Confirmed - #{{ order.order_number }}{% endblock %}
-
-{% block preheader %}Your order #{{ order.order_number }} has been confirmed! Track your order and view details.{% endblock %}
+{% block title %}Order Confirmation - #{{ order.number }}{% endblock %}
 
 {% block content %}
-<!-- Success Icon -->
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-    <tr>
-        <td style="text-align: center; padding-bottom: 20px;">
-            <div style="display: inline-block; width: 64px; height: 64px; background-color: #dcfce7; border-radius: 50%; line-height: 64px;">
-                <span style="color: #16a34a; font-size: 28px;">✓</span>
-            </div>
-        </td>
-    </tr>
-</table>
+<h2>Thank you for your order! 🎉</h2>
+<p>Hi {{ order.customer_name }},</p>
+<p>We've received your order and it's now being processed. You'll receive another email when your order ships.</p>
 
-<!-- Heading -->
-<h1 style="margin: 0 0 10px 0; font-size: 24px; font-weight: 700; color: #111827; text-align: center;">
-    Order Confirmed!
-</h1>
-<p style="margin: 0 0 30px 0; font-size: 16px; color: #6b7280; text-align: center;">
-    Thank you for your order, {{ order.user.first_name|default:"there" }}!
-</p>
+<div class="highlight-box">
+    <strong>Order Number:</strong> #{{ order.number }}<br>
+    <strong>Order Date:</strong> {{ order.created_at|date:"F j, Y" }}
+</div>
 
-<!-- Order Info Box -->
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f9fafb; border-radius: 8px; margin-bottom: 30px;">
-    <tr>
-        <td style="padding: 20px;">
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                <tr>
-                    <td width="50%" style="vertical-align: top;">
-                        <p style="margin: 0 0 5px 0; font-size: 12px; color: #6b7280; text-transform: uppercase;">Order Number</p>
-                        <p style="margin: 0; font-size: 16px; font-weight: 600; color: #111827;">#{{ order.order_number }}</p>
-                    </td>
-                    <td width="50%" style="vertical-align: top; text-align: right;">
-                        <p style="margin: 0 0 5px 0; font-size: 12px; color: #6b7280; text-transform: uppercase;">Order Date</p>
-                        <p style="margin: 0; font-size: 16px; font-weight: 600; color: #111827;">{{ order.created_at|date:"M d, Y" }}</p>
-                    </td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-</table>
+<a href="{{ order_url }}" class="button">View Order Details</a>
 
-<!-- CTA Button -->
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 30px;">
-    <tr>
-        <td style="text-align: center;">
-            <a href="{{ site_url }}/orders/{{ order.order_number }}/" class="btn" style="display: inline-block; padding: 14px 28px; background-color: #e5604d; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px; border-radius: 8px;">
-                View Order Details
-            </a>
-        </td>
-    </tr>
-</table>
+<div class="divider"></div>
 
-<!-- Divider -->
-<hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-
-<!-- Order Items -->
-<h2 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #111827;">
-    Order Summary
-</h2>
-
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+<h3>Order Summary</h3>
+<div class="order-summary">
     {% for item in order.items.all %}
-    <tr>
-        <td style="padding: 15px 0; border-bottom: 1px solid #f3f4f6;">
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                <tr>
-                    <td width="80" style="vertical-align: top;">
-                        <img src="{{ site_url }}{{ item.product.primary_image.url }}" alt="{{ item.product.name }}" width="70" height="70" style="border-radius: 8px; object-fit: cover; background-color: #f3f4f6;">
-                    </td>
-                    <td style="vertical-align: top; padding-left: 15px;">
-                        <p style="margin: 0 0 5px 0; font-size: 15px; font-weight: 600; color: #111827;">
-                            {{ item.product.name }}
-                        </p>
-                        {% if item.variant %}
-                        <p style="margin: 0 0 5px 0; font-size: 13px; color: #6b7280;">
-                            {{ item.variant.name }}
-                        </p>
-                        {% endif %}
-                        <p style="margin: 0; font-size: 13px; color: #6b7280;">
-                            Qty: {{ item.quantity }} × {{ item.unit_price|floatformat:2 }} {{ order.currency }}
-                        </p>
-                    </td>
-                    <td width="100" style="vertical-align: top; text-align: right;">
-                        <p style="margin: 0; font-size: 15px; font-weight: 600; color: #111827;">
-                            {{ item.subtotal|floatformat:2 }} {{ order.currency }}
-                        </p>
-                    </td>
-                </tr>
-            </table>
-        </td>
-    </tr>
+    <div class="order-item">
+        {% if item.product.image %}
+        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="order-item-image">
+        {% endif %}
+        <div class="order-item-details">
+            <p class="order-item-name">{{ item.product.name }}</p>
+            <p class="order-item-meta">Qty: {{ item.quantity }}</p>
+        </div>
+        <div class="order-item-price">${{ item.total }}</div>
+    </div>
     {% endfor %}
-</table>
+    
+    <div class="order-totals">
+        <div class="order-totals-row">
+            <span>Subtotal</span>
+            <span>${{ order.subtotal }}</span>
+        </div>
+        <div class="order-totals-row">
+            <span>Shipping</span>
+            <span>{% if order.shipping_cost > 0 %}${{ order.shipping_cost }}{% else %}Free{% endif %}</span>
+        </div>
+        {% if order.discount_amount > 0 %}
+        <div class="order-totals-row">
+            <span>Discount</span>
+            <span>-${{ order.discount_amount }}</span>
+        </div>
+        {% endif %}
+        <div class="order-totals-row">
+            <span>Tax</span>
+            <span>${{ order.tax_amount }}</span>
+        </div>
+        <div class="order-totals-row total">
+            <span>Total</span>
+            <span>${{ order.total }}</span>
+        </div>
+    </div>
+</div>
 
-<!-- Totals -->
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-top: 20px;">
-    <tr>
-        <td style="padding: 8px 0;">
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                <tr>
-                    <td style="font-size: 14px; color: #6b7280;">Subtotal</td>
-                    <td style="text-align: right; font-size: 14px; color: #374151;">{{ order.subtotal|floatformat:2 }} {{ order.currency }}</td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-    {% if order.discount_amount > 0 %}
-    <tr>
-        <td style="padding: 8px 0;">
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                <tr>
-                    <td style="font-size: 14px; color: #16a34a;">Discount{% if order.coupon_code %} ({{ order.coupon_code }}){% endif %}</td>
-                    <td style="text-align: right; font-size: 14px; color: #16a34a;">-{{ order.discount_amount|floatformat:2 }} {{ order.currency }}</td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-    {% endif %}
-    <tr>
-        <td style="padding: 8px 0;">
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                <tr>
-                    <td style="font-size: 14px; color: #6b7280;">Shipping</td>
-                    <td style="text-align: right; font-size: 14px; color: #374151;">
-                        {% if order.shipping_cost == 0 %}FREE{% else %}{{ order.shipping_cost|floatformat:2 }} {{ order.currency }}{% endif %}
-                    </td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-    {% if order.tax_amount > 0 %}
-    <tr>
-        <td style="padding: 8px 0;">
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                <tr>
-                    <td style="font-size: 14px; color: #6b7280;">Tax</td>
-                    <td style="text-align: right; font-size: 14px; color: #374151;">{{ order.tax_amount|floatformat:2 }} {{ order.currency }}</td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-    {% endif %}
-    <tr>
-        <td style="padding: 15px 0 0 0; border-top: 2px solid #e5e7eb;">
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                <tr>
-                    <td style="font-size: 18px; font-weight: 700; color: #111827;">Total</td>
-                    <td style="text-align: right; font-size: 18px; font-weight: 700; color: #e5604d;">{{ order.total|floatformat:2 }} {{ order.currency }}</td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-</table>
+<div style="display: flex; gap: 20px;">
+    <div class="address-box" style="flex: 1;">
+        <div class="address-label">Shipping Address</div>
+        <div class="address-text">
+            {{ order.shipping_address.name }}<br>
+            {{ order.shipping_address.address_line_1 }}<br>
+            {% if order.shipping_address.address_line_2 %}{{ order.shipping_address.address_line_2 }}<br>{% endif %}
+            {{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{ order.shipping_address.postal_code }}<br>
+            {{ order.shipping_address.country }}
+        </div>
+    </div>
+    <div class="address-box" style="flex: 1;">
+        <div class="address-label">Payment Method</div>
+        <div class="address-text">
+            {{ order.payment_method|default:"Credit Card" }}<br>
+            {% if order.card_last_four %}**** **** **** {{ order.card_last_four }}{% endif %}
+        </div>
+    </div>
+</div>
 
-<!-- Divider -->
-<hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+<div class="divider"></div>
 
-<!-- Delivery Info -->
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-    <tr>
-        <td width="50%" style="vertical-align: top; padding-right: 20px;">
-            <h3 style="margin: 0 0 15px 0; font-size: 14px; font-weight: 600; color: #111827; text-transform: uppercase;">
-                Shipping Address
-            </h3>
-            <p style="margin: 0; font-size: 14px; color: #374151; line-height: 1.6;">
-                {{ order.shipping_address.full_name }}<br>
-                {{ order.shipping_address.address_line_1 }}<br>
-                {% if order.shipping_address.address_line_2 %}{{ order.shipping_address.address_line_2 }}<br>{% endif %}
-                {{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{ order.shipping_address.postal_code }}<br>
-                {{ order.shipping_address.country.name }}
-            </p>
-            {% if order.shipping_address.phone %}
-            <p style="margin: 10px 0 0 0; font-size: 14px; color: #6b7280;">
-                Phone: {{ order.shipping_address.phone }}
-            </p>
-            {% endif %}
-        </td>
-        <td width="50%" style="vertical-align: top; padding-left: 20px;">
-            <h3 style="margin: 0 0 15px 0; font-size: 14px; font-weight: 600; color: #111827; text-transform: uppercase;">
-                Shipping Method
-            </h3>
-            <p style="margin: 0; font-size: 14px; color: #374151;">
-                {{ order.shipping_method.name|default:"Standard Shipping" }}
-            </p>
-            <p style="margin: 5px 0 0 0; font-size: 13px; color: #6b7280;">
-                Estimated delivery: {{ order.estimated_delivery|date:"M d, Y"|default:"3-5 business days" }}
-            </p>
-        </td>
-    </tr>
-</table>
+<p><strong>Estimated Delivery:</strong> {{ order.estimated_delivery|default:"5-7 business days" }}</p>
 
-<!-- Payment Info -->
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-top: 25px;">
-    <tr>
-        <td width="50%" style="vertical-align: top; padding-right: 20px;">
-            <h3 style="margin: 0 0 15px 0; font-size: 14px; font-weight: 600; color: #111827; text-transform: uppercase;">
-                Payment Method
-            </h3>
-            <p style="margin: 0; font-size: 14px; color: #374151;">
-                {{ order.payment_method|default:"Credit Card" }}
-            </p>
-        </td>
-        <td width="50%" style="vertical-align: top; padding-left: 20px;">
-            <h3 style="margin: 0 0 15px 0; font-size: 14px; font-weight: 600; color: #111827; text-transform: uppercase;">
-                Billing Address
-            </h3>
-            <p style="margin: 0; font-size: 14px; color: #374151;">
-                {% if order.billing_address %}
-                {{ order.billing_address.full_name }}<br>
-                {{ order.billing_address.address_line_1 }}
-                {% else %}
-                Same as shipping address
-                {% endif %}
-            </p>
-        </td>
-    </tr>
-</table>
+<p>If you have any questions about your order, please don't hesitate to <a href="{{ contact_url }}">contact us</a>.</p>
 
-<!-- Divider -->
-<hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-
-<!-- What's Next -->
-<h2 style="margin: 0 0 15px 0; font-size: 16px; font-weight: 600; color: #111827;">
-    What's Next?
-</h2>
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-    <tr>
-        <td style="padding: 10px 0;">
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
-                <tr>
-                    <td style="vertical-align: top; padding-right: 15px;">
-                        <div style="width: 32px; height: 32px; background-color: #fef3c7; border-radius: 50%; text-align: center; line-height: 32px;">
-                            <span style="color: #d97706; font-size: 16px;">📦</span>
-                        </div>
-                    </td>
-                    <td style="vertical-align: top;">
-                        <p style="margin: 0 0 3px 0; font-size: 14px; font-weight: 600; color: #374151;">We're preparing your order</p>
-                        <p style="margin: 0; font-size: 13px; color: #6b7280;">Your items are being carefully packed.</p>
-                    </td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-    <tr>
-        <td style="padding: 10px 0;">
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
-                <tr>
-                    <td style="vertical-align: top; padding-right: 15px;">
-                        <div style="width: 32px; height: 32px; background-color: #dbeafe; border-radius: 50%; text-align: center; line-height: 32px;">
-                            <span style="color: #2563eb; font-size: 16px;">🚚</span>
-                        </div>
-                    </td>
-                    <td style="vertical-align: top;">
-                        <p style="margin: 0 0 3px 0; font-size: 14px; font-weight: 600; color: #374151;">Shipping notification</p>
-                        <p style="margin: 0; font-size: 13px; color: #6b7280;">You'll receive an email with tracking info once shipped.</p>
-                    </td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-    <tr>
-        <td style="padding: 10px 0;">
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
-                <tr>
-                    <td style="vertical-align: top; padding-right: 15px;">
-                        <div style="width: 32px; height: 32px; background-color: #dcfce7; border-radius: 50%; text-align: center; line-height: 32px;">
-                            <span style="color: #16a34a; font-size: 16px;">🎉</span>
-                        </div>
-                    </td>
-                    <td style="vertical-align: top;">
-                        <p style="margin: 0 0 3px 0; font-size: 14px; font-weight: 600; color: #374151;">Delivered!</p>
-                        <p style="margin: 0; font-size: 13px; color: #6b7280;">Enjoy your new items. Don't forget to leave a review!</p>
-                    </td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-</table>
-
-<!-- Help Section -->
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f9fafb; border-radius: 8px; margin-top: 30px;">
-    <tr>
-        <td style="padding: 20px; text-align: center;">
-            <p style="margin: 0 0 10px 0; font-size: 14px; color: #374151;">
-                Have questions about your order?
-            </p>
-            <a href="{{ site_url }}/support/" style="font-size: 14px; color: #e5604d; text-decoration: underline;">
-                Contact our support team
-            </a>
-            <span style="color: #9ca3af; margin: 0 10px;">|</span>
-            <a href="{{ site_url }}/faq/" style="font-size: 14px; color: #e5604d; text-decoration: underline;">
-                View FAQs
-            </a>
-        </td>
-    </tr>
-</table>
-
-{% endblock %}
-
-{% block unsubscribe %}
-<!-- No unsubscribe for transactional emails -->
+<p>Thank you for shopping with Bunoraa!</p>
 {% endblock %}

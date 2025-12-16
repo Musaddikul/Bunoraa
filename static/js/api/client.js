@@ -1,210 +1,334 @@
 /**
- * Bunoraa API Client
- * Central API communication layer with authentication handling.
+ * API Client - Core HTTP Client
+ * @module api/client
  */
 
-const API_BASE = '/api/v1';
+const ApiClient = (function() {
+    'use strict';
 
-class ApiClient {
-    constructor() {
-        this.baseUrl = API_BASE;
-        this.accessToken = localStorage.getItem('accessToken');
-        this.refreshToken = localStorage.getItem('refreshToken');
-    }
+    const BASE_URL = '/api/v1';
+    const TOKEN_KEY = 'access_token';
+    const REFRESH_KEY = 'refresh_token';
 
-    // =========================================================================
-    // Token Management
-    // =========================================================================
+    const cache = new Map();
+    const pendingRequests = new Map();
+    let isRefreshing = false;
+    let refreshSubscribers = [];
 
-    setTokens(access, refresh) {
-        this.accessToken = access;
-        this.refreshToken = refresh;
-        localStorage.setItem('accessToken', access);
-        localStorage.setItem('refreshToken', refresh);
-    }
-
-    clearTokens() {
-        this.accessToken = null;
-        this.refreshToken = null;
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-    }
-
-    isAuthenticated() {
-        return !!this.accessToken;
-    }
-
-    async refreshAccessToken() {
-        if (!this.refreshToken) {
-            this.clearTokens();
-            return false;
-        }
-
-        try {
-            const response = await fetch(`${this.baseUrl}/auth/token/refresh/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ refresh: this.refreshToken })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                this.accessToken = data.access;
-                localStorage.setItem('accessToken', data.access);
-                return true;
+    function getCsrfToken() {
+        const name = 'csrftoken';
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                return decodeURIComponent(cookie.substring(name.length + 1));
             }
-        } catch (error) {
-            console.error('Token refresh failed:', error);
         }
-
-        this.clearTokens();
-        return false;
+        return '';
     }
 
-    // =========================================================================
-    // Request Methods
-    // =========================================================================
-
-    getHeaders(authenticated = true) {
-        const headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        };
-
-        if (authenticated && this.accessToken) {
-            headers['Authorization'] = `Bearer ${this.accessToken}`;
-        }
-
-        // CSRF token for Django
-        const csrfToken = this.getCookie('csrftoken');
-        if (csrfToken) {
-            headers['X-CSRFToken'] = csrfToken;
-        }
-
-        return headers;
+    function getAccessToken() {
+        return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
     }
 
-    getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
+    function getRefreshToken() {
+        return localStorage.getItem(REFRESH_KEY) || sessionStorage.getItem(REFRESH_KEY);
+    }
+
+    function setTokens(access, refresh, persistent = true) {
+        const storage = persistent ? localStorage : sessionStorage;
+        if (access) storage.setItem(TOKEN_KEY, access);
+        if (refresh) storage.setItem(REFRESH_KEY, refresh);
+    }
+
+    function clearTokens() {
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(REFRESH_KEY);
+        sessionStorage.removeItem(TOKEN_KEY);
+        sessionStorage.removeItem(REFRESH_KEY);
+    }
+
+    function isTokenExpired(token) {
+        if (!token) return true;
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return payload.exp * 1000 < Date.now();
+        } catch {
+            return true;
+        }
+    }
+
+    function subscribeTokenRefresh(callback) {
+        refreshSubscribers.push(callback);
+    }
+
+    function onTokenRefreshed(token) {
+        refreshSubscribers.forEach(cb => cb(token));
+        refreshSubscribers = [];
+    }
+
+    async function refreshAccessToken() {
+        const refresh = getRefreshToken();
+        if (!refresh) {
+            clearTokens();
+            throw new Error('No refresh token');
+        }
+
+        const response = await fetch(`${BASE_URL}/auth/token/refresh/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({ refresh })
+        });
+
+        if (!response.ok) {
+            clearTokens();
+            throw new Error('Token refresh failed');
+        }
+
+        const data = await response.json();
+        const persistent = !!localStorage.getItem(REFRESH_KEY);
+        setTokens(data.access, data.refresh || refresh, persistent);
+        return data.access;
+    }
+
+    function buildUrl(endpoint, params = {}) {
+        const url = new URL(BASE_URL + endpoint, window.location.origin);
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== null && value !== undefined && value !== '') {
+                if (Array.isArray(value)) {
+                    value.forEach(v => url.searchParams.append(key, v));
+                } else {
+                    url.searchParams.append(key, String(value));
+                }
+            }
+        });
+        return url.toString();
+    }
+
+    function getCacheKey(method, url, body) {
+        return `${method}:${url}:${body ? JSON.stringify(body) : ''}`;
+    }
+
+    function getFromCache(key, ttl = 60000) {
+        const cached = cache.get(key);
+        if (cached && Date.now() - cached.timestamp < ttl) {
+            return cached.data;
+        }
+        cache.delete(key);
         return null;
     }
 
-    async request(method, endpoint, data = null, authenticated = true) {
-        const url = endpoint.startsWith('http') ? endpoint : `${this.baseUrl}${endpoint}`;
-        
-        const options = {
-            method,
-            headers: this.getHeaders(authenticated),
+    function setCache(key, data) {
+        cache.set(key, { data, timestamp: Date.now() });
+    }
+
+    function clearCache(pattern = null) {
+        if (pattern) {
+            for (const key of cache.keys()) {
+                if (key.includes(pattern)) cache.delete(key);
+            }
+        } else {
+            cache.clear();
+        }
+    }
+
+    async function request(method, endpoint, options = {}) {
+        const {
+            body = null,
+            params = {},
+            headers = {},
+            useCache = false,
+            cacheTTL = 60000,
+            requiresAuth = false,
+            signal = null
+        } = options;
+
+        const url = buildUrl(endpoint, params);
+        const cacheKey = getCacheKey(method, url, body);
+
+        if (useCache && method === 'GET') {
+            const cached = getFromCache(cacheKey, cacheTTL);
+            if (cached) return cached;
+        }
+
+        if (pendingRequests.has(cacheKey)) {
+            return pendingRequests.get(cacheKey);
+        }
+
+        const requestHeaders = {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
+            'X-Requested-With': 'XMLHttpRequest',
+            ...headers
         };
 
-        if (data && method !== 'GET') {
-            options.body = JSON.stringify(data);
-        }
-
-        try {
-            let response = await fetch(url, options);
-
-            // Handle 401 - try to refresh token
-            if (response.status === 401 && authenticated && this.refreshToken) {
-                const refreshed = await this.refreshAccessToken();
-                if (refreshed) {
-                    options.headers = this.getHeaders(authenticated);
-                    response = await fetch(url, options);
+        let token = getAccessToken();
+        let usedAuthHeader = false;
+        if (token) {
+            if (isTokenExpired(token)) {
+                if (!isRefreshing) {
+                    isRefreshing = true;
+                    try {
+                        token = await refreshAccessToken();
+                        onTokenRefreshed(token);
+                    } catch (err) {
+                        isRefreshing = false;
+                        if (requiresAuth) {
+                            window.dispatchEvent(new CustomEvent('auth:required'));
+                            throw { status: 401, message: 'Authentication required' };
+                        }
+                    }
+                    isRefreshing = false;
                 } else {
-                    // Redirect to login
-                    window.dispatchEvent(new CustomEvent('auth:logout'));
-                    throw new Error('Session expired');
+                    token = await new Promise(resolve => subscribeTokenRefresh(resolve));
                 }
             }
-
-            // Parse response
-            const contentType = response.headers.get('content-type');
-            let result;
-            
-            if (contentType && contentType.includes('application/json')) {
-                result = await response.json();
-            } else {
-                result = await response.text();
+            if (token) {
+                requestHeaders['Authorization'] = `Bearer ${token}`;
+                usedAuthHeader = true;
             }
+        }
 
-            if (!response.ok) {
-                const error = new Error(result.detail || result.error || 'Request failed');
-                error.status = response.status;
-                error.data = result;
-                throw error;
+        const usingSessionAuth = requiresAuth && !usedAuthHeader;
+
+        const config = {
+            method,
+            headers: requestHeaders,
+            credentials: 'same-origin'
+        };
+
+        if (body && method !== 'GET') {
+            config.body = JSON.stringify(body);
+        }
+
+        if (signal) {
+            config.signal = signal;
+        }
+
+        const requestPromise = (async () => {
+            try {
+                const response = await fetch(url, config);
+
+                if (response.status === 204) {
+                    return { success: true, message: 'Success', data: null, meta: null };
+                }
+
+                let data;
+                try {
+                    data = await response.json();
+                } catch {
+                    data = { success: false, message: 'Invalid response format' };
+                }
+
+                if (!response.ok) {
+                    const error = {
+                        status: response.status,
+                        message: data.message || data.detail || `HTTP ${response.status}`,
+                        errors: data.errors || data.meta?.errors || null,
+                        data: data.data || null
+                    };
+
+                    if (response.status === 401) {
+                        if (usedAuthHeader) {
+                            clearTokens();
+                            window.dispatchEvent(new CustomEvent('auth:expired'));
+                        } else if (usingSessionAuth) {
+                            window.__DJANGO_SESSION_AUTH__ = false;
+                            window.dispatchEvent(new CustomEvent('auth:required'));
+                        }
+                    }
+
+                    throw error;
+                }
+
+                const result = {
+                    success: data.success !== undefined ? data.success : true,
+                    message: data.message || 'Success',
+                    data: data.data !== undefined ? data.data : data,
+                    meta: data.meta || null
+                };
+
+                if (useCache && method === 'GET') {
+                    setCache(cacheKey, result);
+                }
+
+                return result;
+            } finally {
+                pendingRequests.delete(cacheKey);
             }
+        })();
 
-            return result;
-        } catch (error) {
-            console.error(`API Error [${method} ${endpoint}]:`, error);
-            throw error;
-        }
+        pendingRequests.set(cacheKey, requestPromise);
+        return requestPromise;
     }
 
-    async get(endpoint, authenticated = true) {
-        return this.request('GET', endpoint, null, authenticated);
-    }
+    async function upload(endpoint, file, fieldName = 'file', additionalData = {}) {
+        const formData = new FormData();
+        formData.append(fieldName, file);
+        Object.entries(additionalData).forEach(([key, value]) => {
+            formData.append(key, value);
+        });
 
-    async post(endpoint, data, authenticated = true) {
-        return this.request('POST', endpoint, data, authenticated);
-    }
+        const headers = {
+            'X-CSRFToken': getCsrfToken(),
+            'X-Requested-With': 'XMLHttpRequest'
+        };
 
-    async put(endpoint, data, authenticated = true) {
-        return this.request('PUT', endpoint, data, authenticated);
-    }
-
-    async patch(endpoint, data, authenticated = true) {
-        return this.request('PATCH', endpoint, data, authenticated);
-    }
-
-    async delete(endpoint, data = null, authenticated = true) {
-        return this.request('DELETE', endpoint, data, authenticated);
-    }
-
-    // =========================================================================
-    // File Upload
-    // =========================================================================
-
-    async upload(endpoint, formData, authenticated = true) {
-        const url = `${this.baseUrl}${endpoint}`;
-        
-        const headers = {};
-        if (authenticated && this.accessToken) {
-            headers['Authorization'] = `Bearer ${this.accessToken}`;
-        }
-        
-        const csrfToken = this.getCookie('csrftoken');
-        if (csrfToken) {
-            headers['X-CSRFToken'] = csrfToken;
+        const token = getAccessToken();
+        if (token && !isTokenExpired(token)) {
+            headers['Authorization'] = `Bearer ${token}`;
         }
 
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers,
-                body: formData
-            });
+        const response = await fetch(BASE_URL + endpoint, {
+            method: 'POST',
+            headers,
+            credentials: 'same-origin',
+            body: formData
+        });
 
-            const result = await response.json();
+        const data = await response.json();
 
-            if (!response.ok) {
-                const error = new Error(result.detail || 'Upload failed');
-                error.status = response.status;
-                error.data = result;
-                throw error;
-            }
-
-            return result;
-        } catch (error) {
-            console.error(`Upload Error [${endpoint}]:`, error);
-            throw error;
+        if (!response.ok) {
+            throw {
+                status: response.status,
+                message: data.message || data.detail || 'Upload failed',
+                errors: data.errors || null
+            };
         }
-    }
-}
 
-// Export singleton instance
-const api = new ApiClient();
-export default api;
-export { ApiClient };
+        return {
+            success: true,
+            message: data.message || 'Upload successful',
+            data: data.data || data
+        };
+    }
+
+    return {
+        get: (endpoint, params = {}, options = {}) =>
+            request('GET', endpoint, { ...options, params }),
+
+        post: (endpoint, body = {}, options = {}) =>
+            request('POST', endpoint, { ...options, body }),
+
+        put: (endpoint, body = {}, options = {}) =>
+            request('PUT', endpoint, { ...options, body }),
+
+        patch: (endpoint, body = {}, options = {}) =>
+            request('PATCH', endpoint, { ...options, body }),
+
+        delete: (endpoint, options = {}) =>
+            request('DELETE', endpoint, options),
+
+        upload,
+        clearCache,
+        setTokens,
+        clearTokens,
+        getAccessToken,
+        isAuthenticated: () => !!getAccessToken() && !isTokenExpired(getAccessToken())
+    };
+})();
+
+window.ApiClient = ApiClient;

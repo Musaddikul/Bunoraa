@@ -1,216 +1,231 @@
-// static/js/components/tabs.js
 /**
  * Tabs Component
- * Accessible tabs with keyboard navigation
+ * @module components/tabs
  */
 
-class Tabs {
-    constructor(container, options = {}) {
-        this.container = typeof container === 'string' ? document.querySelector(container) : container;
-        
-        if (!this.container) {
-            console.error('Tabs: Container not found');
-            return;
-        }
+const Tabs = (function() {
+    'use strict';
 
-        this.options = {
-            activeClass: options.activeClass || 'tab-active',
-            animation: options.animation || 'fade', // fade, slide, none
-            onChange: options.onChange || null,
-            initialTab: options.initialTab || 0
+    const instances = new Map();
+
+    function create(container, options = {}) {
+        if (typeof container === 'string') {
+            container = document.querySelector(container);
+        }
+        if (!container) return null;
+
+        const {
+            activeTab = 0,
+            orientation = 'horizontal',
+            variant = 'underline',
+            onChange = null
+        } = options;
+
+        const id = container.id || 'tabs-' + Date.now();
+        const tabs = container.querySelectorAll('[data-tab]');
+        const panels = container.querySelectorAll('[data-tab-panel]');
+
+        const instance = {
+            id,
+            container,
+            tabs: Array.from(tabs),
+            panels: Array.from(panels),
+            activeIndex: activeTab,
+            onChange
         };
 
-        this.tabList = this.container.querySelector('[role="tablist"]');
-        this.tabs = Array.from(this.container.querySelectorAll('[role="tab"]'));
-        this.panels = Array.from(this.container.querySelectorAll('[role="tabpanel"]'));
-        this.activeIndex = this.options.initialTab;
+        applyStyles(instance, variant, orientation);
+        setActive(instance, activeTab);
+        bindEvents(instance);
 
-        this._init();
+        instances.set(id, instance);
+        return instance;
     }
 
-    /**
-     * Initialize tabs
-     */
-    _init() {
-        // Set up ARIA attributes
-        this.tabs.forEach((tab, index) => {
-            tab.setAttribute('id', tab.id || `tab-${index}`);
-            tab.setAttribute('aria-selected', index === this.activeIndex);
-            tab.setAttribute('tabindex', index === this.activeIndex ? '0' : '-1');
+    function applyStyles(instance, variant, orientation) {
+        const { tabs, panels } = instance;
+        
+        const tabListClass = orientation === 'vertical' 
+            ? 'flex flex-col border-r border-gray-200'
+            : 'flex border-b border-gray-200';
+        
+        const tabList = tabs[0]?.parentElement;
+        if (tabList) {
+            tabList.className = tabListClass;
+            tabList.setAttribute('role', 'tablist');
+            tabList.setAttribute('aria-orientation', orientation);
+        }
 
-            const panel = this.panels[index];
-            if (panel) {
-                panel.setAttribute('id', panel.id || `panel-${index}`);
-                tab.setAttribute('aria-controls', panel.id);
-                panel.setAttribute('aria-labelledby', tab.id);
+        tabs.forEach((tab, index) => {
+            tab.setAttribute('role', 'tab');
+            tab.setAttribute('aria-selected', 'false');
+            tab.setAttribute('tabindex', '-1');
+            tab.id = tab.id || `${instance.id}-tab-${index}`;
+            
+            const panelId = panels[index]?.id || `${instance.id}-panel-${index}`;
+            tab.setAttribute('aria-controls', panelId);
+
+            const baseClass = orientation === 'vertical'
+                ? 'px-4 py-3 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2'
+                : 'px-4 py-3 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2';
+
+            let variantClass = '';
+            switch (variant) {
+                case 'underline':
+                    variantClass = orientation === 'vertical'
+                        ? 'border-r-2 border-transparent'
+                        : 'border-b-2 border-transparent -mb-px';
+                    break;
+                case 'pills':
+                    variantClass = 'rounded-lg';
+                    break;
+                case 'boxed':
+                    variantClass = 'border border-transparent';
+                    break;
             }
 
-            // Event listeners
-            tab.addEventListener('click', (e) => this._handleTabClick(e, index));
-            tab.addEventListener('keydown', (e) => this._handleKeydown(e, index));
+            tab.className = `${baseClass} ${variantClass} text-gray-600 hover:text-gray-900`;
+            tab.dataset.variant = variant;
         });
 
-        // Show initial tab
-        this._activateTab(this.activeIndex);
-    }
-
-    /**
-     * Handle tab click
-     */
-    _handleTabClick(e, index) {
-        e.preventDefault();
-        this.switchTo(index);
-    }
-
-    /**
-     * Handle keyboard navigation
-     */
-    _handleKeydown(e, index) {
-        let newIndex;
-
-        switch (e.key) {
-            case 'ArrowLeft':
-            case 'ArrowUp':
-                e.preventDefault();
-                newIndex = index > 0 ? index - 1 : this.tabs.length - 1;
-                this.switchTo(newIndex);
-                this.tabs[newIndex].focus();
-                break;
-            case 'ArrowRight':
-            case 'ArrowDown':
-                e.preventDefault();
-                newIndex = index < this.tabs.length - 1 ? index + 1 : 0;
-                this.switchTo(newIndex);
-                this.tabs[newIndex].focus();
-                break;
-            case 'Home':
-                e.preventDefault();
-                this.switchTo(0);
-                this.tabs[0].focus();
-                break;
-            case 'End':
-                e.preventDefault();
-                this.switchTo(this.tabs.length - 1);
-                this.tabs[this.tabs.length - 1].focus();
-                break;
-        }
-    }
-
-    /**
-     * Activate tab by index
-     */
-    _activateTab(index) {
-        // Deactivate all tabs
-        this.tabs.forEach((tab, i) => {
-            const isActive = i === index;
-            tab.setAttribute('aria-selected', isActive);
-            tab.setAttribute('tabindex', isActive ? '0' : '-1');
-            tab.classList.toggle(this.options.activeClass, isActive);
-        });
-
-        // Show/hide panels
-        this.panels.forEach((panel, i) => {
-            const isActive = i === index;
+        panels.forEach((panel, index) => {
+            panel.setAttribute('role', 'tabpanel');
+            panel.setAttribute('tabindex', '0');
+            panel.id = panel.id || `${instance.id}-panel-${index}`;
             
-            if (this.options.animation === 'fade') {
-                if (isActive) {
-                    panel.classList.remove('hidden');
-                    panel.classList.add('animate-fade-in');
-                } else {
-                    panel.classList.add('hidden');
-                    panel.classList.remove('animate-fade-in');
-                }
-            } else if (this.options.animation === 'slide') {
-                if (isActive) {
-                    panel.classList.remove('hidden');
-                    panel.classList.add('animate-slide-in');
-                } else {
-                    panel.classList.add('hidden');
-                    panel.classList.remove('animate-slide-in');
+            const tabId = tabs[index]?.id || `${instance.id}-tab-${index}`;
+            panel.setAttribute('aria-labelledby', tabId);
+            
+            panel.classList.add('hidden');
+        });
+    }
+
+    function setActive(instance, index) {
+        const { tabs, panels } = instance;
+        
+        if (index < 0 || index >= tabs.length) return;
+
+        tabs.forEach((tab, i) => {
+            const isActive = i === index;
+            const variant = tab.dataset.variant;
+            
+            tab.setAttribute('aria-selected', String(isActive));
+            tab.setAttribute('tabindex', isActive ? '0' : '-1');
+            
+            tab.classList.remove(
+                'text-primary-600', 'border-primary-600', 'bg-primary-50', 
+                'bg-white', 'border-gray-200', 'text-gray-600'
+            );
+            
+            if (isActive) {
+                tab.classList.add('text-primary-600');
+                switch (variant) {
+                    case 'underline':
+                        tab.classList.add('border-primary-600');
+                        break;
+                    case 'pills':
+                        tab.classList.add('bg-primary-50');
+                        break;
+                    case 'boxed':
+                        tab.classList.add('bg-white', 'border-gray-200');
+                        break;
                 }
             } else {
-                panel.classList.toggle('hidden', !isActive);
+                tab.classList.add('text-gray-600');
             }
         });
 
-        this.activeIndex = index;
+        panels.forEach((panel, i) => {
+            panel.classList.toggle('hidden', i !== index);
+        });
+
+        instance.activeIndex = index;
+
+        if (instance.onChange) {
+            instance.onChange(index, tabs[index], panels[index]);
+        }
     }
 
-    /**
-     * Switch to tab by index
-     */
-    switchTo(index) {
-        if (index < 0 || index >= this.tabs.length || index === this.activeIndex) {
-            return;
-        }
+    function bindEvents(instance) {
+        const { tabs } = instance;
 
-        const prevIndex = this.activeIndex;
-        this._activateTab(index);
-
-        // Callback
-        if (this.options.onChange) {
-            this.options.onChange({
-                prevIndex,
-                currentIndex: index,
-                tab: this.tabs[index],
-                panel: this.panels[index]
+        tabs.forEach((tab, index) => {
+            tab.addEventListener('click', () => {
+                setActive(instance, index);
             });
-        }
-    }
 
-    /**
-     * Switch to tab by ID
-     */
-    switchToId(id) {
-        const index = this.tabs.findIndex(tab => tab.id === id);
-        if (index !== -1) {
-            this.switchTo(index);
-        }
-    }
+            tab.addEventListener('keydown', (e) => {
+                let newIndex = instance.activeIndex;
 
-    /**
-     * Get current active index
-     */
-    getActiveIndex() {
-        return this.activeIndex;
-    }
+                switch (e.key) {
+                    case 'ArrowLeft':
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        newIndex = instance.activeIndex > 0 
+                            ? instance.activeIndex - 1 
+                            : tabs.length - 1;
+                        break;
+                    case 'ArrowRight':
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        newIndex = instance.activeIndex < tabs.length - 1 
+                            ? instance.activeIndex + 1 
+                            : 0;
+                        break;
+                    case 'Home':
+                        e.preventDefault();
+                        newIndex = 0;
+                        break;
+                    case 'End':
+                        e.preventDefault();
+                        newIndex = tabs.length - 1;
+                        break;
+                }
 
-    /**
-     * Get current active tab
-     */
-    getActiveTab() {
-        return this.tabs[this.activeIndex];
-    }
-
-    /**
-     * Get current active panel
-     */
-    getActivePanel() {
-        return this.panels[this.activeIndex];
-    }
-
-    /**
-     * Destroy tabs
-     */
-    destroy() {
-        this.tabs.forEach((tab, index) => {
-            tab.removeEventListener('click', (e) => this._handleTabClick(e, index));
-            tab.removeEventListener('keydown', (e) => this._handleKeydown(e, index));
+                if (newIndex !== instance.activeIndex) {
+                    setActive(instance, newIndex);
+                    tabs[newIndex].focus();
+                }
+            });
         });
     }
 
-    /**
-     * Static method to initialize all tabs
-     */
-    static initAll(selector = '[data-tabs]') {
-        const containers = document.querySelectorAll(selector);
-        return Array.from(containers).map(container => {
-            const animation = container.dataset.tabsAnimation;
-            return new Tabs(container, { animation });
+    function getActive(id) {
+        const instance = instances.get(id);
+        return instance ? instance.activeIndex : -1;
+    }
+
+    function goTo(id, index) {
+        const instance = instances.get(id);
+        if (instance) {
+            setActive(instance, index);
+        }
+    }
+
+    function destroy(id) {
+        const instance = instances.get(id);
+        if (instance) {
+            instances.delete(id);
+        }
+    }
+
+    function init() {
+        document.querySelectorAll('[data-tabs]').forEach(container => {
+            create(container, {
+                activeTab: parseInt(container.dataset.activeTab) || 0,
+                orientation: container.dataset.orientation || 'horizontal',
+                variant: container.dataset.variant || 'underline'
+            });
         });
     }
-}
 
-// Export
-export default Tabs;
+    return {
+        create,
+        getActive,
+        goTo,
+        destroy,
+        init
+    };
+})();
+
 window.Tabs = Tabs;

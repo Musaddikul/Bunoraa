@@ -1,38 +1,35 @@
-# apps/accounts/urls.py
 """
-Account URLs
-URL routing for authentication and user management.
+Account URL configuration - Frontend views
 """
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-
-from .views import (
-    RegisterView,
-    ProfileView,
-    UserAddressViewSet,
-    UserSettingsView,
-    PasswordChangeView,
-    LogoutView,
-)
+from django.urls import path
+from django.views.generic import RedirectView
+from . import views
 
 app_name = 'accounts'
 
-router = DefaultRouter()
-router.register('addresses', UserAddressViewSet, basename='address')
-
 urlpatterns = [
-    # Authentication
-    path('register/', RegisterView.as_view(), name='register'),
-    path('login/', TokenObtainPairView.as_view(), name='login'),
-    path('logout/', LogoutView.as_view(), name='logout'),
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('', RedirectView.as_view(pattern_name='accounts:login', permanent=False)),
+    path('dashboard/', views.AccountDashboardView.as_view(), name='dashboard'),
+    path('profile/', views.ProfileView.as_view(), name='profile'),
+    path('addresses/', views.AddressListView.as_view(), name='addresses'),
+    path('login/', views.LoginView.as_view(), name='login'),
+    path('register/', views.RegisterView.as_view(), name='register'),
+    path('logout/', views.LogoutView.as_view(), name='logout'),
+    path('verify-email/<str:token>/', views.VerifyEmailView.as_view(), name='verify_email'),
+    path('forgot-password/', views.ForgotPasswordView.as_view(), name='forgot_password'),
+    path('password-reset/', views.ForgotPasswordView.as_view(), name='password_reset'),  # Alias
+    path('reset-password/<str:token>/', views.ResetPasswordView.as_view(), name='reset_password'),
     
-    # Profile
-    path('profile/', ProfileView.as_view(), name='profile'),
-    path('settings/', UserSettingsView.as_view(), name='settings'),
-    path('password/change/', PasswordChangeView.as_view(), name='password_change'),
-    
-    # Addresses
-    path('', include(router.urls)),
+    # Placeholder URLs - implement views as needed
+    # path('profile/change-password/', views.ChangePasswordView.as_view(), name='change_password'),
+    # path('profile/delete-account/', views.DeleteAccountView.as_view(), name='delete_account'),
+    # path('addresses/add/', views.AddAddressView.as_view(), name='add_address'),
+    # path('addresses/<uuid:pk>/edit/', views.EditAddressView.as_view(), name='edit_address'),
+    # path('addresses/<uuid:pk>/delete/', views.DeleteAddressView.as_view(), name='delete_address'),
+    # path('addresses/<uuid:pk>/set-default/', views.SetDefaultAddressView.as_view(), name='set_default_address'),
+    # path('payment-methods/', views.PaymentMethodsView.as_view(), name='payment_methods'),
+    # path('notifications/', views.NotificationsView.as_view(), name='notifications'),
+    # path('orders/', views.OrderListView.as_view(), name='orders'),
+    # path('orders/<str:order_number>/', views.OrderDetailView.as_view(), name='order_detail'),
+    # path('orders/<str:order_number>/cancel/', views.CancelOrderView.as_view(), name='cancel_order'),
 ]

@@ -1,0 +1,37 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Back in Stock: {{ product.name }}{% endblock %}
+
+{% block content %}
+<h2>Great news! It's back in stock! 🎉</h2>
+<p>Hi {{ user.first_name|default:user.email }},</p>
+<p>The item you've been waiting for is now back in stock!</p>
+
+<div class="order-summary">
+    <div class="order-item">
+        {% if product.image %}
+        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="order-item-image">
+        {% endif %}
+        <div class="order-item-details">
+            <p class="order-item-name">{{ product.name }}</p>
+            <p class="order-item-meta">{{ product.category }}</p>
+        </div>
+        <div class="order-item-price">${{ product.price }}</div>
+    </div>
+</div>
+
+<div style="text-align: center;">
+    <a href="{{ product_url }}" class="button">Shop Now</a>
+</div>
+
+<div class="highlight-box">
+    <strong>⚡ Don't wait too long!</strong><br>
+    This item is popular and may sell out again quickly.
+</div>
+
+<div class="divider"></div>
+
+<p>If you no longer wish to receive stock alerts for this item, you can manage your <a href="{{ notifications_url }}">notification preferences</a>.</p>
+
+<p>Happy shopping!<br>The Bunoraa Team</p>
+{% endblock %}

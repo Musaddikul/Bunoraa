@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page.meta_title|default:page.title }} - Bunoraa{% endblock %}
+
+{% block meta_description %}{{ page.meta_description|default:page.excerpt }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-12">
+    <!-- Breadcrumb -->
+    <nav class="mb-8">
+        <ol class="flex items-center space-x-2 text-sm text-gray-500">
+            <li><a href="{% url 'pages:home' %}" class="hover:text-primary-600">Home</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li class="text-gray-900">{{ page.title }}</li>
+        </ol>
+    </nav>
+    
+    <article class="max-w-4xl mx-auto">
+        <!-- Page Header -->
+        <header class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">{{ page.title }}</h1>
+            {% if page.excerpt %}
+            <p class="text-xl text-gray-600">{{ page.excerpt }}</p>
+            {% endif %}
+        </header>
+        
+        <!-- Featured Image -->
+        {% if page.featured_image %}
+        <div class="mb-8">
+            <img src="{{ page.featured_image.url }}" 
+                 alt="{{ page.title }}"
+                 class="w-full rounded-lg shadow-sm">
+        </div>
+        {% endif %}
+        
+        <!-- Page Content -->
+        <div class="prose prose-lg max-w-none">
+            {{ page.content|safe }}
+        </div>
+        
+        <!-- Last Updated -->
+        {% if page.updated_at %}
+        <footer class="mt-12 pt-8 border-t border-gray-200">
+            <p class="text-sm text-gray-500">
+                Last updated: {{ page.updated_at|date:"F j, Y" }}
+            </p>
+        </footer>
+        {% endif %}
+    </article>
+</div>
+{% endblock %}

@@ -1,3 +1,2 @@
-from .celery import app as celery_app
-
-__all__ = ['celery_app']
+# Bunoraa Core Module
+default_app_config = 'core.apps.CoreConfig'

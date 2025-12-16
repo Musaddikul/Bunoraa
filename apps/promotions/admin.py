@@ -1,72 +1,111 @@
-# apps/promotions/admin.py
 """
-Promotion Admin
+Promotions admin configuration
 """
 from django.contrib import admin
-from django.utils.html import format_html
-from .models import Coupon, CouponUsage, Sale, FlashDeal, Bundle, BundleItem
-
-
-class CouponUsageInline(admin.TabularInline):
-    model = CouponUsage
-    extra = 0
-    readonly_fields = ['user', 'order', 'discount_amount', 'created_at']
+from .models import Coupon, CouponUsage, Banner, Sale
 
 
 @admin.register(Coupon)
 class CouponAdmin(admin.ModelAdmin):
-    list_display = ['code', 'discount_display', 'times_used', 'max_uses', 'is_active', 'valid_until']
-    list_filter = ['discount_type', 'is_active', 'first_order_only', 'valid_until']
+    list_display = [
+        'code', 'discount_type', 'discount_value', 'is_valid',
+        'times_used', 'usage_limit', 'valid_from', 'valid_until', 'is_active'
+    ]
+    list_filter = ['discount_type', 'is_active', 'first_order_only', 'created_at']
     search_fields = ['code', 'description']
-    filter_horizontal = ['applicable_products', 'applicable_categories', 'excluded_products', 'allowed_users']
-    inlines = [CouponUsageInline]
+    filter_horizontal = ['categories', 'products', 'users']
+    readonly_fields = ['times_used', 'created_at', 'updated_at']
     
-    def discount_display(self, obj):
-        if obj.discount_type == Coupon.DiscountType.PERCENTAGE:
-            return f'{obj.discount_value}%'
-        elif obj.discount_type == Coupon.DiscountType.FIXED:
-            return f'${obj.discount_value}'
-        return 'Free Shipping'
-    discount_display.short_description = 'Discount'
+    fieldsets = (
+        ('Basic Info', {
+            'fields': ('code', 'description')
+        }),
+        ('Discount', {
+            'fields': ('discount_type', 'discount_value', 'maximum_discount')
+        }),
+        ('Requirements', {
+            'fields': ('minimum_order_amount', 'first_order_only')
+        }),
+        ('Usage Limits', {
+            'fields': ('usage_limit', 'usage_limit_per_user', 'times_used')
+        }),
+        ('Validity', {
+            'fields': ('valid_from', 'valid_until', 'is_active')
+        }),
+        ('Restrictions', {
+            'fields': ('categories', 'products', 'users'),
+            'classes': ('collapse',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(CouponUsage)
+class CouponUsageAdmin(admin.ModelAdmin):
+    list_display = ['coupon', 'user', 'order', 'discount_applied', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['coupon__code', 'user__email', 'order__order_number']
+    readonly_fields = ['coupon', 'user', 'order', 'discount_applied', 'created_at']
+
+
+@admin.register(Banner)
+class BannerAdmin(admin.ModelAdmin):
+    list_display = [
+        'title', 'position', 'is_visible', 'sort_order',
+        'start_date', 'end_date', 'is_active'
+    ]
+    list_filter = ['position', 'is_active', 'created_at']
+    search_fields = ['title', 'subtitle']
+    list_editable = ['sort_order', 'is_active']
+    ordering = ['position', 'sort_order']
+    
+    fieldsets = (
+        ('Content', {
+            'fields': ('title', 'subtitle')
+        }),
+        ('Images', {
+            'fields': ('image', 'image_mobile')
+        }),
+        ('Link', {
+            'fields': ('link_url', 'link_text')
+        }),
+        ('Display', {
+            'fields': ('position', 'sort_order')
+        }),
+        ('Validity', {
+            'fields': ('start_date', 'end_date', 'is_active')
+        }),
+    )
 
 
 @admin.register(Sale)
 class SaleAdmin(admin.ModelAdmin):
-    list_display = ['name', 'discount_percentage', 'is_featured', 'is_active', 'start_date', 'end_date']
-    list_filter = ['is_active', 'is_featured', 'start_date']
+    list_display = [
+        'name', 'slug', 'discount_type', 'discount_value',
+        'is_running', 'start_date', 'end_date', 'is_active'
+    ]
+    list_filter = ['discount_type', 'is_active', 'start_date']
     search_fields = ['name', 'description']
     prepopulated_fields = {'slug': ('name',)}
     filter_horizontal = ['products', 'categories']
-
-
-@admin.register(FlashDeal)
-class FlashDealAdmin(admin.ModelAdmin):
-    list_display = ['product', 'deal_price', 'quantity_available', 'quantity_sold', 'progress_bar', 'is_active', 'start_time', 'end_time']
-    list_filter = ['is_active', 'start_time']
-    search_fields = ['product__name']
     
-    def progress_bar(self, obj):
-        percentage = obj.sold_percentage
-        return format_html(
-            '<div style="width: 100px; background: #ddd; border-radius: 3px;">'
-            '<div style="width: {}%; background: {}; height: 15px; border-radius: 3px;"></div>'
-            '</div> {}%',
-            percentage,
-            '#4CAF50' if percentage < 80 else '#FF5722',
-            percentage
-        )
-    progress_bar.short_description = 'Sold'
-
-
-class BundleItemInline(admin.TabularInline):
-    model = BundleItem
-    extra = 1
-
-
-@admin.register(Bundle)
-class BundleAdmin(admin.ModelAdmin):
-    list_display = ['name', 'bundle_price', 'original_price', 'discount_percentage', 'is_active']
-    list_filter = ['is_active']
-    search_fields = ['name', 'description']
-    prepopulated_fields = {'slug': ('name',)}
-    inlines = [BundleItemInline]
+    fieldsets = (
+        ('Basic Info', {
+            'fields': ('name', 'slug', 'description')
+        }),
+        ('Discount', {
+            'fields': ('discount_type', 'discount_value')
+        }),
+        ('Products', {
+            'fields': ('products', 'categories')
+        }),
+        ('Banner', {
+            'fields': ('banner_image',)
+        }),
+        ('Schedule', {
+            'fields': ('start_date', 'end_date', 'is_active')
+        }),
+    )

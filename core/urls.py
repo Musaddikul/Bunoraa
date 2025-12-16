@@ -1,64 +1,63 @@
-# core/urls.py
+"""
+Bunoraa URL Configuration
+"""
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from django.views.generic import TemplateView
 from django.contrib.sitemaps.views import sitemap
-from products.sitemaps import ProductSitemap, CategorySitemap
-from core.sitemaps import StaticViewSitemap
-from accounts.sitemaps import AccountsSitemap
-from products.views import HomeView
-from .views import health_check # Removed change_language
-from django.views.i18n import set_language # Added set_language import
+from .sitemaps import StaticViewSitemap, ProductSitemap, CategorySitemap
+from .views import HomeView, health_check
 
 sitemaps = {
+    'static': StaticViewSitemap,
     'products': ProductSitemap,
     'categories': CategorySitemap,
-    'static': StaticViewSitemap,
-    'accounts': AccountsSitemap,
 }
 
 urlpatterns = [
-    path('set-language/', set_language, name='set_language'), # Changed to use set_language
-    path('', HomeView.as_view(), name='home'),
-    path('cart/', include('cart.urls')),
-    path('wishlist/', include('wishlist.urls')),
-    path('promotions/', include('promotions.urls')),
-    path('shipping/', include('shipping.urls')),
-    path('payments/', include('payments.urls')),
-    path('returns/', include('returns.urls')),
-    path('reviews/', include('reviews.urls')),
-    path('support/', include('support.urls')),
-    path('faq/', include('faq.urls')),
-    path('legal/', include('legal.urls')),
-    path('cms/', include('cms.urls')),
-    path('contacts/', include('contacts.urls')),
-    path('notifications/', include('notifications.urls')),
-    path('analytics/', include('analytics.urls')),
-    path('currencies/', include('currencies.urls')),
-
-    path('rosetta/', include('rosetta.urls')),
+    # Admin
     path('admin/', admin.site.urls),
-    path('accounts/', include('allauth.urls')),
-    path('accounts/', include('allauth.socialaccount.urls')),
-    path('accounts/', include('accounts.urls')),
-
-    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
-    path('robots.txt', TemplateView.as_view(template_name="robots.txt", content_type="text/plain")),
-    path('ckeditor5/', include('django_ckeditor_5.urls')),
+    
+    # API v1
+    path('api/v1/', include('core.urls_api')),
+    
+    # Health check
     path('health/', health_check, name='health_check'),
-
-    path('custom-order/', include('custom_order.urls')),
-
-    path('api/products/', include('products.api.urls')),
-    path('', include('orders.urls')),
-    path('', include('products.urls')),
+    
+    # Sitemap
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
+    
+    # Frontend specific paths (must come before catch-all)
+    path('', HomeView.as_view(), name='home'),
+    path('products/', include('apps.products.urls')),
+    path('categories/', include('apps.categories.urls')),
+    path('cart/', include('apps.cart.urls')),
+    path('wishlist/', include('apps.wishlist.urls')),
+    path('checkout/', include('apps.checkout.urls')),
+    path('orders/', include('apps.orders.urls')),
+    path('payments/', include('apps.payments.urls')),
+    path('support/', include('apps.support.urls')),
+    path('notifications/', include('apps.notifications.urls')),
+    path('account/', include('apps.accounts.urls')),
+    path('legal/', include('apps.legal.urls')),
+    
+    # Pages catch-all (must come last)
+    path('', include('apps.pages.urls')),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    # Debug toolbar
-    import debug_toolbar
-    urlpatterns = [path('__debug__/', include(debug_toolbar.urls))] + urlpatterns
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    
+    # Debug toolbar
+    try:
+        import debug_toolbar
+        urlpatterns = [path('__debug__/', include(debug_toolbar.urls))] + urlpatterns
+    except ImportError:
+        pass
+
+# Admin site customization
+admin.site.site_header = 'Bunoraa Administration'
+admin.site.site_title = 'Bunoraa Admin'
+admin.site.index_title = 'Dashboard'

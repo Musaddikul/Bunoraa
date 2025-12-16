@@ -1,223 +1,203 @@
 /**
- * Authentication Module
- * Handles user authentication, registration, and session management.
+ * Auth API Module
+ * @module api/auth
  */
 
-import api from './client.js';
+const AuthApi = (function() {
+    'use strict';
 
-class AuthService {
-    constructor() {
-        this.user = null;
-        this.listeners = new Set();
+    const USER_KEY = 'current_user';
+
+    function hasSessionAuth() {
+        if (typeof window === 'undefined') return false;
+        return !!window.__DJANGO_SESSION_AUTH__;
     }
 
-    // =========================================================================
-    // Event Management
-    // =========================================================================
-
-    subscribe(callback) {
-        this.listeners.add(callback);
-        return () => this.listeners.delete(callback);
+    function setSessionAuth(value) {
+        if (typeof window === 'undefined') return;
+        window.__DJANGO_SESSION_AUTH__ = value;
     }
 
-    notify() {
-        this.listeners.forEach(callback => callback(this.user));
-    }
-
-    // =========================================================================
-    // Authentication
-    // =========================================================================
-
-    async login(email, password) {
-        const response = await api.post('/auth/token/', { email, password }, false);
+    async function login(email, password, remember = false) {
+        const response = await ApiClient.post('/auth/token/', { email, password });
         
-        api.setTokens(response.access, response.refresh);
-        await this.fetchUser();
-        
-        window.dispatchEvent(new CustomEvent('auth:login', { detail: this.user }));
-        
-        return this.user;
-    }
-
-    async register(data) {
-        const response = await api.post('/accounts/register/', data, false);
-        
-        // Auto-login after registration
-        if (response.tokens) {
-            api.setTokens(response.tokens.access, response.tokens.refresh);
-            await this.fetchUser();
-            window.dispatchEvent(new CustomEvent('auth:login', { detail: this.user }));
+        if (response.data?.access) {
+            ApiClient.setTokens(response.data.access, response.data.refresh, remember);
+            
+            try {
+                const profile = await getProfile();
+                if (profile.success && profile.data) {
+                    setUser(profile.data);
+                }
+            } catch (e) {
+                console.warn('Failed to fetch profile after login');
+            }
+            
+            ApiClient.clearCache();
+            window.dispatchEvent(new CustomEvent('auth:login'));
+            
+            return { success: true, message: 'Login successful', data: getUser() };
         }
         
         return response;
     }
 
-    async logout() {
-        try {
-            await api.post('/accounts/logout/', {});
-        } catch (error) {
-            // Ignore logout errors
+    async function register(userData) {
+        const response = await ApiClient.post('/accounts/register/', userData);
+        
+        if (response.success) {
+            window.dispatchEvent(new CustomEvent('auth:registered'));
         }
         
-        api.clearTokens();
-        this.user = null;
-        this.notify();
+        return response;
+    }
+
+    async function logout() {
+        try {
+            await ApiClient.post('/accounts/logout/');
+        } catch (e) {
+            // Ignore logout API errors
+        }
         
+        ApiClient.clearTokens();
+        clearUser();
+        ApiClient.clearCache();
+        setSessionAuth(false);
         window.dispatchEvent(new CustomEvent('auth:logout'));
     }
 
-    async fetchUser() {
+    async function getProfile() {
+        return ApiClient.get('/accounts/profile/', {}, { requiresAuth: true });
+    }
+
+    async function updateProfile(data) {
+        const response = await ApiClient.patch('/accounts/profile/', data, { requiresAuth: true });
+        
+        if (response.success && response.data) {
+            setUser(response.data);
+            window.dispatchEvent(new CustomEvent('auth:profile-updated'));
+        }
+        
+        return response;
+    }
+
+    async function uploadAvatar(file) {
+        const response = await ApiClient.upload('/accounts/profile/avatar/', file, 'avatar');
+        
+        if (response.success) {
+            const user = getUser();
+            if (user && response.data?.avatar) {
+                user.avatar = response.data.avatar;
+                setUser(user);
+            }
+        }
+        
+        return response;
+    }
+
+    async function changePassword(currentPassword, newPassword) {
+        return ApiClient.post('/accounts/password/change/', {
+            current_password: currentPassword,
+            new_password: newPassword
+        }, { requiresAuth: true });
+    }
+
+    async function requestPasswordReset(email) {
+        return ApiClient.post('/accounts/password/reset/request/', { email });
+    }
+
+    async function resetPassword(token, password) {
+        return ApiClient.post('/accounts/password/reset/', { token, password });
+    }
+
+    async function verifyEmail(token) {
+        return ApiClient.post('/accounts/email/verify/', { token });
+    }
+
+    async function resendVerification(email) {
+        return ApiClient.post('/accounts/email/resend/', { email });
+    }
+
+    async function getAddresses() {
+        return ApiClient.get('/accounts/addresses/', {}, { requiresAuth: true });
+    }
+
+    async function getAddress(id) {
+        return ApiClient.get(`/accounts/addresses/${id}/`, {}, { requiresAuth: true });
+    }
+
+    async function addAddress(data) {
+        const response = await ApiClient.post('/accounts/addresses/', data, { requiresAuth: true });
+        if (response.success) {
+            window.dispatchEvent(new CustomEvent('address:added'));
+        }
+        return response;
+    }
+
+    async function updateAddress(id, data) {
+        const response = await ApiClient.patch(`/accounts/addresses/${id}/`, data, { requiresAuth: true });
+        if (response.success) {
+            window.dispatchEvent(new CustomEvent('address:updated'));
+        }
+        return response;
+    }
+
+    async function deleteAddress(id) {
+        const response = await ApiClient.delete(`/accounts/addresses/${id}/`, { requiresAuth: true });
+        if (response.success) {
+            window.dispatchEvent(new CustomEvent('address:deleted'));
+        }
+        return response;
+    }
+
+    async function setDefaultAddress(id, type = 'both') {
+        return ApiClient.post(`/accounts/addresses/${id}/set-default/`, { type }, { requiresAuth: true });
+    }
+
+    function setUser(user) {
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
+        window.dispatchEvent(new CustomEvent('user:changed', { detail: user }));
+    }
+
+    function getUser() {
         try {
-            this.user = await api.get('/accounts/me/');
-            this.notify();
-            return this.user;
-        } catch (error) {
-            this.user = null;
-            this.notify();
+            const data = localStorage.getItem(USER_KEY);
+            return data ? JSON.parse(data) : null;
+        } catch {
             return null;
         }
     }
 
-    // =========================================================================
-    // Password Management
-    // =========================================================================
-
-    async requestPasswordReset(email) {
-        return api.post('/accounts/password-reset/', { email }, false);
+    function clearUser() {
+        localStorage.removeItem(USER_KEY);
     }
 
-    async resetPassword(token, password, confirmPassword) {
-        return api.post('/accounts/password-reset-confirm/', {
-            token,
-            password,
-            confirm_password: confirmPassword
-        }, false);
+    function isAuthenticated() {
+        return ApiClient.isAuthenticated() || hasSessionAuth();
     }
 
-    async changePassword(oldPassword, newPassword) {
-        return api.post('/accounts/change-password/', {
-            old_password: oldPassword,
-            new_password: newPassword
-        });
-    }
+    return {
+        login,
+        register,
+        logout,
+        getProfile,
+        updateProfile,
+        uploadAvatar,
+        changePassword,
+        requestPasswordReset,
+        resetPassword,
+        verifyEmail,
+        resendVerification,
+        getAddresses,
+        getAddress,
+        addAddress,
+        updateAddress,
+        deleteAddress,
+        setDefaultAddress,
+        getUser,
+        setUser,
+        isAuthenticated
+    };
+})();
 
-    // =========================================================================
-    // Profile Management
-    // =========================================================================
-
-    async getProfile() {
-        return this.fetchUser();
-    }
-
-    async updateProfile(data) {
-        const response = await api.patch('/accounts/me/', data);
-        this.user = response;
-        this.notify();
-        return this.user;
-    }
-
-    async uploadAvatar(file) {
-        const formData = new FormData();
-        formData.append('avatar', file);
-        
-        const response = await api.upload('/accounts/me/avatar/', formData);
-        this.user = response;
-        this.notify();
-        return this.user;
-    }
-
-    // =========================================================================
-    // Orders
-    // =========================================================================
-
-    async getOrders(params = {}) {
-        return api.get('/orders/', params);
-    }
-
-    async getOrder(orderNumber) {
-        return api.get(`/orders/${orderNumber}/`);
-    }
-
-    // =========================================================================
-    // Wishlist
-    // =========================================================================
-
-    async getWishlist(params = {}) {
-        return api.get('/wishlist/', params);
-    }
-
-    async addToWishlist(productId) {
-        return api.post('/wishlist/', { product_id: productId });
-    }
-
-    async removeFromWishlist(productId) {
-        return api.delete(`/wishlist/${productId}/`);
-    }
-
-    // =========================================================================
-    // Addresses
-    // =========================================================================
-
-    async getAddresses() {
-        return api.get('/accounts/addresses/');
-    }
-
-    async createAddress(data) {
-        return api.post('/accounts/addresses/', data);
-    }
-
-    async updateAddress(id, data) {
-        return api.patch(`/accounts/addresses/${id}/`, data);
-    }
-
-    async deleteAddress(id) {
-        return api.delete(`/accounts/addresses/${id}/`);
-    }
-
-    async setDefaultAddress(id) {
-        return api.post(`/accounts/addresses/${id}/set-default/`);
-    }
-
-    // =========================================================================
-    // Email Verification
-    // =========================================================================
-
-    async verifyEmail(token) {
-        return api.post('/accounts/verify-email/', { token }, false);
-    }
-
-    async resendVerification() {
-        return api.post('/accounts/resend-verification/', {});
-    }
-
-    // =========================================================================
-    // Session Check
-    // =========================================================================
-
-    async checkSession() {
-        if (!api.isAuthenticated()) {
-            return false;
-        }
-
-        try {
-            await this.fetchUser();
-            return !!this.user;
-        } catch (error) {
-            return false;
-        }
-    }
-
-    isAuthenticated() {
-        return api.isAuthenticated() && !!this.user;
-    }
-
-    getUser() {
-        return this.user;
-    }
-}
-
-// Export singleton
-const auth = new AuthService();
-export default auth;
-export { AuthService };
-export { auth as authApi };
+window.AuthApi = AuthApi;

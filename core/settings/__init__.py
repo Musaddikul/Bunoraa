@@ -1,16 +1,11 @@
-# core/settings/__init__.py
-"""
-Bunoraa Settings Module
-Enterprise-grade Django configuration with environment-based settings.
-"""
-import os
+from .base import *
 
-# Determine which settings module to use
-environment = os.environ.get('DJANGO_ENV', 'development')
+try:
+    from .local import *
+except ImportError:
+    pass
 
-if environment == 'production':
+try:
     from .production import *
-elif environment == 'staging':
-    from .staging import *
-else:
-    from .development import *
+except ImportError:
+    pass

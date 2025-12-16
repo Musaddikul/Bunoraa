@@ -8,8 +8,10 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "build:clean": "rd /s /q .\\static\\css\\dist || exit 0",
-    "build:tailwind": "set NODE_ENV=production&& postcss ./static/css/input.css -o ./static/css/dist/styles.css --minify"
+    "build:clean": "rimraf ./static/css/styles.css || exit 0",
+    "build:tailwind": "cross-env NODE_ENV=production postcss ./static/css/input.css -o ./static/css/styles.css --minify",
+    "build": "npm run build:clean && npm run build:tailwind",
+    "dev:css": "cross-env NODE_ENV=development postcss ./static/css/input.css -o ./static/css/styles.css --watch"
   },
   "dependencies": {
     "autoprefixer": "10.4.21",
@@ -40,9 +42,14 @@
     "@tailwindcss/typography": "^0.5.9",
     "animate": "^1.0.0",
     "cross-env": "^7.0.3",
+    "cssnano": "^7.1.2",
     "postcss-cli": "^11.0.1",
+    "postcss-flexbugs-fixes": "^5.0.2",
     "postcss-import": "^16.1.1",
     "postcss-nested": "^7.0.2",
+    "postcss-normalize": "^13.0.1",
+    "postcss-preset-env": "^10.5.0",
+    "postcss-reporter": "^7.1.0",
     "postcss-simple-vars": "^7.0.1",
     "rimraf": "^6.0.1",
     "tailwindcss-animate": "^1.0.6",

@@ -1,15 +1,14 @@
-# apps/accounts/signals.py
 """
-Account Signals
-Signal handlers for user-related events.
+Account signals
 """
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from .models import User, UserSettings
+from .models import User
 
 
 @receiver(post_save, sender=User)
-def create_user_settings(sender, instance, created, **kwargs):
-    """Create UserSettings when a new user is created."""
+def user_post_save(sender, instance, created, **kwargs):
+    """Handle user creation."""
     if created:
-        UserSettings.objects.get_or_create(user=instance)
+        # Send verification email (handled by service)
+        pass

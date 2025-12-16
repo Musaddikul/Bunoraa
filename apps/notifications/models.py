@@ -1,77 +1,84 @@
-# apps/notifications/models.py
 """
-Notification Models
-User notifications and email template management.
+Notifications models
 """
+import uuid
 from django.db import models
 from django.conf import settings
-from django.utils.translation import gettext_lazy as _
-from django.template import Template, Context
-
-from apps.core.models import TimeStampedModel
 
 
-class Notification(TimeStampedModel):
-    """
-    User notification model.
-    """
-    class Type(models.TextChoices):
-        ORDER = 'order', _('Order')
-        PAYMENT = 'payment', _('Payment')
-        SHIPPING = 'shipping', _('Shipping')
-        REVIEW = 'review', _('Review')
-        PROMOTION = 'promotion', _('Promotion')
-        ACCOUNT = 'account', _('Account')
-        SYSTEM = 'system', _('System')
-    
+class NotificationType(models.TextChoices):
+    """Notification types."""
+    ORDER_PLACED = 'order_placed', 'Order Placed'
+    ORDER_CONFIRMED = 'order_confirmed', 'Order Confirmed'
+    ORDER_SHIPPED = 'order_shipped', 'Order Shipped'
+    ORDER_DELIVERED = 'order_delivered', 'Order Delivered'
+    ORDER_CANCELLED = 'order_cancelled', 'Order Cancelled'
+    ORDER_REFUNDED = 'order_refunded', 'Order Refunded'
+    PAYMENT_RECEIVED = 'payment_received', 'Payment Received'
+    PAYMENT_FAILED = 'payment_failed', 'Payment Failed'
+    REVIEW_APPROVED = 'review_approved', 'Review Approved'
+    REVIEW_REJECTED = 'review_rejected', 'Review Rejected'
+    PRICE_DROP = 'price_drop', 'Price Drop'
+    BACK_IN_STOCK = 'back_in_stock', 'Back In Stock'
+    WISHLIST_SALE = 'wishlist_sale', 'Wishlist Item On Sale'
+    ACCOUNT_CREATED = 'account_created', 'Account Created'
+    PASSWORD_RESET = 'password_reset', 'Password Reset'
+    PROMO_CODE = 'promo_code', 'Promo Code'
+    GENERAL = 'general', 'General'
+
+
+class NotificationChannel(models.TextChoices):
+    """Notification delivery channels."""
+    EMAIL = 'email', 'Email'
+    SMS = 'sms', 'SMS'
+    PUSH = 'push', 'Push Notification'
+    IN_APP = 'in_app', 'In-App Notification'
+
+
+class Notification(models.Model):
+    """User notification model."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='notifications',
-        verbose_name=_('user')
+        related_name='notifications'
     )
-    
     type = models.CharField(
-        _('type'),
-        max_length=20,
-        choices=Type.choices
+        max_length=50,
+        choices=NotificationType.choices,
+        default=NotificationType.GENERAL
     )
-    title = models.CharField(_('title'), max_length=200)
-    message = models.TextField(_('message'))
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    url = models.URLField(blank=True, null=True, help_text='Link to relevant page')
     
-    # Link
-    action_url = models.URLField(_('action URL'), blank=True)
-    action_text = models.CharField(_('action text'), max_length=50, blank=True)
-    
-    # Related objects
-    order = models.ForeignKey(
-        'orders.Order',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='notifications',
-        verbose_name=_('order')
-    )
+    # Reference to related object
+    reference_type = models.CharField(max_length=50, blank=True, null=True)
+    reference_id = models.CharField(max_length=100, blank=True, null=True)
     
     # Status
-    is_read = models.BooleanField(_('read'), default=False)
-    read_at = models.DateTimeField(_('read at'), null=True, blank=True)
+    is_read = models.BooleanField(default=False)
+    read_at = models.DateTimeField(null=True, blank=True)
     
-    # Email
-    email_sent = models.BooleanField(_('email sent'), default=False)
-    email_sent_at = models.DateTimeField(_('email sent at'), null=True, blank=True)
+    # Delivery tracking
+    channels_sent = models.JSONField(default=list, help_text='Channels notification was sent to')
+    
+    # Metadata
+    metadata = models.JSONField(default=dict, blank=True)
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
-        verbose_name = _('notification')
-        verbose_name_plural = _('notifications')
         ordering = ['-created_at']
         indexes = [
+            models.Index(fields=['user', '-created_at']),
             models.Index(fields=['user', 'is_read']),
-            models.Index(fields=['user', 'type']),
+            models.Index(fields=['type']),
         ]
     
     def __str__(self):
-        return f'{self.title} - {self.user}'
+        return f"{self.user.email} - {self.title}"
     
     def mark_as_read(self):
         """Mark notification as read."""
@@ -82,70 +89,147 @@ class Notification(TimeStampedModel):
             self.save(update_fields=['is_read', 'read_at'])
 
 
-class EmailTemplate(TimeStampedModel):
-    """
-    Email template for notifications.
-    """
-    name = models.CharField(_('name'), max_length=100, unique=True)
-    code = models.CharField(_('code'), max_length=50, unique=True)
-    description = models.TextField(_('description'), blank=True)
-    
-    # Content
-    subject = models.CharField(_('subject'), max_length=200)
-    html_body = models.TextField(_('HTML body'))
-    text_body = models.TextField(_('plain text body'), blank=True)
-    
-    # Settings
-    is_active = models.BooleanField(_('active'), default=True)
-    
-    class Meta:
-        verbose_name = _('email template')
-        verbose_name_plural = _('email templates')
-    
-    def __str__(self):
-        return self.name
-    
-    def render(self, context_data):
-        """Render template with context."""
-        context = Context(context_data)
-        
-        subject = Template(self.subject).render(context)
-        html_body = Template(self.html_body).render(context)
-        text_body = Template(self.text_body).render(context) if self.text_body else ''
-        
-        return subject, html_body, text_body
-
-
-class NotificationPreference(TimeStampedModel):
-    """
-    User notification preferences.
-    """
+class NotificationPreference(models.Model):
+    """User notification preferences."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='notification_preferences',
-        verbose_name=_('user')
+        related_name='notification_preferences'
     )
     
     # Email preferences
-    email_orders = models.BooleanField(_('order emails'), default=True)
-    email_shipping = models.BooleanField(_('shipping emails'), default=True)
-    email_promotions = models.BooleanField(_('promotional emails'), default=True)
-    email_reviews = models.BooleanField(_('review reminders'), default=True)
-    email_newsletter = models.BooleanField(_('newsletter'), default=True)
-    
-    # Push preferences
-    push_orders = models.BooleanField(_('order notifications'), default=True)
-    push_shipping = models.BooleanField(_('shipping notifications'), default=True)
-    push_promotions = models.BooleanField(_('promotional notifications'), default=False)
+    email_order_updates = models.BooleanField(default=True)
+    email_shipping_updates = models.BooleanField(default=True)
+    email_promotions = models.BooleanField(default=True)
+    email_newsletter = models.BooleanField(default=True)
+    email_reviews = models.BooleanField(default=True)
+    email_price_drops = models.BooleanField(default=True)
+    email_back_in_stock = models.BooleanField(default=True)
     
     # SMS preferences
-    sms_orders = models.BooleanField(_('order SMS'), default=False)
-    sms_shipping = models.BooleanField(_('shipping SMS'), default=False)
+    sms_enabled = models.BooleanField(default=False)
+    sms_order_updates = models.BooleanField(default=True)
+    sms_shipping_updates = models.BooleanField(default=True)
+    sms_promotions = models.BooleanField(default=False)
+    
+    # Push preferences
+    push_enabled = models.BooleanField(default=True)
+    push_order_updates = models.BooleanField(default=True)
+    push_promotions = models.BooleanField(default=True)
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        verbose_name = _('notification preference')
-        verbose_name_plural = _('notification preferences')
+        verbose_name_plural = 'Notification Preferences'
     
     def __str__(self):
-        return f'Preferences for {self.user}'
+        return f"{self.user.email} - Notification Preferences"
+
+
+class EmailTemplate(models.Model):
+    """Email template model."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100, unique=True)
+    notification_type = models.CharField(
+        max_length=50,
+        choices=NotificationType.choices,
+        unique=True
+    )
+    subject = models.CharField(max_length=200)
+    html_template = models.TextField(help_text='HTML template with placeholders')
+    text_template = models.TextField(help_text='Plain text template with placeholders')
+    
+    is_active = models.BooleanField(default=True)
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['name']
+    
+    def __str__(self):
+        return self.name
+
+
+class EmailLog(models.Model):
+    """Email delivery log."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    recipient_email = models.EmailField()
+    recipient_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='email_logs'
+    )
+    notification_type = models.CharField(
+        max_length=50,
+        choices=NotificationType.choices
+    )
+    subject = models.CharField(max_length=200)
+    
+    # Status
+    STATUS_PENDING = 'pending'
+    STATUS_SENT = 'sent'
+    STATUS_FAILED = 'failed'
+    STATUS_BOUNCED = 'bounced'
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'Pending'),
+        (STATUS_SENT, 'Sent'),
+        (STATUS_FAILED, 'Failed'),
+        (STATUS_BOUNCED, 'Bounced'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    error_message = models.TextField(blank=True, null=True)
+    
+    # Tracking
+    sent_at = models.DateTimeField(null=True, blank=True)
+    opened_at = models.DateTimeField(null=True, blank=True)
+    clicked_at = models.DateTimeField(null=True, blank=True)
+    
+    # Reference
+    reference_type = models.CharField(max_length=50, blank=True, null=True)
+    reference_id = models.CharField(max_length=100, blank=True, null=True)
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural = 'Email Logs'
+        indexes = [
+            models.Index(fields=['recipient_email', '-created_at']),
+            models.Index(fields=['status']),
+        ]
+    
+    def __str__(self):
+        return f"{self.recipient_email} - {self.subject}"
+
+
+class PushToken(models.Model):
+    """Push notification device tokens."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='push_tokens'
+    )
+    token = models.CharField(max_length=500, unique=True)
+    device_type = models.CharField(max_length=20)  # ios, android, web
+    device_name = models.CharField(max_length=100, blank=True, null=True)
+    
+    is_active = models.BooleanField(default=True)
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-last_used_at']
+    
+    def __str__(self):
+        return f"{self.user.email} - {self.device_type}"

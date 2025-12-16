@@ -1,54 +1,26 @@
-# core/settings/base.py
 """
-Bunoraa Base Settings
-Common configuration shared across all environments.
+Bunoraa Django Settings - Base Configuration
 """
-# os module available when needed
+import os
 from pathlib import Path
 from datetime import timedelta
-from decouple import config, Csv
 
-# =============================================================================
-# PATH CONFIGURATION
-# =============================================================================
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-APPS_DIR = BASE_DIR / 'apps'
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    BASE_DIR = Path(__file__).resolve().parent.parent.parent
+    env_path = BASE_DIR / '.env'
+    load_dotenv(dotenv_path=env_path)
+except ImportError:
+    BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-# =============================================================================
-# SECURITY CONFIGURATION
-# =============================================================================
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me-in-production')
-DEBUG = config('DEBUG', default=False, cast=bool)
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-this-in-production')
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
+DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-CSRF_TRUSTED_ORIGINS = config(
-    'CSRF_TRUSTED_ORIGINS',
-    default='http://localhost:8000,http://127.0.0.1:8000',
-    cast=Csv()
-)
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
-# Security headers
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = 'DENY'
-
-# =============================================================================
-# SITE CONFIGURATION
-# =============================================================================
-SITE_ID = 1
-SITE_URL = config('SITE_URL', default='http://localhost:8000')
-SITE_NAME = config('SITE_NAME', default='Bunoraa')
-
-# =============================================================================
-# DJANGO HOSTS CONFIGURATION
-# =============================================================================
-ROOT_HOSTCONF = 'core.hosts'
-DEFAULT_HOST = 'www'
-
-# =============================================================================
-# APPLICATION DEFINITION
-# =============================================================================
+# Application definition
 DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -57,126 +29,61 @@ DJANGO_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
-    'django.contrib.humanize',
     'django.contrib.sitemaps',
+    'django.contrib.humanize',
 ]
 
 THIRD_PARTY_APPS = [
-    # Infrastructure
-    'django_hosts',
-    'django_extensions',
-    'django_browser_reload',
-    'channels',
-    'corsheaders',
-    'storages',
-    
-    # REST API
     'rest_framework',
-    'rest_framework.authtoken',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+    'corsheaders',
     'django_filters',
-    
-    # Admin enhancements
-    'django_admin_listfilter_dropdown',
-    'rangefilter',
-    
-    # Tailwind & Forms
-    'tailwind',
-    'theme',
-    'crispy_forms',
-    'crispy_tailwind',
-    'widget_tweaks',
-    
-    # Authentication
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.facebook',
-    'allauth.socialaccount.providers.microsoft',
-    
-    # Features
-    'django_countries',
-    'phonenumber_field',
-    'django_ckeditor_5',
-    'django_htmx',
-    'taggit',
-    'mptt',
-    
-    # Tasks & Scheduling
-    'django_celery_beat',
-    
-    # Internationalization
-    'rosetta',
+    'storages',
 ]
 
 LOCAL_APPS = [
-    # Core
     'core',
-    'accounts',
-    
-    # Products & Catalog
-    'products',
-    'reviews',
-    
-    # Shopping
-    'cart',
-    'wishlist',
-    'orders',
-    'custom_order',
-    
-    # Payments & Shipping
-    'payments',
-    'shipping',
-    'returns',
-    
-    # Marketing
-    'promotions',
-    'notifications',
-    
-    # Content & Support
-    'cms',
-    'faq',
-    'legal',
-    'support',
-    'contacts',
-    
-    # Analytics & Settings
-    'analytics',
-    'currencies',
-    'locations',
-    
-    # Storefront
-    'storefront',
+    'apps.accounts',
+    'apps.categories',
+    'apps.products',
+    'apps.cart',
+    'apps.checkout',
+    'apps.orders',
+    'apps.payments',
+    'apps.pages',
+    'apps.promotions',
+    'apps.reviews',
+    'apps.notifications',
+    'apps.analytics',
+    'apps.shipping',
+    'apps.wishlist',
+    'apps.currencies',
+    'apps.support',
+    'apps.legal',
+    'apps.localization',
+    'apps.faq',
+    'apps.contacts',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
-# =============================================================================
-# MIDDLEWARE CONFIGURATION
-# =============================================================================
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
-    'core.middleware.RequestTimingMiddleware',
-    'core.middleware.UserActivityMiddleware',
+    'core.middleware.request_logging.RequestLoggingMiddleware',
+    'core.middleware.api_response.APIResponseMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
 
-# =============================================================================
-# TEMPLATE CONFIGURATION
-# =============================================================================
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -188,9 +95,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'core.context_processors.site_context',
-                'apps.carts.context_processors.cart_context',
-                'apps.categories.context_processors.categories_context',
+                'core.context_processors.site_settings',
+                'apps.cart.context_processors.cart_context',
             ],
         },
     },
@@ -199,31 +105,24 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 ASGI_APPLICATION = 'core.asgi.application'
 
-# =============================================================================
-# DATABASE CONFIGURATION
-# =============================================================================
+# Database
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME', default='bunoraa'),
-        'USER': config('DB_USER', default='postgres'),
-        'PASSWORD': config('DB_PASSWORD', default=''),
-        'HOST': config('DB_HOST', default='localhost'),
-        'PORT': config('DB_PORT', default='5432'),
-        'CONN_MAX_AGE': 60,
-        'OPTIONS': {
-            'connect_timeout': 10,
-        },
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# Use PostgreSQL in production
+if os.environ.get('DATABASE_URL'):
+    import dj_database_url
+    DATABASES['default'] = dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600,
+        ssl_require=not DEBUG,
+    )
 
-# =============================================================================
-# AUTHENTICATION CONFIGURATION
-# =============================================================================
-AUTH_USER_MODEL = 'accounts.User'
-
+# Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 8}},
@@ -231,25 +130,32 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
-]
+# Custom User Model
+AUTH_USER_MODEL = 'accounts.User'
 
-# AllAuth Configuration
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
-ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
-LOGIN_URL = '/accounts/login/'
+# Internationalization
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
+USE_I18N = True
+USE_TZ = True
 
-# =============================================================================
-# REST FRAMEWORK CONFIGURATION
-# =============================================================================
+# Static files
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Default primary key field type
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Site ID
+SITE_ID = 1
+
+# REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -258,13 +164,22 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'core.pagination.StandardResultsPagination',
+    'DEFAULT_PAGINATION_CLASS': 'core.pagination.StandardResultsSetPagination',
     'PAGE_SIZE': 20,
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
     ],
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.MultiPartParser',
+        'rest_framework.parsers.FormParser',
+    ],
+    'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',
         'rest_framework.throttling.UserRateThrottle',
@@ -273,131 +188,101 @@ REST_FRAMEWORK = {
         'anon': '100/hour',
         'user': '1000/hour',
     },
-    'DEFAULT_RENDERER_CLASSES': [
-        'rest_framework.renderers.JSONRenderer',
-    ],
-    'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
 }
 
-# JWT Configuration
+# JWT Settings
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
     'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
     'AUTH_HEADER_TYPES': ('Bearer',),
     'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
 }
 
-# =============================================================================
-# CORS CONFIGURATION
-# =============================================================================
-CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL', default=False, cast=bool)
-CORS_ALLOWED_ORIGINS = config(
-    'CORS_ALLOWED_ORIGINS',
-    default='http://localhost:3000,http://127.0.0.1:3000',
-    cast=Csv()
-)
+# CORS Settings
+CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000').split(',')
 CORS_ALLOW_CREDENTIALS = True
 
-# =============================================================================
-# INTERNATIONALIZATION
-# =============================================================================
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'Asia/Dhaka'
-USE_I18N = True
-USE_L10N = True
-USE_TZ = True
+# CSRF Settings
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000').split(',')
 
-LANGUAGES = [
-    ('en', 'English'),
-    ('bn', 'Bengali'),
-]
+# Security Settings (enable in production)
+if not DEBUG:
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
-LOCALE_PATHS = [BASE_DIR / 'locale']
+# Email Configuration
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.sendgrid.net')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() == 'true'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('SENDGRID_API_KEY', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@bunoraa.com')
 
-# =============================================================================
-# STATIC & MEDIA FILES
-# =============================================================================
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [BASE_DIR / 'static']
-
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
-# =============================================================================
-# CKEDITOR CONFIGURATION
-# =============================================================================
-CKEDITOR_5_CONFIGS = {
-    'default': {
-        'toolbar': ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote'],
-    },
-    'extends': {
-        'toolbar': [
-            'heading', '|', 'bold', 'italic', 'link', 'underline', 'strikethrough', '|',
-            'bulletedList', 'numberedList', 'todoList', '|',
-            'outdent', 'indent', '|', 'blockQuote', 'insertTable', '|',
-            'imageUpload', 'mediaEmbed', '|', 'undo', 'redo', '|', 'sourceEditing'
-        ],
-        'image': {
-            'toolbar': ['imageTextAlternative', 'imageStyle:full', 'imageStyle:side']
-        },
-        'table': {
-            'contentToolbar': ['tableColumn', 'tableRow', 'mergeTableCells']
-        },
-    }
-}
-
-# =============================================================================
-# CELERY CONFIGURATION
-# =============================================================================
-CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='redis://localhost:6379/0')
+# Celery Configuration
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
-CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
-# =============================================================================
-# CACHE CONFIGURATION
-# =============================================================================
+# Cache Configuration
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': config('REDIS_URL', default='redis://localhost:6379/1'),
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
     }
 }
 
+if os.environ.get('REDIS_URL'):
+    CACHES['default'] = {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': os.environ.get('REDIS_URL'),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+
 # Session Configuration
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_CACHE_ALIAS = 'default'
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # 30 days
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
 
-# =============================================================================
-# CHANNEL LAYERS
-# =============================================================================
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            'hosts': [config('REDIS_URL', default='redis://localhost:6379/2')],
-        },
-    },
-}
+# Stripe Configuration
+STRIPE_PUBLIC_KEY = os.environ.get('STRIPE_PUBLIC_KEY', '')
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
 
-# =============================================================================
-# LOGGING CONFIGURATION
-# =============================================================================
-LOG_DIR = BASE_DIR / 'logs'
-LOG_DIR.mkdir(parents=True, exist_ok=True)
+# AWS S3 Configuration (for media files in production)
+if os.environ.get('AWS_ACCESS_KEY_ID'):
+    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+    AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'us-east-1')
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+    AWS_DEFAULT_ACL = 'public-read'
+    AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
+# Logging Configuration
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -407,7 +292,7 @@ LOGGING = {
             'style': '{',
         },
         'simple': {
-            'format': '{levelname} {asctime} {message}',
+            'format': '{levelname} {message}',
             'style': '{',
         },
     },
@@ -415,32 +300,33 @@ LOGGING = {
         'require_debug_false': {
             '()': 'django.utils.log.RequireDebugFalse',
         },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
     },
     'handlers': {
         'console': {
             'level': 'INFO',
+            'filters': ['require_debug_true'],
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
         'file': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOG_DIR / 'bunoraa.log',
-            'maxBytes': 1024 * 1024 * 10,  # 10 MB
+            'filename': BASE_DIR / 'logs' / 'bunoraa.log',
+            'maxBytes': 1024 * 1024 * 5,  # 5 MB
             'backupCount': 5,
             'formatter': 'verbose',
         },
-        'error_file': {
+        'mail_admins': {
             'level': 'ERROR',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOG_DIR / 'errors.log',
-            'maxBytes': 1024 * 1024 * 10,  # 10 MB
-            'backupCount': 5,
-            'formatter': 'verbose',
+            'filters': ['require_debug_false'],
+            'class': 'django.utils.log.AdminEmailHandler',
         },
     },
     'root': {
-        'handlers': ['console', 'file'],
+        'handlers': ['console'],
         'level': 'INFO',
     },
     'loggers': {
@@ -450,11 +336,11 @@ LOGGING = {
             'propagate': False,
         },
         'django.request': {
-            'handlers': ['error_file'],
+            'handlers': ['mail_admins', 'file'],
             'level': 'ERROR',
             'propagate': False,
         },
-        'apps': {
+        'bunoraa': {
             'handlers': ['console', 'file'],
             'level': 'DEBUG',
             'propagate': False,
@@ -462,14 +348,5 @@ LOGGING = {
     },
 }
 
-# =============================================================================
-# PHONE NUMBER FIELD
-# =============================================================================
-PHONENUMBER_DEFAULT_REGION = 'BD'
-PHONENUMBER_DB_FORMAT = 'E164'
-
-# =============================================================================
-# FILE UPLOAD
-# =============================================================================
-FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10 MB
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10 MB
+# Create logs directory if it doesn't exist
+(BASE_DIR / 'logs').mkdir(exist_ok=True)

@@ -1,91 +1,91 @@
 /**
- * Bunoraa Categories API
- * Category-related API endpoints.
+ * Categories API Module
  * @module api/categories
  */
 
-import api from './client.js';
+const CategoriesApi = (function() {
+    'use strict';
 
-const CategoriesAPI = {
-    /**
-     * Get all categories as tree
-     */
-    async getTree() {
-        return api.get('/categories/tree/', { cache: true });
-    },
-    
-    /**
-     * Get all categories flat list
-     */
-    async list(options = {}) {
-        const { parent, active = true } = options;
-        return api.get('/categories/', {
-            params: { parent, is_active: active },
-            cache: true
-        });
-    },
-    
-    /**
-     * Get single category by slug
-     */
-    async get(slug) {
-        return api.get(`/categories/${slug}/`, { cache: true });
-    },
-    
-    /**
-     * Get category by path (e.g., 'clothing/men/shirts')
-     */
-    async getByPath(path) {
-        return api.get(`/categories/path/${path}/`, { cache: true });
-    },
-    
-    /**
-     * Get category children
-     */
-    async getChildren(slug) {
-        return api.get(`/categories/${slug}/children/`, { cache: true });
-    },
-    
-    /**
-     * Get category ancestors (breadcrumbs)
-     */
-    async getAncestors(slug) {
-        return api.get(`/categories/${slug}/ancestors/`, { cache: true });
-    },
-    
-    /**
-     * Get featured categories
-     */
-    async getFeatured(limit = 8) {
-        return api.get('/categories/featured/', {
-            params: { limit },
-            cache: true
-        });
-    },
-    
-    /**
-     * Get menu categories
-     */
-    async getMenu() {
-        return api.get('/categories/menu/', { cache: true });
-    },
-    
-    /**
-     * Get category products
-     */
-    async getProducts(slug, options = {}) {
-        const { page = 1, limit = 24, includeChildren = true, sort, filters = {} } = options;
-        return api.get(`/categories/${slug}/products/`, {
-            params: {
-                page,
-                page_size: limit,
-                include_children: includeChildren,
-                ordering: sort,
-                ...filters
-            }
+    async function getCategories(params = {}) {
+        return ApiClient.get('/categories/', {
+            page: params.page || 1,
+            page_size: params.pageSize || 100,
+            is_active: true,
+            parent_id: params.parentId || undefined,
+            is_featured: params.featured ? true : undefined
+        }, { useCache: true, cacheTTL: 300000 });
+    }
+
+    async function getCategory(idOrSlug) {
+        return ApiClient.get(`/categories/${idOrSlug}/`, {}, { useCache: true, cacheTTL: 300000 });
+    }
+
+    async function getTree() {
+        return ApiClient.get('/categories/tree/', {}, { useCache: true, cacheTTL: 300000 });
+    }
+
+    async function getFeatured(limit = 6) {
+        return ApiClient.get('/categories/', {
+            is_featured: true,
+            page_size: limit
+        }, { useCache: true, cacheTTL: 300000 });
+    }
+
+    async function getRootCategories() {
+        return ApiClient.get('/categories/', {
+            parent_id: 'null',
+            is_active: true
+        }, { useCache: true, cacheTTL: 300000 });
+    }
+
+    async function getSubcategories(categoryId) {
+        return ApiClient.get('/categories/', {
+            parent_id: categoryId,
+            is_active: true
+        }, { useCache: true, cacheTTL: 300000 });
+    }
+
+    async function getCategoryProducts(categoryId, params = {}) {
+        return ApiClient.get(`/categories/${categoryId}/products/`, {
+            page: params.page || 1,
+            page_size: params.pageSize || 20,
+            ordering: params.ordering || '-created_at'
         });
     }
-};
 
-export default CategoriesAPI;
-window.BunoraaCategories = CategoriesAPI;
+    async function getBreadcrumb(categoryId) {
+        return ApiClient.get(`/categories/${categoryId}/breadcrumb/`, {}, { useCache: true });
+    }
+
+    function flattenTree(categories, parent = null, level = 0) {
+        const result = [];
+        
+        for (const cat of categories) {
+            result.push({
+                ...cat,
+                parent,
+                level
+            });
+            
+            if (cat.children && cat.children.length > 0) {
+                result.push(...flattenTree(cat.children, cat, level + 1));
+            }
+        }
+        
+        return result;
+    }
+
+    return {
+        getCategories,
+        getCategory,
+        getTree,
+        getFeatured,
+        getRootCategories,
+        getSubcategories,
+        getCategoryProducts,
+        getBreadcrumb,
+        flattenTree
+    };
+})();
+
+window.CategoriesApi = CategoriesApi;

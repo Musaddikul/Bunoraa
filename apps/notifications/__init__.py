@@ -1,6 +1,4 @@
-# apps/notifications/__init__.py
 """
-Notifications App
-User notifications and email templates.
+Notifications app
 """
 default_app_config = 'apps.notifications.apps.NotificationsConfig'
