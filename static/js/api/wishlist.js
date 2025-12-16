@@ -1,144 +1,106 @@
 /**
- * Wishlist Module
- * Wishlist management functionality.
+ * Wishlist API Module
+ * @module api/wishlist
  */
 
-import api from './client.js';
+const WishlistApi = (function() {
+    'use strict';
 
-class WishlistService {
-    constructor() {
-        this.wishlist = null;
-        this.listeners = new Set();
-    }
+    const WISHLIST_PATH = '/wishlist/';
 
-    // =========================================================================
-    // Event Management
-    // =========================================================================
+    async function getWishlist(params = {}) {
+        const response = await ApiClient.get(WISHLIST_PATH, {
+            page: params.page || 1,
+            page_size: params.pageSize || 20
+        }, { requiresAuth: true });
 
-    subscribe(callback) {
-        this.listeners.add(callback);
-        return () => this.listeners.delete(callback);
-    }
-
-    notify() {
-        this.listeners.forEach(callback => callback(this.wishlist));
-        window.dispatchEvent(new CustomEvent('wishlist:updated', { detail: this.wishlist }));
-    }
-
-    // =========================================================================
-    // Wishlist Operations
-    // =========================================================================
-
-    async fetch() {
-        try {
-            this.wishlist = await api.get('/wishlist/default/');
-            this.notify();
-            return this.wishlist;
-        } catch (error) {
-            this.wishlist = { items: [], item_count: 0 };
-            return this.wishlist;
+        if (response.success) {
+            updateBadge(response.data);
         }
+
+        return response;
     }
 
-    async getLists() {
-        return api.get('/wishlist/');
-    }
-
-    async createList(name, isPublic = false) {
-        return api.post('/wishlist/', { name, is_public: isPublic });
-    }
-
-    async deleteList(id) {
-        return api.delete(`/wishlist/${id}/`);
-    }
-
-    // =========================================================================
-    // Item Operations
-    // =========================================================================
-
-    async addItem(productId, variantId = null, wishlistId = null) {
-        const response = await api.post('/wishlist/items/', {
+    async function addItem(productId, variantId = null, notes = '') {
+        const data = {
             product_id: productId,
             variant_id: variantId,
-            wishlist_id: wishlistId
-        });
-        
-        await this.fetch();
-        
-        window.dispatchEvent(new CustomEvent('notification:show', {
-            detail: {
-                type: 'success',
-                message: response.created ? 'Added to wishlist' : 'Already in wishlist',
-                action: { text: 'View Wishlist', url: '/account/wishlist/' }
-            }
-        }));
-        
-        return response;
-    }
+            notes
+        };
 
-    async removeItem(productId, variantId = null) {
-        const response = await api.delete('/wishlist/items/', {
-            product_id: productId,
-            variant_id: variantId
-        });
-        
-        await this.fetch();
-        return response;
-    }
+        const response = await ApiClient.post(WISHLIST_PATH, data, { requiresAuth: true });
 
-    async moveToCart(itemId) {
-        const response = await api.post(`/wishlist/items/${itemId}/to-cart/`, {});
-        await this.fetch();
-        
-        window.dispatchEvent(new CustomEvent('cart:updated'));
-        
-        return response;
-    }
-
-    async toggle(productId, variantId = null) {
-        const inWishlist = this.hasItem(productId, variantId);
-        
-        if (inWishlist) {
-            return this.removeItem(productId, variantId);
-        } else {
-            return this.addItem(productId, variantId);
+        if (response.success) {
+            window.dispatchEvent(new CustomEvent('wishlist:item-added', { detail: { productId } }));
+            window.dispatchEvent(new CustomEvent('wishlist:updated'));
         }
+
+        return response;
     }
 
-    // =========================================================================
-    // Utilities
-    // =========================================================================
+    async function removeItem(itemId) {
+        const response = await ApiClient.delete(`${WISHLIST_PATH}${itemId}/`, { requiresAuth: true });
 
-    async check(productId) {
-        try {
-            const response = await api.get(`/wishlist/check/${productId}/`);
-            return response.in_wishlist;
-        } catch {
-            return false;
+        if (response.success) {
+            window.dispatchEvent(new CustomEvent('wishlist:item-removed', { detail: { itemId } }));
+            window.dispatchEvent(new CustomEvent('wishlist:updated'));
         }
+
+        return response;
     }
 
-    hasItem(productId, variantId = null) {
-        if (!this.wishlist?.items) return false;
+    async function updateItem(itemId, data) {
+        return ApiClient.patch(`${WISHLIST_PATH}${itemId}/update_item/`, data, { requiresAuth: true });
+    }
+
+    async function moveToCart(itemId, quantity = 1) {
+        const response = await ApiClient.post(`${WISHLIST_PATH}${itemId}/move_to_cart/`, { quantity }, { requiresAuth: true });
+
+        if (response.success) {
+            window.dispatchEvent(new CustomEvent('wishlist:item-moved', { detail: { itemId } }));
+            window.dispatchEvent(new CustomEvent('wishlist:updated'));
+            window.dispatchEvent(new CustomEvent('cart:updated'));
+        }
+
+        return response;
+    }
+
+    async function clearWishlist() {
+        const response = await ApiClient.delete(`${WISHLIST_PATH}clear/`, { requiresAuth: true });
+
+        if (response.success) {
+            updateBadge({ items: [] });
+            window.dispatchEvent(new CustomEvent('wishlist:cleared'));
+            window.dispatchEvent(new CustomEvent('wishlist:updated'));
+        }
+
+        return response;
+    }
+
+    async function check(productIds) {
+        return ApiClient.post(`${WISHLIST_PATH}check/`, { product_ids: productIds }, { requiresAuth: true });
+    }
+
+    function updateBadge(wishlist) {
+        const count = wishlist?.items?.length || wishlist?.item_count || 0;
+        const badges = document.querySelectorAll('[data-wishlist-count]');
         
-        return this.wishlist.items.some(item => {
-            if (item.product.id !== productId) return false;
-            if (variantId && item.variant?.id !== variantId) return false;
-            return true;
+        badges.forEach(badge => {
+            badge.textContent = count > 99 ? '99+' : count;
+            badge.classList.toggle('hidden', count === 0);
         });
     }
 
-    getItemCount() {
-        return this.wishlist?.item_count || 0;
-    }
+    return {
+        getWishlist,
+        addItem,
+        removeItem,
+        updateItem,
+        moveToCart,
+        clearWishlist,
+        check,
+        updateBadge
+    };
+})();
 
-    getWishlist() {
-        return this.wishlist;
-    }
-}
-
-// Export singleton
-const wishlist = new WishlistService();
-export default wishlist;
-export { WishlistService };
-export { wishlist as wishlistService };
+window.WishlistApi = WishlistApi;

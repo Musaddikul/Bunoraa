@@ -1,319 +1,227 @@
-// static/js/components/dropdown.js
 /**
  * Dropdown Component
- * Reusable dropdown menus
+ * @module components/dropdown
  */
 
-class Dropdown {
-    constructor(trigger, options = {}) {
-        this.trigger = typeof trigger === 'string' ? document.querySelector(trigger) : trigger;
-        
-        if (!this.trigger) {
-            console.error('Dropdown: Trigger element not found');
-            return;
+const Dropdown = (function() {
+    'use strict';
+
+    const instances = new Map();
+    let activeDropdown = null;
+
+    function create(trigger, options = {}) {
+        const {
+            content = '',
+            placement = 'bottom-start',
+            offset = 8,
+            closeOnClick = true,
+            closeOnOutside = true,
+            onOpen = null,
+            onClose = null
+        } = options;
+
+        if (typeof trigger === 'string') {
+            trigger = document.querySelector(trigger);
         }
 
-        this.options = {
-            menu: options.menu || null,
-            placement: options.placement || 'bottom-start', // bottom-start, bottom-end, top-start, top-end
-            offset: options.offset || 8,
-            closeOnClick: options.closeOnClick !== false,
-            closeOnOutside: options.closeOnOutside !== false,
-            animation: options.animation || 'fade', // fade, scale, slide
-            onOpen: options.onOpen || null,
-            onClose: options.onClose || null
+        if (!trigger) return null;
+
+        const id = 'dropdown-' + Date.now();
+        
+        const dropdown = document.createElement('div');
+        dropdown.id = id;
+        dropdown.className = 'absolute z-50 hidden opacity-0 transform scale-95 transition-all duration-150';
+        dropdown.innerHTML = `
+            <div class="bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[200px]">
+                ${content}
+            </div>
+        `;
+        
+        document.body.appendChild(dropdown);
+
+        const instance = {
+            id,
+            trigger,
+            dropdown,
+            options,
+            isOpen: false,
+            onOpen,
+            onClose
         };
 
-        this.menu = this.options.menu 
-            ? (typeof this.options.menu === 'string' ? document.querySelector(this.options.menu) : this.options.menu)
-            : this.trigger.nextElementSibling;
-
-        this.isOpen = false;
-
-        this._handleTriggerClick = this._handleTriggerClick.bind(this);
-        this._handleOutsideClick = this._handleOutsideClick.bind(this);
-        this._handleMenuClick = this._handleMenuClick.bind(this);
-        this._handleKeydown = this._handleKeydown.bind(this);
-
-        this._init();
-    }
-
-    /**
-     * Initialize dropdown
-     */
-    _init() {
-        // Set up trigger
-        this.trigger.setAttribute('aria-haspopup', 'true');
-        this.trigger.setAttribute('aria-expanded', 'false');
-
-        // Set up menu
-        if (this.menu) {
-            this.menu.setAttribute('role', 'menu');
-            this.menu.classList.add('hidden', 'opacity-0', 'transform');
-            this._setupMenuItems();
-        }
-
-        // Event listeners
-        this.trigger.addEventListener('click', this._handleTriggerClick);
-        this.trigger.addEventListener('keydown', this._handleKeydown);
-    }
-
-    /**
-     * Setup menu items for accessibility
-     */
-    _setupMenuItems() {
-        const items = this.menu.querySelectorAll('a, button');
-        items.forEach((item, index) => {
-            item.setAttribute('role', 'menuitem');
-            item.setAttribute('tabindex', '-1');
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggle(id);
         });
-    }
 
-    /**
-     * Handle trigger click
-     */
-    _handleTriggerClick(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        this.toggle();
-    }
-
-    /**
-     * Handle outside click
-     */
-    _handleOutsideClick(e) {
-        if (!this.trigger.contains(e.target) && !this.menu.contains(e.target)) {
-            this.close();
-        }
-    }
-
-    /**
-     * Handle menu click
-     */
-    _handleMenuClick(e) {
-        if (this.options.closeOnClick && (e.target.tagName === 'A' || e.target.tagName === 'BUTTON')) {
-            this.close();
-        }
-    }
-
-    /**
-     * Handle keyboard navigation
-     */
-    _handleKeydown(e) {
-        switch (e.key) {
-            case 'Enter':
-            case ' ':
-                e.preventDefault();
-                this.toggle();
-                break;
-            case 'Escape':
-                this.close();
-                this.trigger.focus();
-                break;
-            case 'ArrowDown':
-                e.preventDefault();
-                if (!this.isOpen) {
-                    this.open();
+        if (closeOnClick) {
+            dropdown.addEventListener('click', (e) => {
+                if (e.target.closest('[data-dropdown-item]')) {
+                    close(id);
                 }
-                this._focusNextItem();
-                break;
-            case 'ArrowUp':
-                e.preventDefault();
-                this._focusPrevItem();
-                break;
+            });
         }
+
+        instances.set(id, instance);
+        return instance;
     }
 
-    /**
-     * Focus next menu item
-     */
-    _focusNextItem() {
-        const items = Array.from(this.menu.querySelectorAll('[role="menuitem"]:not([disabled])'));
-        const currentIndex = items.indexOf(document.activeElement);
-        const nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
-        items[nextIndex]?.focus();
-    }
+    function position(instance) {
+        const { trigger, dropdown, options } = instance;
+        const { placement, offset } = options;
 
-    /**
-     * Focus previous menu item
-     */
-    _focusPrevItem() {
-        const items = Array.from(this.menu.querySelectorAll('[role="menuitem"]:not([disabled])'));
-        const currentIndex = items.indexOf(document.activeElement);
-        const prevIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
-        items[prevIndex]?.focus();
-    }
-
-    /**
-     * Position menu
-     */
-    _positionMenu() {
-        const triggerRect = this.trigger.getBoundingClientRect();
-        const menuRect = this.menu.getBoundingClientRect();
-        const offset = this.options.offset;
+        const triggerRect = trigger.getBoundingClientRect();
+        const dropdownRect = dropdown.getBoundingClientRect();
 
         let top, left;
 
-        switch (this.options.placement) {
+        switch (placement) {
             case 'bottom-start':
                 top = triggerRect.bottom + offset;
                 left = triggerRect.left;
                 break;
             case 'bottom-end':
                 top = triggerRect.bottom + offset;
-                left = triggerRect.right - menuRect.width;
+                left = triggerRect.right - dropdownRect.width;
+                break;
+            case 'bottom':
+                top = triggerRect.bottom + offset;
+                left = triggerRect.left + (triggerRect.width - dropdownRect.width) / 2;
                 break;
             case 'top-start':
-                top = triggerRect.top - menuRect.height - offset;
+                top = triggerRect.top - dropdownRect.height - offset;
                 left = triggerRect.left;
                 break;
             case 'top-end':
-                top = triggerRect.top - menuRect.height - offset;
-                left = triggerRect.right - menuRect.width;
+                top = triggerRect.top - dropdownRect.height - offset;
+                left = triggerRect.right - dropdownRect.width;
                 break;
+            case 'top':
+                top = triggerRect.top - dropdownRect.height - offset;
+                left = triggerRect.left + (triggerRect.width - dropdownRect.width) / 2;
+                break;
+            default:
+                top = triggerRect.bottom + offset;
+                left = triggerRect.left;
         }
 
-        // Viewport bounds
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
+        top = Math.max(8, Math.min(top, window.innerHeight - dropdownRect.height - 8));
+        left = Math.max(8, Math.min(left, window.innerWidth - dropdownRect.width - 8));
 
-        if (left < 0) left = offset;
-        if (left + menuRect.width > viewportWidth) left = viewportWidth - menuRect.width - offset;
-        if (top < 0) top = triggerRect.bottom + offset;
-        if (top + menuRect.height > viewportHeight) top = triggerRect.top - menuRect.height - offset;
-
-        this.menu.style.position = 'fixed';
-        this.menu.style.top = `${top}px`;
-        this.menu.style.left = `${left}px`;
+        dropdown.style.top = `${top + window.scrollY}px`;
+        dropdown.style.left = `${left + window.scrollX}px`;
     }
 
-    /**
-     * Get animation classes
-     */
-    _getAnimationClasses(show) {
-        const animations = {
-            fade: {
-                show: 'opacity-100',
-                hide: 'opacity-0'
-            },
-            scale: {
-                show: 'opacity-100 scale-100',
-                hide: 'opacity-0 scale-95'
-            },
-            slide: {
-                show: 'opacity-100 translate-y-0',
-                hide: 'opacity-0 -translate-y-2'
-            }
-        };
+    function open(id) {
+        const instance = instances.get(id);
+        if (!instance || instance.isOpen) return;
 
-        const anim = animations[this.options.animation] || animations.fade;
-        return show ? anim.show : anim.hide;
-    }
-
-    /**
-     * Open dropdown
-     */
-    open() {
-        if (this.isOpen || !this.menu) return;
-
-        // Show menu
-        this.menu.classList.remove('hidden');
-        this._positionMenu();
-
-        // Animate in
-        requestAnimationFrame(() => {
-            const hideClasses = this._getAnimationClasses(false).split(' ');
-            const showClasses = this._getAnimationClasses(true).split(' ');
-            
-            hideClasses.forEach(cls => this.menu.classList.remove(cls));
-            showClasses.forEach(cls => this.menu.classList.add(cls));
-        });
-
-        // Update ARIA
-        this.trigger.setAttribute('aria-expanded', 'true');
-
-        this.isOpen = true;
-
-        // Event listeners
-        if (this.options.closeOnOutside) {
-            document.addEventListener('click', this._handleOutsideClick);
+        if (activeDropdown && activeDropdown !== id) {
+            close(activeDropdown);
         }
-        this.menu.addEventListener('click', this._handleMenuClick);
-        this.menu.addEventListener('keydown', this._handleKeydown);
 
-        // Callback
-        if (this.options.onOpen) {
-            this.options.onOpen(this);
-        }
-    }
-
-    /**
-     * Close dropdown
-     */
-    close() {
-        if (!this.isOpen || !this.menu) return;
-
-        // Animate out
-        const hideClasses = this._getAnimationClasses(false).split(' ');
-        const showClasses = this._getAnimationClasses(true).split(' ');
+        instance.dropdown.classList.remove('hidden');
+        position(instance);
         
-        showClasses.forEach(cls => this.menu.classList.remove(cls));
-        hideClasses.forEach(cls => this.menu.classList.add(cls));
+        requestAnimationFrame(() => {
+            instance.dropdown.classList.remove('opacity-0', 'scale-95');
+            instance.dropdown.classList.add('opacity-100', 'scale-100');
+        });
 
-        // Update ARIA
-        this.trigger.setAttribute('aria-expanded', 'false');
+        instance.isOpen = true;
+        activeDropdown = id;
 
-        this.isOpen = false;
+        if (instance.onOpen) instance.onOpen(instance);
+    }
 
-        // Remove event listeners
-        document.removeEventListener('click', this._handleOutsideClick);
-        this.menu.removeEventListener('click', this._handleMenuClick);
-        this.menu.removeEventListener('keydown', this._handleKeydown);
+    function close(id = null) {
+        const targetId = id || activeDropdown;
+        if (!targetId) return;
 
-        // Hide after animation
+        const instance = instances.get(targetId);
+        if (!instance || !instance.isOpen) return;
+
+        instance.dropdown.classList.remove('opacity-100', 'scale-100');
+        instance.dropdown.classList.add('opacity-0', 'scale-95');
+
         setTimeout(() => {
-            if (!this.isOpen) {
-                this.menu.classList.add('hidden');
-            }
-        }, 200);
+            instance.dropdown.classList.add('hidden');
+        }, 150);
 
-        // Callback
-        if (this.options.onClose) {
-            this.options.onClose(this);
+        instance.isOpen = false;
+        
+        if (activeDropdown === targetId) {
+            activeDropdown = null;
+        }
+
+        if (instance.onClose) instance.onClose(instance);
+    }
+
+    function toggle(id) {
+        const instance = instances.get(id);
+        if (!instance) return;
+
+        if (instance.isOpen) {
+            close(id);
+        } else {
+            open(id);
         }
     }
 
-    /**
-     * Toggle dropdown
-     */
-    toggle() {
-        this.isOpen ? this.close() : this.open();
+    function setContent(id, content) {
+        const instance = instances.get(id);
+        if (!instance) return;
+
+        const inner = instance.dropdown.querySelector('div');
+        if (inner) {
+            inner.innerHTML = content;
+        }
     }
 
-    /**
-     * Destroy dropdown
-     */
-    destroy() {
-        this.close();
-        this.trigger.removeEventListener('click', this._handleTriggerClick);
-        this.trigger.removeEventListener('keydown', this._handleKeydown);
-        this.trigger.removeAttribute('aria-haspopup');
-        this.trigger.removeAttribute('aria-expanded');
+    function destroy(id) {
+        const instance = instances.get(id);
+        if (!instance) return;
+
+        close(id);
+        instance.dropdown.remove();
+        instances.delete(id);
     }
 
-    /**
-     * Static method to initialize all dropdowns
-     */
-    static initAll(selector = '[data-dropdown]') {
-        const triggers = document.querySelectorAll(selector);
-        return Array.from(triggers).map(trigger => {
-            const menuSelector = trigger.dataset.dropdownMenu;
-            const placement = trigger.dataset.dropdownPlacement;
-            return new Dropdown(trigger, { menu: menuSelector, placement });
+    function init() {
+        document.addEventListener('click', (e) => {
+            if (activeDropdown) {
+                const instance = instances.get(activeDropdown);
+                if (instance?.options.closeOnOutside) {
+                    if (!instance.dropdown.contains(e.target) && !instance.trigger.contains(e.target)) {
+                        close(activeDropdown);
+                    }
+                }
+            }
         });
-    }
-}
 
-// Export
-export default Dropdown;
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && activeDropdown) {
+                close(activeDropdown);
+            }
+        });
+
+        window.addEventListener('resize', Debounce.throttle(() => {
+            if (activeDropdown) {
+                const instance = instances.get(activeDropdown);
+                if (instance) position(instance);
+            }
+        }, 100));
+    }
+
+    return {
+        create,
+        open,
+        close,
+        toggle,
+        setContent,
+        destroy,
+        init
+    };
+})();
+
 window.Dropdown = Dropdown;

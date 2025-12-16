@@ -1,46 +1,43 @@
-# apps/reviews/signals.py
 """
-Review Signals
+Reviews signals
 """
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from django.db.models import Avg, Count
-from .models import Review, ReviewVote
+from django.db.models import Avg
+
+from .models import Review
 
 
-@receiver([post_save, post_delete], sender=Review)
-def update_product_rating(sender, instance, **kwargs):
-    """Update product rating when reviews change."""
-    product = instance.product
-    reviews = product.reviews.filter(status=Review.Status.APPROVED)
+@receiver(post_save, sender=Review)
+def update_product_rating_on_save(sender, instance, **kwargs):
+    """Update product average rating when review is saved."""
+    if instance.status == Review.STATUS_APPROVED:
+        update_product_rating(instance.product)
+
+
+@receiver(post_delete, sender=Review)
+def update_product_rating_on_delete(sender, instance, **kwargs):
+    """Update product average rating when review is deleted."""
+    update_product_rating(instance.product)
+
+
+def update_product_rating(product):
+    """Calculate and update product average rating."""
+    from apps.products.models import Product
     
-    stats = reviews.aggregate(
-        avg_rating=Avg('rating'),
-        count=Count('id')
+    avg_rating = Review.objects.filter(
+        product=product,
+        status=Review.STATUS_APPROVED,
+        is_deleted=False
+    ).aggregate(avg=Avg('rating'))['avg']
+    
+    review_count = Review.objects.filter(
+        product=product,
+        status=Review.STATUS_APPROVED,
+        is_deleted=False
+    ).count()
+    
+    Product.objects.filter(id=product.id).update(
+        average_rating=avg_rating or 0,
+        review_count=review_count
     )
-    
-    product.rating = stats['avg_rating'] or 0
-    product.review_count = stats['count']
-    product.save(update_fields=['rating', 'review_count'])
-
-
-@receiver(post_save, sender=ReviewVote)
-def update_review_votes(sender, instance, created, **kwargs):
-    """Update review vote counts."""
-    review = instance.review
-    
-    review.helpful_count = review.votes.filter(is_helpful=True).count()
-    review.not_helpful_count = review.votes.filter(is_helpful=False).count()
-    review.save(update_fields=['helpful_count', 'not_helpful_count'])
-
-
-@receiver(post_delete, sender=ReviewVote)
-def update_review_votes_on_delete(sender, instance, **kwargs):
-    """Update review vote counts when vote deleted."""
-    try:
-        review = instance.review
-        review.helpful_count = review.votes.filter(is_helpful=True).count()
-        review.not_helpful_count = review.votes.filter(is_helpful=False).count()
-        review.save(update_fields=['helpful_count', 'not_helpful_count'])
-    except:
-        pass

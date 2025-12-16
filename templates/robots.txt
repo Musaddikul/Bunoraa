@@ -1,9 +1,0 @@
-# templates/robots.txt
-User-agent: *
-Allow: /
-Disallow: /admin/
-Disallow: /accounts/
-Disallow: /cart/
-Disallow: /checkout/
-
-Sitemap: https://www.bunonmart.com/sitemap.xml

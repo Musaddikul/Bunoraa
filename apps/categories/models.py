@@ -1,28 +1,28 @@
-# apps/categories/models.py
 """
-Category Models
-Hierarchical category structure using MPTT for efficient tree queries.
+Category models - Hierarchical category structure
 """
+import uuid
 from django.db import models
-from django.utils.text import slugify
-from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from django.utils import timezone
-from django.core.cache import cache
-from mptt.models import MPTTModel, TreeForeignKey
-
-from apps.core.models import TimeStampedModel, SoftDeleteModel
+from django.utils.text import slugify
+from core.utils.helpers import generate_unique_slug
 
 
-class Category(MPTTModel, TimeStampedModel, SoftDeleteModel):
+class Category(models.Model):
     """
-    Hierarchical category model for organizing products.
-    Uses MPTT for efficient ancestor/descendant queries.
+    Hierarchical product category with adjacency list structure.
+    Supports efficient tree queries through helper services.
     """
-    name = models.CharField(_('name'), max_length=100)
-    slug = models.SlugField(_('slug'), max_length=120, unique=True, db_index=True)
     
-    parent = TreeForeignKey(
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Basic fields
+    name = models.CharField(_('name'), max_length=200)
+    slug = models.SlugField(_('slug'), max_length=250, unique=True)
+    description = models.TextField(_('description'), blank=True)
+    
+    # Hierarchy - adjacency list
+    parent = models.ForeignKey(
         'self',
         on_delete=models.CASCADE,
         null=True,
@@ -31,49 +31,44 @@ class Category(MPTTModel, TimeStampedModel, SoftDeleteModel):
         verbose_name=_('parent category')
     )
     
+    # For efficient tree operations
+    level = models.PositiveIntegerField(_('level'), default=0, editable=False)
+    path = models.CharField(_('path'), max_length=1000, blank=True, editable=False)
+    
     # Display
-    description = models.TextField(_('description'), blank=True)
     image = models.ImageField(
         _('image'),
-        upload_to='categories/%Y/%m/',
-        null=True,
-        blank=True
+        upload_to='categories/',
+        blank=True,
+        null=True
     )
-    icon = models.CharField(_('icon class'), max_length=50, blank=True, help_text=_('Font Awesome icon class'))
-    banner_image = models.ImageField(
-        _('banner image'),
-        upload_to='categories/banners/%Y/%m/',
-        null=True,
-        blank=True
-    )
+    icon = models.CharField(_('icon class'), max_length=100, blank=True)
+    order = models.PositiveIntegerField(_('display order'), default=0)
     
     # SEO
-    meta_title = models.CharField(_('meta title'), max_length=100, blank=True)
+    meta_title = models.CharField(_('meta title'), max_length=200, blank=True)
     meta_description = models.TextField(_('meta description'), blank=True)
+    meta_keywords = models.CharField(_('meta keywords'), max_length=500, blank=True)
     
-    # Flags
-    is_active = models.BooleanField(_('active'), default=True, db_index=True)
+    # Status
+    is_active = models.BooleanField(_('active'), default=True)
     is_featured = models.BooleanField(_('featured'), default=False)
-    show_in_menu = models.BooleanField(_('show in menu'), default=True)
+    is_deleted = models.BooleanField(_('deleted'), default=False)
     
-    # Display order
-    display_order = models.PositiveIntegerField(_('display order'), default=0)
-    
-    # Cache for product count
-    product_count_cache = models.PositiveIntegerField(_('product count'), default=0)
-    product_count_updated = models.DateTimeField(_('count updated'), null=True, blank=True)
-    
-    class MPTTMeta:
-        order_insertion_by = ['display_order', 'name']
+    # Timestamps
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('updated at'), auto_now=True)
     
     class Meta:
         verbose_name = _('category')
         verbose_name_plural = _('categories')
-        ordering = ['display_order', 'name']
+        ordering = ['order', 'name']
         indexes = [
             models.Index(fields=['slug']),
-            models.Index(fields=['is_active', 'show_in_menu']),
-            models.Index(fields=['parent', 'display_order']),
+            models.Index(fields=['parent']),
+            models.Index(fields=['level']),
+            models.Index(fields=['is_active', 'is_deleted']),
+            models.Index(fields=['path']),
         ]
     
     def __str__(self):
@@ -82,150 +77,99 @@ class Category(MPTTModel, TimeStampedModel, SoftDeleteModel):
     def save(self, *args, **kwargs):
         # Auto-generate slug
         if not self.slug:
-            self.slug = self._generate_unique_slug()
+            self.slug = generate_unique_slug(Category, self.name)
         
-        # Auto-fill SEO fields
-        if not self.meta_title:
-            self.meta_title = self.name
+        # Calculate level and path
+        if self.parent:
+            self.level = self.parent.level + 1
+            self.path = f"{self.parent.path}/{self.id}" if self.parent.path else str(self.id)
+        else:
+            self.level = 0
+            self.path = str(self.id)
         
         super().save(*args, **kwargs)
         
-        # Clear cache
-        self._clear_category_cache()
+        # Update children paths if necessary
+        if self.pk:
+            self._update_children_paths()
     
-    def delete(self, *args, **kwargs):
-        self._clear_category_cache()
-        super().delete(*args, **kwargs)
-    
-    def _generate_unique_slug(self):
-        """Generate a unique slug for this category."""
-        base_slug = slugify(self.name)
-        slug = base_slug
-        counter = 1
-        
-        while Category.all_objects.filter(slug=slug).exclude(pk=self.pk).exists():
-            slug = f'{base_slug}-{counter}'
-            counter += 1
-        
-        return slug
-    
-    def _clear_category_cache(self):
-        """Clear category-related caches."""
-        cache.delete('category_tree')
-        cache.delete('menu_categories')
-        cache.delete(f'category_{self.slug}')
-    
-    def get_absolute_url(self):
-        """Get the URL for this category."""
-        if self.parent:
-            ancestors = self.get_ancestors(include_self=True)
-            path = '/'.join([a.slug for a in ancestors])
-            return reverse('storefront:category_detail', kwargs={'category_path': path})
-        return reverse('storefront:category_detail', kwargs={'category_path': self.slug})
+    def _update_children_paths(self):
+        """Update paths for all descendants."""
+        for child in self.children.all():
+            child.level = self.level + 1
+            child.path = f"{self.path}/{child.id}"
+            child.save(update_fields=['level', 'path'])
     
     @property
     def full_path(self):
-        """Get the full path as a string (e.g., 'Clothing/Men/Shirts')."""
-        ancestors = self.get_ancestors(include_self=True)
-        return ' / '.join([a.name for a in ancestors])
+        """Get the full category path as a string."""
+        ancestors = self.get_ancestors()
+        names = [cat.name for cat in ancestors] + [self.name]
+        return ' > '.join(names)
     
-    @property
-    def breadcrumbs(self):
-        """Get breadcrumb trail as list of dicts."""
-        ancestors = self.get_ancestors(include_self=True)
-        return [
-            {'name': a.name, 'slug': a.slug, 'url': a.get_absolute_url()}
-            for a in ancestors
-        ]
+    def get_ancestors(self):
+        """Get all ancestor categories."""
+        ancestors = []
+        current = self.parent
+        while current:
+            ancestors.insert(0, current)
+            current = current.parent
+        return ancestors
     
-    def get_all_children_ids(self):
-        """Get IDs of all descendant categories."""
-        return list(self.get_descendants(include_self=True).values_list('id', flat=True))
-    
-    def get_products(self, include_descendants=True):
-        """
-        Get all products in this category.
-        If include_descendants=True, also gets products from all child categories.
-        """
-        from apps.products.models import Product
+    def get_descendants(self, include_self=False):
+        """Get all descendant categories."""
+        descendants = []
+        if include_self:
+            descendants.append(self)
         
-        if include_descendants:
-            category_ids = self.get_all_children_ids()
-            return Product.objects.filter(
-                category_id__in=category_ids,
-                is_active=True
-            )
-        return Product.objects.filter(category=self, is_active=True)
+        def collect_children(category):
+            for child in category.children.filter(is_active=True, is_deleted=False):
+                descendants.append(child)
+                collect_children(child)
+        
+        collect_children(self)
+        return descendants
     
-    def update_product_count(self):
-        """Update the cached product count."""
-        count = self.get_products(include_descendants=True).count()
-        self.product_count_cache = count
-        self.product_count_updated = timezone.now()
-        self.save(update_fields=['product_count_cache', 'product_count_updated'])
-        return count
+    def get_descendant_ids(self, include_self=False):
+        """Get IDs of all descendant categories for efficient queries."""
+        descendants = self.get_descendants(include_self=include_self)
+        return [cat.id for cat in descendants]
+    
+    def get_siblings(self, include_self=False):
+        """Get sibling categories."""
+        queryset = Category.objects.filter(
+            parent=self.parent,
+            is_active=True,
+            is_deleted=False
+        )
+        if not include_self:
+            queryset = queryset.exclude(pk=self.pk)
+        return queryset.order_by('order', 'name')
+    
+    def get_breadcrumbs(self):
+        """Get breadcrumb data for navigation."""
+        ancestors = self.get_ancestors()
+        breadcrumbs = [{'name': cat.name, 'slug': cat.slug} for cat in ancestors]
+        breadcrumbs.append({'name': self.name, 'slug': self.slug})
+        return breadcrumbs
     
     @property
     def product_count(self):
-        """
-        Get the product count, using cache if available.
-        """
-        # Check if cache is stale (older than 1 hour)
-        if self.product_count_updated:
-            age = (timezone.now() - self.product_count_updated).seconds
-            if age < 3600:  # 1 hour
-                return self.product_count_cache
-        
-        return self.update_product_count()
+        """Get count of products in this category and descendants."""
+        from apps.products.models import Product
+        category_ids = self.get_descendant_ids(include_self=True)
+        return Product.objects.filter(
+            categories__id__in=category_ids,
+            is_active=True,
+            is_deleted=False
+        ).distinct().count()
     
-    @classmethod
-    def get_category_tree(cls, include_inactive=False):
-        """
-        Get the full category tree structure.
-        Cached for performance.
-        """
-        cache_key = 'category_tree' if not include_inactive else 'category_tree_all'
-        tree = cache.get(cache_key)
+    def soft_delete(self):
+        """Soft delete category and all descendants."""
+        self.is_deleted = True
+        self.is_active = False
+        self.save(update_fields=['is_deleted', 'is_active', 'updated_at'])
         
-        if tree is None:
-            queryset = cls.objects.all() if include_inactive else cls.objects.filter(is_active=True)
-            tree = cls._build_tree(queryset.filter(parent=None))
-            cache.set(cache_key, tree, 3600)  # Cache for 1 hour
-        
-        return tree
-    
-    @classmethod
-    def _build_tree(cls, categories):
-        """Recursively build category tree structure."""
-        result = []
-        for category in categories:
-            node = {
-                'id': category.id,
-                'name': category.name,
-                'slug': category.slug,
-                'url': category.get_absolute_url(),
-                'image': category.image.url if category.image else None,
-                'icon': category.icon,
-                'product_count': category.product_count_cache,
-                'children': cls._build_tree(category.get_children().filter(is_active=True))
-            }
-            result.append(node)
-        return result
-    
-    @classmethod
-    def get_menu_categories(cls):
-        """Get categories for navigation menu."""
-        cache_key = 'menu_categories'
-        categories = cache.get(cache_key)
-        
-        if categories is None:
-            categories = list(
-                cls.objects.filter(
-                    is_active=True,
-                    show_in_menu=True,
-                    level__lte=1  # Only top 2 levels for menu
-                ).select_related('parent')
-            )
-            cache.set(cache_key, categories, 3600)
-        
-        return categories
+        # Soft delete all descendants
+        for child in self.children.all():
+            child.soft_delete()

@@ -1,0 +1,104 @@
+"""
+Category API serializers
+"""
+from rest_framework import serializers
+from ..models import Category
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    """Basic category serializer."""
+    
+    image_url = serializers.SerializerMethodField()
+    product_count = serializers.IntegerField(read_only=True)
+    
+    class Meta:
+        model = Category
+        fields = [
+            'id', 'name', 'slug', 'description', 'image_url', 'icon',
+            'level', 'is_featured', 'product_count', 'meta_title',
+            'meta_description', 'created_at'
+        ]
+    
+    def get_image_url(self, obj):
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
+
+
+class CategoryDetailSerializer(CategorySerializer):
+    """Detailed category serializer with breadcrumbs."""
+    
+    breadcrumbs = serializers.SerializerMethodField()
+    parent = CategorySerializer(read_only=True)
+    children = serializers.SerializerMethodField()
+    
+    class Meta(CategorySerializer.Meta):
+        fields = CategorySerializer.Meta.fields + ['breadcrumbs', 'parent', 'children']
+    
+    def get_breadcrumbs(self, obj):
+        return obj.get_breadcrumbs()
+    
+    def get_children(self, obj):
+        children = obj.children.filter(is_active=True, is_deleted=False).order_by('order', 'name')
+        return CategorySerializer(children, many=True, context=self.context).data
+
+
+class CategoryTreeSerializer(serializers.ModelSerializer):
+    """Serializer for category tree structure."""
+    
+    children = serializers.SerializerMethodField()
+    image_url = serializers.SerializerMethodField()
+    product_count = serializers.IntegerField(read_only=True)
+    
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'slug', 'image_url', 'icon', 'level', 'product_count', 'children']
+    
+    def get_children(self, obj):
+        children = obj.children.filter(is_active=True, is_deleted=False).order_by('order', 'name')
+        return CategoryTreeSerializer(children, many=True, context=self.context).data
+    
+    def get_image_url(self, obj):
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
+
+
+class CategoryCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating categories."""
+    
+    class Meta:
+        model = Category
+        fields = [
+            'name', 'slug', 'description', 'parent', 'image', 'icon',
+            'order', 'meta_title', 'meta_description', 'meta_keywords',
+            'is_active', 'is_featured'
+        ]
+        extra_kwargs = {
+            'slug': {'required': False}
+        }
+
+
+class CategoryUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating categories."""
+    
+    class Meta:
+        model = Category
+        fields = [
+            'name', 'slug', 'description', 'parent', 'image', 'icon',
+            'order', 'meta_title', 'meta_description', 'meta_keywords',
+            'is_active', 'is_featured'
+        ]
+
+
+class CategoryReorderSerializer(serializers.Serializer):
+    """Serializer for reordering categories."""
+    
+    id = serializers.UUIDField()
+    order = serializers.IntegerField(min_value=0)

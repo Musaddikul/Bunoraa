@@ -1,201 +1,253 @@
-# apps/analytics/models.py
 """
-Analytics Models
-Site analytics and tracking.
+Analytics models
 """
-from decimal import Decimal
+import uuid
 from django.db import models
 from django.conf import settings
-from django.utils.translation import gettext_lazy as _
-
-# TimeStampedModel available when needed
 
 
 class PageView(models.Model):
-    """
-    Track page views.
-    """
+    """Track page views."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        verbose_name=_('user')
+        related_name='page_views'
     )
-    session_key = models.CharField(_('session'), max_length=40, blank=True)
+    session_key = models.CharField(max_length=40, blank=True, null=True)
     
-    path = models.CharField(_('path'), max_length=500, db_index=True)
-    full_url = models.URLField(_('full URL'), max_length=1000)
-    
-    # Request info
-    ip_address = models.GenericIPAddressField(_('IP'), null=True, blank=True)
-    user_agent = models.TextField(_('user agent'), blank=True)
-    referrer = models.URLField(_('referrer'), max_length=1000, blank=True)
+    # Page info
+    path = models.CharField(max_length=500)
+    query_string = models.CharField(max_length=1000, blank=True, null=True)
+    referrer = models.URLField(max_length=1000, blank=True, null=True)
     
     # Device info
-    device_type = models.CharField(_('device'), max_length=20, blank=True)
-    browser = models.CharField(_('browser'), max_length=50, blank=True)
-    os = models.CharField(_('OS'), max_length=50, blank=True)
+    user_agent = models.CharField(max_length=500, blank=True, null=True)
+    device_type = models.CharField(max_length=20, blank=True, null=True)  # mobile, tablet, desktop
+    browser = models.CharField(max_length=50, blank=True, null=True)
+    os = models.CharField(max_length=50, blank=True, null=True)
     
-    # Timestamp
-    timestamp = models.DateTimeField(_('timestamp'), auto_now_add=True, db_index=True)
+    # Location
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    country = models.CharField(max_length=100, blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
+    
+    # Timing
+    time_on_page = models.IntegerField(default=0, help_text='Time in seconds')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
-        verbose_name = _('page view')
-        verbose_name_plural = _('page views')
-        ordering = ['-timestamp']
+        ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['path', 'timestamp']),
-            models.Index(fields=['user', 'timestamp']),
+            models.Index(fields=['-created_at']),
+            models.Index(fields=['path', '-created_at']),
+            models.Index(fields=['session_key']),
         ]
+    
+    def __str__(self):
+        return f"{self.path} - {self.created_at}"
 
 
 class ProductView(models.Model):
-    """
-    Track product views.
-    """
+    """Track product views."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     product = models.ForeignKey(
         'products.Product',
         on_delete=models.CASCADE,
-        related_name='views',
-        verbose_name=_('product')
+        related_name='analytics_views'
     )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
-        blank=True,
-        verbose_name=_('user')
+        blank=True
     )
-    session_key = models.CharField(_('session'), max_length=40, blank=True)
-    ip_address = models.GenericIPAddressField(_('IP'), null=True, blank=True)
+    session_key = models.CharField(max_length=40, blank=True, null=True)
     
-    timestamp = models.DateTimeField(_('timestamp'), auto_now_add=True, db_index=True)
+    # Source
+    source = models.CharField(max_length=50, blank=True, null=True)  # direct, search, category, related
+    referrer = models.URLField(max_length=1000, blank=True, null=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
-        verbose_name = _('product view')
-        verbose_name_plural = _('product views')
-        ordering = ['-timestamp']
+        ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['product', 'timestamp']),
+            models.Index(fields=['product', '-created_at']),
         ]
+    
+    def __str__(self):
+        return f"{self.product.name} view - {self.created_at}"
 
 
 class SearchQuery(models.Model):
-    """
-    Track search queries.
-    """
-    query = models.CharField(_('query'), max_length=500, db_index=True)
+    """Track search queries."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    query = models.CharField(max_length=500)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
-        blank=True,
-        verbose_name=_('user')
+        blank=True
     )
-    session_key = models.CharField(_('session'), max_length=40, blank=True)
+    session_key = models.CharField(max_length=40, blank=True, null=True)
     
-    results_count = models.PositiveIntegerField(_('results'), default=0)
+    results_count = models.IntegerField(default=0)
     clicked_product = models.ForeignKey(
         'products.Product',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        verbose_name=_('clicked product')
+        related_name='search_clicks'
     )
     
-    timestamp = models.DateTimeField(_('timestamp'), auto_now_add=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
-        verbose_name = _('search query')
-        verbose_name_plural = _('search queries')
-        ordering = ['-timestamp']
+        ordering = ['-created_at']
+        verbose_name_plural = 'Search Queries'
+        indexes = [
+            models.Index(fields=['-created_at']),
+            models.Index(fields=['query']),
+        ]
+    
+    def __str__(self):
+        return f'"{self.query}" - {self.created_at}'
+
+
+class CartEvent(models.Model):
+    """Track cart events."""
+    EVENT_ADD = 'add'
+    EVENT_REMOVE = 'remove'
+    EVENT_UPDATE = 'update'
+    EVENT_CHECKOUT_START = 'checkout_start'
+    EVENT_CHECKOUT_COMPLETE = 'checkout_complete'
+    EVENT_ABANDONED = 'abandoned'
+    EVENT_CHOICES = [
+        (EVENT_ADD, 'Add to Cart'),
+        (EVENT_REMOVE, 'Remove from Cart'),
+        (EVENT_UPDATE, 'Update Quantity'),
+        (EVENT_CHECKOUT_START, 'Start Checkout'),
+        (EVENT_CHECKOUT_COMPLETE, 'Complete Checkout'),
+        (EVENT_ABANDONED, 'Abandoned Cart'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    event_type = models.CharField(max_length=20, choices=EVENT_CHOICES)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    session_key = models.CharField(max_length=40, blank=True, null=True)
+    
+    product = models.ForeignKey(
+        'products.Product',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    quantity = models.IntegerField(default=1)
+    cart_value = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['event_type', '-created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.event_type} - {self.created_at}"
 
 
 class DailyStat(models.Model):
-    """
-    Daily aggregated statistics.
-    """
-    date = models.DateField(_('date'), unique=True, db_index=True)
+    """Daily aggregated statistics."""
+    date = models.DateField(unique=True)
     
-    # Visitors
-    total_visitors = models.PositiveIntegerField(_('visitors'), default=0)
-    unique_visitors = models.PositiveIntegerField(_('unique visitors'), default=0)
-    new_visitors = models.PositiveIntegerField(_('new visitors'), default=0)
-    
-    # Page views
-    total_page_views = models.PositiveIntegerField(_('page views'), default=0)
+    # Traffic
+    page_views = models.IntegerField(default=0)
+    unique_visitors = models.IntegerField(default=0)
+    new_visitors = models.IntegerField(default=0)
+    returning_visitors = models.IntegerField(default=0)
     
     # Products
-    product_views = models.PositiveIntegerField(_('product views'), default=0)
-    products_added_to_cart = models.PositiveIntegerField(_('add to cart'), default=0)
+    product_views = models.IntegerField(default=0)
+    products_added_to_cart = models.IntegerField(default=0)
     
     # Orders
-    orders_placed = models.PositiveIntegerField(_('orders'), default=0)
-    orders_revenue = models.DecimalField(_('revenue'), max_digits=12, decimal_places=2, default=Decimal('0'))
-    orders_average = models.DecimalField(_('avg order'), max_digits=12, decimal_places=2, default=Decimal('0'))
+    orders_count = models.IntegerField(default=0)
+    orders_revenue = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    average_order_value = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     
     # Conversion
-    cart_conversion_rate = models.DecimalField(_('cart rate'), max_digits=5, decimal_places=2, default=Decimal('0'))
-    checkout_conversion_rate = models.DecimalField(_('checkout rate'), max_digits=5, decimal_places=2, default=Decimal('0'))
+    checkout_starts = models.IntegerField(default=0)
+    checkout_completions = models.IntegerField(default=0)
+    conversion_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    cart_abandonment_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     
-    # Searches
-    total_searches = models.PositiveIntegerField(_('searches'), default=0)
+    # Users
+    new_registrations = models.IntegerField(default=0)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        verbose_name = _('daily stat')
-        verbose_name_plural = _('daily stats')
         ordering = ['-date']
+        verbose_name_plural = 'Daily Stats'
     
     def __str__(self):
-        return str(self.date)
+        return f"Stats for {self.date}"
 
 
-class SalesReport(models.Model):
-    """
-    Sales report snapshots.
-    """
-    class Period(models.TextChoices):
-        DAILY = 'daily', _('Daily')
-        WEEKLY = 'weekly', _('Weekly')
-        MONTHLY = 'monthly', _('Monthly')
-        YEARLY = 'yearly', _('Yearly')
+class ProductStat(models.Model):
+    """Product-level statistics."""
+    product = models.ForeignKey(
+        'products.Product',
+        on_delete=models.CASCADE,
+        related_name='stats'
+    )
+    date = models.DateField()
     
-    period = models.CharField(_('period'), max_length=10, choices=Period.choices)
-    start_date = models.DateField(_('start date'))
-    end_date = models.DateField(_('end date'))
+    views = models.IntegerField(default=0)
+    add_to_cart_count = models.IntegerField(default=0)
+    orders_count = models.IntegerField(default=0)
+    revenue = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     
-    # Revenue
-    gross_revenue = models.DecimalField(_('gross revenue'), max_digits=14, decimal_places=2, default=Decimal('0'))
-    net_revenue = models.DecimalField(_('net revenue'), max_digits=14, decimal_places=2, default=Decimal('0'))
-    
-    # Orders
-    total_orders = models.PositiveIntegerField(_('orders'), default=0)
-    average_order_value = models.DecimalField(_('AOV'), max_digits=12, decimal_places=2, default=Decimal('0'))
-    
-    # Products
-    units_sold = models.PositiveIntegerField(_('units sold'), default=0)
-    
-    # Discounts
-    total_discounts = models.DecimalField(_('discounts'), max_digits=12, decimal_places=2, default=Decimal('0'))
-    
-    # Refunds
-    total_refunds = models.DecimalField(_('refunds'), max_digits=12, decimal_places=2, default=Decimal('0'))
-    refund_count = models.PositiveIntegerField(_('refund count'), default=0)
-    
-    # Shipping
-    shipping_revenue = models.DecimalField(_('shipping'), max_digits=12, decimal_places=2, default=Decimal('0'))
-    
-    # Taxes
-    tax_collected = models.DecimalField(_('taxes'), max_digits=12, decimal_places=2, default=Decimal('0'))
-    
-    created_at = models.DateTimeField(_('created'), auto_now_add=True)
+    conversion_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     
     class Meta:
-        verbose_name = _('sales report')
-        verbose_name_plural = _('sales reports')
-        ordering = ['-end_date']
-        unique_together = [['period', 'start_date', 'end_date']]
+        ordering = ['-date']
+        unique_together = ['product', 'date']
+        verbose_name_plural = 'Product Stats'
     
     def __str__(self):
-        return f'{self.get_period_display()}: {self.start_date} - {self.end_date}'
+        return f"{self.product.name} - {self.date}"
+
+
+class CategoryStat(models.Model):
+    """Category-level statistics."""
+    category = models.ForeignKey(
+        'categories.Category',
+        on_delete=models.CASCADE,
+        related_name='stats'
+    )
+    date = models.DateField()
+    
+    views = models.IntegerField(default=0)
+    product_views = models.IntegerField(default=0)
+    orders_count = models.IntegerField(default=0)
+    revenue = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    
+    class Meta:
+        ordering = ['-date']
+        unique_together = ['category', 'date']
+        verbose_name_plural = 'Category Stats'
+    
+    def __str__(self):
+        return f"{self.category.name} - {self.date}"

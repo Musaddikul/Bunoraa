@@ -1,150 +1,125 @@
 /**
- * Cart Module
- * Shopping cart management with real-time updates.
+ * Cart API Module
+ * @module api/cart
  */
 
-import api from './client.js';
+const CartApi = (function() {
+    'use strict';
 
-class CartService {
-    constructor() {
-        this.cart = null;
-        this.listeners = new Set();
-    }
+    const CART_PATH = '/cart/';
 
-    // =========================================================================
-    // Event Management
-    // =========================================================================
-
-    subscribe(callback) {
-        this.listeners.add(callback);
-        return () => this.listeners.delete(callback);
-    }
-
-    notify() {
-        this.listeners.forEach(callback => callback(this.cart));
-        window.dispatchEvent(new CustomEvent('cart:updated', { detail: this.cart }));
-    }
-
-    // =========================================================================
-    // Cart Operations
-    // =========================================================================
-
-    async fetch() {
-        this.cart = await api.get('/cart/', false);
-        this.notify();
-        return this.cart;
-    }
-
-    async addItem(productId, variantId = null, quantity = 1) {
-        const response = await api.post('/cart/add/', {
-            product_id: productId,
-            variant_id: variantId,
-            quantity
-        }, false);
-        
-        this.cart = response.cart;
-        this.notify();
-        
-        // Show notification
-        window.dispatchEvent(new CustomEvent('notification:show', {
-            detail: {
-                type: 'success',
-                message: 'Added to cart',
-                action: { text: 'View Cart', url: '/cart/' }
-            }
-        }));
-        
-        return response;
-    }
-
-    async updateItem(itemId, quantity) {
-        const response = await api.put(`/cart/items/${itemId}/`, { quantity }, false);
-        this.cart = response.cart;
-        this.notify();
-        return response;
-    }
-
-    async removeItem(itemId) {
-        const response = await api.delete(`/cart/items/${itemId}/remove/`, null, false);
-        this.cart = response.cart;
-        this.notify();
-        return response;
-    }
-
-    async clear() {
-        const response = await api.post('/cart/clear/', {}, false);
-        this.cart = response.cart;
-        this.notify();
-        return response;
-    }
-
-    // =========================================================================
-    // Coupon Management
-    // =========================================================================
-
-    async applyCoupon(code) {
-        try {
-            const response = await api.post('/cart/coupon/apply/', { code }, false);
-            this.cart = response.cart;
-            this.notify();
-            
-            window.dispatchEvent(new CustomEvent('notification:show', {
-                detail: { type: 'success', message: 'Coupon applied!' }
-            }));
-            
-            return response;
-        } catch (error) {
-            window.dispatchEvent(new CustomEvent('notification:show', {
-                detail: { type: 'error', message: error.data?.error || 'Invalid coupon' }
-            }));
-            throw error;
+    async function getCart() {
+        const response = await ApiClient.get(CART_PATH);
+        if (response.success) {
+            updateBadge(response.data);
+            window.dispatchEvent(new CustomEvent('cart:updated', { detail: response.data }));
         }
-    }
-
-    async removeCoupon() {
-        const response = await api.post('/cart/coupon/remove/', {}, false);
-        this.cart = response.cart;
-        this.notify();
         return response;
     }
 
-    // =========================================================================
-    // Getters
-    // =========================================================================
+    async function addItem(productId, quantity = 1, variantId = null) {
+        const data = { product_id: productId, quantity };
+        if (variantId) data.variant_id = variantId;
 
-    getCart() {
-        return this.cart;
-    }
-
-    getItemCount() {
-        return this.cart?.item_count || 0;
-    }
-
-    getSubtotal() {
-        return parseFloat(this.cart?.subtotal || 0);
-    }
-
-    getTotal() {
-        return parseFloat(this.cart?.total || 0);
-    }
-
-    isEmpty() {
-        return this.cart?.is_empty ?? true;
-    }
-
-    hasItem(productId, variantId = null) {
-        if (!this.cart?.items) return false;
+        const response = await ApiClient.post(`${CART_PATH}add/`, data);
         
-        return this.cart.items.some(item => {
-            if (item.product.id !== productId) return false;
-            if (variantId && item.variant?.id !== variantId) return false;
-            return true;
+        if (response.success) {
+            updateBadge(response.data?.cart);
+            window.dispatchEvent(new CustomEvent('cart:item-added', { detail: response.data }));
+            window.dispatchEvent(new CustomEvent('cart:updated', { detail: response.data?.cart }));
+        }
+        
+        return response;
+    }
+
+    async function updateItem(itemId, quantity) {
+        const response = await ApiClient.patch(`${CART_PATH}items/${itemId}/`, { quantity });
+        
+        if (response.success) {
+            updateBadge(response.data?.cart);
+            window.dispatchEvent(new CustomEvent('cart:item-updated', { detail: response.data }));
+            window.dispatchEvent(new CustomEvent('cart:updated', { detail: response.data?.cart }));
+        }
+        
+        return response;
+    }
+
+    async function removeItem(itemId) {
+        const response = await ApiClient.delete(`${CART_PATH}items/${itemId}/`);
+        
+        if (response.success) {
+            updateBadge(response.data?.cart);
+            window.dispatchEvent(new CustomEvent('cart:item-removed', { detail: { itemId, cart: response.data?.cart } }));
+            window.dispatchEvent(new CustomEvent('cart:updated', { detail: response.data?.cart }));
+        }
+        
+        return response;
+    }
+
+    async function clearCart() {
+        const response = await ApiClient.delete(`${CART_PATH}clear/`);
+        
+        if (response.success) {
+            updateBadge({ item_count: 0 });
+            window.dispatchEvent(new CustomEvent('cart:cleared'));
+            window.dispatchEvent(new CustomEvent('cart:updated', { detail: response.data?.cart }));
+        }
+        
+        return response;
+    }
+
+    async function applyCoupon(code) {
+        const response = await ApiClient.post(`${CART_PATH}coupon/`, { code });
+        
+        if (response.success) {
+            window.dispatchEvent(new CustomEvent('cart:coupon-applied', { detail: response.data }));
+            window.dispatchEvent(new CustomEvent('cart:updated', { detail: response.data?.cart }));
+        }
+        
+        return response;
+    }
+
+    async function removeCoupon() {
+        const response = await ApiClient.delete(`${CART_PATH}coupon/`);
+        
+        if (response.success) {
+            window.dispatchEvent(new CustomEvent('cart:coupon-removed'));
+            window.dispatchEvent(new CustomEvent('cart:updated', { detail: response.data?.cart }));
+        }
+        
+        return response;
+    }
+
+    async function validate() {
+        return ApiClient.get(`${CART_PATH}validate/`);
+    }
+
+    async function merge() {
+        return ApiClient.post(`${CART_PATH}merge/`, {}, { requiresAuth: true });
+    }
+
+    function updateBadge(cart) {
+        const count = cart?.item_count || cart?.items?.length || 0;
+        const badges = document.querySelectorAll('[data-cart-count]');
+        
+        badges.forEach(badge => {
+            badge.textContent = count > 99 ? '99+' : count;
+            badge.classList.toggle('hidden', count === 0);
         });
     }
-}
 
-// Export singleton
-const cart = new CartService();
-export default cart;
-export { CartService };
-export { cart as cartService };
+    return {
+        getCart,
+        addItem,
+        updateItem,
+        removeItem,
+        clearCart,
+        applyCoupon,
+        removeCoupon,
+        validate,
+        merge,
+        updateBadge
+    };
+})();
+
+window.CartApi = CartApi;

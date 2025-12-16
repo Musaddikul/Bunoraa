@@ -1,94 +1,73 @@
 /**
- * Orders Module
- * Order management and checkout functionality.
+ * Orders API Module
+ * @module api/orders
  */
 
-import api from './client.js';
+const OrdersApi = (function() {
+    'use strict';
 
-class OrderService {
-    // =========================================================================
-    // Order List
-    // =========================================================================
+    const ORDERS_PATH = '/orders/orders/';
 
-    async getOrders(params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        return api.get(`/orders/my-orders/${queryString ? '?' + queryString : ''}`);
+    async function getOrders(params = {}) {
+        return ApiClient.get(ORDERS_PATH, {
+            page: params.page || 1,
+            page_size: params.pageSize || 10,
+            status: params.status || undefined,
+            ordering: params.ordering || '-created_at'
+        }, { requiresAuth: true });
     }
 
-    async getOrder(orderNumber) {
-        return api.get(`/orders/my-orders/${orderNumber}/`);
+    async function getOrder(orderId) {
+        return ApiClient.get(`${ORDERS_PATH}${orderId}/`, {}, { requiresAuth: true });
     }
 
-    async getOrderByUuid(uuid) {
-        return api.get(`/orders/track/${uuid}/`);
+    async function getOrderByNumber(orderNumber, email = null) {
+        const params = { order_number: orderNumber };
+        if (email) params.email = email;
+        return ApiClient.get(`${ORDERS_PATH}by-number/`, params);
     }
 
-    // =========================================================================
-    // Checkout
-    // =========================================================================
-
-    async checkout(data) {
-        return api.post('/orders/checkout/', data);
+    async function trackOrder(orderNumber, email = null) {
+        const params = { order_number: orderNumber };
+        if (email) params.email = email;
+        return ApiClient.get(`${ORDERS_PATH}track/`, params);
     }
 
-    async validateCheckout(data) {
-        return api.post('/orders/checkout/validate/', data);
+    async function cancelOrder(orderId, reason = '') {
+        return ApiClient.post(`${ORDERS_PATH}${orderId}/cancel/`, { reason }, { requiresAuth: true });
     }
 
-    // =========================================================================
-    // Order Actions
-    // =========================================================================
-
-    async cancelOrder(orderNumber, reason = '') {
-        return api.post(`/orders/my-orders/${orderNumber}/cancel/`, { reason });
+    async function requestReturn(orderId, items, reason) {
+        return ApiClient.post(`${ORDERS_PATH}${orderId}/return/`, {
+            items,
+            reason
+        }, { requiresAuth: true });
     }
 
-    async trackOrder(orderNumber) {
-        return api.get(`/orders/my-orders/${orderNumber}/track/`);
+    async function getInvoice(orderId) {
+        return ApiClient.get(`${ORDERS_PATH}${orderId}/invoice/`, {}, { requiresAuth: true });
     }
 
-    // =========================================================================
-    // Addresses
-    // =========================================================================
-
-    async getAddresses() {
-        return api.get('/accounts/addresses/');
+    async function reorder(orderId) {
+        const response = await ApiClient.post(`${ORDERS_PATH}${orderId}/reorder/`, {}, { requiresAuth: true });
+        
+        if (response.success) {
+            window.dispatchEvent(new CustomEvent('cart:updated'));
+        }
+        
+        return response;
     }
 
-    async getAddress(id) {
-        return api.get(`/accounts/addresses/${id}/`);
-    }
+    return {
+        getOrders,
+        getOrder,
+        getOrderByNumber,
+        trackOrder,
+        cancelOrder,
+        requestReturn,
+        getInvoice,
+        reorder
+    };
+})();
 
-    async createAddress(data) {
-        return api.post('/accounts/addresses/', data);
-    }
-
-    async updateAddress(id, data) {
-        return api.patch(`/accounts/addresses/${id}/`, data);
-    }
-
-    async deleteAddress(id) {
-        return api.delete(`/accounts/addresses/${id}/`);
-    }
-
-    async setDefaultAddress(id) {
-        return api.post(`/accounts/addresses/${id}/set-default/`, {});
-    }
-
-    // =========================================================================
-    // Shipping
-    // =========================================================================
-
-    async getShippingMethods(data) {
-        return api.post('/shipping/calculate/', data, false);
-    }
-
-    async getShippingZones() {
-        return api.get('/shipping/zones/', false);
-    }
-}
-
-// Export singleton
-const orders = new OrderService();
-export default orders;
-export { OrderService };
+window.OrdersApi = OrdersApi;

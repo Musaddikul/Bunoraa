@@ -1,15 +1,13 @@
-# core/pagination.py
 """
-Bunoraa Pagination Classes
-Custom pagination for REST API responses.
+Custom pagination classes
 """
-from rest_framework.pagination import PageNumberPagination, CursorPagination
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 
-class StandardResultsPagination(PageNumberPagination):
+class StandardResultsSetPagination(PageNumberPagination):
     """
-    Standard page number pagination with customizable page size.
+    Standard pagination with consistent response format.
     """
     page_size = 20
     page_size_query_param = 'page_size'
@@ -17,19 +15,23 @@ class StandardResultsPagination(PageNumberPagination):
     
     def get_paginated_response(self, data):
         return Response({
-            'pagination': {
-                'count': self.page.paginator.count,
-                'total_pages': self.page.paginator.num_pages,
-                'current_page': self.page.number,
-                'page_size': self.get_page_size(self.request),
-                'next': self.get_next_link(),
-                'previous': self.get_previous_link(),
-            },
-            'results': data
+            'success': True,
+            'message': 'Data retrieved successfully.',
+            'data': data,
+            'meta': {
+                'pagination': {
+                    'count': self.page.paginator.count,
+                    'next': self.get_next_link(),
+                    'previous': self.get_previous_link(),
+                    'page': self.page.number,
+                    'page_size': self.get_page_size(self.request),
+                    'total_pages': self.page.paginator.num_pages,
+                }
+            }
         })
 
 
-class LargeResultsPagination(PageNumberPagination):
+class LargeResultsSetPagination(PageNumberPagination):
     """
     Pagination for large result sets.
     """
@@ -39,21 +41,25 @@ class LargeResultsPagination(PageNumberPagination):
     
     def get_paginated_response(self, data):
         return Response({
-            'pagination': {
-                'count': self.page.paginator.count,
-                'total_pages': self.page.paginator.num_pages,
-                'current_page': self.page.number,
-                'page_size': self.get_page_size(self.request),
-                'next': self.get_next_link(),
-                'previous': self.get_previous_link(),
-            },
-            'results': data
+            'success': True,
+            'message': 'Data retrieved successfully.',
+            'data': data,
+            'meta': {
+                'pagination': {
+                    'count': self.page.paginator.count,
+                    'next': self.get_next_link(),
+                    'previous': self.get_previous_link(),
+                    'page': self.page.number,
+                    'page_size': self.get_page_size(self.request),
+                    'total_pages': self.page.paginator.num_pages,
+                }
+            }
         })
 
 
-class SmallResultsPagination(PageNumberPagination):
+class SmallResultsSetPagination(PageNumberPagination):
     """
-    Pagination for small result sets (reviews, comments, etc.).
+    Pagination for small result sets.
     """
     page_size = 10
     page_size_query_param = 'page_size'
@@ -61,76 +67,17 @@ class SmallResultsPagination(PageNumberPagination):
     
     def get_paginated_response(self, data):
         return Response({
-            'pagination': {
-                'count': self.page.paginator.count,
-                'total_pages': self.page.paginator.num_pages,
-                'current_page': self.page.number,
-                'page_size': self.get_page_size(self.request),
-                'next': self.get_next_link(),
-                'previous': self.get_previous_link(),
-            },
-            'results': data
-        })
-
-
-class ProductCursorPagination(CursorPagination):
-    """
-    Cursor-based pagination for infinite scroll on product listings.
-    More efficient for large datasets and real-time updates.
-    """
-    page_size = 24
-    ordering = '-created_at'
-    cursor_query_param = 'cursor'
-    
-    def get_paginated_response(self, data):
-        return Response({
-            'pagination': {
-                'next': self.get_next_link(),
-                'previous': self.get_previous_link(),
-            },
-            'results': data
-        })
-
-
-class ReviewPagination(PageNumberPagination):
-    """
-    Pagination specifically for reviews.
-    """
-    page_size = 5
-    page_size_query_param = 'page_size'
-    max_page_size = 20
-    
-    def get_paginated_response(self, data):
-        return Response({
-            'pagination': {
-                'count': self.page.paginator.count,
-                'total_pages': self.page.paginator.num_pages,
-                'current_page': self.page.number,
-                'page_size': self.get_page_size(self.request),
-                'next': self.get_next_link(),
-                'previous': self.get_previous_link(),
-            },
-            'results': data
-        })
-
-
-class NotificationPagination(PageNumberPagination):
-    """
-    Pagination for notifications.
-    """
-    page_size = 15
-    page_size_query_param = 'page_size'
-    max_page_size = 50
-    
-    def get_paginated_response(self, data):
-        return Response({
-            'pagination': {
-                'count': self.page.paginator.count,
-                'unread_count': getattr(self, 'unread_count', 0),
-                'total_pages': self.page.paginator.num_pages,
-                'current_page': self.page.number,
-                'next': self.get_next_link(),
-                'previous': self.get_previous_link(),
-            },
-            'results': data
+            'success': True,
+            'message': 'Data retrieved successfully.',
+            'data': data,
+            'meta': {
+                'pagination': {
+                    'count': self.page.paginator.count,
+                    'next': self.get_next_link(),
+                    'previous': self.get_previous_link(),
+                    'page': self.page.number,
+                    'page_size': self.get_page_size(self.request),
+                    'total_pages': self.page.paginator.num_pages,
+                }
+            }
         })

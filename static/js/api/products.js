@@ -1,142 +1,105 @@
 /**
- * Products Module
- * Product listing, filtering, and search functionality.
+ * Products API Module
+ * @module api/products
  */
 
-import api from './client.js';
+const ProductsApi = (function() {
+    'use strict';
 
-class ProductService {
-    // =========================================================================
-    // Product Listing
-    // =========================================================================
+    async function getProducts(params = {}) {
+        const queryParams = {
+            page: params.page || 1,
+            page_size: params.pageSize || 20,
+            ordering: params.ordering || '-created_at',
+            search: params.search || undefined,
+            category: params.category || undefined,
+            tag: params.tag || undefined,
+            min_price: params.minPrice || undefined,
+            max_price: params.maxPrice || undefined,
+            in_stock: params.inStock ? 'true' : undefined,
+            is_featured: params.featured ? 'true' : undefined,
+            is_on_sale: params.onSale ? 'true' : undefined
+        };
 
-    async getProducts(params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        const endpoint = `/products/${queryString ? '?' + queryString : ''}`;
-        return api.get(endpoint, false);
+        return ApiClient.get('/products/', queryParams, { useCache: true, cacheTTL: 60000 });
     }
 
-    async getProduct(slug) {
-        return api.get(`/products/${slug}/`, false);
+    async function getProduct(idOrSlug) {
+        return ApiClient.get(`/products/${idOrSlug}/`, {}, { useCache: true, cacheTTL: 120000 });
     }
 
-    async getProductById(id) {
-        return api.get(`/products/by-id/${id}/`, false);
+    async function getFeatured(limit = 8) {
+        return ApiClient.get('/products/', { is_featured: 'true', page_size: limit }, { useCache: true });
     }
 
-    // =========================================================================
-    // Categories
-    // =========================================================================
-
-    async getCategories() {
-        return api.get('/categories/', false);
+    async function getNewArrivals(limit = 10) {
+        return ApiClient.get('/products/', { ordering: '-created_at', page_size: limit }, { useCache: true });
     }
 
-    async getCategoryTree() {
-        return api.get('/categories/tree/', false);
+    async function getBestSellers(limit = 10) {
+        return ApiClient.get('/products/', { ordering: '-sold_count', page_size: limit }, { useCache: true });
     }
 
-    async getCategoryProducts(slug, params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        return api.get(`/categories/${slug}/products/${queryString ? '?' + queryString : ''}`, false);
+    async function getOnSale(limit = 10) {
+        return ApiClient.get('/products/', { is_on_sale: 'true', page_size: limit }, { useCache: true });
     }
 
-    // =========================================================================
-    // Brands
-    // =========================================================================
-
-    async getBrands() {
-        return api.get('/products/brands/', false);
+    async function getRelated(productId, limit = 6) {
+        return ApiClient.get(`/products/${productId}/related/`, { limit }, { useCache: true });
     }
 
-    async getBrand(slug) {
-        return api.get(`/products/brands/${slug}/`, false);
-    }
-
-    async getBrandProducts(slug, params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        return api.get(`/products/brands/${slug}/products/${queryString ? '?' + queryString : ''}`, false);
-    }
-
-    // =========================================================================
-    // Search
-    // =========================================================================
-
-    async search(query, params = {}) {
-        return api.get(`/products/search/?q=${encodeURIComponent(query)}&${new URLSearchParams(params)}`, false);
-    }
-
-    async getSearchSuggestions(query) {
-        return api.get(`/products/autocomplete/?q=${encodeURIComponent(query)}`, false);
-    }
-
-    // =========================================================================
-    // Filters
-    // =========================================================================
-
-    async getFilters(categorySlug = null) {
-        const endpoint = categorySlug 
-            ? `/products/filters/?category=${categorySlug}`
-            : '/products/filters/';
-        return api.get(endpoint, false);
-    }
-
-    // =========================================================================
-    // Reviews
-    // =========================================================================
-
-    async getProductReviews(productId, params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        return api.get(`/reviews/products/${productId}/${queryString ? '?' + queryString : ''}`, false);
-    }
-
-    async getReviewStats(productId) {
-        return api.get(`/reviews/products/${productId}/stats/`, false);
-    }
-
-    async submitReview(productId, data) {
-        return api.post('/reviews/my-reviews/', {
-            product: productId,
-            ...data
+    async function search(query, params = {}) {
+        return ApiClient.get('/products/', {
+            search: query,
+            page: params.page || 1,
+            page_size: params.pageSize || 20,
+            ordering: params.ordering || '-created_at',
+            category: params.category || undefined,
+            min_price: params.minPrice || undefined,
+            max_price: params.maxPrice || undefined
         });
     }
 
-    async voteReview(reviewId, isHelpful) {
-        return api.post(`/reviews/${reviewId}/vote/`, { is_helpful: isHelpful });
+    async function getReviews(productId, params = {}) {
+        return ApiClient.get('/reviews/', {
+            product: productId,
+            page: params.page || 1,
+            page_size: params.pageSize || 10,
+            ordering: params.ordering || '-created_at'
+        }, { useCache: true });
     }
 
-    // =========================================================================
-    // Related Products
-    // =========================================================================
-
-    async getRelatedProducts(productId) {
-        return api.get(`/products/${productId}/related/`, false);
+    async function submitReview(productId, data) {
+        return ApiClient.post('/reviews/', {
+            product: productId,
+            rating: data.rating,
+            title: data.title,
+            content: data.content
+        }, { requiresAuth: true });
     }
 
-    async getFrequentlyBoughtTogether(productId) {
-        return api.get(`/products/${productId}/frequently-bought/`, false);
+    async function getTags() {
+        return ApiClient.get('/products/tags/', {}, { useCache: true, cacheTTL: 300000 });
     }
 
-    // =========================================================================
-    // Product Tracking
-    // =========================================================================
-
-    async trackProductView(productId) {
-        try {
-            await api.post(`/products/${productId}/view/`, {}, false);
-        } catch (error) {
-            // Silently fail
-        }
+    async function getAttributes() {
+        return ApiClient.get('/products/attributes/', {}, { useCache: true, cacheTTL: 300000 });
     }
 
-    // Alias for trackProductView to match page module naming
-    async trackView(slug) {
-        return this.trackProductView(slug);
-    }
-}
+    return {
+        getProducts,
+        getProduct,
+        getFeatured,
+        getNewArrivals,
+        getBestSellers,
+        getOnSale,
+        getRelated,
+        search,
+        getReviews,
+        submitReview,
+        getTags,
+        getAttributes
+    };
+})();
 
-// Export singleton
-const products = new ProductService();
-export default products;
-export { ProductService };
-export { products as productsApi };
+window.ProductsApi = ProductsApi;

@@ -1,6 +1,4 @@
-# apps/payments/__init__.py
 """
-Payments App
-Payment processing and management.
+Payments app
 """
 default_app_config = 'apps.payments.apps.PaymentsConfig'

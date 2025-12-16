@@ -1,6 +1,2 @@
-# apps/orders/__init__.py
-"""
-Orders App
-Order management and processing.
-"""
+# Orders app
 default_app_config = 'apps.orders.apps.OrdersConfig'

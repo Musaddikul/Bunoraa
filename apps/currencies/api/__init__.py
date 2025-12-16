@@ -1,0 +1,3 @@
+"""
+Currencies API Package
+"""

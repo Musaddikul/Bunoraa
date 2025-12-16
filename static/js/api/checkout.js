@@ -1,127 +1,76 @@
-// static/js/api/checkout.js
 /**
  * Checkout API Module
- * Handles checkout process and order creation
+ * @module api/checkout
  */
 
-import api from './client.js';
+const CheckoutApi = (function() {
+    'use strict';
 
-const CheckoutAPI = {
-    /**
-     * Initialize checkout session
-     */
-    async initCheckout() {
-        return api.post('/checkout/init/');
-    },
+    const CHECKOUT_PATH = '/checkout/checkout/';
 
-    /**
-     * Get checkout data (addresses, shipping, etc.)
-     */
-    async getCheckoutData() {
-        return api.get('/checkout/');
-    },
-
-    /**
-     * Update shipping address
-     */
-    async setShippingAddress(addressId) {
-        return api.patch('/checkout/shipping-address/', { address_id: addressId });
-    },
-
-    /**
-     * Create new shipping address during checkout
-     */
-    async createShippingAddress(addressData) {
-        return api.post('/checkout/shipping-address/', addressData);
-    },
-
-    /**
-     * Update billing address
-     */
-    async setBillingAddress(addressId) {
-        return api.patch('/checkout/billing-address/', { address_id: addressId });
-    },
-
-    /**
-     * Set same as shipping
-     */
-    async useSameAsBilling(useSame) {
-        return api.patch('/checkout/billing-same/', { same_as_shipping: useSame });
-    },
-
-    /**
-     * Get available payment methods
-     */
-    async getPaymentMethods() {
-        return api.get('/checkout/payment-methods/');
-    },
-
-    /**
-     * Set payment method
-     */
-    async setPaymentMethod(methodId) {
-        return api.patch('/checkout/payment-method/', { method_id: methodId });
-    },
-
-    /**
-     * Add customer note
-     */
-    async setCustomerNote(note) {
-        return api.patch('/checkout/note/', { note });
-    },
-
-    /**
-     * Place order
-     */
-    async placeOrder() {
-        return api.post('/checkout/place-order/');
-    },
-
-    /**
-     * Process payment (for immediate payment methods)
-     */
-    async processPayment(orderNumber, paymentData) {
-        return api.post(`/checkout/process-payment/${orderNumber}/`, paymentData);
-    },
-
-    /**
-     * Validate checkout before submission
-     */
-    async validateCheckout() {
-        return api.post('/checkout/validate/');
-    },
-
-    /**
-     * Get order summary
-     */
-    async getOrderSummary() {
-        return api.get('/checkout/summary/');
-    },
-
-    /**
-     * Create Stripe payment intent
-     */
-    async createPaymentIntent() {
-        return api.post('/checkout/create-payment-intent/');
-    },
-
-    /**
-     * Confirm Stripe payment
-     */
-    async confirmStripePayment(paymentIntentId) {
-        return api.post('/checkout/confirm-stripe/', { payment_intent_id: paymentIntentId });
-    },
-
-    /**
-     * Initialize SSLCommerz payment
-     */
-    async initSSLCommerz() {
-        return api.post('/checkout/sslcommerz/init/');
+    async function getSession() {
+        return ApiClient.get(CHECKOUT_PATH);
     }
-};
 
-export default CheckoutAPI;
-export { CheckoutAPI as checkoutApi };
+    async function startCheckout() {
+        return ApiClient.post(`${CHECKOUT_PATH}start/`);
+    }
 
-// Attach to window
-window.CheckoutAPI = CheckoutAPI;
+    async function updateShipping(data) {
+        return ApiClient.post(`${CHECKOUT_PATH}shipping/`, data);
+    }
+
+    async function getShippingOptions() {
+        return ApiClient.get(`${CHECKOUT_PATH}shipping-options/`);
+    }
+
+    async function setShippingMethod(method) {
+        return ApiClient.post(`${CHECKOUT_PATH}shipping-method/`, { method });
+    }
+
+    async function setPaymentMethod(method, data = {}) {
+        return ApiClient.post(`${CHECKOUT_PATH}payment-method/`, {
+            payment_method: method,
+            ...data
+        });
+    }
+
+    async function createPaymentIntent() {
+        return ApiClient.post(`${CHECKOUT_PATH}payment-intent/`);
+    }
+
+    async function getSummary() {
+        return ApiClient.get(`${CHECKOUT_PATH}summary/`);
+    }
+
+    async function complete(paymentData = {}) {
+        const response = await ApiClient.post(`${CHECKOUT_PATH}complete/`, paymentData);
+        
+        if (response.success) {
+            ApiClient.clearCache('/cart/');
+            window.dispatchEvent(new CustomEvent('checkout:completed', { detail: response.data }));
+            window.dispatchEvent(new CustomEvent('cart:cleared'));
+        }
+        
+        return response;
+    }
+
+    async function validateStep(step, data) {
+        return ApiClient.post(`${CHECKOUT_PATH}validate/${step}/`, data);
+    }
+
+    return {
+        getSession,
+        startCheckout,
+        updateShipping,
+        getShippingOptions,
+        setShippingMethod,
+        setPaymentMethod,
+        createPaymentIntent,
+        getSummary,
+        complete,
+        validateStep
+    };
+})();
+
+window.CheckoutApi = CheckoutApi;

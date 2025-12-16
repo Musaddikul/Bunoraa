@@ -1,8 +1,0 @@
-<!-- cart/templates/cart/partials/_empty_cart.html -->
- {% load static %}
-<div class="p-8 text-center">
-  <img src="{% static 'images/empty_cart.svg' %}" class="mx-auto h-32 mb-4" alt="Empty Cart">
-  <h2 class="text-xl font-bold mb-2">Your cart is empty</h2>
-  <p class="text-gray-500 mb-4">Browse products and add to cart!</p>
-  <a href="{% url 'products:all_products' %}" class="btn btn-outline-primary">Continue Shopping</a>
-</div>

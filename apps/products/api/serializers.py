@@ -1,0 +1,272 @@
+"""
+Product API serializers
+"""
+from rest_framework import serializers
+from ..models import (
+    Product, ProductImage, ProductVariant, ProductAttribute,
+    Tag, Attribute, AttributeValue
+)
+
+
+class TagSerializer(serializers.ModelSerializer):
+    """Tag serializer."""
+    
+    class Meta:
+        model = Tag
+        fields = ['id', 'name', 'slug']
+
+
+class AttributeValueSerializer(serializers.ModelSerializer):
+    """Attribute value serializer."""
+    
+    attribute_name = serializers.CharField(source='attribute.name', read_only=True)
+    
+    class Meta:
+        model = AttributeValue
+        fields = ['id', 'attribute_name', 'value']
+
+
+class AttributeSerializer(serializers.ModelSerializer):
+    """Attribute serializer with values."""
+    
+    values = AttributeValueSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Attribute
+        fields = ['id', 'name', 'slug', 'values']
+
+
+class ProductImageSerializer(serializers.ModelSerializer):
+    """Product image serializer."""
+    
+    url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ProductImage
+        fields = ['id', 'url', 'alt_text', 'is_primary', 'order']
+    
+    def get_url(self, obj):
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
+
+
+class ProductVariantSerializer(serializers.ModelSerializer):
+    """Product variant serializer."""
+    
+    price = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    attributes = AttributeValueSerializer(many=True, read_only=True)
+    image_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ProductVariant
+        fields = [
+            'id', 'name', 'sku', 'price', 'price_modifier',
+            'stock_quantity', 'is_in_stock', 'attributes', 'image_url'
+        ]
+    
+    def get_image_url(self, obj):
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
+
+
+class ProductListSerializer(serializers.ModelSerializer):
+    """Serializer for product listings (compact)."""
+    
+    primary_image = serializers.SerializerMethodField()
+    current_price = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    discount_percentage = serializers.IntegerField(read_only=True)
+    is_on_sale = serializers.BooleanField(read_only=True)
+    is_in_stock = serializers.BooleanField(read_only=True)
+    average_rating = serializers.FloatField(read_only=True)
+    review_count = serializers.IntegerField(read_only=True)
+    
+    class Meta:
+        model = Product
+        fields = [
+            'id', 'name', 'slug', 'sku', 'short_description',
+            'price', 'sale_price', 'current_price', 'discount_percentage',
+            'is_on_sale', 'is_in_stock', 'is_featured', 'is_new',
+            'primary_image', 'average_rating', 'review_count',
+            'created_at'
+        ]
+    
+    def get_primary_image(self, obj):
+        image = obj.primary_image
+        if image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(image.image.url)
+            return image.image.url
+        return None
+
+
+class ProductDetailSerializer(serializers.ModelSerializer):
+    """Detailed product serializer."""
+    
+    images = ProductImageSerializer(many=True, read_only=True)
+    variants = ProductVariantSerializer(many=True, read_only=True)
+    tags = TagSerializer(many=True, read_only=True)
+    categories = serializers.SerializerMethodField()
+    current_price = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    discount_percentage = serializers.IntegerField(read_only=True)
+    is_on_sale = serializers.BooleanField(read_only=True)
+    is_in_stock = serializers.BooleanField(read_only=True)
+    is_low_stock = serializers.BooleanField(read_only=True)
+    average_rating = serializers.FloatField(read_only=True)
+    review_count = serializers.IntegerField(read_only=True)
+    breadcrumbs = serializers.SerializerMethodField()
+    related_products = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Product
+        fields = [
+            'id', 'name', 'slug', 'sku', 'description', 'short_description',
+            'price', 'sale_price', 'current_price', 'discount_percentage',
+            'stock_quantity', 'is_on_sale', 'is_in_stock', 'is_low_stock',
+            'is_featured', 'is_new', 'is_bestseller',
+            'weight', 'length', 'width', 'height',
+            'meta_title', 'meta_description',
+            'images', 'variants', 'tags', 'categories',
+            'average_rating', 'review_count', 'view_count', 'sold_count',
+            'breadcrumbs', 'related_products',
+            'created_at', 'updated_at'
+        ]
+    
+    def get_categories(self, obj):
+        from apps.categories.api.serializers import CategorySerializer
+        return CategorySerializer(
+            obj.categories.filter(is_active=True, is_deleted=False),
+            many=True,
+            context=self.context
+        ).data
+    
+    def get_breadcrumbs(self, obj):
+        breadcrumbs = [{'name': 'Home', 'slug': ''}]
+        category = obj.categories.first()
+        if category:
+            for crumb in category.get_breadcrumbs():
+                breadcrumbs.append(crumb)
+        return breadcrumbs
+    
+    def get_related_products(self, obj):
+        from ..services import ProductService
+        related = ProductService.get_related_products(obj, limit=4)
+        return ProductListSerializer(related, many=True, context=self.context).data
+
+
+class ProductCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating products."""
+    
+    categories = serializers.ListField(
+        child=serializers.UUIDField(),
+        required=False,
+        write_only=True
+    )
+    tags = serializers.ListField(
+        child=serializers.UUIDField(),
+        required=False,
+        write_only=True
+    )
+    
+    class Meta:
+        model = Product
+        fields = [
+            'name', 'slug', 'sku', 'description', 'short_description',
+            'price', 'sale_price', 'cost_price',
+            'stock_quantity', 'low_stock_threshold', 'track_inventory', 'allow_backorder',
+            'categories', 'tags',
+            'weight', 'length', 'width', 'height',
+            'meta_title', 'meta_description', 'meta_keywords',
+            'is_active', 'is_featured', 'is_new', 'is_bestseller'
+        ]
+        extra_kwargs = {
+            'slug': {'required': False},
+            'sku': {'required': False},
+        }
+    
+    def create(self, validated_data):
+        category_ids = validated_data.pop('categories', [])
+        tag_ids = validated_data.pop('tags', [])
+        
+        product = Product.objects.create(**validated_data)
+        
+        if category_ids:
+            from apps.categories.models import Category
+            categories = Category.objects.filter(id__in=category_ids)
+            product.categories.set(categories)
+        
+        if tag_ids:
+            tags = Tag.objects.filter(id__in=tag_ids)
+            product.tags.set(tags)
+        
+        return product
+
+
+class ProductUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating products."""
+    
+    categories = serializers.ListField(
+        child=serializers.UUIDField(),
+        required=False,
+        write_only=True
+    )
+    tags = serializers.ListField(
+        child=serializers.UUIDField(),
+        required=False,
+        write_only=True
+    )
+    
+    class Meta:
+        model = Product
+        fields = [
+            'name', 'slug', 'sku', 'description', 'short_description',
+            'price', 'sale_price', 'cost_price',
+            'stock_quantity', 'low_stock_threshold', 'track_inventory', 'allow_backorder',
+            'categories', 'tags',
+            'weight', 'length', 'width', 'height',
+            'meta_title', 'meta_description', 'meta_keywords',
+            'is_active', 'is_featured', 'is_new', 'is_bestseller'
+        ]
+    
+    def update(self, instance, validated_data):
+        category_ids = validated_data.pop('categories', None)
+        tag_ids = validated_data.pop('tags', None)
+        
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        if category_ids is not None:
+            from apps.categories.models import Category
+            categories = Category.objects.filter(id__in=category_ids)
+            instance.categories.set(categories)
+        
+        if tag_ids is not None:
+            tags = Tag.objects.filter(id__in=tag_ids)
+            instance.tags.set(tags)
+        
+        return instance
+
+
+class ProductImageCreateSerializer(serializers.ModelSerializer):
+    """Serializer for uploading product images."""
+    
+    class Meta:
+        model = ProductImage
+        fields = ['image', 'alt_text', 'is_primary', 'order']
+
+
+class BulkStockUpdateSerializer(serializers.Serializer):
+    """Serializer for bulk stock updates."""
+    
+    product_id = serializers.UUIDField()
+    quantity = serializers.IntegerField(min_value=0)
+    operation = serializers.ChoiceField(choices=['set', 'add', 'subtract'], default='set')

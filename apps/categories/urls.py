@@ -1,17 +1,12 @@
-# apps/categories/urls.py
 """
-Category URLs
+Category URL configuration - Frontend views
 """
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import CategoryViewSet, CategoryByPathView
+from django.urls import path
+from . import views
 
 app_name = 'categories'
 
-router = DefaultRouter()
-router.register('', CategoryViewSet, basename='category')
-
 urlpatterns = [
-    path('by-path/<path:category_path>/', CategoryByPathView.as_view(), name='by_path'),
-    path('', include(router.urls)),
+    path('', views.CategoryListView.as_view(), name='category_list'),
+    path('<slug:slug>/', views.CategoryDetailView.as_view(), name='detail'),
 ]

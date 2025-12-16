@@ -1,66 +1,63 @@
-# apps/categories/admin.py
 """
-Category Admin Configuration
+Category admin configuration
 """
 from django.contrib import admin
-# format_html available if needed
-from mptt.admin import DraggableMPTTAdmin
+from django.utils.html import format_html
 from .models import Category
 
 
 @admin.register(Category)
-class CategoryAdmin(DraggableMPTTAdmin):
+class CategoryAdmin(admin.ModelAdmin):
+    """Category admin with tree display."""
+    
     list_display = [
-        'tree_actions',
-        'indented_title',
-        'slug',
-        'is_active',
-        'is_featured',
-        'show_in_menu',
-        'product_count_display',
-        'display_order',
+        'name', 'parent', 'level', 'order', 'is_active', 'is_featured',
+        'product_count_display', 'created_at'
     ]
-    list_display_links = ['indented_title']
-    list_filter = ['is_active', 'is_featured', 'show_in_menu', 'level']
+    list_filter = ['is_active', 'is_featured', 'is_deleted', 'level', 'created_at']
     search_fields = ['name', 'slug', 'description']
     prepopulated_fields = {'slug': ('name',)}
-    list_editable = ['is_active', 'is_featured', 'show_in_menu', 'display_order']
+    raw_id_fields = ['parent']
+    ordering = ['level', 'order', 'name']
     
     fieldsets = (
-        (None, {
-            'fields': ('name', 'slug', 'parent', 'description')
-        }),
-        ('Display', {
-            'fields': ('image', 'icon', 'banner_image', 'display_order')
-        }),
+        (None, {'fields': ('name', 'slug', 'description', 'parent')}),
+        ('Display', {'fields': ('image', 'icon', 'order')}),
         ('SEO', {
-            'fields': ('meta_title', 'meta_description'),
+            'fields': ('meta_title', 'meta_description', 'meta_keywords'),
             'classes': ('collapse',)
         }),
-        ('Settings', {
-            'fields': ('is_active', 'is_featured', 'show_in_menu')
+        ('Status', {'fields': ('is_active', 'is_featured', 'is_deleted')}),
+        ('Info', {
+            'fields': ('level', 'path', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
         }),
     )
     
-    @admin.display(description='Products')
+    readonly_fields = ['level', 'path', 'created_at', 'updated_at']
+    
     def product_count_display(self, obj):
-        return obj.product_count_cache
+        """Display product count."""
+        return obj.product_count
+    product_count_display.short_description = 'Products'
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('parent')
     
-    actions = ['make_active', 'make_inactive', 'update_product_counts']
+    actions = ['make_active', 'make_inactive', 'make_featured', 'remove_featured']
     
-    @admin.action(description='Activate selected categories')
     def make_active(self, request, queryset):
         queryset.update(is_active=True)
+    make_active.short_description = 'Mark selected categories as active'
     
-    @admin.action(description='Deactivate selected categories')
     def make_inactive(self, request, queryset):
         queryset.update(is_active=False)
+    make_inactive.short_description = 'Mark selected categories as inactive'
     
-    @admin.action(description='Update product counts')
-    def update_product_counts(self, request, queryset):
-        for category in queryset:
-            category.update_product_count()
-        self.message_user(request, f'Updated product counts for {queryset.count()} categories.')
+    def make_featured(self, request, queryset):
+        queryset.update(is_featured=True)
+    make_featured.short_description = 'Mark selected categories as featured'
+    
+    def remove_featured(self, request, queryset):
+        queryset.update(is_featured=False)
+    remove_featured.short_description = 'Remove featured status'

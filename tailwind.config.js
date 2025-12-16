@@ -1,17 +1,34 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     content: [
-        './frontend/templates/**/*.html',
-        './frontend/static/js/**/*.js',
-        './backend/templates/**/*.html',
         './templates/**/*.html',
+        './static/js/**/*.js',
     ],
     darkMode: 'class',
     theme: {
+        container: {
+            center: true,
+            padding: {
+                DEFAULT: '1rem',
+                sm: '1.5rem',
+                lg: '2rem',
+                xl: '2rem',
+                '2xl': '2rem',
+            },
+        },
         extend: {
+            maxWidth: {
+                '8xl': '88rem',
+                '9xl': '96rem',
+                'full': '100%',
+            },
             colors: {
+                // Base colors for light/dark mode
+                light: '#f5f5f5',
+                dark: '#212121',
                 // Brand colors
                 primary: {
+                    DEFAULT: '#7c2d12',
                     50: '#fdf4f3',
                     100: '#fce7e4',
                     200: '#fbd3cd',
@@ -25,6 +42,7 @@ module.exports = {
                     950: '#41140e',
                 },
                 secondary: {
+                    DEFAULT: '#2bb073',
                     50: '#f6f6f6',
                     100: '#e7e7e7',
                     200: '#d1d1d1',
@@ -38,6 +56,7 @@ module.exports = {
                     950: '#262626',
                 },
                 accent: {
+                    DEFAULT: '#b1c21a',
                     50: '#fff7ed',
                     100: '#ffedd5',
                     200: '#fed7aa',
@@ -51,6 +70,7 @@ module.exports = {
                     950: '#431407',
                 },
                 success: {
+                    DEFAULT: '#22c55e',
                     50: '#f0fdf4',
                     100: '#dcfce7',
                     200: '#bbf7d0',
@@ -64,6 +84,7 @@ module.exports = {
                     950: '#052e16',
                 },
                 warning: {
+                    DEFAULT: '#f97316',
                     50: '#fffbeb',
                     100: '#fef3c7',
                     200: '#fde68a',
@@ -77,6 +98,7 @@ module.exports = {
                     950: '#451a03',
                 },
                 error: {
+                    DEFAULT: '#ef4444',
                     50: '#fef2f2',
                     100: '#fee2e2',
                     200: '#fecaca',
@@ -94,6 +116,7 @@ module.exports = {
                 sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
                 serif: ['Merriweather', 'Georgia', 'serif'],
                 mono: ['JetBrains Mono', 'Menlo', 'monospace'],
+                display: ['Poppins', 'system-ui', '-apple-system', 'sans-serif'],
             },
             fontSize: {
                 '2xs': ['0.625rem', { lineHeight: '0.75rem' }],

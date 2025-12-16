@@ -1,8 +1,0 @@
-<div class="mt-10 text-center" x-data>
-  <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">We accept</p>
-  <div class="flex justify-center space-x-4">
-    <template x-for="method in paymentMethods" :key="method.id">
-      <img :src="method.icon" :alt="method.name" class="h-6" :title="method.name">
-    </template>
-  </div>
-</div>

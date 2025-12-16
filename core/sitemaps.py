@@ -1,24 +1,49 @@
+"""
+Sitemap configuration
+"""
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
 
+
 class StaticViewSitemap(Sitemap):
-    changefreq = "monthly"  # How often the page changes
-    priority = 0.5          # Importance (0.0 to 1.0)
-    protocol = 'https'      # Use https for all URLs
-
+    """Sitemap for static pages."""
+    priority = 0.5
+    changefreq = 'weekly'
+    
     def items(self):
-        return [
-            'home',                   # Your homepage
-            'products:all_products',  # All products listing
-            'products:trending',      # Trending products
-            'products:new_arrivals',  # New arrivals
-            'custom_order:create',    # Custom order page
-            'contacts:contact',       # Contact page
-            'contacts:about',         # About page
-            'faq:list',               # Privacy policy
-            'legal:policy_list',      # Terms and conditions
-        ]
-
+        return ['home']
+    
     def location(self, item):
-        # Generate the actual URL for each item
         return reverse(item)
+
+
+class ProductSitemap(Sitemap):
+    """Sitemap for products."""
+    changefreq = 'daily'
+    priority = 0.8
+    
+    def items(self):
+        from apps.products.models import Product
+        return Product.objects.filter(is_active=True, is_deleted=False)
+    
+    def lastmod(self, obj):
+        return obj.updated_at
+    
+    def location(self, obj):
+        return reverse('products:product_detail', kwargs={'slug': obj.slug})
+
+
+class CategorySitemap(Sitemap):
+    """Sitemap for categories."""
+    changefreq = 'weekly'
+    priority = 0.7
+    
+    def items(self):
+        from apps.categories.models import Category
+        return Category.objects.filter(is_active=True, is_deleted=False)
+    
+    def lastmod(self, obj):
+        return obj.updated_at
+    
+    def location(self, obj):
+        return reverse('categories:category_detail', kwargs={'slug': obj.slug})

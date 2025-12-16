@@ -1,0 +1,35 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Your Order Has Been Delivered{% endblock %}
+
+{% block content %}
+<h2>Your order has been delivered! 🎉</h2>
+<p>Hi {{ order.customer_name }},</p>
+<p>Great news! Your order #{{ order.number }} has been delivered.</p>
+
+<div class="highlight-box">
+    <strong>Delivered on:</strong> {{ delivery_date|date:"l, F j, Y" }} at {{ delivery_time|default:"your doorstep" }}
+</div>
+
+<a href="{{ order_url }}" class="button">View Order Details</a>
+
+<div class="divider"></div>
+
+<h3>We'd Love Your Feedback!</h3>
+<p>How was your experience? Your feedback helps us improve and helps other customers make informed decisions.</p>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ review_url }}" style="display: inline-block; padding: 14px 28px; background-color: #f5f5f5; color: #1a1a1a; text-decoration: none; border-radius: 6px; font-weight: 600;">
+        ⭐ Write a Review
+    </a>
+</div>
+
+<div class="divider"></div>
+
+<h3>Not What You Expected?</h3>
+<p>No worries! You can return or exchange items within 30 days. Visit our <a href="{{ returns_url }}">Returns Center</a> to start a return.</p>
+
+<p>If you have any questions about your order, please <a href="{{ contact_url }}">contact us</a>.</p>
+
+<p>Thank you for shopping with Bunoraa!</p>
+{% endblock %}
