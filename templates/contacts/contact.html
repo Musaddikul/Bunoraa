@@ -112,7 +112,7 @@
                     {% if messages %}
                     <div class="mb-6">
                         {% for message in messages %}
-                        <div class="p-4 rounded-lg {% if message.tags == 'success' %}bg-green-50 text-green-800{% else %}bg-red-50 text-red-800{% endif %}">
+                        <div class="p-4 rounded-lg {% if message.tags == 'success' %}bg-green-50 text-green-800 dark:bg-green-900 dark:text-green-300{% else %}bg-red-50 text-red-800 dark:bg-red-900 dark:text-red-300{% endif %}">
                             {{ message }}
                         </div>
                         {% endfor %}

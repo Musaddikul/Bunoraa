@@ -6,158 +6,26 @@
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
-    <!-- Breadcrumb -->
-    <nav class="mb-8">
-        <ol class="flex items-center space-x-2 text-sm text-gray-500">
-            <li><a href="{% url 'pages:home' %}" class="hover:text-primary-600">Home</a></li>
-            <li><span class="mx-2">/</span></li>
-            <li class="text-gray-900">Wishlist</li>
-        </ol>
-    </nav>
-    
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">My Wishlist</h1>
-        {% if wishlist_items %}
-        <span class="text-gray-600">{{ wishlist_items|length }} item{{ wishlist_items|length|pluralize }}</span>
-        {% endif %}
-    </div>
-    
-    {% if wishlist_items %}
-    <div class="bg-white rounded-lg shadow-sm">
-        <div class="divide-y divide-gray-200">
-            {% for item in wishlist_items %}
-            <div class="p-6 flex flex-col md:flex-row md:items-center gap-6" data-wishlist-item="{{ item.id }}">
-                <!-- Product Image -->
-                <a href="{% url 'products:detail' item.product.slug %}" class="flex-shrink-0">
-                    <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.jpg' }}" 
-                         alt="{{ item.product.name }}"
-                         class="w-32 h-32 object-cover rounded-lg">
-                </a>
-                
-                <!-- Product Info -->
-                <div class="flex-1">
-                    <a href="{% url 'products:detail' item.product.slug %}" class="text-lg font-medium text-gray-900 hover:text-primary-600">
-                        {{ item.product.name }}
-                    </a>
-                    
-                    {% if item.product.category %}
-                    <p class="text-sm text-gray-500 mt-1">{{ item.product.category.name }}</p>
-                    {% endif %}
-                    
-                    <!-- Price -->
-                    <div class="mt-2">
-                        {% if item.product.sale_price %}
-                        <span class="text-lg font-semibold text-primary-600">{{ currency_symbol }}{{ item.product.sale_price }}</span>
-                        <span class="text-sm text-gray-400 line-through ml-2">{{ currency_symbol }}{{ item.product.price }}</span>
-                        {% else %}
-                        <span class="text-lg font-semibold text-gray-900">{{ currency_symbol }}{{ item.product.price }}</span>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Stock Status -->
-                    <div class="mt-2">
-                        {% if item.product.is_in_stock %}
-                        <span class="inline-flex items-center text-sm text-green-600">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            In Stock
-                        </span>
-                        {% else %}
-                        <span class="inline-flex items-center text-sm text-red-600">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                            Out of Stock
-                        </span>
-                        {% endif %}
-                    </div>
-                    
-                    <p class="text-sm text-gray-500 mt-2">Added on {{ item.created_at|date:"M j, Y" }}</p>
+    <div class="flex flex-col lg:flex-row gap-8">
+        <aside class="lg:w-64 flex-shrink-0">
+            {% include 'accounts/partials/sidebar.html' with active='wishlist' %}
+        </aside>
+
+        <div class="flex-1 flex flex-col gap-6">
+            <div id="wishlist-container"></div>
+            {% if recently_viewed %}
+            <section class="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Recently Viewed</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    {% for product in recently_viewed %}
+                    {% include 'products/partials/product_card.html' with product=product %}
+                    {% endfor %}
                 </div>
-                
-                <!-- Actions -->
-                <div class="flex flex-col space-y-2">
-                    {% if item.product.is_in_stock %}
-                    <button class="add-to-cart-btn bg-primary-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors flex items-center justify-center"
-                            data-product-id="{{ item.product.id }}">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                        </svg>
-                        Add to Cart
-                    </button>
-                    {% else %}
-                    <button class="notify-btn bg-gray-100 text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center"
-                            data-product-id="{{ item.product.id }}">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                        </svg>
-                        Notify Me
-                    </button>
-                    {% endif %}
-                    <button class="remove-wishlist-btn text-red-600 hover:text-red-700 font-medium text-sm flex items-center justify-center"
-                            data-item-id="{{ item.id }}">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                        Remove
-                    </button>
-                </div>
-            </div>
-            {% endfor %}
+            </section>
+            {% endif %}
         </div>
     </div>
-    
-    <!-- Actions Bar -->
-    <div class="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <a href="{% url 'products:list' %}" class="flex items-center text-primary-600 hover:text-primary-700">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-            </svg>
-            Continue Shopping
-        </a>
-        
-        <div class="flex space-x-4">
-            <button id="add-all-to-cart-btn" class="bg-primary-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors">
-                Add All to Cart
-            </button>
-            <button id="clear-wishlist-btn" class="text-red-600 hover:text-red-700 font-medium">
-                Clear Wishlist
-            </button>
-        </div>
-    </div>
-    
-    {% else %}
-    <!-- Empty State -->
-    <div class="text-center py-16 bg-white rounded-lg shadow-sm">
-        <svg class="w-24 h-24 text-gray-300 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-        </svg>
-        <h2 class="text-2xl font-semibold text-gray-900 mb-2">Your wishlist is empty</h2>
-        <p class="text-gray-600 mb-6">Start adding items you love to your wishlist.</p>
-        <a href="{% url 'products:list' %}" 
-           class="inline-block bg-primary-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-primary-700 transition-colors">
-            Explore Products
-        </a>
-    </div>
-    {% endif %}
 </div>
-
-<!-- Recently Viewed -->
-{% if recently_viewed %}
-<section class="bg-gray-50 py-12 mt-8">
-    <div class="container mx-auto px-4">
-        <h2 class="text-2xl font-bold text-gray-900 mb-6">Recently Viewed</h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {% for product in recently_viewed %}
-            {% include 'products/partials/product_card.html' with product=product %}
-            {% endfor %}
-        </div>
-    </div>
-</section>
-{% endif %}
 {% endblock %}
 
-{% block extra_js %}
-<!-- Wishlist page JS is handled by static/js/pages/wishlist.js -->
-{% endblock %}
+

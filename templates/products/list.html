@@ -46,10 +46,10 @@
             <aside id="filters-sidebar" class="hidden lg:block w-72 flex-shrink-0">
                 <div class="sticky top-24 space-y-6">
                     <!-- Active Filters -->
-                    <div id="active-filters" class="hidden bg-white rounded-xl p-4 shadow-soft">
+                    <div id="active-filters" class="hidden bg-white dark:bg-stone-900 rounded-xl p-4 shadow-soft border border-stone-100 dark:border-stone-800">
                         <div class="flex items-center justify-between mb-3">
-                            <h3 class="font-semibold text-gray-900">Active Filters</h3>
-                            <button id="clear-all-filters" class="text-sm text-red-600 hover:text-red-700">Clear All</button>
+                            <h3 class="font-semibold text-gray-900 dark:text-white">Active Filters</h3>
+                            <button id="clear-all-filters" class="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">Clear All</button>
                         </div>
                         <div id="active-filters-list" class="flex flex-wrap gap-2">
                             <!-- Populated via JS -->
@@ -57,28 +57,28 @@
                     </div>
                     
                     <!-- Product Search -->
-                    <div class="bg-white rounded-xl p-4 shadow-soft">
+                    <div class="bg-white dark:bg-stone-900 rounded-xl p-4 shadow-soft border border-stone-100 dark:border-stone-800">
                         <div class="flex items-start justify-between gap-3">
                             <div>
-                                <h3 class="font-semibold text-gray-900">Product Search</h3>
+                                <h3 class="font-semibold text-gray-900 dark:text-white">Product Search</h3>
                             </div>
-                            <button id="sidebar-reset-filters" type="button" class="text-sm font-medium text-primary-700 hover:text-primary-900">Reset All</button>
+                            <button id="sidebar-reset-filters" type="button" class="text-sm font-medium text-primary-700 dark:text-amber-400 hover:text-primary-900 dark:hover:text-amber-300">Reset All</button>
                         </div>
                         <div class="mt-4">
                             <div class="relative">
-                                <svg class="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z"></path></svg>
-                                <input type="search" id="product-search-input" class="w-full pr-10 pl-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="Search products...">
+                                <svg class="w-4 h-4 text-gray-400 dark:text-stone-500 absolute right-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z"></path></svg>
+                                <input type="search" id="product-search-input" class="w-full pr-10 pl-3 py-2.5 border border-gray-200 dark:border-stone-700 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 dark:focus:ring-amber-900 focus:border-primary-500 dark:focus:border-amber-700 bg-white dark:bg-stone-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-stone-500" placeholder="Search products...">
                             </div>
                         </div>
                     </div>
 
                     <!-- Categories -->
-                    <div class="bg-white rounded-xl p-4 shadow-soft" data-filter-card>
+                    <div class="bg-white dark:bg-stone-900 rounded-xl p-4 shadow-soft border border-stone-100 dark:border-stone-800" data-filter-card>
                         <div class="flex items-start justify-between gap-3 mb-4">
                             <div>
-                                <h3 class="font-semibold text-gray-900">Category</h3>
+                                <h3 class="font-semibold text-gray-900 dark:text-white">Category</h3>
                             </div>
-                            <button type="button" class="filter-collapse text-gray-400 hover:text-gray-600" data-collapse-target="#category-filter-body">
+                            <button type="button" class="filter-collapse text-gray-400 dark:text-stone-500 hover:text-gray-600 dark:hover:text-stone-300" data-collapse-target="#category-filter-body">
                                 <svg class="w-5 h-5 transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
                         </div>
@@ -92,48 +92,48 @@
                     </div>
                     
                     <!-- Price Range -->
-                    <div class="bg-white rounded-xl p-4 shadow-soft" data-filter-card>
-                        <h3 class="font-semibold text-gray-900 mb-4 flex items-center justify-between">
+                    <div class="bg-white dark:bg-stone-900 rounded-xl p-4 shadow-soft border border-stone-100 dark:border-stone-800" data-filter-card>
+                        <h3 class="font-semibold text-gray-900 dark:text-white mb-4 flex items-center justify-between">
                             <span>Price Range</span>
-                            <button type="button" class="filter-collapse text-gray-400 hover:text-gray-600" data-collapse-target="#price-filter">
+                            <button type="button" class="filter-collapse text-gray-400 dark:text-stone-500 hover:text-gray-600 dark:hover:text-stone-300" data-collapse-target="#price-filter">
                                 <svg class="w-5 h-5 transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
                         </h3>
                         <div id="price-filter" data-filter-content>
                             <div class="flex items-center gap-3 mb-4">
                                 <div class="relative flex-1">
-                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" data-price-symbol>{{ currency_symbol|default:'৳' }}</span>
-                                    <input type="number" id="price-min" class="w-full pl-7 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="Min">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-stone-500" data-price-symbol>{{ currency_symbol|default:'৳' }}</span>
+                                    <input type="number" id="price-min" class="w-full pl-7 pr-3 py-2 border border-gray-200 dark:border-stone-700 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 dark:focus:ring-amber-900 focus:border-primary-500 dark:focus:border-amber-700 bg-white dark:bg-stone-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-stone-500" placeholder="Min">
                                 </div>
-                                <span class="text-gray-400">–</span>
+                                <span class="text-gray-400 dark:text-stone-500">–</span>
                                 <div class="relative flex-1">
-                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" data-price-symbol>{{ currency_symbol|default:'৳' }}</span>
-                                    <input type="number" id="price-max" class="w-full pl-7 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="Max">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-stone-500" data-price-symbol>{{ currency_symbol|default:'৳' }}</span>
+                                    <input type="number" id="price-max" class="w-full pl-7 pr-3 py-2 border border-gray-200 dark:border-stone-700 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 dark:focus:ring-amber-900 focus:border-primary-500 dark:focus:border-amber-700 bg-white dark:bg-stone-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-stone-500" placeholder="Max">
                                 </div>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Availability -->
-                    <div class="bg-white rounded-xl p-4 shadow-soft" data-filter-card>
+                    <div class="bg-white dark:bg-stone-900 rounded-xl p-4 shadow-soft border border-stone-100 dark:border-stone-800" data-filter-card>
                         <div class="flex items-center justify-between gap-3 mb-4">
-                            <span class="font-semibold text-gray-900">Availability</span>
-                            <button type="button" class="filter-collapse text-gray-400 hover:text-gray-600" data-collapse-target="#availability-filter">
+                            <span class="font-semibold text-gray-900 dark:text-white">Availability</span>
+                            <button type="button" class="filter-collapse text-gray-400 dark:text-stone-500 hover:text-gray-600 dark:hover:text-stone-300" data-collapse-target="#availability-filter">
                                 <svg class="w-5 h-5 transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
                         </div>
                         <div class="space-y-2" id="availability-filter" data-filter-content>
-                            <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1.5 rounded-lg transition-colors">
-                                <input type="checkbox" id="in-stock" class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500">
-                                <span class="text-sm text-gray-700">In Stock Only</span>
+                            <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-stone-800 p-1.5 rounded-lg transition-colors">
+                                <input type="checkbox" id="in-stock" class="w-4 h-4 text-primary-600 dark:text-amber-400 border-gray-300 dark:border-stone-700 rounded focus:ring-primary-500 dark:focus:ring-amber-900">
+                                <span class="text-sm text-gray-700 dark:text-stone-200">In Stock Only</span>
                             </label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1.5 rounded-lg transition-colors">
-                                <input type="checkbox" id="on-sale" class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500">
-                                <span class="text-sm text-gray-700">On Sale</span>
+                            <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-stone-800 p-1.5 rounded-lg transition-colors">
+                                <input type="checkbox" id="on-sale" class="w-4 h-4 text-primary-600 dark:text-amber-400 border-gray-300 dark:border-stone-700 rounded focus:ring-primary-500 dark:focus:ring-amber-900">
+                                <span class="text-sm text-gray-700 dark:text-stone-200">On Sale</span>
                             </label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1.5 rounded-lg transition-colors">
-                                <input type="checkbox" id="new-arrivals" class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500">
-                                <span class="text-sm text-gray-700">New Arrivals</span>
+                            <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-stone-800 p-1.5 rounded-lg transition-colors">
+                                <input type="checkbox" id="new-arrivals" class="w-4 h-4 text-primary-600 dark:text-amber-400 border-gray-300 dark:border-stone-700 rounded focus:ring-primary-500 dark:focus:ring-amber-900">
+                                <span class="text-sm text-gray-700 dark:text-stone-200">New Arrivals</span>
                             </label>
                         </div>
                     </div>
@@ -144,7 +144,7 @@
             <main class="flex-1 min-w-0">
                 <!-- Mobile Filter Bar -->
                 <div class="lg:hidden flex items-center gap-3 mb-6">
-                    <button id="open-filters" class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+                    <button id="open-filters" class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-stone-900 border border-gray-200 dark:border-stone-700 rounded-xl text-gray-700 dark:text-stone-200 font-medium hover:bg-gray-50 dark:hover:bg-stone-800 transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
                         Filters
                         <span id="filter-count-badge" class="hidden px-2 py-0.5 bg-primary-600 text-white text-xs rounded-full">0</span>

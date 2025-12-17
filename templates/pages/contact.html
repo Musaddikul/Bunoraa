@@ -31,7 +31,7 @@
                     {% if messages %}
                     <div class="mb-6 space-y-2">
                         {% for message in messages %}
-                        <div class="px-4 py-3 rounded-lg text-sm {% if message.tags == 'success' %}bg-green-50 text-green-700{% elif message.tags == 'error' %}bg-red-50 text-red-700{% else %}bg-blue-50 text-blue-700{% endif %}">
+                        <div class="px-4 py-3 rounded-lg text-sm {% if message.tags == 'success' %}bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300{% elif message.tags == 'error' %}bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-300{% else %}bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300{% endif %}">
                             {{ message }}
                         </div>
                         {% endfor %}

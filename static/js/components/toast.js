@@ -33,16 +33,16 @@ const Toast = (function() {
         } = typeof options === 'string' ? { message: options } : options;
 
         const icons = {
-            success: `<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            success: `<svg class="w-5 h-5 text-green-600 dark:text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>`,
-            error: `<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            error: `<svg class="w-5 h-5 text-red-600 dark:text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>`,
-            warning: `<svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            warning: `<svg class="w-5 h-5 text-amber-600 dark:text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
             </svg>`,
-            info: `<svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            info: `<svg class="w-5 h-5 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>`
         };
@@ -54,24 +54,31 @@ const Toast = (function() {
             info: 'bg-blue-50 border-blue-200'
         };
 
+        const darkBgColors = {
+            success: 'dark:bg-green-900/50 dark:border-green-500/40',
+            error: 'dark:bg-red-900/50 dark:border-red-500/40',
+            warning: 'dark:bg-amber-900/50 dark:border-amber-500/40',
+            info: 'dark:bg-blue-900/50 dark:border-blue-500/40'
+        };
+
         const toast = document.createElement('div');
-        toast.className = `flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg pointer-events-auto transform translate-x-full transition-transform duration-300 ${bgColors[type] || bgColors.info}`;
+        toast.className = `flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg pointer-events-auto transform translate-x-full transition-transform duration-300 ${bgColors[type] || bgColors.info} ${darkBgColors[type] || darkBgColors.info} dark:text-stone-100 dark:shadow-xl dark:shadow-black/30`;
         toast.setAttribute('role', 'alert');
 
         toast.innerHTML = `
             <div class="flex-shrink-0">
                 ${icons[type] || icons.info}
             </div>
-            <div class="flex-1 text-sm text-gray-700">
+            <div class="flex-1 text-sm text-gray-700 dark:text-stone-100">
                 ${Templates.escapeHtml(message)}
             </div>
             ${action ? `
-                <button type="button" class="flex-shrink-0 text-sm font-medium text-primary-600 hover:text-primary-700" data-toast-action>
+                <button type="button" class="flex-shrink-0 text-sm font-medium text-amber-700 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200" data-toast-action>
                     ${Templates.escapeHtml(action.text)}
                 </button>
             ` : ''}
             ${closable ? `
-                <button type="button" class="flex-shrink-0 text-gray-400 hover:text-gray-600" data-toast-close aria-label="Close">
+                <button type="button" class="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:text-stone-400 dark:hover:text-stone-200" data-toast-close aria-label="Close">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>

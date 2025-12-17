@@ -107,7 +107,7 @@ class ShippingView(CheckoutMixin, View):
         if request.user.is_authenticated:
             context['saved_addresses'] = request.user.addresses.filter(
                 is_deleted=False
-            ).order_by('-is_default_shipping')
+            ).order_by('-is_default')
         
         return render(request, self.template_name, context)
     

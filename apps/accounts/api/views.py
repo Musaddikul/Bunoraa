@@ -5,6 +5,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.views import APIView
 from django.contrib.auth import get_user_model
 from ..models import Address
@@ -74,6 +75,33 @@ class ProfileView(APIView):
             'data': None,
             'meta': {'errors': serializer.errors}
         }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AvatarUploadView(APIView):
+    """Upload and update user avatar."""
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        file_obj = request.FILES.get('avatar')
+        if not file_obj:
+            return Response({
+                'success': False,
+                'message': 'No avatar file provided.',
+                'data': None,
+                'meta': None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        user.avatar = file_obj
+        user.save(update_fields=['avatar'])
+
+        return Response({
+            'success': True,
+            'message': 'Avatar updated successfully.',
+            'data': {'avatar': user.avatar.url if user.avatar else None},
+            'meta': None
+        })
 
 
 class PasswordChangeView(APIView):
