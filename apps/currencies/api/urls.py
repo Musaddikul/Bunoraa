@@ -9,13 +9,13 @@ from .views import (
 )
 
 router = DefaultRouter()
-router.register(r'currencies', CurrencyViewSet, basename='currency')
+router.register(r'', CurrencyViewSet, basename='currency')
 router.register(r'exchange-rates', ExchangeRateViewSet, basename='exchange-rate')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('currencies/convert/', ConvertCurrencyView.as_view(), name='currency-convert'),
-    path('currencies/format/', FormatCurrencyView.as_view(), name='currency-format'),
-    path('currencies/preference/', SetCurrencyPreferenceView.as_view(), name='currency-preference'),
-    path('currencies/settings/', CurrencySettingsView.as_view(), name='currency-settings'),
+    path('convert/', ConvertCurrencyView.as_view(), name='currency-convert'),
+    path('format/', FormatCurrencyView.as_view(), name='currency-format'),
+    path('preference/', SetCurrencyPreferenceView.as_view(), name='currency-preference'),
+    path('settings/', CurrencySettingsView.as_view(), name='currency-settings'),
 ]

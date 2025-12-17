@@ -38,4 +38,5 @@ urlpatterns = [
     path('localization/', include('apps.localization.api.urls')),
     path('faq/', include('apps.faq.api.urls')),
     path('contacts/', include('apps.contacts.api.urls')),
+    path('preorders/', include('apps.preorders.api.urls')),
 ]

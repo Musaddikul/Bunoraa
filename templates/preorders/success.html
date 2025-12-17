@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Order Submitted Successfully | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
+    <div class="container mx-auto px-4">
+        <div class="max-w-2xl mx-auto text-center">
+            <!-- Success Icon -->
+            <div class="mb-8">
+                <div class="w-24 h-24 mx-auto bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                    <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M5 13l4 4L19 7"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Success Message -->
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                Pre-Order Submitted Successfully!
+            </h1>
+            <p class="text-xl text-gray-600 dark:text-gray-400 mb-8">
+                Thank you for your custom order. We're excited to bring your vision to life!
+            </p>
+
+            <!-- Order Reference Card -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 mb-8">
+                <div class="grid md:grid-cols-2 gap-4 text-left">
+                    <div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Order Number</p>
+                        <p class="text-lg font-bold text-primary-600">{{ preorder.preorder_number }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Category</p>
+                        <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ preorder.category.name }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Status</p>
+                        <span class="inline-flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300 rounded-full text-sm font-medium">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Pending Review
+                        </span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Estimated Price</p>
+                        <p class="text-lg font-semibold text-gray-900 dark:text-white">৳{{ preorder.estimated_total }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- What's Next -->
+            <div class="bg-primary-50 dark:bg-primary-900/20 rounded-2xl p-6 mb-8 text-left">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">What Happens Next?</h3>
+                <ol class="space-y-4">
+                    <li class="flex items-start gap-3">
+                        <span class="flex-shrink-0 w-6 h-6 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-medium">1</span>
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">Review & Quote</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Our team will review your order and send you a detailed quote within 24-48 hours.</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="flex-shrink-0 w-6 h-6 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-medium">2</span>
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">Deposit Payment</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Accept the quote and pay the deposit to start production.</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="flex-shrink-0 w-6 h-6 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-medium">3</span>
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">Production Begins</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">We'll start creating your custom order and keep you updated on progress.</p>
+                        </div>
+                    </li>
+                </ol>
+            </div>
+
+            <!-- Email Notice -->
+            <div class="flex items-center justify-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg mb-8">
+                <svg class="w-6 h-6 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    A confirmation email has been sent to <strong class="text-gray-900 dark:text-white">{{ preorder.email }}</strong>
+                </p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{% url 'preorders:detail' preorder_number=preorder.preorder_number %}" 
+                   class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                    View Order Details
+                </a>
+                <a href="{% url 'preorders:my_preorders' %}" 
+                   class="inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-semibold">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                    </svg>
+                    My Pre-Orders
+                </a>
+            </div>
+
+            <!-- Continue Shopping -->
+            <div class="mt-8">
+                <a href="{% url 'preorders:landing' %}" class="text-primary-600 hover:text-primary-700 hover:underline">
+                    Create Another Pre-Order →
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

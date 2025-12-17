@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}{{ page.title }} - Bunoraa{% endblock %}
+{% block title %}{{ page.title }} - {{ SITE_NAME }}{% endblock %}
 {% block meta_description %}{{ page.meta_description|default:page.title }}{% endblock %}
 
 {% block content %}

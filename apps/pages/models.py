@@ -210,9 +210,17 @@ class SiteSettings(models.Model):
     def save(self, *args, **kwargs):
         self.pk = 1
         super().save(*args, **kwargs)
+        # Clear cached site settings
+        self._clear_cache()
     
     def delete(self, *args, **kwargs):
         pass  # Prevent deletion
+    
+    @staticmethod
+    def _clear_cache():
+        """Clear the site settings cache."""
+        from django.core.cache import cache
+        cache.delete('site_settings_context')
     
     @classmethod
     def get_settings(cls):

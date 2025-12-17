@@ -7,8 +7,10 @@ const LocalizationApi = (function() {
     'use strict';
 
     const CURRENCY_KEY = 'selected_currency';
+    const CURRENCY_RATE_KEY = 'currency_rate';
     const LANGUAGE_KEY = 'selected_language';
     const TIMEZONE_KEY = 'selected_timezone';
+    const BASE_CURRENCY = 'BDT';
 
     async function getCurrencies() {
         return ApiClient.get('/currencies/', {}, { useCache: true, cacheTTL: 3600000 });
@@ -33,14 +35,53 @@ const LocalizationApi = (function() {
     async function convertCurrency(amount, from, to) {
         return ApiClient.get('/currencies/convert/', { amount, from, to });
     }
+    
+    async function getExchangeRate(from, to) {
+        try {
+            // Use GET endpoint for simpler exchange rate lookup
+            const response = await ApiClient.get('/currencies/exchange-rates/rate/', {
+                from: from,
+                to: to
+            });
+            if (response && response.data && response.data.rate) {
+                return parseFloat(response.data.rate);
+            }
+            // Try alternate response structure
+            if (response && response.rate) {
+                return parseFloat(response.rate);
+            }
+        } catch (error) {
+            console.error('Error fetching exchange rate:', error);
+        }
+        return 1;
+    }
 
-    function setCurrency(code) {
+    async function setCurrency(code) {
         localStorage.setItem(CURRENCY_KEY, code);
+        
+        // Fetch and store exchange rate
+        if (code !== BASE_CURRENCY) {
+            try {
+                const rate = await getExchangeRate(BASE_CURRENCY, code);
+                localStorage.setItem(CURRENCY_RATE_KEY, rate.toString());
+            } catch (error) {
+                console.error('Error setting exchange rate:', error);
+                localStorage.setItem(CURRENCY_RATE_KEY, '1');
+            }
+        } else {
+            localStorage.setItem(CURRENCY_RATE_KEY, '1');
+        }
+        
         window.dispatchEvent(new CustomEvent('currency:changed', { detail: code }));
     }
 
     function getCurrency() {
         return localStorage.getItem(CURRENCY_KEY) || 'BDT';
+    }
+    
+    function getStoredExchangeRate() {
+        const rate = localStorage.getItem(CURRENCY_RATE_KEY);
+        return rate ? parseFloat(rate) : 1;
     }
 
     function setLanguage(code) {
@@ -68,8 +109,10 @@ const LocalizationApi = (function() {
         getCountries,
         getDivisions,
         convertCurrency,
+        getExchangeRate,
         setCurrency,
         getCurrency,
+        getStoredExchangeRate,
         setLanguage,
         getLanguage,
         setTimezone,

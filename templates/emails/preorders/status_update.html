@@ -1,0 +1,142 @@
+{% extends "emails/base_email.html" %}
+{% load static %}
+
+{% block title %}Pre-Order Update - {{ preorder.preorder_number }}{% endblock %}
+
+{% block content %}
+<h1 style="color: #1f2937; font-size: 24px; margin-bottom: 20px;">
+    Your Pre-Order Status Has Been Updated
+</h1>
+
+<p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+    Hi {{ preorder.full_name }},
+</p>
+
+<p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+    There's an update on your pre-order <strong>{{ preorder.preorder_number }}</strong>.
+</p>
+
+<!-- Status Update Box -->
+<div style="background-color: #f3f4f6; border-radius: 12px; padding: 24px; margin-bottom: 24px; text-align: center;">
+    <p style="color: #6b7280; font-size: 14px; margin-bottom: 8px;">Current Status</p>
+    
+    {% if new_status == 'under_review' %}
+    <div style="display: inline-block; background-color: #fef3c7; color: #92400e; padding: 8px 20px; border-radius: 999px; font-weight: 600;">
+        🔍 Under Review
+    </div>
+    <p style="color: #4b5563; font-size: 14px; margin-top: 16px;">Our team is reviewing your order and will send you a quote soon.</p>
+    
+    {% elif new_status == 'quote_sent' %}
+    <div style="display: inline-block; background-color: #e9d5ff; color: #6b21a8; padding: 8px 20px; border-radius: 999px; font-weight: 600;">
+        💰 Quote Ready
+    </div>
+    <p style="color: #4b5563; font-size: 14px; margin-top: 16px;">We've prepared a quote for your order. Please review and accept it to proceed.</p>
+    
+    {% elif new_status == 'quote_accepted' %}
+    <div style="display: inline-block; background-color: #d1fae5; color: #065f46; padding: 8px 20px; border-radius: 999px; font-weight: 600;">
+        ✅ Quote Accepted
+    </div>
+    <p style="color: #4b5563; font-size: 14px; margin-top: 16px;">Thank you for accepting the quote. Please proceed with the deposit payment.</p>
+    
+    {% elif new_status == 'deposit_paid' %}
+    <div style="display: inline-block; background-color: #ccfbf1; color: #0f766e; padding: 8px 20px; border-radius: 999px; font-weight: 600;">
+        💳 Deposit Received
+    </div>
+    <p style="color: #4b5563; font-size: 14px; margin-top: 16px;">We've received your deposit payment. Production will begin shortly!</p>
+    
+    {% elif new_status == 'design_in_progress' %}
+    <div style="display: inline-block; background-color: #cffafe; color: #0e7490; padding: 8px 20px; border-radius: 999px; font-weight: 600;">
+        🎨 Designing
+    </div>
+    <p style="color: #4b5563; font-size: 14px; margin-top: 16px;">Our designers are working on your custom order.</p>
+    
+    {% elif new_status == 'design_approval' %}
+    <div style="display: inline-block; background-color: #fef3c7; color: #b45309; padding: 8px 20px; border-radius: 999px; font-weight: 600;">
+        👀 Awaiting Your Approval
+    </div>
+    <p style="color: #4b5563; font-size: 14px; margin-top: 16px;">The design is ready for your review. Please check and approve to continue.</p>
+    
+    {% elif new_status == 'in_production' %}
+    <div style="display: inline-block; background-color: #dbeafe; color: #1e40af; padding: 8px 20px; border-radius: 999px; font-weight: 600;">
+        🏭 In Production
+    </div>
+    <p style="color: #4b5563; font-size: 14px; margin-top: 16px;">Your order is now in production! We're creating your custom item.</p>
+    
+    {% elif new_status == 'quality_check' %}
+    <div style="display: inline-block; background-color: #ede9fe; color: #5b21b6; padding: 8px 20px; border-radius: 999px; font-weight: 600;">
+        🔬 Quality Check
+    </div>
+    <p style="color: #4b5563; font-size: 14px; margin-top: 16px;">Your order is undergoing our quality check process.</p>
+    
+    {% elif new_status == 'completed' %}
+    <div style="display: inline-block; background-color: #d1fae5; color: #065f46; padding: 8px 20px; border-radius: 999px; font-weight: 600;">
+        ✨ Completed
+    </div>
+    <p style="color: #4b5563; font-size: 14px; margin-top: 16px;">Your custom order has been completed and is ready for shipping!</p>
+    
+    {% elif new_status == 'shipped' %}
+    <div style="display: inline-block; background-color: #e0f2fe; color: #0369a1; padding: 8px 20px; border-radius: 999px; font-weight: 600;">
+        📦 Shipped
+    </div>
+    <p style="color: #4b5563; font-size: 14px; margin-top: 16px;">Your order is on its way! You should receive it soon.</p>
+    {% if tracking_number %}
+    <p style="color: #4b5563; font-size: 14px; margin-top: 8px;">Tracking Number: <strong>{{ tracking_number }}</strong></p>
+    {% endif %}
+    
+    {% elif new_status == 'delivered' %}
+    <div style="display: inline-block; background-color: #d1fae5; color: #065f46; padding: 8px 20px; border-radius: 999px; font-weight: 600;">
+        🎁 Delivered
+    </div>
+    <p style="color: #4b5563; font-size: 14px; margin-top: 16px;">Your order has been delivered! We hope you love it.</p>
+    
+    {% else %}
+    <div style="display: inline-block; background-color: #f3f4f6; color: #4b5563; padding: 8px 20px; border-radius: 999px; font-weight: 600;">
+        {{ new_status|title }}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Notes from Admin -->
+{% if notes %}
+<div style="background-color: #f0f9ff; border-left: 4px solid #3b82f6; padding: 16px 20px; margin-bottom: 24px;">
+    <p style="color: #1e40af; font-size: 14px; font-weight: 600; margin: 0 0 8px;">Note from our team:</p>
+    <p style="color: #4b5563; font-size: 14px; line-height: 1.6; margin: 0;">{{ notes }}</p>
+</div>
+{% endif %}
+
+<!-- Order Summary -->
+<div style="background-color: #f3f4f6; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+    <h2 style="color: #1f2937; font-size: 18px; margin-bottom: 16px;">Order Summary</h2>
+    <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Order Number</td>
+            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 600; text-align: right;">{{ preorder.preorder_number }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Title</td>
+            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">{{ preorder.title }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Category</td>
+            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">{{ preorder.category.name }}</td>
+        </tr>
+    </table>
+</div>
+
+<!-- CTA Button -->
+<div style="text-align: center; margin-bottom: 24px;">
+    <a href="{{ site_url }}{% url 'preorders:detail' preorder_number=preorder.preorder_number %}" 
+       style="display: inline-block; background-color: #7c3aed; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+        View Order Details
+    </a>
+</div>
+
+<p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+    If you have any questions, feel free to reply to this email or send us a message through the order page.
+</p>
+
+<p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+    Thank you for your patience!<br>
+    <strong>The {{ site_name }} Team</strong>
+</p>
+{% endblock %}

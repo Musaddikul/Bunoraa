@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Your Details - Step 4 | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Progress Bar -->
+        <div class="max-w-4xl mx-auto mb-8">
+            <div class="flex items-center justify-between mb-4">
+                {% for s in "12345"|make_list %}
+                <div class="flex items-center">
+                    <div class="relative">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm
+                                    {% if s|add:0 < step %}bg-primary-600 text-white
+                                    {% elif s|add:0 == step %}bg-primary-600 text-white ring-4 ring-primary-200 dark:ring-primary-800
+                                    {% else %}bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400{% endif %}">
+                            {% if s|add:0 < step %}
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            {% else %}
+                            {{ s }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if s != "5" %}
+                    <div class="hidden sm:block w-20 lg:w-32 h-1 mx-2 
+                                {% if s|add:0 < step %}bg-primary-600{% else %}bg-gray-200 dark:bg-gray-700{% endif %}"></div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            <div class="hidden sm:flex justify-between text-sm">
+                <span class="{% if step >= 1 %}text-primary-600 dark:text-primary-400 font-medium{% else %}text-gray-500 dark:text-gray-400{% endif %}">Category</span>
+                <span class="{% if step >= 2 %}text-primary-600 dark:text-primary-400 font-medium{% else %}text-gray-500 dark:text-gray-400{% endif %}">Customize</span>
+                <span class="{% if step >= 3 %}text-primary-600 dark:text-primary-400 font-medium{% else %}text-gray-500 dark:text-gray-400{% endif %}">Upload</span>
+                <span class="{% if step >= 4 %}text-primary-600 dark:text-primary-400 font-medium{% else %}text-gray-500 dark:text-gray-400{% endif %}">Details</span>
+                <span class="{% if step >= 5 %}text-primary-600 dark:text-primary-400 font-medium{% else %}text-gray-500 dark:text-gray-400{% endif %}">Review</span>
+            </div>
+        </div>
+
+        <!-- Step Content -->
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 md:p-8">
+                <div class="mb-8">
+                    <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                        Step 4: Your Details
+                    </h1>
+                    <p class="text-gray-600 dark:text-gray-400">
+                        Tell us about yourself and where to deliver your order
+                    </p>
+                </div>
+
+                <form method="post" action="{% url 'preorders:wizard' step=4 %}">
+                    {% csrf_token %}
+                    
+                    <div class="space-y-8">
+                        <!-- Contact Information -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                                Contact Information
+                            </h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div class="md:col-span-2">
+                                    <label for="full_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Full Name <span class="text-red-500">*</span>
+                                    </label>
+                                    {{ form.full_name }}
+                                    {% if form.full_name.errors %}<p class="mt-1 text-sm text-red-500">{{ form.full_name.errors.0 }}</p>{% endif %}
+                                </div>
+                                <div>
+                                    <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Email <span class="text-red-500">*</span>
+                                    </label>
+                                    {{ form.email }}
+                                    {% if form.email.errors %}<p class="mt-1 text-sm text-red-500">{{ form.email.errors.0 }}</p>{% endif %}
+                                </div>
+                                <div>
+                                    <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Phone Number
+                                    </label>
+                                    {{ form.phone }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Shipping Address -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                Shipping Address
+                            </h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        First Name <span class="text-red-500">*</span>
+                                    </label>
+                                    {{ form.shipping_first_name }}
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Last Name <span class="text-red-500">*</span>
+                                    </label>
+                                    {{ form.shipping_last_name }}
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Address Line 1 <span class="text-red-500">*</span>
+                                    </label>
+                                    {{ form.shipping_address_line_1 }}
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Address Line 2
+                                    </label>
+                                    {{ form.shipping_address_line_2 }}
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        City <span class="text-red-500">*</span>
+                                    </label>
+                                    {{ form.shipping_city }}
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        State/Division
+                                    </label>
+                                    {{ form.shipping_state }}
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Postal Code <span class="text-red-500">*</span>
+                                    </label>
+                                    {{ form.shipping_postal_code }}
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Country <span class="text-red-500">*</span>
+                                    </label>
+                                    {{ form.shipping_country }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Delivery Options -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                Delivery Options
+                            </h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Preferred Delivery Date
+                                    </label>
+                                    {{ form.requested_delivery_date }}
+                                    <p class="mt-1 text-sm text-gray-500">Leave blank for standard production time</p>
+                                </div>
+                                
+                                {% if category.allow_rush_order %}
+                                <div class="flex items-center gap-3 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                                    {{ form.is_rush_order }}
+                                    <div>
+                                        <label for="id_is_rush_order" class="font-medium text-gray-900 dark:text-white cursor-pointer">
+                                            Rush Order (+{{ category.rush_order_fee_percentage }}% fee)
+                                        </label>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                                            Get your order faster with priority production
+                                        </p>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Gift Options -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>
+                                </svg>
+                                Gift Options
+                            </h3>
+                            <div class="space-y-4">
+                                <div class="flex items-center gap-3">
+                                    {{ form.is_gift }}
+                                    <label for="id_is_gift" class="text-gray-700 dark:text-gray-300 cursor-pointer">
+                                        This is a gift
+                                    </label>
+                                </div>
+                                
+                                <div class="flex items-center gap-3">
+                                    {{ form.gift_wrap }}
+                                    <label for="id_gift_wrap" class="text-gray-700 dark:text-gray-300 cursor-pointer">
+                                        Add gift wrapping
+                                    </label>
+                                </div>
+                                
+                                <div id="giftMessageSection" class="hidden">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Gift Message
+                                    </label>
+                                    {{ form.gift_message }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Terms -->
+                        <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                            <div class="flex items-start gap-3">
+                                {{ form.terms_accepted }}
+                                <label for="id_terms_accepted" class="text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+                                    I agree to the <a href="#" class="text-primary-600 hover:underline">Terms of Service</a> 
+                                    and <a href="#" class="text-primary-600 hover:underline">Pre-Order Policy</a>. 
+                                    I understand that custom orders require a deposit and may not be refundable.
+                                    <span class="text-red-500">*</span>
+                                </label>
+                            </div>
+                            {% if form.terms_accepted.errors %}
+                            <p class="mt-1 text-sm text-red-500">{{ form.terms_accepted.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Navigation -->
+                    <div class="flex justify-between mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                        <a href="{% url 'preorders:wizard' step=3 %}" 
+                           class="px-6 py-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white font-medium">
+                            ← Back
+                        </a>
+                        <button type="submit" 
+                                class="px-8 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 
+                                       transition-colors font-semibold">
+                            Review Order →
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Show/hide gift message
+document.getElementById('id_is_gift').addEventListener('change', function() {
+    document.getElementById('giftMessageSection').classList.toggle('hidden', !this.checked);
+});
+</script>
+{% endblock %}

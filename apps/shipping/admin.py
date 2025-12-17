@@ -20,7 +20,7 @@ class ShippingZoneAdmin(admin.ModelAdmin):
             'fields': ('name', 'description')
         }),
         ('Geographic Coverage', {
-            'fields': ('countries', 'states', 'postal_codes'),
+            'fields': ('countries', 'states', 'cities', 'postal_codes'),
             'description': 'Define the geographic areas this zone covers.'
         }),
         ('Settings', {

@@ -1,0 +1,156 @@
+{% comment %}
+Status Badge Component for Pre-Orders
+Usage: {% include "preorders/includes/status_badge.html" with status=preorder.status %}
+{% endcomment %}
+
+{% if status == 'draft' %}
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 rounded-full text-sm font-medium">
+    <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
+    Draft
+</span>
+
+{% elif status == 'submitted' %}
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-full text-sm font-medium">
+    <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+    Submitted
+</span>
+
+{% elif status == 'under_review' %}
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300 rounded-full text-sm font-medium">
+    <span class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
+    Under Review
+</span>
+
+{% elif status == 'quote_sent' %}
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 rounded-full text-sm font-medium">
+    <span class="w-2 h-2 bg-purple-500 rounded-full"></span>
+    Quote Sent
+</span>
+
+{% elif status == 'quote_accepted' %}
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 rounded-full text-sm font-medium">
+    <span class="w-2 h-2 bg-indigo-500 rounded-full"></span>
+    Quote Accepted
+</span>
+
+{% elif status == 'quote_rejected' %}
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 rounded-full text-sm font-medium">
+    <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+    Quote Rejected
+</span>
+
+{% elif status == 'deposit_pending' %}
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 rounded-full text-sm font-medium">
+    <span class="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+    Deposit Pending
+</span>
+
+{% elif status == 'deposit_paid' %}
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300 rounded-full text-sm font-medium">
+    <span class="w-2 h-2 bg-teal-500 rounded-full"></span>
+    Deposit Paid
+</span>
+
+{% elif status == 'design_in_progress' %}
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300 rounded-full text-sm font-medium">
+    <span class="w-2 h-2 bg-cyan-500 rounded-full animate-pulse"></span>
+    Designing
+</span>
+
+{% elif status == 'design_approval' %}
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 rounded-full text-sm font-medium">
+    <span class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
+    Awaiting Approval
+</span>
+
+{% elif status == 'design_revision' %}
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 rounded-full text-sm font-medium">
+    <span class="w-2 h-2 bg-rose-500 rounded-full"></span>
+    Revision Requested
+</span>
+
+{% elif status == 'approved' %}
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 rounded-full text-sm font-medium">
+    <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
+    Approved
+</span>
+
+{% elif status == 'in_production' %}
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-full text-sm font-medium">
+    <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+    In Production
+</span>
+
+{% elif status == 'quality_check' %}
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300 rounded-full text-sm font-medium">
+    <span class="w-2 h-2 bg-violet-500 rounded-full"></span>
+    Quality Check
+</span>
+
+{% elif status == 'completed' %}
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 rounded-full text-sm font-medium">
+    <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+    Completed
+</span>
+
+{% elif status == 'final_payment_pending' %}
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 rounded-full text-sm font-medium">
+    <span class="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+    Final Payment Pending
+</span>
+
+{% elif status == 'ready_for_pickup' %}
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-lime-100 text-lime-700 dark:bg-lime-900/40 dark:text-lime-300 rounded-full text-sm font-medium">
+    <span class="w-2 h-2 bg-lime-500 rounded-full"></span>
+    Ready for Pickup
+</span>
+
+{% elif status == 'shipped' %}
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300 rounded-full text-sm font-medium">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+    </svg>
+    Shipped
+</span>
+
+{% elif status == 'delivered' %}
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 rounded-full text-sm font-medium">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+    </svg>
+    Delivered
+</span>
+
+{% elif status == 'cancelled' %}
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 rounded-full text-sm font-medium">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+    </svg>
+    Cancelled
+</span>
+
+{% elif status == 'refunded' %}
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-full text-sm font-medium">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+    </svg>
+    Refunded
+</span>
+
+{% elif status == 'on_hold' %}
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300 rounded-full text-sm font-medium">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    On Hold
+</span>
+
+{% else %}
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 rounded-full text-sm font-medium">
+    <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
+    {{ status|title }}
+</span>
+{% endif %}

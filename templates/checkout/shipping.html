@@ -2,263 +2,339 @@
 {% load static %}
 
 {% block page_id %}checkout{% endblock %}
-{% block title %}Shipping - Checkout - Bunoraa{% endblock %}
+{% block title %}Shipping Method - Checkout - {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <!-- Progress Steps -->
-    <div class="mb-8">
-        <div class="flex items-center justify-center">
-            <div class="flex items-center">
-                <div class="w-10 h-10 rounded-full bg-primary-600 text-white flex items-center justify-center font-semibold">1</div>
-                <span class="ml-2 font-medium text-gray-900">Shipping</span>
-            </div>
-            <div class="w-16 h-0.5 mx-4 bg-gray-300"></div>
-            <div class="flex items-center">
-                <div class="w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-semibold">2</div>
-                <span class="ml-2 text-gray-500">Payment</span>
-            </div>
-            <div class="w-16 h-0.5 mx-4 bg-gray-300"></div>
-            <div class="flex items-center">
-                <div class="w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-semibold">3</div>
-                <span class="ml-2 text-gray-500">Review</span>
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Breadcrumb -->
+        <nav class="mb-6 text-sm">
+            <ol class="flex items-center space-x-2">
+                <li><a href="{% url 'cart:cart' %}" class="text-gray-500 hover:text-primary-600 dark:text-gray-400">Cart</a></li>
+                <li><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></li>
+                <li><a href="{% url 'checkout:information' %}" class="text-gray-500 hover:text-primary-600 dark:text-gray-400">Information</a></li>
+                <li><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></li>
+                <li class="font-medium text-gray-900 dark:text-white">Shipping</li>
+            </ol>
+        </nav>
+        
+        <!-- Progress Steps -->
+        <div class="mb-8">
+            <div class="flex items-center justify-center">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <span class="ml-2 text-gray-500 dark:text-gray-400">Information</span>
+                </div>
+                <div class="w-12 md:w-16 h-0.5 mx-2 md:mx-4 bg-green-600"></div>
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-primary-600 text-white flex items-center justify-center font-semibold">2</div>
+                    <span class="ml-2 font-medium text-gray-900 dark:text-white">Shipping</span>
+                </div>
+                <div class="w-12 md:w-16 h-0.5 mx-2 md:mx-4 bg-gray-300 dark:bg-gray-700"></div>
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-700 text-gray-600 dark:text-gray-400 flex items-center justify-center font-semibold">3</div>
+                    <span class="ml-2 text-gray-500 dark:text-gray-400 hidden md:inline">Payment</span>
+                </div>
+                <div class="w-12 md:w-16 h-0.5 mx-2 md:mx-4 bg-gray-300 dark:bg-gray-700"></div>
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-700 text-gray-600 dark:text-gray-400 flex items-center justify-center font-semibold">4</div>
+                    <span class="ml-2 text-gray-500 dark:text-gray-400 hidden md:inline">Review</span>
+                </div>
             </div>
         </div>
-    </div>
     
-    <div class="flex flex-col lg:flex-row gap-8">
-        <!-- Shipping Form -->
-        <div class="flex-1">
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h2 class="text-xl font-semibold text-gray-900 mb-6">Shipping Information</h2>
-                
-                {% if user.is_authenticated and saved_addresses %}
-                <!-- Saved Addresses -->
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-3">Select a saved address</label>
-                    <div class="grid md:grid-cols-2 gap-4">
-                        {% for address in saved_addresses %}
-                        <div class="relative">
-                            <input type="radio" name="saved_address" value="{{ address.id }}" id="address-{{ address.id }}"
-                                   class="peer sr-only" {% if forloop.first %}checked{% endif %}>
-                            <label for="address-{{ address.id }}" 
-                                   class="block p-4 border-2 rounded-lg cursor-pointer peer-checked:border-primary-600 peer-checked:bg-primary-50 hover:border-gray-400">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <p class="font-medium text-gray-900">{{ address.full_name }}</p>
-                                        <p class="text-sm text-gray-600 mt-1">{{ address.address_line1 }}</p>
-                                        {% if address.address_line2 %}
-                                        <p class="text-sm text-gray-600">{{ address.address_line2 }}</p>
-                                        {% endif %}
-                                        <p class="text-sm text-gray-600">{{ address.city }}, {{ address.state }} {{ address.postal_code }}</p>
-                                        <p class="text-sm text-gray-600">{{ address.country }}</p>
-                                        <p class="text-sm text-gray-500 mt-1">{{ address.phone }}</p>
-                                    </div>
-                                    {% if address.is_default %}
-                                    <span class="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded">Default</span>
-                                    {% endif %}
-                                </div>
-                            </label>
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Shipping Form -->
+            <div class="flex-1 space-y-6">
+                <!-- Contact & Shipping Summary -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                    <div class="space-y-4">
+                        <!-- Contact -->
+                        <div class="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center">
+                                <span class="text-sm text-gray-500 dark:text-gray-400 w-20">Contact</span>
+                                <span class="text-sm text-gray-900 dark:text-white">{{ checkout.email|default:checkout.shipping_email }}</span>
+                            </div>
+                            <a href="{% url 'checkout:information' %}" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Change</a>
                         </div>
-                        {% endfor %}
-                        <div class="relative">
-                            <input type="radio" name="saved_address" value="new" id="address-new" class="peer sr-only">
-                            <label for="address-new" 
-                                   class="block p-4 border-2 border-dashed rounded-lg cursor-pointer peer-checked:border-primary-600 peer-checked:bg-primary-50 hover:border-gray-400 h-full flex items-center justify-center">
-                                <div class="text-center">
-                                    <svg class="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                                    </svg>
-                                    <span class="text-gray-600">Add new address</span>
-                                </div>
-                            </label>
+                        
+                        <!-- Ship to -->
+                        <div class="flex justify-between items-center py-3">
+                            <div class="flex items-start">
+                                <span class="text-sm text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">Ship to</span>
+                                <span class="text-sm text-gray-900 dark:text-white">
+                                    {{ checkout.shipping_address_line_1 }}{% if checkout.shipping_address_line_2 %}, {{ checkout.shipping_address_line_2 }}{% endif %}, 
+                                    {{ checkout.shipping_city }}, {{ checkout.shipping_state }} {{ checkout.shipping_postal_code }}, 
+                                    {{ shipping_country_name|default:checkout.shipping_country }}
+                                </span>
+                            </div>
+                            <a href="{% url 'checkout:information' %}" class="text-sm text-primary-600 hover:text-primary-700 font-medium flex-shrink-0 ml-4">Change</a>
                         </div>
                     </div>
                 </div>
-                {% endif %}
                 
-                <!-- New Address Form -->
-                <form id="shipping-form" method="POST" action="{% url 'checkout:shipping' %}">
-                    {% csrf_token %}
-                    <div id="new-address-form" class="{% if user.is_authenticated and saved_addresses %}hidden{% endif %}">
-                        <div class="grid md:grid-cols-2 gap-6">
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-                                <input type="text" name="full_name" value="{{ form.full_name.value|default:'' }}" required
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
-                                {% if form.full_name.errors %}
-                                <p class="text-red-600 text-sm mt-1">{{ form.full_name.errors.0 }}</p>
-                                {% endif %}
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                                <input type="email" name="email" value="{{ form.email.value|default:user.email|default:'' }}" required
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
-                                <input type="tel" name="phone" value="{{ form.phone.value|default:'' }}" required
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
-                            </div>
-                            
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Address Line 1 *</label>
-                                <input type="text" name="address_line1" value="{{ form.address_line1.value|default:'' }}" required
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
-                                       placeholder="Street address, P.O. Box">
-                            </div>
-                            
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Address Line 2</label>
-                                <input type="text" name="address_line2" value="{{ form.address_line2.value|default:'' }}"
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
-                                       placeholder="Apartment, suite, unit, building, floor, etc.">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">City *</label>
-                                <input type="text" name="city" value="{{ form.city.value|default:'' }}" required
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">State/Province *</label>
-                                <input type="text" name="state" value="{{ form.state.value|default:'' }}" required
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Postal Code *</label>
-                                <input type="text" name="postal_code" value="{{ form.postal_code.value|default:'' }}" required
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Country *</label>
-                                <select name="country" required
-                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
-                                    <option value="">Select a country</option>
-                                    {% for country in countries %}
-                                    <option value="{{ country.code }}" {% if form.country.value == country.code %}selected{% endif %}>
-                                        {{ country.name }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
+                <!-- Shipping Method Selection -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                        </svg>
+                        Shipping Method
+                    </h2>
+                    
+                    <form id="shipping-form" method="POST" action="{% url 'checkout:shipping' %}">
+                        {% csrf_token %}
+                        
+                        <!-- Shipping Type Tabs -->
+                        <div class="flex border-b border-gray-200 dark:border-gray-700 mb-6">
+                            <button type="button" id="delivery-tab" onclick="switchShippingType('delivery')"
+                                    class="px-6 py-3 font-medium text-sm border-b-2 border-primary-600 text-primary-600 focus:outline-none">
+                                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                                </svg>
+                                Delivery
+                            </button>
+                            {% if pickup_locations %}
+                            <button type="button" id="pickup-tab" onclick="switchShippingType('pickup')"
+                                    class="px-6 py-3 font-medium text-sm border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none">
+                                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                Store Pickup
+                            </button>
+                            {% endif %}
                         </div>
                         
-                        {% if user.is_authenticated %}
-                        <div class="mt-4">
-                            <label class="flex items-center">
-                                <input type="checkbox" name="save_address" value="true"
-                                       class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
-                                <span class="ml-2 text-sm text-gray-600">Save this address for future orders</span>
-                            </label>
-                        </div>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Shipping Method -->
-                    <div class="mt-8">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Shipping Method</h3>
-                        <div class="space-y-3">
-                            {% for method in shipping_methods %}
+                        <input type="hidden" name="shipping_type" id="shipping-type" value="delivery">
+                        
+                        <!-- Delivery Options -->
+                        <div id="delivery-options" class="space-y-3">
+                            {% for method in shipping_options %}
                             <div class="relative">
-                                <input type="radio" name="shipping_method" value="{{ method.id }}" id="shipping-{{ method.id }}"
-                                       class="peer sr-only" {% if forloop.first %}checked{% endif %}>
+                                <input type="radio" name="shipping_rate_id" value="{{ method.id }}" id="shipping-{{ method.id }}"
+                                       class="peer sr-only" {% if checkout.shipping_rate and method.id|stringformat:"s" == checkout.shipping_rate.id|stringformat:"s" %}checked{% elif forloop.first and not checkout.shipping_rate %}checked{% endif %}
+                                       data-price="{{ method.cost }}"
+                                       data-code="{{ method.code }}"
+                                       data-estimate="{{ method.delivery_estimate }}">
                                 <label for="shipping-{{ method.id }}" 
-                                       class="flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer peer-checked:border-primary-600 peer-checked:bg-primary-50 hover:border-gray-400">
-                                    <div>
-                                        <p class="font-medium text-gray-900">{{ method.name }}</p>
-                                        <p class="text-sm text-gray-500">{{ method.description }}</p>
-                                        <p class="text-sm text-gray-500">Estimated: {{ method.estimated_days }} business days</p>
+                                       class="flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all peer-checked:border-primary-600 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 hover:border-gray-400 dark:hover:border-gray-500 border-gray-200 dark:border-gray-700">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mr-4">
+                                            {% if 'express' in method.name|lower %}
+                                            <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                            </svg>
+                                            {% elif 'overnight' in method.name|lower %}
+                                            <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                                            </svg>
+                                            {% else %}
+                                            <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                                            </svg>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            {% if method.zone %}
+                                            <p class="text-xs font-medium text-primary-600 dark:text-primary-400 uppercase tracking-wide">{{ method.zone }}</p>
+                                            {% endif %}
+                                            <p class="font-medium text-gray-900 dark:text-white">
+                                                {{ method.name }}{% if method.carrier %} <span class="text-gray-500 dark:text-gray-400 font-normal">({{ method.carrier }})</span>{% endif %}
+                                            </p>
+                                            {% if method.delivery_estimate %}
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                                {{ method.delivery_estimate }}
+                                            </p>
+                                            {% endif %}
+                                        </div>
                                     </div>
-                                    <span class="font-semibold text-gray-900">
-                                        {% if method.price == 0 %}Free{% else %}{{ currency_symbol }}{{ method.price }}{% endif %}
+                                    <span class="font-semibold text-gray-900 dark:text-white ml-4">
+                                        {% if method.is_free %}
+                                        <span class="text-green-600">Free</span>
+                                        {% else %}
+                                        {{ method.formatted_cost }}
+                                        {% endif %}
                                     </span>
+                                </label>
+                                <div class="absolute top-4 right-4 hidden peer-checked:flex">
+                                    <svg class="w-5 h-5 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl">
+                                <svg class="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                                </svg>
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No Shipping Available</h3>
+                                <p class="text-gray-500 dark:text-gray-400 mb-4">
+                                    Sorry, we currently don't have shipping options available for your location.
+                                </p>
+                                <p class="text-sm text-gray-400 dark:text-gray-500">
+                                    Please check your address or contact support for assistance.
+                                </p>
+                                <a href="{% url 'checkout:information' %}" class="inline-flex items-center mt-4 text-primary-600 hover:text-primary-700 font-medium">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                                    </svg>
+                                    Update Address
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Pickup Options -->
+                        {% if pickup_locations %}
+                        <div id="pickup-options" class="hidden space-y-3">
+                            {% for location in pickup_locations %}
+                            <div class="relative">
+                                <input type="radio" name="pickup_location" value="{{ location.id }}" id="pickup-{{ location.id }}"
+                                       class="peer sr-only" {% if forloop.first %}checked{% endif %}>
+                                <label for="pickup-{{ location.id }}" 
+                                       class="flex items-start justify-between p-4 border-2 rounded-xl cursor-pointer transition-all peer-checked:border-primary-600 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 hover:border-gray-400 dark:hover:border-gray-500 border-gray-200 dark:border-gray-700">
+                                    <div class="flex items-start">
+                                        <div class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mr-4 flex-shrink-0">
+                                            <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-gray-900 dark:text-white">{{ location.name }}</p>
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ location.address }}</p>
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ location.city }}, {{ location.state }} {{ location.postal_code }}</p>
+                                            {% if location.phone %}
+                                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ location.phone }}</p>
+                                            {% endif %}
+                                            {% if location.operating_hours %}
+                                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ location.operating_hours }}</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <span class="font-semibold text-green-600 ml-4 flex-shrink-0">Free</span>
                                 </label>
                             </div>
                             {% endfor %}
                         </div>
-                    </div>
-                    
-                    <!-- Order Notes -->
-                    <div class="mt-8">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Order Notes (Optional)</label>
-                        <textarea name="notes" rows="3"
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
-                                  placeholder="Special delivery instructions, gift message, etc.">{{ form.notes.value|default:'' }}</textarea>
-                    </div>
-                    
-                    <!-- Navigation -->
-                    <div class="mt-8 flex justify-between">
-                        <a href="{% url 'cart:cart' %}" class="flex items-center text-gray-600 hover:text-gray-800">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                            </svg>
-                            Back to Cart
-                        </a>
-                        <button type="submit" class="bg-primary-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-primary-700 transition-colors">
-                            Continue to Payment
-                        </button>
-                    </div>
-                </form>
+                        {% endif %}
+                        
+                        <!-- Delivery Instructions -->
+                        <div class="mt-6">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Delivery Instructions (optional)
+                            </label>
+                            <textarea name="delivery_instructions" id="delivery_instructions" rows="2"
+                                      class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition"
+                                      placeholder="E.g., Leave at the door, Call before delivery, etc.">{{ checkout.delivery_instructions|default:'' }}</textarea>
+                        </div>
+                        
+                        <!-- Navigation -->
+                        <div class="mt-8 flex justify-between items-center">
+                            <a href="{% url 'checkout:information' %}" class="flex items-center text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                </svg>
+                                Return to Information
+                            </a>
+                            <button type="submit" id="continue-btn" 
+                                    class="inline-flex items-center bg-primary-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-lg shadow-primary-600/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    {% if not shipping_options %}disabled{% endif %}>
+                                <span id="btn-text">Continue to Payment</span>
+                                <span id="btn-spinner" class="hidden ml-2">
+                                    <svg class="animate-spin w-5 h-5" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </span>
+                                <svg class="w-5 h-5 ml-2" id="arrow-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
-        
-        <!-- Order Summary -->
-        <div class="lg:w-96">
-            <div class="bg-white rounded-lg shadow-sm p-6 sticky top-24">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
-                
-                <!-- Cart Items -->
-                <div class="space-y-4 max-h-64 overflow-y-auto">
-                    {% for item in cart_items %}
-                    <div class="flex items-center space-x-4">
-                        <div class="relative">
-                            <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.jpg' }}" 
-                                 alt="{{ item.product.name }}"
-                                 class="w-16 h-16 object-cover rounded-lg">
-                            <span class="absolute -top-2 -right-2 w-5 h-5 bg-gray-500 text-white text-xs rounded-full flex items-center justify-center">
-                                {{ item.quantity }}
+            
+            <!-- Order Summary Sidebar -->
+            <div class="lg:w-96">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sticky top-24">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center justify-between">
+                        <span>Order Summary</span>
+                        <span class="text-sm font-normal text-gray-500 dark:text-gray-400">{{ cart_items|length }} items</span>
+                    </h2>
+                    
+                    <!-- Cart Items -->
+                    <div class="space-y-4 max-h-64 overflow-y-auto scrollbar-thin pr-2">
+                        {% for item in cart_items %}
+                        <div class="flex items-center space-x-4">
+                            <div class="relative flex-shrink-0">
+                                <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.jpg' }}" 
+                                     alt="{{ item.product.name }}"
+                                     class="w-16 h-16 object-cover rounded-lg">
+                                <span class="absolute -top-2 -right-2 w-5 h-5 bg-gray-600 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                                    {{ item.quantity }}
+                                </span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ item.product.name }}</p>
+                                {% if item.variant %}
+                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ item.variant.name }}</p>
+                                {% endif %}
+                            </div>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ currency_symbol }}{{ item.total_price }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Totals -->
+                    <div class="space-y-3 border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
+                        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                            <span>Subtotal</span>
+                            <span>{{ currency_symbol }}{{ cart_summary.subtotal }}</span>
+                        </div>
+                        {% if cart_summary.discount_amount and cart_summary.discount_amount != '0' %}
+                        <div class="flex justify-between text-sm text-green-600">
+                            <span>Discount</span>
+                            <span>-{{ currency_symbol }}{{ cart_summary.discount_amount }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                            <span>Shipping</span>
+                            <span id="shipping-cost" class="font-medium text-gray-900 dark:text-white">
+                                {% if checkout.shipping_cost %}
+                                    {% if checkout.shipping_cost == 0 %}Free{% else %}{{ currency_symbol }}{{ checkout.shipping_cost }}{% endif %}
+                                {% else %}
+                                    --
+                                {% endif %}
                             </span>
                         </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-gray-900 truncate">{{ item.product.name }}</p>
-                            {% if item.variant %}
-                            <p class="text-xs text-gray-500">{{ item.variant.name }}</p>
-                            {% endif %}
+                        {% if tax_rate > 0 %}
+                        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                            <span>Tax ({{ tax_rate }}%)</span>
+                            <span id="tax-amount">{{ currency_symbol }}{{ checkout.tax_amount|default:'0.00' }}</span>
                         </div>
-                        <p class="text-sm font-medium text-gray-900">{{ currency_symbol }}{{ item.total_price }}</p>
+                        {% endif %}
+                        <div class="flex justify-between text-lg font-bold text-gray-900 dark:text-white border-t border-gray-200 dark:border-gray-700 pt-3">
+                            <span>Total</span>
+                            <span id="order-total">{{ currency_symbol }}{{ checkout.total|default:cart_summary.total }}</span>
+                        </div>
                     </div>
-                    {% endfor %}
-                </div>
-                
-                <!-- Totals -->
-                <div class="space-y-3 border-t border-gray-200 mt-4 pt-4">
-                    <div class="flex justify-between text-gray-600">
-                        <span>Subtotal</span>
-                        <span>{{ currency_symbol }}{{ cart.subtotal }}</span>
-                    </div>
-                    {% if cart.discount > 0 %}
-                    <div class="flex justify-between text-green-600">
-                        <span>Discount</span>
-                        <span>-{{ currency_symbol }}{{ cart.discount }}</span>
-                    </div>
-                    {% endif %}
-                    <div class="flex justify-between text-gray-600">
-                        <span>Shipping</span>
-                        <span id="shipping-cost">Calculated at next step</span>
-                    </div>
-                    <div class="flex justify-between text-gray-600">
-                        <span>Tax</span>
-                        <span id="tax-amount">{{ currency_symbol }}{{ cart.tax|default:'0.00' }}</span>
-                    </div>
-                    <div class="flex justify-between text-lg font-semibold text-gray-900 border-t border-gray-200 pt-3">
-                        <span>Total</span>
-                        <span id="order-total">{{ currency_symbol }}{{ cart.total }}</span>
+                    
+                    <!-- Estimated Delivery -->
+                    <div class="mt-4 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+                        <div class="flex items-center text-sm">
+                            <svg class="w-5 h-5 text-primary-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <span class="text-gray-700 dark:text-gray-300">
+                                <strong id="estimated-delivery">Select a shipping method</strong>
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -269,41 +345,118 @@
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Toggle new address form
-        const savedAddressInputs = document.querySelectorAll('input[name="saved_address"]');
-        const newAddressForm = document.getElementById('new-address-form');
+document.addEventListener('DOMContentLoaded', function() {
+    // Switch between delivery and pickup
+    window.switchShippingType = function(type) {
+        const deliveryTab = document.getElementById('delivery-tab');
+        const pickupTab = document.getElementById('pickup-tab');
+        const deliveryOptions = document.getElementById('delivery-options');
+        const pickupOptions = document.getElementById('pickup-options');
+        const shippingTypeInput = document.getElementById('shipping-type');
         
-        savedAddressInputs.forEach(input => {
-            input.addEventListener('change', function() {
-                if (this.value === 'new') {
-                    newAddressForm.classList.remove('hidden');
-                    newAddressForm.querySelectorAll('input, select, textarea').forEach(el => {
-                        if (el.hasAttribute('data-required')) {
-                            el.setAttribute('required', '');
-                        }
-                    });
-                } else {
-                    newAddressForm.classList.add('hidden');
-                    newAddressForm.querySelectorAll('input, select, textarea').forEach(el => {
-                        if (el.hasAttribute('required')) {
-                            el.setAttribute('data-required', '');
-                            el.removeAttribute('required');
-                        }
-                    });
-                }
-            });
+        if (type === 'delivery') {
+            deliveryTab.classList.add('border-primary-600', 'text-primary-600');
+            deliveryTab.classList.remove('border-transparent', 'text-gray-500');
+            if (pickupTab) {
+                pickupTab.classList.remove('border-primary-600', 'text-primary-600');
+                pickupTab.classList.add('border-transparent', 'text-gray-500');
+            }
+            deliveryOptions.classList.remove('hidden');
+            if (pickupOptions) pickupOptions.classList.add('hidden');
+            shippingTypeInput.value = 'delivery';
+        } else {
+            if (pickupTab) {
+                pickupTab.classList.add('border-primary-600', 'text-primary-600');
+                pickupTab.classList.remove('border-transparent', 'text-gray-500');
+            }
+            deliveryTab.classList.remove('border-primary-600', 'text-primary-600');
+            deliveryTab.classList.add('border-transparent', 'text-gray-500');
+            deliveryOptions.classList.add('hidden');
+            if (pickupOptions) pickupOptions.classList.remove('hidden');
+            shippingTypeInput.value = 'pickup';
+            
+            // Update shipping cost display
+            document.getElementById('shipping-cost').textContent = 'Free';
+        }
+        
+        updateOrderTotal();
+    };
+    
+    // Update shipping cost when method changes
+    const shippingInputs = document.querySelectorAll('input[name="shipping_rate_id"]');
+    shippingInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            const price = parseFloat(this.dataset.price);
+            const rateId = this.value;
+            const estimate = this.dataset.estimate;
+            
+            document.getElementById('shipping-cost').textContent = 
+                price === 0 ? 'Free' : '{{ currency_symbol }}' + price.toFixed(2);
+            
+            // Update delivery estimate
+            if (estimate) {
+                document.getElementById('estimated-delivery').textContent = estimate;
+            }
+            
+            updateOrderTotal();
         });
         
-        // Update shipping cost when method changes
-        const shippingInputs = document.querySelectorAll('input[name="shipping_method"]');
-        shippingInputs.forEach(input => {
-            input.addEventListener('change', function() {
-                const label = document.querySelector(`label[for="${this.id}"]`);
-                const price = label.querySelector('span').textContent;
-                document.getElementById('shipping-cost').textContent = price;
-            });
-        });
+        // Initialize with selected option
+        if (input.checked) {
+            const price = parseFloat(input.dataset.price);
+            const estimate = input.dataset.estimate;
+            
+            if (!isNaN(price)) {
+                document.getElementById('shipping-cost').textContent = 
+                    price === 0 ? 'Free' : '{{ currency_symbol }}' + price.toFixed(2);
+            }
+            
+            if (estimate) {
+                document.getElementById('estimated-delivery').textContent = estimate;
+            }
+        }
     });
+    
+    function updateOrderTotal() {
+        // This would ideally call an API to get the updated total
+        // For now, we'll do a simple calculation
+        const subtotal = parseFloat('{{ cart_summary.subtotal|default:0 }}');
+        const discount = parseFloat('{{ cart_summary.discount_amount|default:0 }}');
+        const taxRate = parseFloat('{{ tax_rate|default:0 }}');
+        
+        let shipping = 0;
+        const shippingType = document.getElementById('shipping-type').value;
+        
+        if (shippingType === 'delivery') {
+            const selectedShipping = document.querySelector('input[name="shipping_rate_id"]:checked');
+            if (selectedShipping) {
+                shipping = parseFloat(selectedShipping.dataset.price) || 0;
+            }
+        }
+        
+        const taxableAmount = subtotal - discount;
+        const tax = taxRate > 0 ? (taxableAmount * taxRate / 100) : 0;
+        const total = taxableAmount + shipping + tax;
+        
+        document.getElementById('order-total').textContent = '{{ currency_symbol }}' + total.toFixed(2);
+        if (document.getElementById('tax-amount')) {
+            document.getElementById('tax-amount').textContent = '{{ currency_symbol }}' + tax.toFixed(2);
+        }
+    }
+    
+    // Form submission handling
+    const form = document.getElementById('shipping-form');
+    const continueBtn = document.getElementById('continue-btn');
+    const btnText = document.getElementById('btn-text');
+    const btnSpinner = document.getElementById('btn-spinner');
+    const arrowIcon = document.getElementById('arrow-icon');
+    
+    form.addEventListener('submit', function() {
+        continueBtn.disabled = true;
+        btnText.textContent = 'Processing...';
+        btnSpinner.classList.remove('hidden');
+        arrowIcon.classList.add('hidden');
+    });
+});
 </script>
 {% endblock %}

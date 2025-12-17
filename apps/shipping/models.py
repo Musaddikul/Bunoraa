@@ -17,18 +17,22 @@ class ShippingZone(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     
-    # Zone can be based on countries, states, or postal codes
+    # Zone can be based on countries, states, cities, or postal codes
     countries = models.JSONField(
         default=list,
-        help_text="List of ISO country codes (e.g., ['US', 'CA', 'GB'])"
+        help_text="List of ISO country codes (e.g., ['US', 'BD', 'GB'])"
     )
     states = models.JSONField(
         default=list,
-        help_text="List of state/region codes (e.g., ['US-CA', 'US-NY'])"
+        help_text="List of state/division names (e.g., ['Dhaka', 'Rangpur'])"
+    )
+    cities = models.JSONField(
+        default=list,
+        help_text="List of city/district names (e.g., ['Dhaka', 'Mirpur', 'Gulshan'])"
     )
     postal_codes = models.JSONField(
         default=list,
-        help_text="List of postal code patterns (e.g., ['90*', '100*'])"
+        help_text="List of postal code patterns (e.g., ['1200', '1205', '56*'])"
     )
     
     # Settings
@@ -54,27 +58,73 @@ class ShippingZone(models.Model):
     def __str__(self):
         return self.name
     
-    def matches_location(self, country, state=None, postal_code=None):
-        """Check if a location matches this zone."""
-        # Check postal codes first (most specific)
-        if postal_code and self.postal_codes:
-            for pattern in self.postal_codes:
-                if pattern.endswith('*'):
-                    if postal_code.startswith(pattern[:-1]):
+    def matches_location(self, country=None, state=None, city=None, postal_code=None):
+        """
+        Check if a location matches this zone. 
+        Postal code is the PRIMARY matching key - if provided and matches, that's definitive.
+        Fallback hierarchy: postal_code > city > state > country.
+        """
+        # If this is a default zone, match if country matches (or any location for catch-all)
+        if self.is_default:
+            if self.countries and country:
+                country_upper = country.upper().strip() if isinstance(country, str) else country
+                return country_upper in self.countries or country in self.countries
+            return True
+        
+        # POSTAL CODE IS PRIMARY - if provided, use it as the main matching criterion
+        if postal_code:
+            postal_code_str = str(postal_code).strip()
+            
+            # If zone has postal codes defined, check if this postal code matches
+            if self.postal_codes:
+                for pattern in self.postal_codes:
+                    pattern_str = str(pattern).strip()
+                    if pattern_str.endswith('*'):
+                        # Wildcard match (e.g., "56*" matches "5621")
+                        if postal_code_str.startswith(pattern_str[:-1]):
+                            return True
+                    elif postal_code_str == pattern_str:
+                        # Exact match
                         return True
-                elif postal_code == pattern:
+                # Postal code doesn't match this zone's patterns
+                return False
+            else:
+                # Zone has no postal codes defined - can't match by postal code
+                # Fall through to check other criteria, but this zone is unlikely to match
+                pass
+        
+        # If no postal code provided, fall back to city/state matching
+        # Check cities/districts - if provided and zone has cities
+        if city and self.cities:
+            city_lower = city.lower().strip()
+            for zone_city in self.cities:
+                zone_city_lower = zone_city.lower().strip()
+                if city_lower == zone_city_lower:
                     return True
+                # Also check if zone city is contained in the provided city
+                if zone_city_lower in city_lower:
+                    return True
+            # Zone has cities but none matched
+            return False
         
-        # Check states
+        # Check states/divisions - if provided and zone has states
         if state and self.states:
-            state_code = f"{country}-{state}"
-            if state_code in self.states or state in self.states:
-                return True
+            state_lower = state.lower().strip()
+            for zone_state in self.states:
+                zone_state_lower = zone_state.lower().strip()
+                if state_lower == zone_state_lower:
+                    return True
+                # Also allow partial match (e.g., "Dhaka" matches "Dhaka Division")
+                if zone_state_lower in state_lower or state_lower in zone_state_lower:
+                    return True
+            return False
         
-        # Check countries
+        # Check countries (least specific) - only if no other criteria defined
         if country and self.countries:
-            if country in self.countries:
-                return True
+            country_upper = country.upper().strip() if isinstance(country, str) else country
+            if country_upper in self.countries or country in self.countries:
+                if not self.postal_codes and not self.cities and not self.states:
+                    return True
         
         return False
 

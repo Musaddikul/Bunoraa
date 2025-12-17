@@ -193,14 +193,30 @@ class ExchangeRateService:
         """Calculate rate via base currency."""
         from django.db import models
         
-        base_code = 'USD'
-        base = Currency.objects.filter(code=base_code).first()
+        # Try EUR first (fixer.io free plan), then USD
+        for base_code in ['EUR', 'USD']:
+            base = Currency.objects.filter(code=base_code).first()
+            
+            if not base:
+                continue
+            
+            # Skip if base is same as source or target
+            if base.id == from_currency.id or base.id == to_currency.id:
+                continue
+            
+            rate = ExchangeRateService._calculate_via_base(from_currency, to_currency, base)
+            if rate:
+                return rate
         
-        if not base:
-            return None
-        
-        # Get from_currency -> USD rate
+        return None
+    
+    @staticmethod
+    def _calculate_via_base(from_currency, to_currency, base):
+        """Calculate rate via a specific base currency."""
+        from django.db import models
         now = timezone.now()
+        
+        # Get from_currency -> base rate
         from_to_base = ExchangeRate.objects.filter(
             from_currency=from_currency,
             to_currency=base,
@@ -230,7 +246,7 @@ class ExchangeRateService:
         else:
             from_to_base_rate = from_to_base.rate
         
-        # Get USD -> to_currency rate
+        # Get base -> to_currency rate
         base_to_target = ExchangeRate.objects.filter(
             from_currency=base,
             to_currency=to_currency,

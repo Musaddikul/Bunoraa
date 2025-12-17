@@ -14,6 +14,87 @@ const WishlistPage = (function() {
         await loadWishlist();
     }
 
+    function resolveProductImage(item = {}) {
+        const product = item.product || item || {};
+        const candidates = [
+            item.product_image,
+            product.product_image,
+            product.primary_image,
+            product.image,
+            Array.isArray(product.images) ? product.images[0] : null,
+            product.image_url,
+            product.thumbnail
+        ];
+
+        const pick = (val) => {
+            if (!val) return '';
+            if (typeof val === 'string') return val;
+            if (typeof val === 'object') {
+                if (typeof val.image === 'string' && val.image) return val.image;
+                if (val.image && typeof val.image === 'object') {
+                    if (typeof val.image.url === 'string' && val.image.url) return val.image.url;
+                    if (typeof val.image.src === 'string' && val.image.src) return val.image.src;
+                }
+                if (typeof val.url === 'string' && val.url) return val.url;
+                if (typeof val.src === 'string' && val.src) return val.src;
+            }
+            return '';
+        };
+
+        for (const candidate of candidates) {
+            const url = pick(candidate);
+            if (url) return url;
+        }
+
+        return '';
+    }
+
+    function resolvePrices(item = {}) {
+        const product = item.product || item || {};
+        // For wishlist items, API now returns:
+        // - item.product_price (original price)
+        // - item.product_sale_price (sale price if on sale)
+        
+        const pickNumber = (val) => {
+            if (val === null || val === undefined) return null;
+            const num = Number(val);
+            return Number.isFinite(num) ? num : null;
+        };
+
+        // Get regular price - prefer product_price from wishlist API
+        const priceCandidates = [
+            item.product_price,
+            product.price,
+            item.price,
+            item.current_price,
+            item.price_at_add
+        ];
+        
+        let price = null;
+        for (const p of priceCandidates) {
+            price = pickNumber(p);
+            if (price !== null) break;
+        }
+
+        // Get sale price - prefer product_sale_price from wishlist API
+        const saleCandidates = [
+            item.product_sale_price,
+            product.sale_price,
+            item.sale_price
+        ];
+        
+        let salePrice = null;
+        for (const s of saleCandidates) {
+            salePrice = pickNumber(s);
+            if (salePrice !== null) break;
+        }
+
+        return {
+            price: price !== null ? price : 0,
+            salePrice: salePrice !== null ? salePrice : null
+        };
+    }
+
     async function loadWishlist() {
         const container = document.getElementById('wishlist-container');
         if (!container) return;
@@ -22,8 +103,28 @@ const WishlistPage = (function() {
 
         try {
             const response = await WishlistApi.getWishlist({ page: currentPage });
-            const items = response.data || [];
-            const meta = response.meta || {};
+            // Normalize various API shapes to a flat array and meta
+            let items = [];
+            let meta = {};
+
+            if (Array.isArray(response)) {
+                items = response;
+            } else if (response && typeof response === 'object') {
+                // Common shapes: { data: [...] }, { results: [...] }, { items: [...] }
+                items = response.data || response.results || response.items || [];
+                // Some APIs return { data: { items: [...], meta: {...} } }
+                if (!Array.isArray(items) && response.data && typeof response.data === 'object') {
+                    items = response.data.items || response.data.results || [];
+                    meta = response.data.meta || response.meta || {};
+                } else {
+                    meta = response.meta || {};
+                }
+            }
+
+            if (!Array.isArray(items)) {
+                // Last-ditch attempt: single item object => wrap; otherwise empty
+                items = items && typeof items === 'object' ? [items] : [];
+            }
 
             renderWishlist(items, meta);
         } catch (error) {
@@ -63,44 +164,69 @@ const WishlistPage = (function() {
                 ${items.map(item => renderWishlistItem(item)).join('')}
             </div>
             ${meta.total_pages > 1 ? `
-                <div id="wishlist-pagination" class="mt-8">${Pagination.render({
-                    currentPage: meta.current_page || currentPage,
-                    totalPages: meta.total_pages,
-                    totalItems: meta.total
-                })}</div>
+                <div id="wishlist-pagination" class="mt-8"></div>
             ` : ''}
         `;
+
+        // Mount modern Pagination component if needed
+        if (meta && meta.total_pages > 1) {
+            const mount = document.getElementById('wishlist-pagination');
+            if (mount && window.Pagination) {
+                const paginator = new window.Pagination({
+                    totalPages: meta.total_pages,
+                    currentPage: meta.current_page || currentPage,
+                    className: 'justify-center',
+                    onChange: (page) => {
+                        currentPage = page;
+                        loadWishlist();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                });
+                mount.innerHTML = '';
+                mount.appendChild(paginator.create());
+            }
+        }
 
         bindEvents();
     }
 
     function renderWishlistItem(item) {
         const product = item.product || item;
-        const inStock = product.stock_quantity > 0 || product.in_stock;
-        const onSale = product.sale_price && product.sale_price < product.price;
+        // Use product_name and product_slug from wishlist item if available
+        const productName = item.product_name || product.name || '';
+        const productSlug = item.product_slug || product.slug || '';
+        // Check is_in_stock from the item itself (wishlist API returns it at top level)
+        const inStock = item.is_in_stock !== undefined ? item.is_in_stock : (product.is_in_stock !== undefined ? product.is_in_stock : (product.stock_quantity > 0));
+        const imageUrl = resolveProductImage(item);
+        
+        // Use resolvePrices to get the best available price data
+        const { price, salePrice } = resolvePrices(item);
 
         return `
-            <div class="wishlist-item bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" data-item-id="${item.id}" data-product-id="${product.id}">
+            <div class="wishlist-item relative bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" data-item-id="${item.id}" data-product-id="${product.id || item.product}">
                 <div class="relative aspect-square bg-gray-100">
-                    <a href="/products/${product.slug}/">
-                        <img 
-                            src="${product.image || '/static/images/placeholder.png'}" 
-                            alt="${Templates.escapeHtml(product.name)}"
-                            class="w-full h-full object-cover"
-                            loading="lazy"
-                        >
-                    </a>
-                    ${onSale ? `
-                        <span class="absolute top-2 left-2 px-2 py-1 bg-red-500 text-white text-xs font-medium rounded">Sale</span>
+                    ${item.discount_percentage ? `
+                        <div class="absolute top-2 left-2 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                            -${item.discount_percentage}%
+                        </div>
                     ` : ''}
-                    ${!inStock ? `
-                        <span class="absolute top-2 right-2 px-2 py-1 bg-gray-900 text-white text-xs font-medium rounded">Out of Stock</span>
-                    ` : ''}
-                    <button class="remove-btn absolute top-2 ${onSale ? 'right-2' : 'right-2'} w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-red-50 transition-colors" aria-label="Remove from wishlist">
-                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    <button class="remove-btn absolute top-2 right-2 z-20 w-10 h-10 bg-gray-900 text-white rounded-full shadow-lg ring-2 ring-white/25 border border-white/30 flex items-center justify-center hover:bg-gray-800 transition-colors" aria-label="Remove from wishlist" style="pointer-events:auto;">
+                        <svg class="w-5 h-5" fill="none" stroke="white" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </button>
+                    <a href="/products/${productSlug}/">
+                        ${imageUrl ? `
+                            <img 
+                                src="${imageUrl}" 
+                                alt="${Templates.escapeHtml(productName)}"
+                                class="w-full h-full object-cover"
+                                loading="lazy"
+                            >
+                        ` : `
+                            <div class="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs uppercase tracking-wide">No Image</div>
+                        `}
+                    </a>
                 </div>
                 <div class="p-4">
                     ${product.category ? `
@@ -109,14 +235,14 @@ const WishlistPage = (function() {
                         </a>
                     ` : ''}
                     <h3 class="font-medium text-gray-900 mt-1 line-clamp-2">
-                        <a href="/products/${product.slug}/" class="hover:text-primary-600">
-                            ${Templates.escapeHtml(product.name)}
+                        <a href="/products/${productSlug}/" class="hover:text-primary-600">
+                            ${Templates.escapeHtml(productName)}
                         </a>
                     </h3>
                     <div class="mt-2">
                         ${Price.render({
-                            price: product.price,
-                            salePrice: product.sale_price
+                            price: price,
+                            salePrice: salePrice
                         })}
                     </div>
                     ${product.average_rating ? `
@@ -204,14 +330,7 @@ const WishlistPage = (function() {
             });
         });
 
-        paginationContainer?.addEventListener('click', (e) => {
-            const pageBtn = e.target.closest('[data-page]');
-            if (pageBtn) {
-                currentPage = parseInt(pageBtn.dataset.page);
-                loadWishlist();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-        });
+        // Pagination handled by component onChange
     }
 
     function destroy() {

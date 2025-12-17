@@ -52,6 +52,7 @@ LOCAL_APPS = [
     'apps.orders',
     'apps.payments',
     'apps.pages',
+    'apps.preorders',
     'apps.promotions',
     'apps.reviews',
     'apps.notifications',
@@ -313,11 +314,10 @@ LOGGING = {
         },
         'file': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'logging.FileHandler',
             'filename': BASE_DIR / 'logs' / 'bunoraa.log',
-            'maxBytes': 1024 * 1024 * 5,  # 5 MB
-            'backupCount': 5,
             'formatter': 'verbose',
+            'mode': 'a',
         },
         'mail_admins': {
             'level': 'ERROR',

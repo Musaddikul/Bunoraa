@@ -1,209 +1,230 @@
 /**
- * Toast Component
- * @module components/toast
+ * Toast/Sonner Component
  */
 
-const Toast = (function() {
-    'use strict';
+import { BaseComponent } from './BaseComponent.js';
+import { clsx, createElement } from './utils.js';
 
-    let container = null;
-    const queue = [];
-    const maxVisible = 3;
-    const defaultDuration = 5000;
+export class Toast extends BaseComponent {
+  constructor(options = {}) {
+    super(options);
+    
+    this.message = options.message || '';
+    this.type = options.type || 'default'; // default, success, error, warning, info
+    this.duration = options.duration || 3000;
+    this.position = options.position || 'top-right'; // top-left, top-right, bottom-left, bottom-right, top-center
+    this.className = options.className || '';
+    this.onClose = options.onClose || null;
+  }
 
-    function getContainer() {
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'toast-container';
-            container.className = 'fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none';
-            container.setAttribute('aria-live', 'polite');
-            container.setAttribute('aria-atomic', 'true');
-            document.body.appendChild(container);
+  destroy() {
+    if (!this.element) return;
+    const el = this.element;
+    // Play exit animation, then cleanup
+    el.classList.add(this.getExitAnimationClass());
+    const onDone = () => {
+      el.removeEventListener('animationend', onDone);
+      // Remove and cleanup via BaseComponent
+      super.destroy();
+      // If container becomes empty, remove it
+      const container = Toast.getContainer(this.position);
+      if (container && container.childElementCount === 0 && container.parentNode) {
+        container.parentNode.removeChild(container);
+        if (Toast._containers) {
+          delete Toast._containers[this.position || 'top-right'];
         }
-        return container;
-    }
-
-    function create(options = {}) {
-        const {
-            message = '',
-            type = 'info',
-            duration = defaultDuration,
-            closable = true,
-            action = null
-        } = typeof options === 'string' ? { message: options } : options;
-
-        const icons = {
-            success: `<svg class="w-5 h-5 text-green-600 dark:text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-            </svg>`,
-            error: `<svg class="w-5 h-5 text-red-600 dark:text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>`,
-            warning: `<svg class="w-5 h-5 text-amber-600 dark:text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-            </svg>`,
-            info: `<svg class="w-5 h-5 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>`
-        };
-
-        const bgColors = {
-            success: 'bg-green-50 border-green-200',
-            error: 'bg-red-50 border-red-200',
-            warning: 'bg-yellow-50 border-yellow-200',
-            info: 'bg-blue-50 border-blue-200'
-        };
-
-        const darkBgColors = {
-            success: 'dark:bg-green-900/50 dark:border-green-500/40',
-            error: 'dark:bg-red-900/50 dark:border-red-500/40',
-            warning: 'dark:bg-amber-900/50 dark:border-amber-500/40',
-            info: 'dark:bg-blue-900/50 dark:border-blue-500/40'
-        };
-
-        const toast = document.createElement('div');
-        toast.className = `flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg pointer-events-auto transform translate-x-full transition-transform duration-300 ${bgColors[type] || bgColors.info} ${darkBgColors[type] || darkBgColors.info} dark:text-stone-100 dark:shadow-xl dark:shadow-black/30`;
-        toast.setAttribute('role', 'alert');
-
-        toast.innerHTML = `
-            <div class="flex-shrink-0">
-                ${icons[type] || icons.info}
-            </div>
-            <div class="flex-1 text-sm text-gray-700 dark:text-stone-100">
-                ${Templates.escapeHtml(message)}
-            </div>
-            ${action ? `
-                <button type="button" class="flex-shrink-0 text-sm font-medium text-amber-700 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200" data-toast-action>
-                    ${Templates.escapeHtml(action.text)}
-                </button>
-            ` : ''}
-            ${closable ? `
-                <button type="button" class="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:text-stone-400 dark:hover:text-stone-200" data-toast-close aria-label="Close">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            ` : ''}
-        `;
-
-        const instance = {
-            element: toast,
-            timer: null,
-            close: () => close(instance)
-        };
-
-        if (closable) {
-            toast.querySelector('[data-toast-close]')?.addEventListener('click', () => close(instance));
-        }
-
-        if (action?.callback) {
-            toast.querySelector('[data-toast-action]')?.addEventListener('click', () => {
-                action.callback();
-                close(instance);
-            });
-        }
-
-        return instance;
-    }
-
-    function show(options) {
-        const instance = create(options);
-        const cont = getContainer();
-
-        while (queue.length >= maxVisible) {
-            const oldest = queue.shift();
-            if (!oldest) break;
-            clearTimeout(oldest.timer);
-            oldest.element?.remove();
-            oldest.element = null;
-            oldest.closing = false;
-        }
-
-        cont.appendChild(instance.element);
-        queue.push(instance);
-
-        requestAnimationFrame(() => {
-            instance.element.classList.remove('translate-x-full');
-            instance.element.classList.add('translate-x-0');
-        });
-
-        const duration = typeof options === 'object' ? options.duration : defaultDuration;
-        if (duration > 0) {
-            instance.timer = setTimeout(() => close(instance), duration);
-        }
-
-        return instance;
-    }
-
-    function close(instance, options = {}) {
-        if (!instance) return;
-        const { immediate = false, force = false } = options;
-        if (!force && (instance.closing || !instance.element)) return;
-        instance.closing = true;
-
-        clearTimeout(instance.timer);
-        if (immediate) {
-            instance.element?.remove();
-            const idx = queue.indexOf(instance);
-            if (idx > -1) queue.splice(idx, 1);
-            instance.element = null;
-            instance.closing = false;
-            return;
-        }
-
-        if (!instance.element) {
-            instance.closing = false;
-            return;
-        }
-
-        instance.element.classList.remove('translate-x-0');
-        instance.element.classList.add('translate-x-full');
-
-        setTimeout(() => {
-            instance.element.remove();
-            const idx = queue.indexOf(instance);
-            if (idx > -1) queue.splice(idx, 1);
-            instance.element = null;
-            instance.closing = false;
-        }, 300);
-    }
-
-    function success(message, options = {}) {
-        return show({ ...options, message, type: 'success' });
-    }
-
-    function error(message, options = {}) {
-        return show({ ...options, message, type: 'error', duration: options.duration || 7000 });
-    }
-
-    function warning(message, options = {}) {
-        return show({ ...options, message, type: 'warning' });
-    }
-
-    function info(message, options = {}) {
-        return show({ ...options, message, type: 'info' });
-    }
-
-    function clearAll() {
-        while (queue.length) {
-            const instance = queue.shift();
-            if (!instance) continue;
-            clearTimeout(instance.timer);
-            instance.element?.remove();
-            instance.element = null;
-            instance.closing = false;
-        }
-    }
-
-    return {
-        show,
-        success,
-        error,
-        warning,
-        info,
-        close,
-        clearAll
+      }
     };
-})();
+    el.addEventListener('animationend', onDone);
+    // Fallback in case animationend doesn’t fire
+    setTimeout(onDone, 320);
+  }
 
-window.Toast = Toast;
+  static getContainer(position) {
+    const key = position || 'top-right';
+    if (!this._containers) this._containers = {};
+    if (this._containers[key] && document.body.contains(this._containers[key])) {
+      return this._containers[key];
+    }
+    const container = createElement('div', {
+      className: clsx(
+        'fixed z-50 p-2 flex flex-col gap-2 pointer-events-none',
+        this.getPositionClassesForContainer(key)
+      )
+    });
+    document.body.appendChild(container);
+    this._containers[key] = container;
+    return container;
+  }
+
+  static getPositionClassesForContainer(position) {
+    switch (position) {
+      case 'top-left':
+        return 'top-4 left-4 items-start';
+      case 'top-right':
+        return 'top-4 right-4 items-end';
+      case 'bottom-left':
+        return 'bottom-4 left-4 items-start';
+      case 'bottom-right':
+        return 'bottom-4 right-4 items-end';
+      case 'top-center':
+        return 'top-4 left-1/2 -translate-x-1/2 items-center transform';
+      default:
+        return 'top-4 right-4 items-end';
+    }
+  }
+
+  create() {
+    const containerElement = Toast.getContainer(this.position);
+
+    const toastElement = createElement('div', {
+      className: clsx(
+        'rounded-lg shadow-lg p-2.5 flex items-center gap-2 min-w-max max-w-sm bg-opacity-95',
+        this.getEnterAnimationClass(),
+        this.getTypeClasses(),
+        this.className
+      )
+    });
+
+    // Icon
+    const iconElement = createElement('span', {
+      className: 'text-base flex-shrink-0',
+      text: this.getIcon()
+    });
+    toastElement.appendChild(iconElement);
+
+    // Message
+    const messageElement = createElement('span', {
+      text: this.message,
+      className: 'flex-1'
+    });
+    toastElement.appendChild(messageElement);
+
+    // Close button
+    const closeBtn = createElement('button', {
+      className: 'text-base hover:opacity-70 transition-opacity flex-shrink-0',
+      text: '×'
+    });
+
+    closeBtn.addEventListener('click', () => {
+      this.destroy();
+    });
+
+    toastElement.appendChild(closeBtn);
+
+    // Set element and append to shared container
+    this.element = toastElement;
+    containerElement.appendChild(this.element);
+
+    // Enforce max visible toasts (3). Remove oldest if exceeded.
+    while (containerElement.children.length > 3) {
+      containerElement.removeChild(containerElement.firstElementChild);
+    }
+
+    // Auto close
+    if (this.duration > 0) {
+      setTimeout(() => {
+        this.destroy();
+      }, this.duration);
+    }
+
+    return this.element;
+  }
+
+  getEnterAnimationClass() {
+    const pos = this.position || 'top-right';
+    if (pos === 'top-right' || pos === 'bottom-right') return 'animate-slide-in-right transition-all duration-300 pointer-events-auto';
+    if (pos === 'top-left' || pos === 'bottom-left') return 'animate-slide-in-left transition-all duration-300 pointer-events-auto';
+    return 'animate-slide-in-top transition-all duration-300 pointer-events-auto';
+  }
+
+  getExitAnimationClass() {
+    const pos = this.position || 'top-right';
+    if (pos === 'top-right' || pos === 'bottom-right') return 'animate-slide-out-right';
+    if (pos === 'top-left' || pos === 'bottom-left') return 'animate-slide-out-left';
+    return 'animate-slide-out-top';
+  }
+
+  getPositionClasses() {
+    const positions = {
+      'top-left': 'top-4 left-4',
+      'top-right': 'top-4 right-4',
+      'bottom-left': 'bottom-4 left-4',
+      'bottom-right': 'bottom-4 right-4',
+      'top-center': 'top-4 left-1/2 -translate-x-1/2 transform'
+    };
+    return positions[this.position] || positions['bottom-right'];
+  }
+
+  getTypeClasses() {
+    const types = {
+      default: 'bg-gray-900 text-white',
+      success: 'bg-green-600 text-white',
+      error: 'bg-red-600 text-white',
+      warning: 'bg-yellow-600 text-white',
+      info: 'bg-blue-600 text-white'
+    };
+    return types[this.type] || types.default;
+  }
+
+  getIcon() {
+    const icons = {
+      default: 'ℹ',
+      success: '✓',
+      error: '✕',
+      warning: '⚠',
+      info: 'ℹ'
+    };
+    return icons[this.type] || icons.default;
+  }
+
+  static show(message, options = {}) {
+    const toast = new Toast({ message, ...options });
+    const element = toast.create();
+    return toast;
+  }
+}
+
+// Add CSS animation
+if (!document.querySelector('style[data-toast]')) {
+  const style = document.createElement('style');
+  style.setAttribute('data-toast', 'true');
+  style.textContent = `
+    @keyframes slideInTop {
+      from { transform: translateY(-12px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .animate-slide-in-top { animation: slideInTop 0.25s ease-out; }
+
+    @keyframes slideOutTop {
+      from { transform: translateY(0); opacity: 1; }
+      to { transform: translateY(-12px); opacity: 0; }
+    }
+    .animate-slide-out-top { animation: slideOutTop 0.2s ease-in forwards; }
+
+    @keyframes slideInRight {
+      from { transform: translateX(16px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .animate-slide-in-right { animation: slideInRight 0.25s ease-out; }
+
+    @keyframes slideOutRight {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(16px); opacity: 0; }
+    }
+    .animate-slide-out-right { animation: slideOutRight 0.2s ease-in forwards; }
+
+    @keyframes slideInLeft {
+      from { transform: translateX(-16px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .animate-slide-in-left { animation: slideInLeft 0.25s ease-out; }
+
+    @keyframes slideOutLeft {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(-16px); opacity: 0; }
+    }
+    .animate-slide-out-left { animation: slideOutLeft 0.2s ease-in forwards; }
+  `;
+  document.head.appendChild(style);
+}

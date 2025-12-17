@@ -1,0 +1,80 @@
+{% extends "emails/base_email.html" %}
+{% load static %}
+
+{% block title %}New Customer Message - {{ preorder.preorder_number }}{% endblock %}
+
+{% block content %}
+<h1 style="color: #1f2937; font-size: 24px; margin-bottom: 20px;">
+    💬 New Customer Message
+</h1>
+
+<p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+    A customer has sent a new message regarding pre-order <strong>{{ preorder.preorder_number }}</strong>.
+</p>
+
+<!-- Customer Info Box -->
+<div style="background-color: #dbeafe; border: 1px solid #3b82f6; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+    <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td style="color: #1e40af; font-size: 14px;">Customer</td>
+            <td style="color: #1f2937; font-size: 14px; font-weight: 600; text-align: right;">{{ preorder.full_name }}</td>
+        </tr>
+        <tr>
+            <td style="color: #1e40af; font-size: 14px;">Email</td>
+            <td style="color: #1f2937; font-size: 14px; text-align: right;">
+                <a href="mailto:{{ preorder.email }}" style="color: #2563eb;">{{ preorder.email }}</a>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- Message Box -->
+<div style="background-color: #f3f4f6; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+    <div style="margin-bottom: 12px;">
+        <span style="color: #6b7280; font-size: 12px;">{{ message.created_at|date:"M d, Y at H:i" }}</span>
+    </div>
+    
+    <div style="background-color: white; border-radius: 8px; padding: 16px; border-left: 4px solid #7c3aed;">
+        <p style="color: #1f2937; font-size: 14px; line-height: 1.6; margin: 0; white-space: pre-wrap;">{{ message.message }}</p>
+    </div>
+</div>
+
+<!-- Order Summary -->
+<div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+    <h3 style="color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 12px;">Order Details</h3>
+    <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td style="padding: 4px 0; color: #6b7280; font-size: 14px;">Order Number</td>
+            <td style="padding: 4px 0; color: #1f2937; font-size: 14px; font-weight: 600; text-align: right;">{{ preorder.preorder_number }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 4px 0; color: #6b7280; font-size: 14px;">Title</td>
+            <td style="padding: 4px 0; color: #1f2937; font-size: 14px; text-align: right;">{{ preorder.title }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 4px 0; color: #6b7280; font-size: 14px;">Category</td>
+            <td style="padding: 4px 0; color: #1f2937; font-size: 14px; text-align: right;">{{ preorder.category.name }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 4px 0; color: #6b7280; font-size: 14px;">Status</td>
+            <td style="padding: 4px 0; color: #7c3aed; font-size: 14px; font-weight: 600; text-align: right;">{{ preorder.get_status_display }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 4px 0; color: #6b7280; font-size: 14px;">Price</td>
+            <td style="padding: 4px 0; color: #1f2937; font-size: 14px; font-weight: 600; text-align: right;">৳{{ preorder.final_price|default:preorder.estimated_total }}</td>
+        </tr>
+    </table>
+</div>
+
+<!-- CTA Button -->
+<div style="text-align: center; margin-bottom: 24px;">
+    <a href="{{ admin_url }}" 
+       style="display: inline-block; background-color: #7c3aed; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+        Reply in Admin Panel
+    </a>
+</div>
+
+<p style="color: #6b7280; font-size: 14px; line-height: 1.6;">
+    Please respond to the customer's message in a timely manner.
+</p>
+{% endblock %}

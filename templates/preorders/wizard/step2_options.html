@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Customize Options - Step 2 | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Progress Bar -->
+        <div class="max-w-4xl mx-auto mb-8">
+            <div class="flex items-center justify-between mb-4">
+                {% for s in "12345"|make_list %}
+                <div class="flex items-center">
+                    <div class="relative">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm
+                                    {% if s|add:0 < step %}bg-primary-600 text-white
+                                    {% elif s|add:0 == step %}bg-primary-600 text-white ring-4 ring-primary-200 dark:ring-primary-800
+                                    {% else %}bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400{% endif %}">
+                            {% if s|add:0 < step %}
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            {% else %}
+                            {{ s }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if s != "5" %}
+                    <div class="hidden sm:block w-20 lg:w-32 h-1 mx-2 
+                                {% if s|add:0 < step %}bg-primary-600{% else %}bg-gray-200 dark:bg-gray-700{% endif %}"></div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            <div class="hidden sm:flex justify-between text-sm">
+                <span class="{% if step >= 1 %}text-primary-600 dark:text-primary-400 font-medium{% else %}text-gray-500 dark:text-gray-400{% endif %}">Category</span>
+                <span class="{% if step >= 2 %}text-primary-600 dark:text-primary-400 font-medium{% else %}text-gray-500 dark:text-gray-400{% endif %}">Customize</span>
+                <span class="{% if step >= 3 %}text-primary-600 dark:text-primary-400 font-medium{% else %}text-gray-500 dark:text-gray-400{% endif %}">Upload</span>
+                <span class="{% if step >= 4 %}text-primary-600 dark:text-primary-400 font-medium{% else %}text-gray-500 dark:text-gray-400{% endif %}">Details</span>
+                <span class="{% if step >= 5 %}text-primary-600 dark:text-primary-400 font-medium{% else %}text-gray-500 dark:text-gray-400{% endif %}">Review</span>
+            </div>
+        </div>
+
+        <!-- Step Content -->
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 md:p-8">
+                <div class="mb-8">
+                    <div class="flex items-center gap-4 mb-4">
+                        <span class="px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-sm font-medium">
+                            {{ category.name }}
+                        </span>
+                    </div>
+                    <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                        Step 2: Customize Your Options
+                    </h1>
+                    <p class="text-gray-600 dark:text-gray-400">
+                        Select the options and specifications for your custom order
+                    </p>
+                </div>
+
+                <form method="post" action="{% url 'preorders:wizard' step=2 %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    {% if category.options.count %}
+                    <div class="space-y-6">
+                        {% for field in form %}
+                        <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                            <label for="{{ field.id_for_label }}" 
+                                   class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                {{ field.label }}
+                                {% if field.field.required %}
+                                <span class="text-red-500">*</span>
+                                {% endif %}
+                            </label>
+                            {{ field }}
+                            {% if field.help_text %}
+                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ field.help_text }}</p>
+                            {% endif %}
+                            {% if field.errors %}
+                            <p class="mt-1 text-sm text-red-500">{{ field.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-12 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                        <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
+                                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <p class="text-gray-600 dark:text-gray-400 text-lg">
+                            No additional options required for this category
+                        </p>
+                        <p class="text-sm text-gray-500 dark:text-gray-500 mt-2">
+                            Continue to the next step to upload your design files
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Price Preview -->
+                    <div class="mt-8 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-xl">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-700 dark:text-gray-300 font-medium">Estimated Base Price:</span>
+                            <span class="text-2xl font-bold text-primary-600" id="estimatedPrice">
+                                ৳{{ category.base_price }}
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            * Final price will be confirmed after review
+                        </p>
+                    </div>
+
+                    <!-- Navigation -->
+                    <div class="flex justify-between mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                        <a href="{% url 'preorders:wizard' step=1 %}" 
+                           class="px-6 py-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white font-medium">
+                            ← Back
+                        </a>
+                        <button type="submit" 
+                                class="px-8 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 
+                                       transition-colors font-semibold">
+                            Continue →
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

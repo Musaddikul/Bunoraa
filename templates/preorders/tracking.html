@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Track Your Pre-Order | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
+    <div class="container mx-auto px-4">
+        <div class="max-w-md mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 mx-auto bg-primary-100 dark:bg-primary-900/40 rounded-full flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                    </svg>
+                </div>
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                    Track Your Pre-Order
+                </h1>
+                <p class="text-gray-600 dark:text-gray-400">
+                    Enter your order details to check the status
+                </p>
+            </div>
+
+            <!-- Tracking Form -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+                <form method="post" action="{% url 'preorders:tracking' %}">
+                    {% csrf_token %}
+                    
+                    {% if error %}
+                    <div class="mb-4 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-sm">
+                        {{ error }}
+                    </div>
+                    {% endif %}
+
+                    <div class="space-y-4">
+                        <div>
+                            <label for="preorder_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Pre-Order Number <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" 
+                                   id="preorder_number" 
+                                   name="preorder_number" 
+                                   required
+                                   value="{{ preorder_number|default:'' }}"
+                                   placeholder="e.g., PO-20240115-ABC123"
+                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                        </div>
+
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Email Address <span class="text-red-500">*</span>
+                            </label>
+                            <input type="email" 
+                                   id="email" 
+                                   name="email" 
+                                   required
+                                   value="{{ email|default:'' }}"
+                                   placeholder="Enter the email used for the order"
+                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                        </div>
+
+                        <button type="submit" 
+                                class="w-full py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold">
+                            Track Order
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <p class="text-sm text-gray-500 dark:text-gray-400 text-center">
+                        Don't have your order number? 
+                        <a href="{% url 'contacts:contact' %}" class="text-primary-600 hover:underline">Contact us</a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Info Cards -->
+            <div class="mt-8 grid gap-4">
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 flex items-start gap-4">
+                    <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-medium text-gray-900 dark:text-white">Check Your Email</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                            Your order number was sent to your email when you placed the order.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 flex items-start gap-4">
+                    <div class="w-10 h-10 bg-green-100 dark:bg-green-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-medium text-gray-900 dark:text-white">Have an Account?</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                            <a href="{% url 'accounts:login' %}" class="text-primary-600 hover:underline">Sign in</a> 
+                            to view all your pre-orders in one place.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Back Link -->
+            <div class="mt-8 text-center">
+                <a href="{% url 'preorders:landing' %}" class="text-primary-600 hover:text-primary-700 font-medium">
+                    ← Back to Pre-Orders
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

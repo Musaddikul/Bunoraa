@@ -125,6 +125,12 @@ class Order(models.Model):
     customer_notes = models.TextField(blank=True)
     admin_notes = models.TextField(blank=True)
     
+    # Gift Options
+    is_gift = models.BooleanField(default=False)
+    gift_message = models.TextField(blank=True, max_length=500)
+    gift_wrap = models.BooleanField(default=False)
+    gift_wrap_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)

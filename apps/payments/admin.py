@@ -2,7 +2,51 @@
 Payments admin configuration
 """
 from django.contrib import admin
-from .models import Payment, PaymentMethod, Refund
+from .models import Payment, PaymentMethod, Refund, PaymentGateway
+
+
+@admin.register(PaymentGateway)
+class PaymentGatewayAdmin(admin.ModelAdmin):
+    list_display = ['name', 'code', 'is_active', 'fee_text', 'is_sandbox', 'sort_order']
+    list_filter = ['is_active', 'is_sandbox', 'fee_type']
+    search_fields = ['name', 'code', 'description']
+    list_editable = ['is_active', 'sort_order']
+    readonly_fields = ['id', 'created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('code', 'name', 'description', 'is_active', 'sort_order')
+        }),
+        ('Appearance', {
+            'fields': ('icon', 'icon_class', 'color')
+        }),
+        ('Fees', {
+            'fields': ('fee_type', 'fee_amount', 'fee_text'),
+            'description': 'Configure additional fees for this payment method'
+        }),
+        ('Availability', {
+            'fields': ('currencies', 'countries', 'min_amount', 'max_amount'),
+            'classes': ('collapse',),
+            'description': 'Leave empty to allow all currencies/countries'
+        }),
+        ('API Configuration', {
+            'fields': ('api_key', 'api_secret', 'merchant_id', 'webhook_secret', 'is_sandbox'),
+            'classes': ('collapse',),
+            'description': 'API credentials for this payment gateway'
+        }),
+        ('Bank Transfer Details', {
+            'fields': ('bank_name', 'bank_account_name', 'bank_account_number', 'bank_routing_number', 'bank_branch'),
+            'classes': ('collapse',),
+            'description': 'Only for Bank Transfer payment method'
+        }),
+        ('Customer Instructions', {
+            'fields': ('instructions',),
+        }),
+        ('Timestamps', {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
 
 
 @admin.register(PaymentMethod)

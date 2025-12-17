@@ -1,0 +1,94 @@
+{% extends "emails/base_email.html" %}
+{% load static %}
+
+{% block title %}Pre-Order Submitted - {{ preorder.preorder_number }}{% endblock %}
+
+{% block content %}
+<h1 style="color: #1f2937; font-size: 24px; margin-bottom: 20px;">
+    Thank You for Your Pre-Order!
+</h1>
+
+<p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+    Hi {{ preorder.full_name }},
+</p>
+
+<p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+    We've received your custom pre-order and our team is excited to bring your vision to life!
+</p>
+
+<!-- Order Summary Box -->
+<div style="background-color: #f3f4f6; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+    <h2 style="color: #1f2937; font-size: 18px; margin-bottom: 16px;">Order Summary</h2>
+    
+    <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Order Number</td>
+            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 600; text-align: right;">{{ preorder.preorder_number }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Category</td>
+            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">{{ preorder.category.name }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Title</td>
+            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">{{ preorder.title }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Quantity</td>
+            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">{{ preorder.quantity }}</td>
+        </tr>
+        <tr style="border-top: 1px solid #d1d5db;">
+            <td style="padding: 12px 0 8px; color: #1f2937; font-size: 16px; font-weight: 600;">Estimated Total</td>
+            <td style="padding: 12px 0 8px; color: #7c3aed; font-size: 18px; font-weight: 700; text-align: right;">৳{{ preorder.estimated_total }}</td>
+        </tr>
+    </table>
+</div>
+
+<!-- What's Next -->
+<div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+    <h2 style="color: #1f2937; font-size: 18px; margin-bottom: 16px;">What Happens Next?</h2>
+    
+    <div style="margin-bottom: 16px;">
+        <div style="display: flex; align-items: flex-start; margin-bottom: 12px;">
+            <div style="width: 28px; height: 28px; background-color: #7c3aed; color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; margin-right: 12px; flex-shrink: 0;">1</div>
+            <div>
+                <p style="color: #1f2937; font-size: 14px; font-weight: 600; margin: 0 0 4px;">Review & Quote</p>
+                <p style="color: #6b7280; font-size: 14px; margin: 0;">Our team will review your order and send you a detailed quote within 24-48 hours.</p>
+            </div>
+        </div>
+        
+        <div style="display: flex; align-items: flex-start; margin-bottom: 12px;">
+            <div style="width: 28px; height: 28px; background-color: #7c3aed; color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; margin-right: 12px; flex-shrink: 0;">2</div>
+            <div>
+                <p style="color: #1f2937; font-size: 14px; font-weight: 600; margin: 0 0 4px;">Deposit Payment</p>
+                <p style="color: #6b7280; font-size: 14px; margin: 0;">Accept the quote and pay the deposit to start production.</p>
+            </div>
+        </div>
+        
+        <div style="display: flex; align-items: flex-start;">
+            <div style="width: 28px; height: 28px; background-color: #7c3aed; color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; margin-right: 12px; flex-shrink: 0;">3</div>
+            <div>
+                <p style="color: #1f2937; font-size: 14px; font-weight: 600; margin: 0 0 4px;">Production Begins</p>
+                <p style="color: #6b7280; font-size: 14px; margin: 0;">We'll start creating your custom order and keep you updated on progress.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CTA Button -->
+<div style="text-align: center; margin-bottom: 24px;">
+    <a href="{{ site_url }}{% url 'preorders:detail' preorder_number=preorder.preorder_number %}" 
+       style="display: inline-block; background-color: #7c3aed; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+        View Order Details
+    </a>
+</div>
+
+<p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+    If you have any questions about your order, feel free to reply to this email or visit our support center.
+</p>
+
+<p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+    Thank you for choosing {{ site_name }}!<br>
+    <strong>The {{ site_name }} Team</strong>
+</p>
+{% endblock %}

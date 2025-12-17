@@ -1,0 +1,527 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Upload Designs - Step 3 | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Progress Bar -->
+        <div class="max-w-4xl mx-auto mb-8">
+            <div class="flex items-center justify-between mb-4">
+                {% for s in "12345"|make_list %}
+                <div class="flex items-center">
+                    <div class="relative">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm
+                                    {% if s|add:0 < step %}bg-primary-600 text-white
+                                    {% elif s|add:0 == step %}bg-primary-600 text-white ring-4 ring-primary-200 dark:ring-primary-800
+                                    {% else %}bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400{% endif %}">
+                            {% if s|add:0 < step %}
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            {% else %}
+                            {{ s }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if s != "5" %}
+                    <div class="hidden sm:block w-20 lg:w-32 h-1 mx-2 
+                                {% if s|add:0 < step %}bg-primary-600{% else %}bg-gray-200 dark:bg-gray-700{% endif %}"></div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            <div class="hidden sm:flex text-sm" style="justify-content: space-between; padding: 0 12px;">
+                <span class="text-center {% if step >= 1 %}text-primary-600 dark:text-primary-400 font-medium{% else %}text-gray-500 dark:text-gray-400{% endif %}" style="width: 50px;">Category</span>
+                <span class="text-center {% if step >= 2 %}text-primary-600 dark:text-primary-400 font-medium{% else %}text-gray-500 dark:text-gray-400{% endif %}" style="width: 70px;">Customize</span>
+                <span class="text-center {% if step >= 3 %}text-primary-600 dark:text-primary-400 font-medium{% else %}text-gray-500 dark:text-gray-400{% endif %}" style="width: 50px;">Upload</span>
+                <span class="text-center {% if step >= 4 %}text-primary-600 dark:text-primary-400 font-medium{% else %}text-gray-500 dark:text-gray-400{% endif %}" style="width: 50px;">Details</span>
+                <span class="text-center {% if step >= 5 %}text-primary-600 dark:text-primary-400 font-medium{% else %}text-gray-500 dark:text-gray-400{% endif %}" style="width: 50px;">Review</span>
+            </div>
+        </div>
+
+        <!-- Step Content -->
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 md:p-8">
+                <div class="mb-8">
+                    <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                        Step 3: Upload Your Designs
+                    </h1>
+                    <p class="text-gray-600 dark:text-gray-400">
+                        Share your design files and reference images to help us understand your vision
+                    </p>
+                </div>
+
+                <form method="post" action="{% url 'preorders:wizard' step=3 %}" enctype="multipart/form-data" id="uploadForm">
+                    {% csrf_token %}
+                    
+                    <!-- Hidden inputs for tracking removed files -->
+                    <div id="removedDesignFilesContainer"></div>
+                    <div id="removedReferenceFilesContainer"></div>
+                    
+                    <div class="space-y-8">
+                        <!-- Design Files Upload -->
+                        <div>
+                            <label class="block text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                                Design Files
+                            </label>
+                            
+                            <div id="designDropzone" 
+                                 class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center
+                                        hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer">
+                                <input type="file" name="design_files" id="design_files" 
+                                       class="hidden" multiple
+                                       accept=".pdf,.png,.jpg,.jpeg,.ai,.psd,.svg,.eps,.cdr,.zip,.rar">
+                                <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
+                                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                </svg>
+                                <p class="text-gray-600 dark:text-gray-400 mb-2">
+                                    <span class="text-primary-600 font-medium">Click to upload</span> or drag and drop
+                                </p>
+                                <p class="text-sm text-gray-500 dark:text-gray-500">
+                                    PDF, PNG, JPG, AI, PSD, SVG, EPS, CDR, ZIP, RAR (max 50MB each)
+                                </p>
+                            </div>
+                            
+                            <!-- Combined Design Files List (existing + new) -->
+                            <div id="designFilesList" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+                        </div>
+
+                        <!-- Reference Images Upload -->
+                        <div>
+                            <label class="block text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                                Reference Images <span class="text-sm font-normal text-gray-500">(Optional)</span>
+                            </label>
+                            
+                            <div id="referenceDropzone"
+                                 class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center
+                                        hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer">
+                                <input type="file" name="reference_images" id="reference_images" 
+                                       class="hidden" multiple
+                                       accept="image/*">
+                                <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
+                                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                <p class="text-gray-600 dark:text-gray-400 mb-2">
+                                    <span class="text-primary-600 font-medium">Click to upload</span> reference images
+                                </p>
+                                <p class="text-sm text-gray-500 dark:text-gray-500">
+                                    Images for inspiration or examples of what you want
+                                </p>
+                            </div>
+                            
+                            <!-- Combined Reference Images List (existing + new) -->
+                            <div id="referenceFilesList" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+                        </div>
+
+                        <!-- Special Instructions -->
+                        <div>
+                            <label for="special_instructions" 
+                                   class="block text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                                Special Instructions <span class="text-sm font-normal text-gray-500">(Optional)</span>
+                            </label>
+                            <textarea name="special_instructions" id="special_instructions" rows="4"
+                                      class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
+                                             focus:ring-2 focus:ring-primary-500 focus:border-primary-500
+                                             dark:bg-gray-700 dark:text-white"
+                                      placeholder="Any specific requirements, measurements, or instructions for your order...">{{ session_data.special_instructions|default:'' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Tips -->
+                    <div class="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                        <h4 class="font-semibold text-blue-800 dark:text-blue-300 mb-2">
+                            📝 Tips for Better Results
+                        </h4>
+                        <ul class="text-sm text-blue-700 dark:text-blue-400 space-y-1 list-disc list-inside">
+                            <li>Use high-resolution images (300 DPI or higher for print)</li>
+                            <li>Include multiple angles or views if applicable</li>
+                            <li>Provide vector files (AI, SVG, EPS) when possible</li>
+                            <li>Include any fonts or assets used in your design</li>
+                        </ul>
+                    </div>
+
+                    <!-- Navigation -->
+                    <div class="flex justify-between mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                        <a href="{% url 'preorders:wizard' step=2 %}" 
+                           class="px-6 py-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white font-medium">
+                            ← Back
+                        </a>
+                        <button type="submit" 
+                                class="px-8 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 
+                                       transition-colors font-semibold">
+                            Continue →
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Preview Modal -->
+<div id="imagePreviewModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80" onclick="closePreviewModal()">
+    <div class="relative max-w-4xl max-h-[90vh] p-4">
+        <button onclick="closePreviewModal()" class="absolute top-2 right-2 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+        <img id="previewImage" src="" alt="Preview" class="max-w-full max-h-[85vh] object-contain rounded-lg" onclick="event.stopPropagation()">
+    </div>
+</div>
+
+<script>
+// Initialize with existing files from server
+const existingDesignFiles = {{ existing_files_json.design_files|safe }};
+const existingReferenceFiles = {{ existing_files_json.reference_images|safe }};
+
+// Track files to be removed and new files
+let removedDesignIndices = new Set();
+let removedReferenceIndices = new Set();
+let newDesignFiles = [];
+let newReferenceFiles = [];
+
+// DataTransfer to manage file input
+let designDataTransfer = new DataTransfer();
+let referenceDataTransfer = new DataTransfer();
+
+// Check if file is an image
+function isImageFile(filename) {
+    const ext = filename.toLowerCase().split('.').pop();
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext);
+}
+
+// Store preview data for design files
+let designFilePreviews = {};
+
+// Render all design files
+function renderDesignFiles() {
+    const list = document.getElementById('designFilesList');
+    list.innerHTML = '';
+    
+    // Render existing files
+    existingDesignFiles.forEach((file, index) => {
+        if (removedDesignIndices.has(index)) return;
+        
+        const div = document.createElement('div');
+        div.className = 'relative group';
+        const isImage = isImageFile(file.name);
+        
+        div.innerHTML = `
+            <div class="aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 cursor-pointer"
+                 onclick="previewDesignFile('${file.name}', null, true, ${isImage})">
+                <div class="w-full h-full flex flex-col items-center justify-center p-2">
+                    ${isImage ? `
+                    <svg class="w-10 h-10 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>` : `
+                    <svg class="w-10 h-10 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>`}
+                    <span class="text-xs text-gray-500 text-center truncate w-full px-1">${file.name.length > 15 ? file.name.substring(0, 12) + '...' : file.name}</span>
+                    <span class="text-xs text-gray-400">${formatFileSize(file.size)}</span>
+                </div>
+            </div>
+            <button type="button" onclick="event.stopPropagation(); removeExistingDesignFile(${index})" 
+                    class="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                    title="Remove file">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        `;
+        list.appendChild(div);
+    });
+    
+    // Render new files with preview
+    newDesignFiles.forEach((file, index) => {
+        const div = document.createElement('div');
+        div.className = 'relative group';
+        const isImage = isImageFile(file.name);
+        
+        if (isImage) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                designFilePreviews[`new_${index}`] = e.target.result;
+                div.innerHTML = `
+                    <div class="aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 cursor-pointer relative"
+                         onclick="previewDesignFile('${file.name}', '${e.target.result}', false, true)">
+                        <img src="${e.target.result}" alt="${file.name}" class="w-full h-full object-cover">
+                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
+                            <p class="text-xs text-white truncate">${file.name}</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="event.stopPropagation(); removeNewDesignFile(${index})" 
+                            class="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-10"
+                            title="Remove file">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                `;
+            };
+            reader.readAsDataURL(file);
+        } else {
+            div.innerHTML = `
+                <div class="aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 cursor-pointer"
+                     onclick="previewDesignFile('${file.name}', null, false, false)">
+                    <div class="w-full h-full flex flex-col items-center justify-center p-2">
+                        <svg class="w-10 h-10 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="text-xs text-gray-500 text-center truncate w-full px-1">${file.name.length > 15 ? file.name.substring(0, 12) + '...' : file.name}</span>
+                        <span class="text-xs text-gray-400">${formatFileSize(file.size)}</span>
+                    </div>
+                </div>
+                <button type="button" onclick="event.stopPropagation(); removeNewDesignFile(${index})" 
+                        class="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                        title="Remove file">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            `;
+        }
+        list.appendChild(div);
+    });
+}
+
+// Store preview data for reference files
+let referenceFilePreviews = {};
+
+// Render all reference images
+function renderReferenceFiles() {
+    const list = document.getElementById('referenceFilesList');
+    list.innerHTML = '';
+    
+    // Render existing files
+    existingReferenceFiles.forEach((file, index) => {
+        if (removedReferenceIndices.has(index)) return;
+        
+        const div = document.createElement('div');
+        div.className = 'relative group';
+        div.innerHTML = `
+            <div class="aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 cursor-pointer"
+                 onclick="previewImage('${file.name}', null, true)">
+                <div class="w-full h-full flex flex-col items-center justify-center p-2">
+                    <svg class="w-10 h-10 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="text-xs text-gray-500 text-center truncate w-full px-1">${file.name.length > 15 ? file.name.substring(0, 12) + '...' : file.name}</span>
+                </div>
+            </div>
+            <button type="button" onclick="event.stopPropagation(); removeExistingReferenceFile(${index})"
+                    class="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                    title="Remove image">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        `;
+        list.appendChild(div);
+    });
+    
+    // Render new files with preview
+    newReferenceFiles.forEach((file, index) => {
+        const div = document.createElement('div');
+        div.className = 'relative group';
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            referenceFilePreviews[`new_${index}`] = e.target.result;
+            div.innerHTML = `
+                <div class="aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 cursor-pointer relative"
+                     onclick="previewImage('${file.name}', '${e.target.result}')">
+                    <img src="${e.target.result}" alt="${file.name}" class="w-full h-full object-cover">
+                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
+                        <p class="text-xs text-white truncate">${file.name}</p>
+                    </div>
+                </div>
+                <button type="button" onclick="event.stopPropagation(); removeNewReferenceFile(${index})"
+                        class="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-10"
+                        title="Remove image">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            `;
+        };
+        reader.readAsDataURL(file);
+        list.appendChild(div);
+    });
+}
+
+// Remove functions
+function removeExistingDesignFile(index) {
+    removedDesignIndices.add(index);
+    updateRemovedInputs();
+    renderDesignFiles();
+}
+
+function removeExistingReferenceFile(index) {
+    removedReferenceIndices.add(index);
+    updateRemovedInputs();
+    renderReferenceFiles();
+}
+
+function removeNewDesignFile(index) {
+    newDesignFiles.splice(index, 1);
+    updateDesignFileInput();
+    renderDesignFiles();
+}
+
+function removeNewReferenceFile(index) {
+    newReferenceFiles.splice(index, 1);
+    updateReferenceFileInput();
+    renderReferenceFiles();
+}
+
+// Update hidden inputs for removed existing files
+function updateRemovedInputs() {
+    const designContainer = document.getElementById('removedDesignFilesContainer');
+    const refContainer = document.getElementById('removedReferenceFilesContainer');
+    
+    designContainer.innerHTML = '';
+    refContainer.innerHTML = '';
+    
+    removedDesignIndices.forEach(index => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'remove_design_files';
+        input.value = index;
+        designContainer.appendChild(input);
+    });
+    
+    removedReferenceIndices.forEach(index => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'remove_reference_files';
+        input.value = index;
+        refContainer.appendChild(input);
+    });
+}
+
+// Update file inputs with current files
+function updateDesignFileInput() {
+    designDataTransfer = new DataTransfer();
+    newDesignFiles.forEach(file => designDataTransfer.items.add(file));
+    document.getElementById('design_files').files = designDataTransfer.files;
+}
+
+function updateReferenceFileInput() {
+    referenceDataTransfer = new DataTransfer();
+    newReferenceFiles.forEach(file => referenceDataTransfer.items.add(file));
+    document.getElementById('reference_images').files = referenceDataTransfer.files;
+}
+
+// File input change handlers
+document.getElementById('design_files').addEventListener('change', function(e) {
+    // Add new files to our array
+    Array.from(e.target.files).forEach(file => {
+        if (!newDesignFiles.some(f => f.name === file.name && f.size === file.size)) {
+            newDesignFiles.push(file);
+        }
+    });
+    updateDesignFileInput();
+    renderDesignFiles();
+});
+
+document.getElementById('reference_images').addEventListener('change', function(e) {
+    // Add new files to our array
+    Array.from(e.target.files).forEach(file => {
+        if (!newReferenceFiles.some(f => f.name === file.name && f.size === file.size)) {
+            newReferenceFiles.push(file);
+        }
+    });
+    updateReferenceFileInput();
+    renderReferenceFiles();
+});
+
+// Design file preview
+function previewDesignFile(name, src, isExisting = false, isImage = false) {
+    if (!isImage) {
+        alert('Preview not available for "' + name + '" - This is not an image file.');
+        return;
+    }
+    if (isExisting) {
+        alert('Preview for "' + name + '" - This image was already uploaded and saved.');
+        return;
+    }
+    const modal = document.getElementById('imagePreviewModal');
+    const img = document.getElementById('previewImage');
+    img.src = src;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+// Image preview modal
+function previewImage(name, src, isExisting = false) {
+    if (isExisting) {
+        alert('Preview for "' + name + '" - This image was already uploaded and saved.');
+        return;
+    }
+    const modal = document.getElementById('imagePreviewModal');
+    const img = document.getElementById('previewImage');
+    img.src = src;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closePreviewModal() {
+    const modal = document.getElementById('imagePreviewModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+// Format file size
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Drag and drop
+['designDropzone', 'referenceDropzone'].forEach(id => {
+    const dropzone = document.getElementById(id);
+    const inputId = id === 'designDropzone' ? 'design_files' : 'reference_images';
+    
+    dropzone.addEventListener('click', () => document.getElementById(inputId).click());
+    
+    dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/10');
+    });
+    
+    dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/10');
+    });
+    
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/10');
+        const input = document.getElementById(inputId);
+        
+        // Create a new DataTransfer to merge files
+        const dt = new DataTransfer();
+        Array.from(e.dataTransfer.files).forEach(file => dt.items.add(file));
+        input.files = dt.files;
+        input.dispatchEvent(new Event('change'));
+    });
+});
+
+// Close modal on escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closePreviewModal();
+});
+
+// Initial render
+renderDesignFiles();
+renderReferenceFiles();
+</script>
+{% endblock %}

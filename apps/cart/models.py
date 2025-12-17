@@ -167,6 +167,22 @@ class CartItem(models.Model):
         return self.unit_price * self.quantity
     
     @property
+    def total_price(self):
+        """Alias for total - for template compatibility."""
+        return self.total
+    
+    @property
+    def original_total(self):
+        """Calculate original total before sale (for strikethrough display)."""
+        if self.variant:
+            # For variants, use price (original) vs sale_price (discounted)
+            original_price = self.variant.price
+        else:
+            # For products, use price (original) - sale_price is the discounted price
+            original_price = self.product.price
+        return original_price * self.quantity
+    
+    @property
     def is_available(self):
         """Check if item is available for purchase."""
         if not self.product.is_active or self.product.is_deleted:
