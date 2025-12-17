@@ -3,7 +3,27 @@ Payments API serializers
 """
 from rest_framework import serializers
 
-from ..models import Payment, PaymentMethod, Refund
+from ..models import Payment, PaymentMethod, Refund, PaymentGateway
+
+
+class PaymentGatewaySerializer(serializers.ModelSerializer):
+    """Serializer for payment gateways (public facing)."""
+    icon_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = PaymentGateway
+        fields = [
+            'code', 'name', 'description', 'icon_url', 'icon_class',
+            'color', 'fee_type', 'fee_amount', 'fee_text', 'instructions'
+        ]
+    
+    def get_icon_url(self, obj):
+        if obj.icon:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.icon.url)
+            return obj.icon.url
+        return None
 
 
 class PaymentMethodSerializer(serializers.ModelSerializer):

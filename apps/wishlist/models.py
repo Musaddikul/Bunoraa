@@ -135,8 +135,8 @@ class WishlistItem(models.Model):
     def is_in_stock(self):
         """Check if item is in stock."""
         if self.variant:
-            return self.variant.stock > 0
-        return self.product.stock > 0
+            return self.variant.is_in_stock
+        return self.product.is_in_stock
     
     @property
     def is_on_sale(self):

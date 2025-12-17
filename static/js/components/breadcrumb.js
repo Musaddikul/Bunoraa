@@ -1,107 +1,72 @@
 /**
  * Breadcrumb Component
- * @module components/breadcrumb
  */
 
-const Breadcrumb = (function() {
-    'use strict';
+import { BaseComponent } from './BaseComponent.js';
+import { clsx, createElement } from './utils.js';
 
-    function render(items, options = {}) {
-        const { homeText = 'Home', homeUrl = '/', separator = 'chevron' } = options;
+export class Breadcrumb extends BaseComponent {
+  constructor(options = {}) {
+    super(options);
+    
+    this.items = options.items || []; // Array of {label, href}
+    this.className = options.className || '';
+  }
 
-        if (!items || items.length === 0) {
-            return `
-                <nav aria-label="Breadcrumb" class="text-sm">
-                    <ol class="flex items-center gap-2">
-                        <li>
-                            <a href="${homeUrl}" class="text-gray-500 hover:text-primary-600 transition-colors">
-                                ${homeText}
-                            </a>
-                        </li>
-                    </ol>
-                </nav>
-            `;
-        }
+  create() {
+    const baseClasses = 'flex items-center gap-2';
 
-        const separatorHtml = separator === 'chevron' 
-            ? `<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>`
-            : `<span class="text-gray-400">/</span>`;
+    const breadcrumbElement = super.create('nav', {
+      className: clsx(baseClasses, this.className),
+      attrs: { 'aria-label': 'Breadcrumb' }
+    });
 
-        const breadcrumbItems = [
-            { name: homeText, url: homeUrl },
-            ...items
-        ];
-
-        return `
-            <nav aria-label="Breadcrumb" class="text-sm">
-                <ol class="flex items-center flex-wrap gap-2" itemscope itemtype="https://schema.org/BreadcrumbList">
-                    ${breadcrumbItems.map((item, index) => {
-                        const isLast = index === breadcrumbItems.length - 1;
-                        
-                        return `
-                            <li class="flex items-center gap-2" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
-                                ${index > 0 ? separatorHtml : ''}
-                                ${isLast ? `
-                                    <span class="text-gray-900 font-medium" itemprop="name">${Templates.escapeHtml(item.name)}</span>
-                                ` : `
-                                    <a href="${item.url}" class="text-gray-500 hover:text-primary-600 transition-colors" itemprop="item">
-                                        <span itemprop="name">${Templates.escapeHtml(item.name)}</span>
-                                    </a>
-                                `}
-                                <meta itemprop="position" content="${index + 1}">
-                            </li>
-                        `;
-                    }).join('')}
-                </ol>
-            </nav>
-        `;
-    }
-
-    function init(container, items, options = {}) {
-        if (typeof container === 'string') {
-            container = document.querySelector(container);
-        }
-        if (!container) return;
-
-        container.innerHTML = render(items, options);
-    }
-
-    async function fromCategory(categoryId, options = {}) {
-        try {
-            const response = await CategoriesApi.getBreadcrumb(categoryId);
-            if (response.success && response.data) {
-                return response.data.map(cat => ({
-                    name: cat.name,
-                    url: `/categories/${cat.slug}/`
-                }));
-            }
-        } catch (error) {
-            console.error('Failed to load breadcrumb:', error);
-        }
-        return [];
-    }
-
-    function buildFromPath(pathParts) {
-        const items = [];
-        let currentPath = '';
-
-        pathParts.forEach((part, index) => {
-            currentPath += '/' + part;
-            items.push({
-                name: part.charAt(0).toUpperCase() + part.slice(1).replace(/-/g, ' '),
-                url: currentPath + '/'
-            });
+    this.items.forEach((item, index) => {
+      if (index > 0) {
+        const separator = createElement('span', {
+          className: 'text-gray-400 mx-1',
+          text: '/'
         });
+        breadcrumbElement.appendChild(separator);
+      }
 
-        return items;
+      if (index === this.items.length - 1) {
+        const span = createElement('span', {
+          className: 'text-gray-700 font-medium',
+          text: item.label,
+          attrs: { 'aria-current': 'page' }
+        });
+        breadcrumbElement.appendChild(span);
+      } else {
+        const link = createElement('a', {
+          className: 'text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200',
+          text: item.label,
+          attrs: { href: item.href || '#' }
+        });
+        breadcrumbElement.appendChild(link);
+      }
+    });
+
+    return breadcrumbElement;
+  }
+
+  addItem(label, href = '#') {
+    if (this.element) {
+      if (this.element.children.length > 0) {
+        const separator = createElement('span', {
+          className: 'text-gray-400 mx-1',
+          text: '/'
+        });
+        this.element.appendChild(separator);
+      }
+
+      const link = createElement('a', {
+        className: 'text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200',
+        text: label,
+        attrs: { href }
+      });
+      this.element.appendChild(link);
+      this.items.push({ label, href });
     }
-
-    return {
-        render,
-        init,
-        fromCategory,
-        buildFromPath
-    };
-})();
-
-window.Breadcrumb = Breadcrumb;
+  }
+}

@@ -2,372 +2,784 @@
 {% load static %}
 
 {% block page_id %}checkout{% endblock %}
-{% block title %}Payment - Checkout - Bunoraa{% endblock %}
+{% block title %}Payment - Checkout - {{ SITE_NAME }}{% endblock %}
 
 {% block extra_head %}
 <script src="https://js.stripe.com/v3/"></script>
 {% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <!-- Progress Steps -->
-    <div class="mb-8">
-        <div class="flex items-center justify-center">
-            <div class="flex items-center">
-                <div class="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Breadcrumb -->
+        <nav class="mb-6 text-sm">
+            <ol class="flex items-center space-x-2">
+                <li><a href="{% url 'cart:cart' %}" class="text-gray-500 hover:text-primary-600 dark:text-gray-400">Cart</a></li>
+                <li><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></li>
+                <li><a href="{% url 'checkout:information' %}" class="text-gray-500 hover:text-primary-600 dark:text-gray-400">Information</a></li>
+                <li><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></li>
+                <li><a href="{% url 'checkout:shipping' %}" class="text-gray-500 hover:text-primary-600 dark:text-gray-400">Shipping</a></li>
+                <li><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></li>
+                <li class="font-medium text-gray-900 dark:text-white">Payment</li>
+            </ol>
+        </nav>
+        
+        <!-- Progress Steps -->
+        <div class="mb-8">
+            <div class="flex items-center justify-center">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <span class="ml-2 text-gray-500 dark:text-gray-400">Information</span>
                 </div>
-                <span class="ml-2 text-gray-500">Shipping</span>
-            </div>
-            <div class="w-16 h-0.5 mx-4 bg-primary-600"></div>
-            <div class="flex items-center">
-                <div class="w-10 h-10 rounded-full bg-primary-600 text-white flex items-center justify-center font-semibold">2</div>
-                <span class="ml-2 font-medium text-gray-900">Payment</span>
-            </div>
-            <div class="w-16 h-0.5 mx-4 bg-gray-300"></div>
-            <div class="flex items-center">
-                <div class="w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-semibold">3</div>
-                <span class="ml-2 text-gray-500">Review</span>
+                <div class="w-12 md:w-16 h-0.5 mx-2 md:mx-4 bg-green-600"></div>
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <span class="ml-2 text-gray-500 dark:text-gray-400">Shipping</span>
+                </div>
+                <div class="w-12 md:w-16 h-0.5 mx-2 md:mx-4 bg-primary-600"></div>
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-primary-600 text-white flex items-center justify-center font-semibold">3</div>
+                    <span class="ml-2 font-medium text-gray-900 dark:text-white">Payment</span>
+                </div>
+                <div class="w-12 md:w-16 h-0.5 mx-2 md:mx-4 bg-gray-300 dark:bg-gray-700"></div>
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-700 text-gray-600 dark:text-gray-400 flex items-center justify-center font-semibold">4</div>
+                    <span class="ml-2 text-gray-500 dark:text-gray-400 hidden md:inline">Review</span>
+                </div>
             </div>
         </div>
-    </div>
     
-    <div class="flex flex-col lg:flex-row gap-8">
-        <!-- Payment Form -->
-        <div class="flex-1">
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h2 class="text-xl font-semibold text-gray-900 mb-6">Payment Information</h2>
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Payment Form -->
+            <div class="flex-1 space-y-6">
+                <!-- Contact & Shipping Summary -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                    <div class="space-y-4">
+                        <!-- Contact -->
+                        <div class="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center">
+                                <span class="text-sm text-gray-500 dark:text-gray-400 w-20">Contact</span>
+                                <span class="text-sm text-gray-900 dark:text-white">{{ checkout.email|default:checkout.shipping_email }}</span>
+                            </div>
+                            <a href="{% url 'checkout:information' %}" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Change</a>
+                        </div>
+                        
+                        <!-- Ship to -->
+                        <div class="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700">
+                            <div class="flex items-start">
+                                <span class="text-sm text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">Ship to</span>
+                                <span class="text-sm text-gray-900 dark:text-white">
+                                    {{ checkout.shipping_address_line_1 }}{% if checkout.shipping_address_line_2 %}, {{ checkout.shipping_address_line_2 }}{% endif %}, 
+                                    {{ checkout.shipping_city }}, {{ checkout.shipping_state }} {{ checkout.shipping_postal_code }}
+                                </span>
+                            </div>
+                            <a href="{% url 'checkout:information' %}" class="text-sm text-primary-600 hover:text-primary-700 font-medium flex-shrink-0 ml-4">Change</a>
+                        </div>
+                        
+                        <!-- Shipping Method -->
+                        <div class="flex justify-between items-center py-3">
+                            <div class="flex items-center">
+                                <span class="text-sm text-gray-500 dark:text-gray-400 w-20">Method</span>
+                                <span class="text-sm text-gray-900 dark:text-white">
+                                    {{ checkout.get_shipping_method_display }} · 
+                                    {% if checkout.shipping_cost == 0 %}Free{% else %}{{ currency_symbol }}{{ checkout.shipping_cost }}{% endif %}
+                                </span>
+                            </div>
+                            <a href="{% url 'checkout:shipping' %}" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Change</a>
+                        </div>
+                    </div>
+                </div>
                 
-                <!-- Shipping Address Summary -->
-                <div class="mb-6 p-4 bg-gray-50 rounded-lg">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h3 class="text-sm font-medium text-gray-900">Shipping to:</h3>
-                            <p class="text-sm text-gray-600 mt-1">
-                                {{ checkout.shipping_address.full_name }}<br>
-                                {{ checkout.shipping_address.address_line1 }}<br>
-                                {% if checkout.shipping_address.address_line2 %}
-                                {{ checkout.shipping_address.address_line2 }}<br>
-                                {% endif %}
-                                {{ checkout.shipping_address.city }}, {{ checkout.shipping_address.state }} {{ checkout.shipping_address.postal_code }}<br>
-                                {{ checkout.shipping_address.country }}
+                <!-- Payment Method Selection -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                        </svg>
+                        Payment Method
+                    </h2>
+                    
+                    <form id="payment-form" method="POST" action="{% url 'checkout:payment' %}">
+                        {% csrf_token %}
+                        
+                        <!-- Payment Method Tabs - Dynamic from Backend -->
+                        <div id="payment-methods-container" class="space-y-3 mb-6">
+                            {% for gateway in payment_gateways %}
+                            <div class="relative payment-option transform transition-all duration-300 hover:scale-[1.01]" 
+                                 data-gateway="{{ gateway.code }}" style="animation: slideIn 0.3s ease-out {{ forloop.counter0 }}00ms both;">
+                                <input type="radio" name="payment_method" value="{{ gateway.code }}" 
+                                       id="payment-{{ gateway.code }}"
+                                       class="peer sr-only" 
+                                       {% if checkout.payment_method == gateway.code %}checked{% elif forloop.first and not checkout.payment_method %}checked{% endif %}>
+                                <label for="payment-{{ gateway.code }}" 
+                                       class="flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all duration-300 
+                                              peer-checked:border-primary-600 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 
+                                              peer-checked:shadow-lg peer-checked:shadow-primary-500/20
+                                              hover:border-gray-400 dark:hover:border-gray-500 border-gray-200 dark:border-gray-700
+                                              hover:shadow-md">
+                                    <div class="flex items-center">
+                                        <div class="w-12 h-12 rounded-full bg-{{ gateway.color }}-100 dark:bg-{{ gateway.color }}-900/30 flex items-center justify-center mr-4 transition-transform duration-300 peer-checked:scale-110">
+                                            {% if gateway.code == 'stripe' %}
+                                            <svg class="w-6 h-6 text-{{ gateway.color }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                            </svg>
+                                            {% elif gateway.code == 'bkash' %}
+                                            <span class="text-{{ gateway.color }}-600 font-bold text-sm">bK</span>
+                                            {% elif gateway.code == 'nagad' %}
+                                            <span class="text-{{ gateway.color }}-600 font-bold text-sm">N</span>
+                                            {% elif gateway.code == 'cod' %}
+                                            <svg class="w-6 h-6 text-{{ gateway.color }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                            </svg>
+                                            {% elif gateway.code == 'bank_transfer' %}
+                                            <svg class="w-6 h-6 text-{{ gateway.color }}-600 dark:text-{{ gateway.color }}-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                            </svg>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-gray-900 dark:text-white">{{ gateway.name }}</p>
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ gateway.description }}</p>
+                                            {% if gateway.fee_text %}
+                                            <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">{{ gateway.fee_text }}</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        {% for icon in gateway.brand_icons %}
+                                        <img src="{{ icon }}" alt="" class="h-6 transition-opacity duration-300" onerror="this.style.display='none'">
+                                        {% endfor %}
+                                        {% if gateway.icon_url %}
+                                        <img src="{{ gateway.icon_url }}" alt="{{ gateway.name }}" class="h-8 transition-opacity duration-300" onerror="this.style.display='none'">
+                                        {% endif %}
+                                    </div>
+                                </label>
+                                <!-- Selection indicator -->
+                                <div class="absolute top-4 right-4 opacity-0 peer-checked:opacity-100 transition-opacity duration-300">
+                                    <svg class="w-6 h-6 text-primary-600" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Credit Card Form (Stripe) -->
+                        <div id="stripe-form" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cardholder Name *</label>
+                                <input type="text" id="cardholder-name" name="cardholder_name"
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition"
+                                       placeholder="Name on card">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Card Details *</label>
+                                <div id="card-element" class="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"></div>
+                                <div id="card-errors" class="text-red-600 text-sm mt-2" role="alert"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- bKash Form -->
+                        <div id="bkash-form" class="hidden space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">bKash Mobile Number *</label>
+                                <input type="tel" id="bkash-number" name="bkash_number"
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition"
+                                       placeholder="01XXXXXXXXX">
+                            </div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                You will receive a payment request on your bKash app.
                             </p>
                         </div>
-                        <a href="{% url 'checkout:shipping' %}" class="text-sm text-primary-600 hover:text-primary-700">Edit</a>
-                    </div>
-                </div>
-                
-                {% if user.is_authenticated and saved_payment_methods %}
-                <!-- Saved Payment Methods -->
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-3">Select a payment method</label>
-                    <div class="space-y-3">
-                        {% for method in saved_payment_methods %}
-                        <div class="relative">
-                            <input type="radio" name="saved_payment_method" value="{{ method.id }}" id="payment-{{ method.id }}"
-                                   class="peer sr-only" {% if forloop.first %}checked{% endif %}>
-                            <label for="payment-{{ method.id }}" 
-                                   class="flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer peer-checked:border-primary-600 peer-checked:bg-primary-50 hover:border-gray-400">
-                                <div class="flex items-center">
-                                    <img src="{% static 'images/payments/' %}{{ method.brand|lower }}.svg" alt="{{ method.brand }}" class="h-8 mr-3">
+                        
+                        <!-- Nagad Form -->
+                        <div id="nagad-form" class="hidden space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nagad Mobile Number *</label>
+                                <input type="tel" id="nagad-number" name="nagad_number"
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition"
+                                       placeholder="01XXXXXXXXX">
+                            </div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                You will receive a payment request on your Nagad app.
+                            </p>
+                        </div>
+                        
+                        <!-- COD Info -->
+                        <div id="cod-form" class="hidden">
+                            <div class="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                                <div class="flex items-start">
+                                    <svg class="w-5 h-5 text-yellow-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
                                     <div>
-                                        <p class="font-medium text-gray-900">{{ method.brand }} •••• {{ method.last4 }}</p>
-                                        <p class="text-sm text-gray-500">Expires {{ method.exp_month }}/{{ method.exp_year }}</p>
+                                        <p class="text-sm text-yellow-800 dark:text-yellow-200 font-medium">Cash on Delivery</p>
+                                        <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                                            Pay in cash when your order is delivered. Please have the exact amount ready.
+                                        </p>
                                     </div>
-                                </div>
-                                {% if method.is_default %}
-                                <span class="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded">Default</span>
-                                {% endif %}
-                            </label>
-                        </div>
-                        {% endfor %}
-                        <div class="relative">
-                            <input type="radio" name="saved_payment_method" value="new" id="payment-new" class="peer sr-only">
-                            <label for="payment-new" 
-                                   class="flex items-center p-4 border-2 border-dashed rounded-lg cursor-pointer peer-checked:border-primary-600 peer-checked:bg-primary-50 hover:border-gray-400">
-                                <svg class="w-6 h-6 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                                </svg>
-                                <span class="text-gray-600">Add new payment method</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-                
-                <!-- New Card Form -->
-                <form id="payment-form" method="POST" action="{% url 'checkout:payment' %}">
-                    {% csrf_token %}
-                    <div id="new-card-form" class="{% if user.is_authenticated and saved_payment_methods %}hidden{% endif %}">
-                        <!-- Cardholder Name -->
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Cardholder Name *</label>
-                            <input type="text" id="cardholder-name" name="cardholder_name" required
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
-                                   placeholder="Name on card">
-                        </div>
-                        
-                        <!-- Card Element -->
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Card Details *</label>
-                            <div id="card-element" class="px-4 py-3 border border-gray-300 rounded-lg"></div>
-                            <div id="card-errors" class="text-red-600 text-sm mt-1" role="alert"></div>
-                        </div>
-                        
-                        <!-- Billing Address -->
-                        <div class="mb-4">
-                            <label class="flex items-center">
-                                <input type="checkbox" id="same-as-shipping" name="same_as_shipping" checked
-                                       class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
-                                <span class="ml-2 text-sm text-gray-600">Billing address same as shipping</span>
-                            </label>
-                        </div>
-                        
-                        <div id="billing-address-form" class="hidden space-y-4 mb-4">
-                            <div class="grid md:grid-cols-2 gap-4">
-                                <div class="md:col-span-2">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Address Line 1 *</label>
-                                    <input type="text" name="billing_address_line1"
-                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
-                                </div>
-                                <div class="md:col-span-2">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Address Line 2</label>
-                                    <input type="text" name="billing_address_line2"
-                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">City *</label>
-                                    <input type="text" name="billing_city"
-                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">State/Province *</label>
-                                    <input type="text" name="billing_state"
-                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Postal Code *</label>
-                                    <input type="text" name="billing_postal_code"
-                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Country *</label>
-                                    <select name="billing_country"
-                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
-                                        {% for country in countries %}
-                                        <option value="{{ country.code }}">{{ country.name }}</option>
-                                        {% endfor %}
-                                    </select>
                                 </div>
                             </div>
                         </div>
                         
-                        {% if user.is_authenticated %}
-                        <div class="mb-4">
-                            <label class="flex items-center">
-                                <input type="checkbox" name="save_payment_method" value="true"
-                                       class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
-                                <span class="ml-2 text-sm text-gray-600">Save this card for future purchases</span>
+                        <!-- Bank Transfer Info -->
+                        <div id="bank-form" class="hidden">
+                            <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                <p class="text-sm text-blue-800 dark:text-blue-200 font-medium mb-2">Bank Transfer Details</p>
+                                <div class="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+                                    <p><strong>Bank:</strong> BRAC Bank Limited</p>
+                                    <p><strong>Account Name:</strong> {{ SITE_NAME }}</p>
+                                    <p><strong>Account Number:</strong> 1234567890123</p>
+                                    <p><strong>Branch:</strong> Dhaka Main Branch</p>
+                                    <p><strong>Routing Number:</strong> 123456789</p>
+                                </div>
+                                <p class="text-xs text-blue-600 dark:text-blue-400 mt-3">
+                                    Please use your order number as payment reference.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Billing Address -->
+                        <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" id="same-as-shipping" name="same_as_shipping" checked
+                                       class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500">
+                                <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">Billing address same as shipping</span>
                             </label>
                         </div>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Hidden fields -->
-                    <input type="hidden" name="payment_method_id" id="payment-method-id">
-                    <input type="hidden" name="payment_intent_id" id="payment-intent-id" value="{{ payment_intent_client_secret }}">
-                    
-                    <!-- Navigation -->
-                    <div class="mt-8 flex justify-between">
-                        <a href="{% url 'checkout:shipping' %}" class="flex items-center text-gray-600 hover:text-gray-800">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                            </svg>
-                            Back to Shipping
-                        </a>
-                        <button type="submit" id="submit-button" class="bg-primary-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                            <span id="button-text">Continue to Review</span>
-                            <span id="spinner" class="hidden">
-                                <svg class="animate-spin inline w-5 h-5 ml-2" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        
+                        <div id="billing-address-form" class="hidden mt-4 space-y-4 animate-slideDown">
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">First Name *</label>
+                                    <input type="text" name="billing_first_name" id="billing_first_name"
+                                           value="{{ checkout.billing_first_name|default:checkout.shipping_first_name }}"
+                                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Name *</label>
+                                    <input type="text" name="billing_last_name" id="billing_last_name"
+                                           value="{{ checkout.billing_last_name|default:checkout.shipping_last_name }}"
+                                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address Line 1 *</label>
+                                    <input type="text" name="billing_address_line_1" id="billing_address_line_1"
+                                           value="{{ checkout.billing_address_line_1|default:checkout.shipping_address_line_1 }}"
+                                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address Line 2</label>
+                                    <input type="text" name="billing_address_line_2" id="billing_address_line_2"
+                                           value="{{ checkout.billing_address_line_2|default:checkout.shipping_address_line_2 }}"
+                                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">City *</label>
+                                    <input type="text" name="billing_city" id="billing_city"
+                                           value="{{ checkout.billing_city|default:checkout.shipping_city }}"
+                                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">State/Province *</label>
+                                    <input type="text" name="billing_state" id="billing_state"
+                                           value="{{ checkout.billing_state|default:checkout.shipping_state }}"
+                                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Postal Code *</label>
+                                    <input type="text" name="billing_postal_code" id="billing_postal_code"
+                                           value="{{ checkout.billing_postal_code|default:checkout.shipping_postal_code }}"
+                                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Country *</label>
+                                    <select name="billing_country" id="billing_country"
+                                            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300">
+                                        {% for country in countries %}
+                                        <option value="{{ country.code }}" {% if checkout.billing_country == country.code or checkout.shipping_country == country.code %}selected{% endif %}>{{ country.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <!-- Sync from shipping button -->
+                            <button type="button" id="sync-billing-btn" 
+                                    class="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center transition-all duration-300 hover:translate-x-1">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                                 </svg>
-                            </span>
-                        </button>
+                                Copy from shipping address
+                            </button>
+                        </div>
+                        
+                        <!-- Hidden fields -->
+                        <input type="hidden" name="payment_method_id" id="payment-method-id">
+                        <input type="hidden" name="payment_intent_id" id="payment-intent-id">
+                        
+                        <!-- Navigation -->
+                        <div class="mt-8 flex justify-between items-center">
+                            <a href="{% url 'checkout:shipping' %}" class="flex items-center text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                </svg>
+                                Return to Shipping
+                            </a>
+                            <button type="submit" id="submit-button" 
+                                    class="inline-flex items-center bg-primary-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-lg shadow-primary-600/25 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span id="button-text">Continue to Review</span>
+                                <span id="spinner" class="hidden ml-2">
+                                    <svg class="animate-spin w-5 h-5" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </span>
+                                <svg class="w-5 h-5 ml-2" id="arrow-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Security Notice -->
+                    <div class="mt-6 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                        <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                        Your payment information is encrypted and secure. We never store your full card details.
                     </div>
-                </form>
-                
-                <!-- Security Notice -->
-                <div class="mt-6 flex items-center text-sm text-gray-500">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                    </svg>
-                    Your payment information is encrypted and secure. We never store your full card details.
                 </div>
             </div>
-        </div>
-        
-        <!-- Order Summary -->
-        <div class="lg:w-96">
-            <div class="bg-white rounded-lg shadow-sm p-6 sticky top-24">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
-                
-                <!-- Cart Items -->
-                <div class="space-y-4 max-h-64 overflow-y-auto">
-                    {% for item in cart_items %}
-                    <div class="flex items-center space-x-4">
-                        <div class="relative">
-                            <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.jpg' }}" 
-                                 alt="{{ item.product.name }}"
-                                 class="w-16 h-16 object-cover rounded-lg">
-                            <span class="absolute -top-2 -right-2 w-5 h-5 bg-gray-500 text-white text-xs rounded-full flex items-center justify-center">
-                                {{ item.quantity }}
-                            </span>
+            
+            <!-- Order Summary Sidebar -->
+            <div class="lg:w-96">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sticky top-24">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center justify-between">
+                        <span>Order Summary</span>
+                        <span class="text-sm font-normal text-gray-500 dark:text-gray-400">{{ cart_items|length }} items</span>
+                    </h2>
+                    
+                    <!-- Cart Items -->
+                    <div class="space-y-4 max-h-64 overflow-y-auto scrollbar-thin pr-2">
+                        {% for item in cart_items %}
+                        <div class="flex items-center space-x-4">
+                            <div class="relative flex-shrink-0">
+                                <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.jpg' }}" 
+                                     alt="{{ item.product.name }}"
+                                     class="w-16 h-16 object-cover rounded-lg">
+                                <span class="absolute -top-2 -right-2 w-5 h-5 bg-gray-600 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                                    {{ item.quantity }}
+                                </span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ item.product.name }}</p>
+                                {% if item.variant %}
+                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ item.variant.name }}</p>
+                                {% endif %}
+                            </div>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ currency_symbol }}{{ item.total_price }}</p>
                         </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-gray-900 truncate">{{ item.product.name }}</p>
-                            {% if item.variant %}
-                            <p class="text-xs text-gray-500">{{ item.variant.name }}</p>
-                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Totals -->
+                    <div class="space-y-3 border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
+                        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                            <span>Subtotal</span>
+                            <span>{{ currency_symbol }}{{ cart.subtotal }}</span>
                         </div>
-                        <p class="text-sm font-medium text-gray-900">{{ currency_symbol }}{{ item.total_price }}</p>
+                        {% if cart.discount > 0 %}
+                        <div class="flex justify-between text-sm text-green-600">
+                            <span>Discount</span>
+                            <span>-{{ currency_symbol }}{{ cart.discount }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                            <span>Shipping ({{ checkout.get_shipping_method_display }})</span>
+                            <span>{% if checkout.shipping_cost == 0 %}Free{% else %}{{ currency_symbol }}{{ checkout.shipping_cost }}{% endif %}</span>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                            <span>Tax</span>
+                            <span>{{ currency_symbol }}{{ cart.tax|default:'0.00' }}</span>
+                        </div>
+                        <div class="flex justify-between text-lg font-bold text-gray-900 dark:text-white border-t border-gray-200 dark:border-gray-700 pt-3">
+                            <span>Total</span>
+                            <span>{{ currency_symbol }}{{ checkout.total }}</span>
+                        </div>
                     </div>
-                    {% endfor %}
-                </div>
-                
-                <!-- Totals -->
-                <div class="space-y-3 border-t border-gray-200 mt-4 pt-4">
-                    <div class="flex justify-between text-gray-600">
-                        <span>Subtotal</span>
-                        <span>{{ currency_symbol }}{{ cart.subtotal }}</span>
-                    </div>
-                    {% if cart.discount > 0 %}
-                    <div class="flex justify-between text-green-600">
-                        <span>Discount</span>
-                        <span>-{{ currency_symbol }}{{ cart.discount }}</span>
-                    </div>
-                    {% endif %}
-                    <div class="flex justify-between text-gray-600">
-                        <span>Shipping ({{ checkout.shipping_method.name }})</span>
-                        <span>{% if checkout.shipping_method.price == 0 %}Free{% else %}{{ currency_symbol }}{{ checkout.shipping_method.price }}{% endif %}</span>
-                    </div>
-                    <div class="flex justify-between text-gray-600">
-                        <span>Tax</span>
-                        <span>{{ currency_symbol }}{{ cart.tax|default:'0.00' }}</span>
-                    </div>
-                    <div class="flex justify-between text-lg font-semibold text-gray-900 border-t border-gray-200 pt-3">
-                        <span>Total</span>
-                        <span>{{ currency_symbol }}{{ checkout.total }}</span>
+                    
+                    <!-- Payment Icons -->
+                    <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">We Accept</p>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <img src="{% static 'images/payments/visa.svg' %}" alt="Visa" class="h-6">
+                            <img src="{% static 'images/payments/mastercard.svg' %}" alt="Mastercard" class="h-6">
+                            <img src="{% static 'images/payments/amex.svg' %}" alt="Amex" class="h-6">
+                            <img src="{% static 'images/payments/bkash.svg' %}" alt="bKash" class="h-6" onerror="this.style.display='none'">
+                            <img src="{% static 'images/payments/nagad.svg' %}" alt="Nagad" class="h-6" onerror="this.style.display='none'">
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+/* Custom animations */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        max-height: 1000px;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse-ring {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(1.3);
+        opacity: 0;
+    }
+}
+
+.animate-slideDown {
+    animation: slideDown 0.4s ease-out forwards;
+}
+
+.payment-option.selected .pulse-effect {
+    animation: pulse-ring 1s ease-out;
+}
+</style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Configuration from backend
+    const CONFIG = {
+        currencySymbol: '{{ currency_symbol|escapejs }}',
+        taxRate: {{ tax_rate|default:0 }},
+        countryNames: {{ country_names|safe }},
+        shippingData: {
+            firstName: '{{ checkout.shipping_first_name|escapejs }}',
+            lastName: '{{ checkout.shipping_last_name|escapejs }}',
+            addressLine1: '{{ checkout.shipping_address_line_1|escapejs }}',
+            addressLine2: '{{ checkout.shipping_address_line_2|escapejs }}',
+            city: '{{ checkout.shipping_city|escapejs }}',
+            state: '{{ checkout.shipping_state|escapejs }}',
+            postalCode: '{{ checkout.shipping_postal_code|escapejs }}',
+            country: '{{ checkout.shipping_country|escapejs }}'
+        }
+    };
+
+    // ========================================
+    // Utility Functions
+    // ========================================
+    const Utils = {
+        formatCurrency(amount) {
+            return `${CONFIG.currencySymbol}${parseFloat(amount).toFixed(2)}`;
+        },
+        
+        showToast(message, type = 'info') {
+            const colors = {
+                success: 'bg-green-600',
+                error: 'bg-red-600',
+                info: 'bg-blue-600',
+                warning: 'bg-yellow-500'
+            };
+            
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-500 translate-y-full opacity-0 ${colors[type]} text-white`;
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-3 text-white/80 hover:text-white">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-full', 'opacity-0');
+            });
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-full', 'opacity-0');
+                setTimeout(() => toast.remove(), 500);
+            }, 4000);
+        },
+        
+        animateElement(element, animation, duration = 300) {
+            element.style.animation = `${animation} ${duration}ms ease-out forwards`;
+            setTimeout(() => element.style.animation = '', duration);
+        }
+    };
+
+    // ========================================
     // Initialize Stripe
-    const stripe = Stripe('{{ stripe_public_key }}');
-    const elements = stripe.elements();
-    
-    // Create card element
-    const cardElement = elements.create('card', {
-        style: {
-            base: {
-                fontSize: '16px',
-                color: '#374151',
-                '::placeholder': {
-                    color: '#9CA3AF',
+    // ========================================
+    let stripe, cardElement;
+    try {
+        stripe = Stripe('{{ stripe_publishable_key|default:"pk_test_dummy" }}');
+        const elements = stripe.elements();
+        
+        const isDarkMode = document.documentElement.classList.contains('dark');
+        cardElement = elements.create('card', {
+            style: {
+                base: {
+                    fontSize: '16px',
+                    color: isDarkMode ? '#f9fafb' : '#374151',
+                    fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+                    '::placeholder': {
+                        color: isDarkMode ? '#6b7280' : '#9CA3AF',
+                    },
+                    iconColor: isDarkMode ? '#f9fafb' : '#374151',
+                },
+                invalid: {
+                    color: '#EF4444',
+                    iconColor: '#EF4444',
                 },
             },
-            invalid: {
-                color: '#EF4444',
-            },
-        },
-    });
-    cardElement.mount('#card-element');
-    
-    // Handle card errors
-    cardElement.on('change', function(event) {
-        const displayError = document.getElementById('card-errors');
-        if (event.error) {
-            displayError.textContent = event.error.message;
-        } else {
-            displayError.textContent = '';
-        }
-    });
-    
-    // Toggle saved payment methods
-    const paymentInputs = document.querySelectorAll('input[name="saved_payment_method"]');
-    const newCardForm = document.getElementById('new-card-form');
-    
-    paymentInputs.forEach(input => {
-        input.addEventListener('change', function() {
-            if (this.value === 'new') {
-                newCardForm.classList.remove('hidden');
-            } else {
-                newCardForm.classList.add('hidden');
+        });
+        cardElement.mount('#card-element');
+        
+        cardElement.on('change', function(event) {
+            const displayError = document.getElementById('card-errors');
+            displayError.textContent = event.error ? event.error.message : '';
+            displayError.classList.toggle('animate-shake', !!event.error);
+        });
+    } catch (e) {
+        console.warn('Stripe not initialized:', e);
+    }
+
+    // ========================================
+    // Payment Method Handling
+    // ========================================
+    const paymentForms = {
+        stripe: document.getElementById('stripe-form'),
+        bkash: document.getElementById('bkash-form'),
+        nagad: document.getElementById('nagad-form'),
+        cod: document.getElementById('cod-form'),
+        bank_transfer: document.getElementById('bank-form')
+    };
+
+    function showPaymentForm(method) {
+        // Hide all forms with animation
+        Object.values(paymentForms).forEach(form => {
+            if (form) {
+                form.classList.add('hidden');
+                form.style.opacity = '0';
             }
+        });
+        
+        // Show selected form with animation
+        const selectedForm = paymentForms[method];
+        if (selectedForm) {
+            selectedForm.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                selectedForm.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
+                selectedForm.style.opacity = '1';
+                selectedForm.style.transform = 'translateY(0)';
+            });
+        }
+    }
+
+    // Initialize payment method switching
+    document.querySelectorAll('input[name="payment_method"]').forEach(input => {
+        input.addEventListener('change', function() {
+            showPaymentForm(this.value);
+            
+            // Add visual feedback
+            document.querySelectorAll('.payment-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            this.closest('.payment-option')?.classList.add('selected');
         });
     });
     
-    // Toggle billing address
+    // Show initial payment form
+    const initialMethod = document.querySelector('input[name="payment_method"]:checked');
+    if (initialMethod) {
+        showPaymentForm(initialMethod.value);
+    }
+
+    // ========================================
+    // Billing Address Handling
+    // ========================================
     const sameAsShipping = document.getElementById('same-as-shipping');
     const billingForm = document.getElementById('billing-address-form');
+    const syncBillingBtn = document.getElementById('sync-billing-btn');
     
-    sameAsShipping.addEventListener('change', function() {
-        billingForm.classList.toggle('hidden', this.checked);
-    });
+    function syncBillingFromShipping() {
+        const fields = ['first_name', 'last_name', 'address_line_1', 'address_line_2', 'city', 'state', 'postal_code', 'country'];
+        const shippingFields = {
+            'first_name': CONFIG.shippingData.firstName,
+            'last_name': CONFIG.shippingData.lastName,
+            'address_line_1': CONFIG.shippingData.addressLine1,
+            'address_line_2': CONFIG.shippingData.addressLine2,
+            'city': CONFIG.shippingData.city,
+            'state': CONFIG.shippingData.state,
+            'postal_code': CONFIG.shippingData.postalCode,
+            'country': CONFIG.shippingData.country
+        };
+        
+        fields.forEach(field => {
+            const input = document.getElementById(`billing_${field}`);
+            if (input && shippingFields[field]) {
+                input.value = shippingFields[field];
+                // Add highlight animation
+                input.classList.add('ring-2', 'ring-primary-400');
+                setTimeout(() => input.classList.remove('ring-2', 'ring-primary-400'), 1000);
+            }
+        });
+        
+        Utils.showToast('Billing address synced from shipping', 'success');
+    }
     
-    // Form submission
+    if (sameAsShipping) {
+        sameAsShipping.addEventListener('change', function() {
+            if (this.checked) {
+                billingForm.style.animation = 'slideDown 0.3s ease-out reverse forwards';
+                setTimeout(() => billingForm.classList.add('hidden'), 300);
+            } else {
+                billingForm.classList.remove('hidden');
+                billingForm.style.animation = 'slideDown 0.4s ease-out forwards';
+            }
+        });
+    }
+    
+    if (syncBillingBtn) {
+        syncBillingBtn.addEventListener('click', syncBillingFromShipping);
+    }
+
+    // ========================================
+    // Form Submission
+    // ========================================
     const form = document.getElementById('payment-form');
     const submitButton = document.getElementById('submit-button');
     const buttonText = document.getElementById('button-text');
     const spinner = document.getElementById('spinner');
+    const arrowIcon = document.getElementById('arrow-icon');
+    
+    function setLoadingState(loading) {
+        submitButton.disabled = loading;
+        buttonText.textContent = loading ? 'Processing...' : 'Continue to Review';
+        spinner.classList.toggle('hidden', !loading);
+        arrowIcon.classList.toggle('hidden', loading);
+        
+        if (loading) {
+            submitButton.classList.add('animate-pulse');
+        } else {
+            submitButton.classList.remove('animate-pulse');
+        }
+    }
     
     form.addEventListener('submit', async function(event) {
         event.preventDefault();
         
-        // Check if using saved payment method
-        const savedPaymentMethod = document.querySelector('input[name="saved_payment_method"]:checked');
-        if (savedPaymentMethod && savedPaymentMethod.value !== 'new') {
-            document.getElementById('payment-method-id').value = savedPaymentMethod.value;
+        const selectedMethod = document.querySelector('input[name="payment_method"]:checked')?.value;
+        
+        if (!selectedMethod) {
+            Utils.showToast('Please select a payment method', 'warning');
+            return;
+        }
+        
+        setLoadingState(true);
+        
+        // Non-Stripe payment methods - just submit
+        if (selectedMethod !== 'stripe') {
             form.submit();
             return;
         }
         
-        // Disable button
-        submitButton.disabled = true;
-        buttonText.classList.add('hidden');
-        spinner.classList.remove('hidden');
+        // Stripe payment - create payment method first
+        const cardholderName = document.getElementById('cardholder-name')?.value;
         
-        // Create payment method with Stripe
-        const cardholderName = document.getElementById('cardholder-name').value;
-        
-        const { paymentMethod, error } = await stripe.createPaymentMethod({
-            type: 'card',
-            card: cardElement,
-            billing_details: {
-                name: cardholderName,
-            },
-        });
-        
-        if (error) {
-            const errorElement = document.getElementById('card-errors');
-            errorElement.textContent = error.message;
-            submitButton.disabled = false;
-            buttonText.classList.remove('hidden');
-            spinner.classList.add('hidden');
+        if (!cardholderName) {
+            Utils.showToast('Please enter cardholder name', 'warning');
+            setLoadingState(false);
             return;
         }
         
-        // Set the payment method ID and submit
-        document.getElementById('payment-method-id').value = paymentMethod.id;
-        form.submit();
+        try {
+            const { paymentMethod, error } = await stripe.createPaymentMethod({
+                type: 'card',
+                card: cardElement,
+                billing_details: { name: cardholderName },
+            });
+            
+            if (error) {
+                document.getElementById('card-errors').textContent = error.message;
+                Utils.showToast(error.message, 'error');
+                setLoadingState(false);
+                return;
+            }
+            
+            document.getElementById('payment-method-id').value = paymentMethod.id;
+            form.submit();
+        } catch (err) {
+            Utils.showToast('Payment processing error. Please try again.', 'error');
+            setLoadingState(false);
+        }
     });
+
+    // ========================================
+    // Enhanced Interactions
+    // ========================================
+    // Add focus animations to inputs
+    document.querySelectorAll('input, select, textarea').forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement?.classList.add('ring-2', 'ring-primary-200', 'dark:ring-primary-800', 'rounded-lg');
+        });
+        input.addEventListener('blur', function() {
+            this.parentElement?.classList.remove('ring-2', 'ring-primary-200', 'dark:ring-primary-800', 'rounded-lg');
+        });
+    });
+    
+    // Add ripple effect to payment options
+    document.querySelectorAll('.payment-option label').forEach(label => {
+        label.addEventListener('click', function(e) {
+            const ripple = document.createElement('span');
+            ripple.className = 'absolute inset-0 bg-primary-600/10 rounded-xl animate-ping';
+            ripple.style.animationDuration = '0.5s';
+            ripple.style.animationIterationCount = '1';
+            this.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 500);
+        });
+    });
+
+    console.log('Payment page initialized successfully');
+});
 </script>
 {% endblock %}

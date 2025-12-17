@@ -1,0 +1,71 @@
+{% extends "emails/base_email.html" %}
+{% load static %}
+
+{% block title %}New Message - {{ preorder.preorder_number }}{% endblock %}
+
+{% block content %}
+<h1 style="color: #1f2937; font-size: 24px; margin-bottom: 20px;">
+    💬 New Message on Your Pre-Order
+</h1>
+
+<p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+    Hi {{ preorder.full_name }},
+</p>
+
+<p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+    You've received a new message regarding your pre-order <strong>{{ preorder.preorder_number }}</strong>.
+</p>
+
+<!-- Message Box -->
+<div style="background-color: #f3f4f6; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+    <div style="display: flex; align-items: center; margin-bottom: 16px;">
+        <div style="width: 40px; height: 40px; background-color: #7c3aed; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 12px;">
+            <span style="color: white; font-size: 16px; font-weight: 600;">{{ sender_name|slice:":1"|upper }}</span>
+        </div>
+        <div>
+            <p style="color: #1f2937; font-size: 14px; font-weight: 600; margin: 0;">{{ sender_name }}</p>
+            <p style="color: #6b7280; font-size: 12px; margin: 0;">{{ message.created_at|date:"M d, Y at H:i" }}</p>
+        </div>
+    </div>
+    
+    <div style="background-color: white; border-radius: 8px; padding: 16px;">
+        <p style="color: #1f2937; font-size: 14px; line-height: 1.6; margin: 0; white-space: pre-wrap;">{{ message.message }}</p>
+    </div>
+</div>
+
+<!-- Order Reference -->
+<div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+    <h3 style="color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 12px;">Order Reference</h3>
+    <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td style="padding: 4px 0; color: #6b7280; font-size: 14px;">Order Number</td>
+            <td style="padding: 4px 0; color: #1f2937; font-size: 14px; font-weight: 600; text-align: right;">{{ preorder.preorder_number }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 4px 0; color: #6b7280; font-size: 14px;">Title</td>
+            <td style="padding: 4px 0; color: #1f2937; font-size: 14px; text-align: right;">{{ preorder.title }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 4px 0; color: #6b7280; font-size: 14px;">Status</td>
+            <td style="padding: 4px 0; color: #7c3aed; font-size: 14px; font-weight: 600; text-align: right;">{{ preorder.get_status_display }}</td>
+        </tr>
+    </table>
+</div>
+
+<!-- CTA Button -->
+<div style="text-align: center; margin-bottom: 24px;">
+    <a href="{{ site_url }}{% url 'preorders:detail' preorder_number=preorder.preorder_number %}" 
+       style="display: inline-block; background-color: #7c3aed; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+        View & Reply
+    </a>
+</div>
+
+<p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+    You can reply directly from your order page or simply respond to this email.
+</p>
+
+<p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+    Best regards,<br>
+    <strong>The {{ site_name }} Team</strong>
+</p>
+{% endblock %}

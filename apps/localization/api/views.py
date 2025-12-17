@@ -120,6 +120,54 @@ class CountryViewSet(viewsets.ReadOnlyModelViewSet):
             'success': True,
             'data': serializer.data
         })
+    
+    @action(detail=True, methods=['get'], url_path='divisions')
+    def divisions(self, request, code=None):
+        """Get divisions/states for a country."""
+        from ..models import Division
+        
+        try:
+            country = Country.objects.get(code=code, is_active=True)
+            divisions = Division.objects.filter(
+                country=country,
+                is_active=True
+            ).order_by('sort_order', 'name').values(
+                'code', 'name', 'native_name'
+            )
+            
+            return Response({
+                'success': True,
+                'data': list(divisions)
+            })
+        except Country.DoesNotExist:
+            return Response({
+                'success': False,
+                'message': 'Country not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+    
+    @action(detail=False, methods=['get'], url_path='divisions/(?P<division_code>[^/.]+)/districts')
+    def districts(self, request, division_code=None):
+        """Get districts/cities for a division."""
+        from ..models import Division, District
+        
+        try:
+            division = Division.objects.get(code=division_code, is_active=True)
+            districts = District.objects.filter(
+                division=division,
+                is_active=True
+            ).order_by('sort_order', 'name').values(
+                'code', 'name', 'native_name', 'shipping_zone'
+            )
+            
+            return Response({
+                'success': True,
+                'data': list(districts)
+            })
+        except Division.DoesNotExist:
+            return Response({
+                'success': False,
+                'message': 'Division not found'
+            }, status=status.HTTP_404_NOT_FOUND)
 
 
 class LocalePreferenceView(APIView):

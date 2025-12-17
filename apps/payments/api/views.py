@@ -10,13 +10,113 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 
-from ..models import Payment, PaymentMethod, Refund
+from ..models import Payment, PaymentMethod, Refund, PaymentGateway
 from ..services import StripeService, PaymentService, PaymentMethodService
 from .serializers import (
     PaymentSerializer, PaymentMethodSerializer, RefundSerializer,
     CreatePaymentIntentSerializer, SavePaymentMethodSerializer,
-    SetDefaultPaymentMethodSerializer, RefundCreateSerializer
+    SetDefaultPaymentMethodSerializer, RefundCreateSerializer,
+    PaymentGatewaySerializer
 )
+
+
+class PaymentGatewayViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for payment gateways (public read-only).
+    
+    GET /api/v1/payments/gateways/ - List available payment gateways
+    GET /api/v1/payments/gateways/{code}/ - Get gateway detail
+    GET /api/v1/payments/gateways/available/ - Get gateways for current context
+    """
+    serializer_class = PaymentGatewaySerializer
+    permission_classes = [AllowAny]
+    lookup_field = 'code'
+    
+    def get_queryset(self):
+        return PaymentGateway.objects.filter(is_active=True)
+    
+    def list(self, request, *args, **kwargs):
+        """List all active payment gateways."""
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({
+            'success': True,
+            'message': 'Payment gateways retrieved successfully',
+            'data': serializer.data,
+            'meta': {'count': queryset.count()}
+        })
+    
+    @action(detail=False, methods=['get'])
+    def available(self, request):
+        """Get payment gateways available for current context."""
+        currency = request.query_params.get('currency')
+        country = request.query_params.get('country')
+        amount = request.query_params.get('amount')
+        
+        if amount:
+            try:
+                amount = float(amount)
+            except ValueError:
+                amount = None
+        
+        gateways = PaymentGateway.get_active_gateways(
+            currency=currency,
+            country=country,
+            amount=amount
+        )
+        
+        # If no gateways configured, return defaults
+        if not gateways:
+            gateways = self._get_default_gateways(currency)
+        
+        serializer = self.get_serializer(gateways, many=True)
+        return Response({
+            'success': True,
+            'message': 'Available payment gateways retrieved',
+            'data': serializer.data,
+            'meta': {'count': len(gateways)}
+        })
+    
+    def _get_default_gateways(self, currency=None):
+        """Return default gateways if none configured."""
+        defaults = [
+            {
+                'code': 'stripe',
+                'name': 'Credit/Debit Card',
+                'description': 'Visa, Mastercard, American Express',
+                'icon_class': 'card',
+                'color': 'blue',
+                'fee_text': 'No extra fee',
+            },
+            {
+                'code': 'cod',
+                'name': 'Cash on Delivery',
+                'description': 'Pay when you receive your order',
+                'icon_class': 'cash',
+                'color': 'green',
+                'fee_text': '৳20 fee' if currency == 'BDT' else None,
+            },
+        ]
+        
+        if currency == 'BDT':
+            defaults.insert(1, {
+                'code': 'bkash',
+                'name': 'bKash',
+                'description': 'Pay with your bKash wallet',
+                'icon_class': 'bkash',
+                'color': 'pink',
+                'fee_text': 'No extra fee',
+            })
+            defaults.insert(2, {
+                'code': 'nagad',
+                'name': 'Nagad',
+                'description': 'Pay with your Nagad wallet',
+                'icon_class': 'nagad',
+                'color': 'orange',
+                'fee_text': 'No extra fee',
+            })
+        
+        return defaults
 
 
 class PaymentViewSet(viewsets.ReadOnlyModelViewSet):

@@ -379,11 +379,18 @@ const CheckoutPage = (function() {
             });
         });
 
+        // Only attach the SPA place order handler if NOT on the traditional form-based review page
+        // The traditional form has action attribute and we should let it submit normally
         const placeOrderBtn = document.getElementById('place-order-btn');
-        placeOrderBtn?.addEventListener('click', async (e) => {
-            e.preventDefault();
-            await placeOrder();
-        });
+        const placeOrderForm = document.getElementById('place-order-form');
+        
+        // Only use JavaScript-based checkout if the form doesn't have a traditional action
+        if (placeOrderBtn && (!placeOrderForm || !placeOrderForm.action || placeOrderForm.action.includes('javascript'))) {
+            placeOrderBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                await placeOrder();
+            });
+        }
     }
 
     async function placeOrder() {

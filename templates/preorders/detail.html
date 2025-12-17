@@ -1,0 +1,417 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Pre-Order #{{ preorder.preorder_number }} | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Header -->
+        <div class="max-w-6xl mx-auto mb-6">
+            <nav class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
+                <a href="{% url 'preorders:landing' %}" class="hover:text-primary-600">Pre-Orders</a>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+                <a href="{% url 'preorders:my_preorders' %}" class="hover:text-primary-600">My Pre-Orders</a>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+                <span class="text-gray-900 dark:text-white">{{ preorder.preorder_number }}</span>
+            </nav>
+            
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+                        {{ preorder.title }}
+                    </h1>
+                    <p class="text-gray-500 dark:text-gray-400">Order #{{ preorder.preorder_number }}</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    {% include "preorders/includes/status_badge.html" with status=preorder.status %}
+                    {% if preorder.is_rush_order %}
+                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 rounded-full text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        Rush
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-6xl mx-auto grid lg:grid-cols-3 gap-6">
+            <!-- Main Content -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Status Timeline -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Order Progress</h2>
+                    <div class="relative">
+                        {% with status_flow="submitted,under_review,quote_sent,quote_accepted,deposit_paid,design_approval,in_production,quality_check,completed,shipped,delivered" %}
+                        <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
+                        {% for history in status_history %}
+                        <div class="relative flex items-start gap-4 pb-6 last:pb-0">
+                            <div class="relative z-10 w-8 h-8 rounded-full flex items-center justify-center
+                                        {% if forloop.first %}bg-primary-600{% else %}bg-gray-300 dark:bg-gray-600{% endif %}">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-medium text-gray-900 dark:text-white">{{ history.get_status_display }}</p>
+                                {% if history.notes %}
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ history.notes }}</p>
+                                {% endif %}
+                                <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">{{ history.created_at|date:"M d, Y H:i" }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% endwith %}
+                    </div>
+                </div>
+
+                <!-- Order Details -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Order Details</h2>
+                    <dl class="grid md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <dt class="text-gray-500 dark:text-gray-400">Category</dt>
+                            <dd class="text-gray-900 dark:text-white font-medium">{{ preorder.category.name }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500 dark:text-gray-400">Quantity</dt>
+                            <dd class="text-gray-900 dark:text-white font-medium">{{ preorder.quantity }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500 dark:text-gray-400">Created</dt>
+                            <dd class="text-gray-900 dark:text-white font-medium">{{ preorder.created_at|date:"M d, Y" }}</dd>
+                        </div>
+                        {% if preorder.requested_delivery_date %}
+                        <div>
+                            <dt class="text-gray-500 dark:text-gray-400">Requested Delivery</dt>
+                            <dd class="text-gray-900 dark:text-white font-medium">{{ preorder.requested_delivery_date|date:"M d, Y" }}</dd>
+                        </div>
+                        {% endif %}
+                        <div class="md:col-span-2">
+                            <dt class="text-gray-500 dark:text-gray-400">Description</dt>
+                            <dd class="text-gray-900 dark:text-white">{{ preorder.description|default:"No description provided" }}</dd>
+                        </div>
+                        {% if preorder.special_instructions %}
+                        <div class="md:col-span-2">
+                            <dt class="text-gray-500 dark:text-gray-400">Special Instructions</dt>
+                            <dd class="text-gray-900 dark:text-white">{{ preorder.special_instructions }}</dd>
+                        </div>
+                        {% endif %}
+                    </dl>
+
+                    <!-- Options -->
+                    {% if option_values %}
+                    <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                        <h3 class="font-semibold text-gray-900 dark:text-white mb-3">Selected Options</h3>
+                        <div class="space-y-2 text-sm">
+                            {% for ov in option_values %}
+                            <div class="flex justify-between">
+                                <span class="text-gray-600 dark:text-gray-400">{{ ov.option.name }}</span>
+                                <span class="text-gray-900 dark:text-white">{{ ov.choice.name|default:ov.value }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Design Files -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Design Files</h2>
+                        {% if preorder.status == 'design_revision' or preorder.status == 'design_approval' %}
+                        <button id="uploadDesignBtn" 
+                                class="text-sm text-primary-600 hover:text-primary-700 font-medium">
+                            + Upload New Design
+                        </button>
+                        {% endif %}
+                    </div>
+                    
+                    {% if designs %}
+                    <div class="space-y-3">
+                        {% for design in designs %}
+                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-primary-100 dark:bg-primary-900/40 rounded-lg flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900 dark:text-white">{{ design.original_filename }}</p>
+                                    <p class="text-xs text-gray-500">{{ design.file_size|filesizeformat }} • {{ design.uploaded_at|date:"M d, Y" }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                {% if design.file %}
+                                <a href="{{ design.file.url }}" download 
+                                   class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                    </svg>
+                                </a>
+                                {% endif %}
+                                <span class="text-xs px-2 py-1 rounded-full
+                                    {% if design.status == 'approved' %}bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300
+                                    {% elif design.status == 'rejected' %}bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300
+                                    {% else %}bg-gray-100 text-gray-700 dark:bg-gray-600 dark:text-gray-300{% endif %}">
+                                    {{ design.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-gray-500 dark:text-gray-400 text-center py-8">No design files uploaded yet</p>
+                    {% endif %}
+                </div>
+
+                <!-- Messages -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Messages</h2>
+                    
+                    <div class="space-y-4 max-h-96 overflow-y-auto mb-6" id="messagesContainer">
+                        {% for message in messages %}
+                        <div class="flex gap-3 {% if message.sender_type == 'customer' %}justify-end{% endif %}">
+                            <div class="max-w-md p-4 rounded-xl {% if message.sender_type == 'customer' %}bg-primary-600 text-white{% else %}bg-gray-100 dark:bg-gray-700{% endif %}">
+                                <p class="text-sm">{{ message.message }}</p>
+                                <p class="text-xs mt-2 {% if message.sender_type == 'customer' %}text-primary-200{% else %}text-gray-500 dark:text-gray-400{% endif %}">
+                                    {{ message.created_at|date:"M d, Y H:i" }}
+                                </p>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-center text-gray-500 dark:text-gray-400 py-4">No messages yet</p>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Message Form -->
+                    <form method="post" action="{% url 'preorders:send_message' preorder_number=preorder.preorder_number %}" class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                        {% csrf_token %}
+                        <div class="flex gap-3">
+                            <textarea name="message" rows="2" placeholder="Type your message..." required
+                                      class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"></textarea>
+                            <button type="submit" 
+                                    class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors self-end">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- Price Summary -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Payment Summary</h3>
+                    <div class="space-y-3 text-sm">
+                        {% if preorder.final_price %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-500 dark:text-gray-400">Total Price</span>
+                            <span class="font-semibold text-gray-900 dark:text-white">৳{{ preorder.final_price }}</span>
+                        </div>
+                        {% elif preorder.estimated_price %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-500 dark:text-gray-400">Estimated Total</span>
+                            <span class="font-semibold text-gray-900 dark:text-white">৳{{ preorder.estimated_price }}</span>
+                        </div>
+                        {% else %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-500 dark:text-gray-400">Estimated Total</span>
+                            <span class="font-semibold text-gray-500 dark:text-gray-400">Pending quote</span>
+                        </div>
+                        {% endif %}
+                        {% if preorder.deposit_required %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-500 dark:text-gray-400">Deposit Required</span>
+                            <span class="font-semibold text-gray-900 dark:text-white">৳{{ preorder.deposit_required }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-500 dark:text-gray-400">Deposit Paid</span>
+                            <span class="font-semibold text-green-600">৳{{ preorder.deposit_paid|default:"0.00" }}</span>
+                        </div>
+                        {% if preorder.deposit_required %}
+                        {% with remaining=preorder.deposit_required|add:preorder.deposit_paid|default:0 %}
+                        {% if remaining > 0 %}
+                        <div class="flex justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
+                            <span class="font-medium text-gray-900 dark:text-white">Deposit Remaining</span>
+                            <span class="font-bold text-red-600">৳{{ remaining }}</span>
+                        </div>
+                        {% endif %}
+                        {% endwith %}
+                        {% endif %}
+                    </div>
+
+                    <!-- Payment Progress -->
+                    {% if preorder.deposit_required %}
+                    <div class="mt-4">
+                        {% widthratio preorder.deposit_paid preorder.deposit_required 100 as payment_percent %}
+                        <div class="flex items-center justify-between text-xs mb-1">
+                            <span class="text-gray-500 dark:text-gray-400">Payment Progress</span>
+                            <span class="text-gray-900 dark:text-white">{{ payment_percent|default:0 }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div class="bg-primary-600 h-2 rounded-full transition-all" style="width: {{ payment_percent|default:0 }}%"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if preorder.status == 'quote_sent' %}
+                    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                        <a href="{% url 'preorders:pay_deposit' preorder_number=preorder.preorder_number %}" 
+                           class="block w-full py-2 bg-primary-600 text-white text-center rounded-lg hover:bg-primary-700 font-semibold">
+                            Pay Deposit
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Quote -->
+                {% if active_quote %}
+                <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-2xl p-6 border border-yellow-200 dark:border-yellow-800">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quote</h3>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-400">Quote Amount</span>
+                            <span class="text-xl font-bold text-gray-900 dark:text-white">৳{{ active_quote.quote_amount }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-400">Deposit ({{ active_quote.deposit_percentage }}%)</span>
+                            <span class="font-semibold text-gray-900 dark:text-white">৳{{ active_quote.deposit_amount }}</span>
+                        </div>
+                        {% if active_quote.valid_until %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-400">Valid Until</span>
+                            <span class="text-gray-900 dark:text-white">{{ active_quote.valid_until|date:"M d, Y" }}</span>
+                        </div>
+                        {% endif %}
+                        {% if active_quote.notes %}
+                        <p class="text-gray-600 dark:text-gray-400 pt-2 border-t border-yellow-200 dark:border-yellow-800">
+                            {{ active_quote.notes }}
+                        </p>
+                        {% endif %}
+                        
+                        {% if active_quote.status == 'pending' %}
+                        <div class="grid grid-cols-2 gap-2 pt-3">
+                            <form method="post" action="{% url 'preorders:quote_response' preorder_number=preorder.preorder_number %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="accept">
+                                <button type="submit" class="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">
+                                    Accept
+                                </button>
+                            </form>
+                            <form method="post" action="{% url 'preorders:quote_response' preorder_number=preorder.preorder_number %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="reject">
+                                <button type="submit" class="w-full py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium">
+                                    Decline
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Actions -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Actions</h3>
+                    <div class="space-y-3">
+                        {% if preorder.status == 'design_approval' or preorder.status == 'quality_check' %}
+                        <form method="post" action="{% url 'preorders:approve' preorder_number=preorder.preorder_number %}">
+                            {% csrf_token %}
+                            <button type="submit" class="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">
+                                Approve Work
+                            </button>
+                        </form>
+                        {% endif %}
+                        
+                        {% if preorder.can_request_revision %}
+                        <button id="requestRevisionBtn" 
+                                class="w-full py-2 border-2 border-yellow-500 text-yellow-600 dark:text-yellow-400 rounded-lg hover:bg-yellow-50 dark:hover:bg-yellow-900/20 font-medium">
+                            Request Revision ({{ preorder.revisions_remaining }} left)
+                        </button>
+                        {% endif %}
+
+                        <a href="{% url 'preorders:tracking' %}" 
+                           class="block w-full py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-center rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 font-medium">
+                            Track Another Order
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Contact Card -->
+                <div class="bg-primary-50 dark:bg-primary-900/20 rounded-2xl p-6">
+                    <h3 class="font-semibold text-gray-900 dark:text-white mb-2">Need Help?</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        Our team is here to assist you with your custom order.
+                    </p>
+                    <a href="{% url 'pages:contact' %}"
+                       class="inline-flex items-center gap-2 text-sm text-primary-600 hover:text-primary-700 font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        Contact Support
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Revision Modal -->
+<div id="revisionModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-4">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Request Revision</h3>
+        <form method="post" action="{% url 'preorders:request_revision' preorder_number=preorder.preorder_number %}">
+            {% csrf_token %}
+            <textarea name="notes" rows="4" required placeholder="Please describe the changes you'd like..."
+                      class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 mb-4"></textarea>
+            <div class="flex gap-3">
+                <button type="button" onclick="closeRevisionModal()" 
+                        class="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg">
+                    Cancel
+                </button>
+                <button type="submit" class="flex-1 py-2 bg-primary-600 text-white rounded-lg">
+                    Submit Request
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+const revisionBtn = document.getElementById('requestRevisionBtn');
+const revisionModal = document.getElementById('revisionModal');
+
+if (revisionBtn) {
+    revisionBtn.addEventListener('click', () => {
+        revisionModal.classList.remove('hidden');
+        revisionModal.classList.add('flex');
+    });
+}
+
+function closeRevisionModal() {
+    revisionModal.classList.add('hidden');
+    revisionModal.classList.remove('flex');
+}
+
+revisionModal.addEventListener('click', (e) => {
+    if (e.target === revisionModal) closeRevisionModal();
+});
+</script>
+{% endblock %}

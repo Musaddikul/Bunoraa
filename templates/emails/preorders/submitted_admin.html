@@ -1,0 +1,128 @@
+{% extends "emails/base_email.html" %}
+{% load static %}
+
+{% block title %}New Pre-Order: {{ preorder.preorder_number }}{% endblock %}
+
+{% block content %}
+<h1 style="color: #1f2937; font-size: 24px; margin-bottom: 20px;">
+    🎉 New Pre-Order Received!
+</h1>
+
+<p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+    A new custom pre-order has been submitted and requires your review.
+</p>
+
+<!-- Order Details Box -->
+<div style="background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+    <h2 style="color: #92400e; font-size: 18px; margin-bottom: 16px;">Order Details</h2>
+    
+    <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td style="padding: 8px 0; color: #78350f; font-size: 14px;">Order Number</td>
+            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 600; text-align: right;">{{ preorder.preorder_number }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; color: #78350f; font-size: 14px;">Category</td>
+            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">{{ preorder.category.name }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; color: #78350f; font-size: 14px;">Title</td>
+            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">{{ preorder.title }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; color: #78350f; font-size: 14px;">Quantity</td>
+            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">{{ preorder.quantity }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; color: #78350f; font-size: 14px;">Estimated Total</td>
+            <td style="padding: 8px 0; color: #7c3aed; font-size: 16px; font-weight: 600; text-align: right;">৳{{ preorder.estimated_total }}</td>
+        </tr>
+        {% if preorder.is_rush_order %}
+        <tr>
+            <td colspan="2" style="padding: 8px 0;">
+                <span style="background-color: #f97316; color: white; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600;">⚡ RUSH ORDER</span>
+            </td>
+        </tr>
+        {% endif %}
+    </table>
+</div>
+
+<!-- Customer Information -->
+<div style="background-color: #f3f4f6; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+    <h2 style="color: #1f2937; font-size: 18px; margin-bottom: 16px;">Customer Information</h2>
+    
+    <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Name</td>
+            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">{{ preorder.full_name }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Email</td>
+            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">
+                <a href="mailto:{{ preorder.email }}" style="color: #7c3aed;">{{ preorder.email }}</a>
+            </td>
+        </tr>
+        {% if preorder.phone %}
+        <tr>
+            <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Phone</td>
+            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">{{ preorder.phone }}</td>
+        </tr>
+        {% endif %}
+        {% if preorder.user %}
+        <tr>
+            <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Account</td>
+            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">Registered User</td>
+        </tr>
+        {% endif %}
+    </table>
+</div>
+
+<!-- Shipping Address -->
+<div style="background-color: #f3f4f6; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+    <h2 style="color: #1f2937; font-size: 18px; margin-bottom: 16px;">Shipping Address</h2>
+    <p style="color: #1f2937; font-size: 14px; line-height: 1.6; margin: 0;">
+        {{ preorder.shipping_first_name }} {{ preorder.shipping_last_name }}<br>
+        {{ preorder.shipping_address_line_1 }}<br>
+        {% if preorder.shipping_address_line_2 %}{{ preorder.shipping_address_line_2 }}<br>{% endif %}
+        {{ preorder.shipping_city }}, {{ preorder.shipping_state }} {{ preorder.shipping_postal_code }}<br>
+        {{ preorder.shipping_country }}
+    </p>
+</div>
+
+<!-- Description -->
+{% if preorder.description %}
+<div style="background-color: #f3f4f6; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+    <h2 style="color: #1f2937; font-size: 18px; margin-bottom: 16px;">Description</h2>
+    <p style="color: #1f2937; font-size: 14px; line-height: 1.6; margin: 0;">{{ preorder.description }}</p>
+</div>
+{% endif %}
+
+<!-- Special Instructions -->
+{% if preorder.special_instructions %}
+<div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+    <h2 style="color: #991b1b; font-size: 18px; margin-bottom: 16px;">⚠️ Special Instructions</h2>
+    <p style="color: #1f2937; font-size: 14px; line-height: 1.6; margin: 0;">{{ preorder.special_instructions }}</p>
+</div>
+{% endif %}
+
+<!-- Design Files Notice -->
+{% if design_count > 0 %}
+<div style="background-color: #ecfdf5; border: 1px solid #10b981; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+    <p style="color: #065f46; font-size: 14px; margin: 0;">
+        📎 <strong>{{ design_count }} design file(s)</strong> uploaded. View in admin panel.
+    </p>
+</div>
+{% endif %}
+
+<!-- CTA Button -->
+<div style="text-align: center; margin-bottom: 24px;">
+    <a href="{{ admin_url }}" 
+       style="display: inline-block; background-color: #7c3aed; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+        Review in Admin Panel
+    </a>
+</div>
+
+<p style="color: #6b7280; font-size: 14px; line-height: 1.6;">
+    Please review this order and send a quote to the customer within 24-48 hours.
+</p>
+{% endblock %}

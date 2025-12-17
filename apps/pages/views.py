@@ -46,7 +46,7 @@ class PageDetailView(DetailView):
     def get_template_names(self):
         # Use specific template if available
         template_map = {
-            Page.TEMPLATE_LANDING: 'pages/landing.html',
+            Page.TEMPLATE_LANDING: 'pages/home.html',
             Page.TEMPLATE_CONTACT: 'pages/contact.html',
             Page.TEMPLATE_ABOUT: 'pages/about.html',
             Page.TEMPLATE_FAQ: 'pages/faq.html',

@@ -250,6 +250,11 @@ class StoreLocation(models.Model):
     is_pickup_location = models.BooleanField(default=False)
     is_returns_location = models.BooleanField(default=False)
     
+    # Pickup settings (for checkout)
+    pickup_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    min_pickup_time_hours = models.PositiveIntegerField(default=2, help_text="Minimum hours before pickup is ready")
+    max_hold_days = models.PositiveIntegerField(default=7, help_text="Maximum days to hold for pickup")
+    
     # Display
     description = models.TextField(blank=True)
     image = models.ImageField(upload_to='contacts/locations/', blank=True)

@@ -165,6 +165,62 @@
         @apply animate-pulse bg-stone-200 rounded;
     }
     
+    /* Search Form - Hide input by default */
+    #search-form.collapsed input[type="search"] {
+        display: none;
+    }
+    
+    #search-form.collapsed #search-suggestions {
+        display: none;
+    }
+    
+    /* Header Collapse Animation */
+    #main-header {
+        @apply transition-all duration-500 ease-out;
+    }
+    
+    nav[data-main-nav] {
+        @apply transition-all duration-500 ease-in-out;
+        max-height: 100px;
+        opacity: 1;
+    }
+    
+    #main-header.header-collapsed nav[data-main-nav] {
+        @apply hidden opacity-0;
+        max-height: 0;
+        overflow: hidden;
+    }
+    
+    /* Dark Mode Button Styling - Dropdown Toggles */
+    .dark .dropdown-toggle {
+        @apply text-stone-300;
+    }
+    
+    .dark .dropdown-toggle:hover {
+        background-color: rgb(55 65 81);
+        color: rgb(252 191 73);
+    }
+    
+    /* Dark Mode Button Styling - Theme Toggle */
+    .dark #theme-toggle {
+        @apply text-stone-300;
+    }
+    
+    .dark #theme-toggle:hover {
+        background-color: rgb(55 65 81);
+        color: rgb(252 191 73);
+    }
+    
+    /* Dark Mode Button Styling - Mobile Search Toggle */
+    .dark #mobile-search-toggle {
+        @apply text-stone-300;
+    }
+    
+    .dark #mobile-search-toggle:hover {
+        background-color: rgb(55 65 81);
+        color: rgb(252 191 73);
+    }
+    
     /* Dropdown */
     .dropdown-menu {
         @apply absolute z-50 bg-white rounded-xl shadow-xl border border-stone-200 
@@ -300,6 +356,30 @@
         @apply bg-clip-text text-transparent bg-gradient-to-r from-amber-600 to-orange-500;
     }
 
+
+/* ===== TOAST (COMPACT) ===== */
+@layer components {
+    .toast-container {
+        gap: 0.375rem; /* even tighter vertical spacing */
+    }
+    .toast {
+        padding: 0.375rem 0.5rem; /* further reduced padding */
+        gap: 0.375rem; /* tighter internal gap */
+    }
+    .toast-icon {
+        width: 0.875rem;
+        height: 0.875rem; /* smaller icon */
+    }
+    .toast-title {
+        font-size: 0.75rem; /* ~12px */
+        line-height: 1; /* compact line-height */
+        margin-bottom: 0.0625rem; /* minimal spacing */
+    }
+    .toast-message {
+        font-size: 0.6875rem; /* ~11px */
+        line-height: 1; /* compact line-height */
+    }
+}
     /* Theme-aware surface helper */
     .surface {
         @apply bg-white text-stone-900 dark:bg-stone-900 dark:text-stone-100;

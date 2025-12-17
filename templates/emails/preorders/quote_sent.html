@@ -1,0 +1,110 @@
+{% extends "emails/base_email.html" %}
+{% load static %}
+
+{% block title %}New Quote Ready - {{ preorder.preorder_number }}{% endblock %}
+
+{% block content %}
+<h1 style="color: #1f2937; font-size: 24px; margin-bottom: 20px;">
+    💰 Your Quote is Ready!
+</h1>
+
+<p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+    Hi {{ preorder.full_name }},
+</p>
+
+<p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+    Great news! We've reviewed your pre-order and prepared a quote for you.
+</p>
+
+<!-- Quote Details Box -->
+<div style="background-color: #ede9fe; border: 2px solid #8b5cf6; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+    <h2 style="color: #5b21b6; font-size: 18px; margin-bottom: 16px;">Quote Details</h2>
+    
+    <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td style="padding: 8px 0; color: #6d28d9; font-size: 14px;">Order</td>
+            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">{{ preorder.title }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; color: #6d28d9; font-size: 14px;">Quantity</td>
+            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">{{ preorder.quantity }}</td>
+        </tr>
+        <tr style="border-top: 1px solid #c4b5fd; border-bottom: 1px solid #c4b5fd;">
+            <td style="padding: 16px 0; color: #5b21b6; font-size: 16px; font-weight: 600;">Total Quote Amount</td>
+            <td style="padding: 16px 0; color: #5b21b6; font-size: 24px; font-weight: 700; text-align: right;">৳{{ quote.quote_amount }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 12px 0; color: #6d28d9; font-size: 14px;">Deposit Required ({{ quote.deposit_percentage }}%)</td>
+            <td style="padding: 12px 0; color: #1f2937; font-size: 16px; font-weight: 600; text-align: right;">৳{{ quote.deposit_amount }}</td>
+        </tr>
+        {% if quote.valid_until %}
+        <tr>
+            <td style="padding: 8px 0; color: #6d28d9; font-size: 14px;">Valid Until</td>
+            <td style="padding: 8px 0; color: #dc2626; font-size: 14px; font-weight: 600; text-align: right;">{{ quote.valid_until|date:"M d, Y" }}</td>
+        </tr>
+        {% endif %}
+    </table>
+</div>
+
+<!-- Quote Notes -->
+{% if quote.notes %}
+<div style="background-color: #f0f9ff; border-left: 4px solid #3b82f6; padding: 16px 20px; margin-bottom: 24px;">
+    <p style="color: #1e40af; font-size: 14px; font-weight: 600; margin: 0 0 8px;">Notes from our team:</p>
+    <p style="color: #4b5563; font-size: 14px; line-height: 1.6; margin: 0;">{{ quote.notes }}</p>
+</div>
+{% endif %}
+
+<!-- What's Included -->
+<div style="background-color: #f3f4f6; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+    <h2 style="color: #1f2937; font-size: 18px; margin-bottom: 16px;">What's Included</h2>
+    <ul style="color: #4b5563; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+        <li>Custom {{ preorder.category.name }} production</li>
+        <li>{{ preorder.quantity }} unit(s) as specified</li>
+        <li>{{ preorder.category.max_revisions }} revision(s) included</li>
+        <li>Quality assurance check</li>
+        {% if preorder.is_rush_order %}
+        <li><strong>Rush order</strong> - Priority production</li>
+        {% endif %}
+    </ul>
+</div>
+
+<!-- Timeline -->
+<div style="background-color: #f3f4f6; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+    <h2 style="color: #1f2937; font-size: 18px; margin-bottom: 16px;">Estimated Timeline</h2>
+    <p style="color: #4b5563; font-size: 14px; line-height: 1.6; margin: 0;">
+        Production Time: <strong>{{ preorder.category.estimated_days_min }}-{{ preorder.category.estimated_days_max }} business days</strong><br>
+        {% if preorder.is_rush_order %}
+        <span style="color: #f97316;">⚡ Rush order - Expedited production</span>
+        {% endif %}
+    </p>
+</div>
+
+<!-- CTA Buttons -->
+<div style="text-align: center; margin-bottom: 24px;">
+    <a href="{{ site_url }}{% url 'preorders:detail' preorder_number=preorder.preorder_number %}" 
+       style="display: inline-block; background-color: #10b981; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; margin-right: 8px;">
+        Accept Quote
+    </a>
+    <a href="{{ site_url }}{% url 'preorders:detail' preorder_number=preorder.preorder_number %}" 
+       style="display: inline-block; background-color: #e5e7eb; color: #374151; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+        View Details
+    </a>
+</div>
+
+{% if quote.valid_until %}
+<div style="background-color: #fef3c7; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; text-align: center;">
+    <p style="color: #92400e; font-size: 14px; margin: 0;">
+        ⏰ This quote expires on <strong>{{ quote.valid_until|date:"F d, Y" }}</strong>. Please respond before then.
+    </p>
+</div>
+{% endif %}
+
+<p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+    Have questions about the quote? Simply reply to this email or visit your order page to send us a message.
+</p>
+
+<p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+    We look forward to working with you!<br>
+    <strong>The {{ site_name }} Team</strong>
+</p>
+{% endblock %}

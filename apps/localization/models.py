@@ -115,6 +115,160 @@ class Country(models.Model):
         return self.name
 
 
+class Division(models.Model):
+    """
+    Division/State/Province within a country.
+    For Bangladesh: 8 divisions (Dhaka, Chittagong, Rajshahi, Khulna, Barisal, Sylhet, Rangpur, Mymensingh)
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name='divisions'
+    )
+    code = models.CharField(max_length=10, help_text="Division code (e.g., DHK for Dhaka)")
+    name = models.CharField(max_length=100)
+    native_name = models.CharField(max_length=100, blank=True)
+    
+    # Coordinates for mapping
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    
+    # Status
+    is_active = models.BooleanField(default=True)
+    is_shipping_available = models.BooleanField(default=True)
+    
+    sort_order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['sort_order', 'name']
+        unique_together = ['country', 'code']
+        verbose_name = 'Division'
+        verbose_name_plural = 'Divisions'
+    
+    def __str__(self):
+        return f"{self.name}, {self.country.name}"
+
+
+class District(models.Model):
+    """
+    District/City within a Division.
+    For Bangladesh: 64 districts
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    division = models.ForeignKey(
+        Division,
+        on_delete=models.CASCADE,
+        related_name='districts'
+    )
+    code = models.CharField(max_length=10, help_text="District code")
+    name = models.CharField(max_length=100)
+    native_name = models.CharField(max_length=100, blank=True)
+    
+    # Coordinates for mapping
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    
+    # Status
+    is_active = models.BooleanField(default=True)
+    is_shipping_available = models.BooleanField(default=True)
+    
+    # Shipping configuration
+    shipping_zone = models.CharField(
+        max_length=20,
+        choices=[
+            ('metro', 'Metro/City'),
+            ('suburban', 'Suburban'),
+            ('rural', 'Rural'),
+        ],
+        default='suburban',
+        help_text="Used for shipping rate calculation"
+    )
+    
+    sort_order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['sort_order', 'name']
+        unique_together = ['division', 'code']
+        verbose_name = 'District'
+        verbose_name_plural = 'Districts'
+    
+    def __str__(self):
+        return f"{self.name}, {self.division.name}"
+    
+    @property
+    def country(self):
+        return self.division.country
+
+
+class Upazila(models.Model):
+    """
+    Upazila/Thana/Subdistrict within a District.
+    For Bangladesh: ~500 upazilas
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    district = models.ForeignKey(
+        District,
+        on_delete=models.CASCADE,
+        related_name='upazilas'
+    )
+    code = models.CharField(max_length=10, help_text="Upazila code")
+    name = models.CharField(max_length=100)
+    native_name = models.CharField(max_length=100, blank=True)
+    
+    # Type
+    upazila_type = models.CharField(
+        max_length=20,
+        choices=[
+            ('upazila', 'Upazila'),
+            ('thana', 'Thana'),
+            ('municipality', 'Municipality'),
+            ('city_corporation', 'City Corporation'),
+        ],
+        default='upazila'
+    )
+    
+    # Coordinates for mapping
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    
+    # Status
+    is_active = models.BooleanField(default=True)
+    is_shipping_available = models.BooleanField(default=True)
+    
+    # Postal codes for this upazila
+    postal_codes = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of postal codes for this upazila"
+    )
+    
+    sort_order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['sort_order', 'name']
+        unique_together = ['district', 'code']
+        verbose_name = 'Upazila'
+        verbose_name_plural = 'Upazilas'
+    
+    def __str__(self):
+        return f"{self.name}, {self.district.name}"
+    
+    @property
+    def division(self):
+        return self.district.division
+    
+    @property
+    def country(self):
+        return self.district.division.country
+
+
 class UserLocalePreference(models.Model):
     """User's locale preferences."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

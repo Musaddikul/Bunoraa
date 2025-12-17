@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Custom Pre-Orders | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <!-- Hero Section -->
+    <section class="relative bg-gradient-to-br from-primary-600 via-primary-700 to-purple-800 text-white overflow-hidden">
+        <div class="absolute inset-0 bg-black/20"></div>
+        <div class="absolute inset-0 opacity-30">
+            <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" stroke-width="0.5" opacity="0.1"/>
+                </pattern>
+                <rect width="100%" height="100%" fill="url(#grid)"/>
+            </svg>
+        </div>
+        
+        <div class="relative container mx-auto px-4 py-20">
+            <div class="max-w-3xl mx-auto text-center">
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+                    Create Your Dream Product
+                </h1>
+                <p class="text-xl md:text-2xl text-white/90 mb-8">
+                    Custom-made products tailored to your exact specifications. 
+                    From personalized jewelry to bulk orders, we bring your vision to life.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="{% url 'preorders:wizard' %}" 
+                       class="inline-flex items-center justify-center px-8 py-4 bg-white text-primary-700 font-semibold rounded-xl hover:bg-gray-100 transition-colors shadow-lg">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Start Your Order
+                    </a>
+                    <a href="{% url 'preorders:tracking' %}" 
+                       class="inline-flex items-center justify-center px-8 py-4 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-colors border border-white/30">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        Track Your Order
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="py-16 bg-white dark:bg-gray-800">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                    How It Works
+                </h2>
+                <p class="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                    Our simple 5-step process makes creating custom products easy
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-5 gap-6">
+                {% for step in "12345"|make_list %}
+                <div class="relative text-center">
+                    <div class="w-16 h-16 mx-auto bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mb-4">
+                        <span class="text-2xl font-bold text-primary-600 dark:text-primary-400">{{ step }}</span>
+                    </div>
+                    {% if step == "1" %}
+                    <h3 class="font-semibold text-gray-900 dark:text-white mb-2">Choose Category</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Select the type of product you want</p>
+                    {% elif step == "2" %}
+                    <h3 class="font-semibold text-gray-900 dark:text-white mb-2">Customize Options</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Choose materials, colors, and features</p>
+                    {% elif step == "3" %}
+                    <h3 class="font-semibold text-gray-900 dark:text-white mb-2">Upload Designs</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Share your vision with us</p>
+                    {% elif step == "4" %}
+                    <h3 class="font-semibold text-gray-900 dark:text-white mb-2">Review Quote</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Approve pricing and timeline</p>
+                    {% else %}
+                    <h3 class="font-semibold text-gray-900 dark:text-white mb-2">We Create It</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Sit back while we craft your order</p>
+                    {% endif %}
+                    
+                    {% if step != "5" %}
+                    <div class="hidden md:block absolute top-8 left-full w-full h-0.5 bg-gradient-to-r from-primary-300 to-transparent -translate-x-1/2"></div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories -->
+    <section class="py-16 bg-gray-50 dark:bg-gray-900">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                    Choose Your Category
+                </h2>
+                <p class="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                    Explore our custom order categories and find what suits your needs
+                </p>
+            </div>
+            
+            <div id="preorder-categories" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Loaded via JS -->
+                {% for i in "123456" %}
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
+                    <div class="aspect-video skeleton bg-gray-200 dark:bg-gray-700"></div>
+                    <div class="p-6">
+                        <div class="skeleton h-6 w-3/4 rounded mb-3"></div>
+                        <div class="skeleton h-4 w-full rounded mb-2"></div>
+                        <div class="skeleton h-4 w-2/3 rounded"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Templates -->
+    <section id="preorder-templates-section" class="py-16 bg-white dark:bg-gray-800">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                    Popular Templates
+                </h2>
+                <p class="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                    Start with a template for faster ordering
+                </p>
+            </div>
+            
+            <div id="preorder-templates" class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Loaded via JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-16 bg-gray-50 dark:bg-gray-900">
+        <div class="container mx-auto px-4">
+            <div class="max-w-3xl mx-auto">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                        Frequently Asked Questions
+                    </h2>
+                </div>
+                
+                <div class="space-y-4">
+                    <details class="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+                        <summary class="p-6 cursor-pointer font-semibold text-gray-900 dark:text-white hover:text-primary-600 transition-colors">
+                            How long does a custom order take?
+                        </summary>
+                        <div class="px-6 pb-6 text-gray-600 dark:text-gray-400">
+                            Production time varies by category and complexity. Generally, orders take 7-30 days. 
+                            Rush orders are available for most categories for an additional fee.
+                        </div>
+                    </details>
+                    
+                    <details class="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+                        <summary class="p-6 cursor-pointer font-semibold text-gray-900 dark:text-white hover:text-primary-600 transition-colors">
+                            What is the deposit requirement?
+                        </summary>
+                        <div class="px-6 pb-6 text-gray-600 dark:text-gray-400">
+                            Most orders require a 30-50% deposit before production begins. 
+                            The remaining balance is due before shipping.
+                        </div>
+                    </details>
+                    
+                    <details class="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+                        <summary class="p-6 cursor-pointer font-semibold text-gray-900 dark:text-white hover:text-primary-600 transition-colors">
+                            Can I request revisions?
+                        </summary>
+                        <div class="px-6 pb-6 text-gray-600 dark:text-gray-400">
+                            Yes! You get 2 free revisions. Additional revisions may incur extra charges.
+                            You'll have the opportunity to review and approve the design before final production.
+                        </div>
+                    </details>
+                    
+                    <details class="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+                        <summary class="p-6 cursor-pointer font-semibold text-gray-900 dark:text-white hover:text-primary-600 transition-colors">
+                            What file formats do you accept for designs?
+                        </summary>
+                        <div class="px-6 pb-6 text-gray-600 dark:text-gray-400">
+                            We accept PDF, PNG, JPG, AI, PSD, SVG, EPS, CDR, and ZIP/RAR archives. 
+                            High-resolution files are recommended for the best results.
+                        </div>
+                    </details>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-16 bg-gradient-to-r from-primary-600 to-purple-600 text-white">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-3xl md:text-4xl font-bold mb-4">
+                Ready to Create Something Special?
+            </h2>
+            <p class="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
+                Start your custom order today and let us bring your vision to life
+            </p>
+            <a href="{% url 'preorders:wizard' %}" 
+               class="inline-flex items-center px-8 py-4 bg-white text-primary-700 font-semibold rounded-xl hover:bg-gray-100 transition-colors shadow-lg">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+                Start Your Custom Order
+            </a>
+        </div>
+    </section>
+</div>
+
+<script src="{% static 'js/pages/preorders.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof PreordersPage !== 'undefined') {
+        PreordersPage.initLanding();
+    }
+});
+
+function useTemplate(templateId) {
+    if (typeof PreordersApi !== 'undefined' && PreordersApi.useTemplate) {
+        PreordersApi.useTemplate(templateId)
+            .then(data => {
+                if (data.success || data.template) {
+                    sessionStorage.setItem('preorder_template', JSON.stringify(data.template || data));
+                    window.location.href = window.BUNORAA_ROUTES?.preordersWizard || '{% url "preorders:wizard" %}';
+                }
+            })
+            .catch(err => {
+                console.error('Failed to use template:', err);
+                Toast?.error?.('Failed to load template') || alert('Failed to load template');
+            });
+    }
+}
+</script>
+{% endblock %}

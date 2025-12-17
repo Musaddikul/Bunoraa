@@ -43,6 +43,11 @@ class Command(BaseCommand):
         self.create_promotions()
         self.create_pages()
         self.create_reviews()
+        
+        # Seed additional data
+        self.seed_localization()
+        self.seed_shipping()
+        self.seed_payment_gateways()
 
         self.stdout.write(self.style.SUCCESS('\nDatabase seeding completed successfully!'))
 
@@ -370,7 +375,7 @@ class Command(BaseCommand):
         """Create sample CMS pages"""
         self.stdout.write('Creating pages...')
 
-        from apps.cms.models import Page
+        from apps.pages.models import Page
 
         pages_data = [
             {
@@ -493,3 +498,30 @@ class Command(BaseCommand):
                     review_count += 1
 
         self.stdout.write(f'  Created {review_count} reviews')
+
+    def seed_localization(self):
+        """Seed Bangladesh location data."""
+        self.stdout.write('Seeding Bangladesh locations...')
+        from django.core.management import call_command
+        try:
+            call_command('seed_bangladesh_locations')
+        except Exception as e:
+            self.stdout.write(self.style.WARNING(f'  Could not seed locations: {e}'))
+
+    def seed_shipping(self):
+        """Seed shipping zones and rates."""
+        self.stdout.write('Seeding shipping data...')
+        from django.core.management import call_command
+        try:
+            call_command('seed_bangladesh_shipping')
+        except Exception as e:
+            self.stdout.write(self.style.WARNING(f'  Could not seed shipping: {e}'))
+
+    def seed_payment_gateways(self):
+        """Seed payment gateways."""
+        self.stdout.write('Seeding payment gateways...')
+        from django.core.management import call_command
+        try:
+            call_command('seed_payment_gateways')
+        except Exception as e:
+            self.stdout.write(self.style.WARNING(f'  Could not seed payment gateways: {e}'))

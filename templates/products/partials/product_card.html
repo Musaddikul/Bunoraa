@@ -89,10 +89,10 @@
         <!-- Price -->
         <div class="mt-2 flex items-center space-x-2">
             {% if product.sale_price %}
-            <span class="text-lg font-bold text-red-600 dark:text-red-400">${{ product.sale_price }}</span>
-            <span class="text-sm text-gray-400 dark:text-stone-500 line-through">${{ product.price }}</span>
+            <span class="text-lg font-bold text-red-600 dark:text-red-400 price-display" data-price="{{ product.sale_price }}">${{ product.sale_price }}</span>
+            <span class="text-sm text-gray-400 dark:text-stone-500 line-through price-display" data-price="{{ product.price }}">${{ product.price }}</span>
             {% else %}
-            <span class="text-lg font-bold text-gray-900 dark:text-white">${{ product.price }}</span>
+            <span class="text-lg font-bold text-gray-900 dark:text-white price-display" data-price="{{ product.price }}">${{ product.price }}</span>
             {% endif %}
         </div>
         

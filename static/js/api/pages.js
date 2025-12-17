@@ -19,8 +19,24 @@ const PagesApi = (function() {
     }
 
     async function getBanners(location = null) {
-        const params = location ? { location } : {};
-        return ApiClient.get('/pages/banners/', params, { useCache: true, cacheTTL: 60000 });
+        // Map legacy "location" to promotions API routes
+        // Supported positions: 'home_hero', 'home_secondary', or any Banner.position
+        try {
+            if (location === 'home_hero') {
+                return await ApiClient.get('/promotions/banners/hero/', {}, { useCache: true, cacheTTL: 60000 });
+            }
+            if (location === 'home_secondary') {
+                return await ApiClient.get('/promotions/banners/secondary/', {}, { useCache: true, cacheTTL: 60000 });
+            }
+            const params = location ? { position: location } : {};
+            return await ApiClient.get('/promotions/banners/', params, { useCache: true, cacheTTL: 60000 });
+        } catch (err) {
+            if (err && err.status === 404) {
+                // Gracefully handle missing endpoint by returning an empty dataset
+                return { success: true, message: 'No banners', data: [], meta: null };
+            }
+            throw err;
+        }
     }
 
     async function getPromotions() {

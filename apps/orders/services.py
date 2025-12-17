@@ -29,12 +29,25 @@ class OrderService:
         cart = checkout_session.cart
         cart_summary = CartService.get_cart_summary(cart)
         
-        # Calculate totals
+        # Calculate totals - use checkout session values which are already calculated
         subtotal = Decimal(cart_summary['subtotal'])
-        discount = Decimal(cart_summary.get('discount', '0'))
-        shipping = checkout_session.shipping_cost
-        tax = Decimal('0')  # TODO: Implement tax calculation
-        total = subtotal - discount + shipping + tax
+        
+        # Use discount from checkout session (coupon-based) or from cart
+        discount = checkout_session.discount_amount or Decimal(cart_summary.get('discount', '0'))
+        
+        # Shipping cost from checkout session
+        shipping = checkout_session.shipping_cost or Decimal('0')
+        
+        # Gift wrap cost
+        gift_wrap_cost = checkout_session.gift_wrap_cost or Decimal('0')
+        
+        # Tax calculation using checkout session's tax rate
+        tax_rate = checkout_session.tax_rate or Decimal('0')
+        taxable_amount = subtotal - discount + gift_wrap_cost
+        tax = (taxable_amount * tax_rate / 100).quantize(Decimal('0.01'))
+        
+        # Total
+        total = subtotal - discount + shipping + tax + gift_wrap_cost
         
         # Create order
         order = Order.objects.create(
@@ -75,9 +88,15 @@ class OrderService:
             tax=tax,
             total=total,
             
-            # Coupon
-            coupon=cart.coupon,
-            coupon_code=cart.coupon.code if cart.coupon else '',
+            # Coupon - use checkout session coupon if available, fallback to cart
+            coupon=checkout_session.coupon or cart.coupon,
+            coupon_code=checkout_session.coupon_code or (cart.coupon.code if cart.coupon else ''),
+            
+            # Gift Options
+            is_gift=checkout_session.is_gift,
+            gift_message=checkout_session.gift_message or '',
+            gift_wrap=checkout_session.gift_wrap,
+            gift_wrap_cost=gift_wrap_cost,
             
             # Notes
             customer_notes=checkout_session.order_notes,

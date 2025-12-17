@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block page_id %}category{% endblock %}
-{% block title %}{{ category.name }} - Bunoraa{% endblock %}
+{% block title %}{{ category.name }} - {{ SITE_NAME }}{% endblock %}
 
 {% block meta %}
 <meta name="description" content="{{ category.meta_description|default:category.description }}">

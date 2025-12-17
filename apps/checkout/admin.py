@@ -2,7 +2,7 @@
 Checkout admin configuration
 """
 from django.contrib import admin
-from .models import CheckoutSession, ShippingRate
+from .models import CheckoutSession
 
 
 @admin.register(CheckoutSession)
@@ -55,32 +55,5 @@ class CheckoutSessionAdmin(admin.ModelAdmin):
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at', 'expires_at')
-        }),
-    )
-
-
-@admin.register(ShippingRate)
-class ShippingRateAdmin(admin.ModelAdmin):
-    list_display = [
-        'name', 'code', 'base_rate', 'per_item_rate',
-        'free_shipping_threshold', 'delivery_estimate', 'is_active', 'sort_order'
-    ]
-    list_filter = ['is_active']
-    search_fields = ['name', 'code', 'description']
-    list_editable = ['is_active', 'sort_order']
-    ordering = ['sort_order', 'name']
-    
-    fieldsets = (
-        ('Basic Info', {
-            'fields': ('name', 'code', 'description')
-        }),
-        ('Pricing', {
-            'fields': ('base_rate', 'per_item_rate', 'free_shipping_threshold')
-        }),
-        ('Delivery', {
-            'fields': ('min_delivery_days', 'max_delivery_days')
-        }),
-        ('Status', {
-            'fields': ('is_active', 'sort_order')
         }),
     )

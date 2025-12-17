@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block page_id %}category{% endblock %}
-{% block title %}{% if category %}{{ category.name }}{% else %}All Products{% endif %} - Bunoraa{% endblock %}
+{% block title %}{% if category %}{{ category.name }}{% else %}All Products{% endif %} - {{ SITE_NAME }}{% endblock %}
 {% block meta_description %}{% if category %}{{ category.meta_description|default:category.description }}{% else %}Browse our premium collection of products. Find the best deals on fashion, electronics, home & living and more.{% endif %}{% endblock %}
 
 {% block content %}
@@ -179,7 +179,8 @@
                 </div>
                 
                 <!-- Load More / Pagination -->
-                <div id="pagination-container" class="mt-8 flex justify-center">
+                <div id="pagination-container" class="mt-8 flex flex-col items-center gap-4">
+                    <div id="pagination-component" class="flex justify-center"></div>
                     <button id="load-more" class="hidden px-8 py-3 bg-white border border-gray-200 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors">
                         <span class="load-more-text">Load More Products</span>
                         <svg class="load-more-spinner hidden w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -215,7 +216,9 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script type="module">
+import { Pagination, Toast } from "{% static 'js/components/index.js' %}";
+
 document.addEventListener('DOMContentLoaded', async function() {
     const currency = {
         symbol: '{{ currency_symbol|default:"৳"|escapejs }}',
@@ -236,6 +239,21 @@ document.addEventListener('DOMContentLoaded', async function() {
         AED: 'د.إ',
         SAR: '﷼'
     };
+    
+    // Initialize currency from localStorage if previously selected
+    (function initCurrencyFromStorage() {
+        try {
+            const storedCurrency = localStorage.getItem('selected_currency');
+            if (storedCurrency && storedCurrency !== currency.code) {
+                const normalized = storedCurrency.toUpperCase();
+                currency.code = normalized;
+                currency.symbol = currencySymbolsMap[normalized] || currency.symbol;
+            }
+        } catch (e) {
+            // Ignore localStorage errors
+        }
+    })();
+    
     const locale = document.documentElement.lang || navigator.language || 'en-US';
     const categoryNameMap = {};
     const routePlaceholder = window.BUNORAA_ROUTE_PLACEHOLDER || '__slug__';
@@ -255,6 +273,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     let currentPage = 1;
     let totalPages = 1;
     let totalProducts = 0;
+    let paginationInstance = null;
     let isLoading = false;
     let viewMode = 'grid';
     let filters = {
@@ -284,6 +303,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const productsGrid = document.getElementById('products-grid');
     const emptyState = document.getElementById('empty-state');
     const loadMoreBtn = document.getElementById('load-more');
+    const paginationMount = document.getElementById('pagination-component');
     const productCount = document.getElementById('product-count');
     const pageTitle = document.getElementById('page-title');
     const sortSelect = document.getElementById('sort-select');
@@ -495,8 +515,27 @@ document.addEventListener('DOMContentLoaded', async function() {
         const storedCode = typeof storedValue === 'string' ? storedValue : storedValue?.code;
         const nextCode = event?.detail || storedCode || currency.code;
         applyCurrencyCode(nextCode);
-        loadProducts();
+        // Re-render products with new currency conversion
+        renderProductsFromCache();
     });
+    
+    // Helper to format price using global Templates.formatPrice with currency conversion
+    function formatProductPrice(amount) {
+        if (window.Templates && window.Templates.formatPrice) {
+            return window.Templates.formatPrice(amount);
+        }
+        // Fallback if Templates not available
+        return `${currency.symbol}${parseFloat(amount).toLocaleString(locale)}`;
+    }
+    
+    // Store last loaded products for re-rendering on currency change
+    let cachedProducts = [];
+    
+    function renderProductsFromCache() {
+        if (cachedProducts.length > 0 && productsGrid) {
+            productsGrid.innerHTML = cachedProducts.map(p => createProductCard(p)).join('');
+        }
+    }
     
     // Create product card
     function createProductCard(product) {
@@ -529,10 +568,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                         <div class="flex items-center justify-between pt-4 border-t border-gray-100">
                             <div class="flex items-center gap-2">
                                 ${product.sale_price ? `
-                                    <span class="text-xl font-bold text-gray-900">${currency.symbol}${product.sale_price}</span>
-                                    <span class="text-sm text-gray-400 line-through">${currency.symbol}${product.price}</span>
+                                    <span class="text-xl font-bold text-gray-900">${formatProductPrice(product.sale_price)}</span>
+                                    <span class="text-sm text-gray-400 line-through">${formatProductPrice(product.price)}</span>
                                 ` : `
-                                    <span class="text-xl font-bold text-gray-900">${currency.symbol}${product.price}</span>
+                                    <span class="text-xl font-bold text-gray-900">${formatProductPrice(product.price)}</span>
                                 `}
                             </div>
                             <div class="flex gap-2">
@@ -583,10 +622,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                     ` : ''}
                     <div class="flex items-center gap-2">
                         ${product.sale_price ? `
-                            <span class="text-lg font-bold text-gray-900">${currency.symbol}${product.sale_price}</span>
-                            <span class="text-sm text-gray-400 line-through">${currency.symbol}${product.price}</span>
+                            <span class="text-lg font-bold text-gray-900">${formatProductPrice(product.sale_price)}</span>
+                            <span class="text-sm text-gray-400 line-through">${formatProductPrice(product.price)}</span>
                         ` : `
-                            <span class="text-lg font-bold text-gray-900">${currency.symbol}${product.price}</span>
+                            <span class="text-lg font-bold text-gray-900">${formatProductPrice(product.price)}</span>
                         `}
                     </div>
                 </div>
@@ -625,6 +664,13 @@ document.addEventListener('DOMContentLoaded', async function() {
             const response = await ProductsApi.getProducts(params);
             const products = response.data || response.results || [];
             
+            // Cache products for currency re-rendering
+            if (append) {
+                cachedProducts = [...cachedProducts, ...products];
+            } else {
+                cachedProducts = products;
+            }
+            
             totalProducts = response.meta?.pagination?.count || response.count || products.length;
             totalPages = response.meta?.pagination?.total_pages || Math.ceil(totalProducts / 12);
             
@@ -649,6 +695,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                     loadMoreBtn.classList.add('hidden');
                 }
             }
+
+            syncPagination();
             
             // Update URL
             const url = new URL(window.location);
@@ -680,12 +728,39 @@ document.addEventListener('DOMContentLoaded', async function() {
             
         } catch (error) {
             console.error('Error loading products:', error);
-            Toast.error('Failed to load products. Please try again.');
+            Toast.show('Failed to load products. Please try again.', { type: 'error', position: 'top-right' });
         } finally {
             isLoading = false;
             loadMoreBtn.querySelector('.load-more-text').classList.remove('hidden');
             loadMoreBtn.querySelector('.load-more-spinner').classList.add('hidden');
         }
+    }
+
+    function syncPagination() {
+        if (!paginationMount) return;
+        const total = Math.max(totalPages, 1);
+        const current = Math.min(Math.max(currentPage, 1), total);
+
+        if (!paginationInstance) {
+            paginationInstance = new Pagination({
+                totalPages: total,
+                currentPage: current,
+                maxVisible: 7,
+                className: 'justify-center',
+                onChange: (page) => {
+                    currentPage = page;
+                    loadProducts(false);
+                }
+            });
+        } else {
+            paginationInstance.totalPages = total;
+            paginationInstance.currentPage = current;
+        }
+
+        paginationMount.innerHTML = '';
+        const element = paginationInstance.create();
+        paginationMount.appendChild(element);
+        paginationInstance.element = element;
     }
     
     // Load filters

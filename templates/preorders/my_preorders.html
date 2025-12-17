@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Pre-Orders | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div class="container mx-auto px-4">
+        <div class="max-w-6xl mx-auto">
+            <!-- Header -->
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">My Pre-Orders</h1>
+                    <p class="text-gray-600 dark:text-gray-400">Track and manage your custom orders</p>
+                </div>
+                <a href="{% url 'preorders:landing' %}" 
+                   class="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    New Pre-Order
+                </a>
+            </div>
+
+            <!-- Filters -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-6">
+                <form method="get" class="flex flex-wrap gap-4">
+                    <div class="flex-1 min-w-[200px]">
+                        <input type="text" 
+                               name="search" 
+                               value="{{ request.GET.search }}"
+                               placeholder="Search by order number or title..."
+                               class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <select name="status" 
+                                class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+                            <option value="">All Statuses</option>
+                            <option value="submitted" {% if request.GET.status == 'submitted' %}selected{% endif %}>Submitted</option>
+                            <option value="under_review" {% if request.GET.status == 'under_review' %}selected{% endif %}>Under Review</option>
+                            <option value="quote_sent" {% if request.GET.status == 'quote_sent' %}selected{% endif %}>Quote Sent</option>
+                            <option value="in_production" {% if request.GET.status == 'in_production' %}selected{% endif %}>In Production</option>
+                            <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="shipped" {% if request.GET.status == 'shipped' %}selected{% endif %}>Shipped</option>
+                            <option value="delivered" {% if request.GET.status == 'delivered' %}selected{% endif %}>Delivered</option>
+                        </select>
+                    </div>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600">
+                        Filter
+                    </button>
+                </form>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-4">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Total Orders</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ total_count }}</p>
+                </div>
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-4">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">In Progress</p>
+                    <p class="text-2xl font-bold text-primary-600">{{ in_progress_count }}</p>
+                </div>
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-4">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Completed</p>
+                    <p class="text-2xl font-bold text-green-600">{{ completed_count }}</p>
+                </div>
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-4">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Awaiting Action</p>
+                    <p class="text-2xl font-bold text-yellow-600">{{ action_required_count }}</p>
+                </div>
+            </div>
+
+            <!-- Pre-Orders List -->
+            {% if preorders %}
+            <div class="space-y-4">
+                {% for preorder in preorders %}
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                    <div class="p-6">
+                        <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+                            <!-- Main Info -->
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
+                                        {% if preorder.category.icon %}
+                                        <span class="text-2xl">{{ preorder.category.icon }}</span>
+                                        {% else %}
+                                        <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                        </svg>
+                                        {% endif %}
+                                    </div>
+                                    <div class="min-w-0">
+                                        <h3 class="font-semibold text-gray-900 dark:text-white truncate">
+                                            {{ preorder.title }}
+                                        </h3>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                                            #{{ preorder.preorder_number }} • {{ preorder.category.name }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Status & Meta -->
+                            <div class="flex flex-wrap items-center gap-4 lg:gap-6">
+                                <div class="text-sm">
+                                    <p class="text-gray-500 dark:text-gray-400">Quantity</p>
+                                    <p class="font-medium text-gray-900 dark:text-white">{{ preorder.quantity }}</p>
+                                </div>
+                                <div class="text-sm">
+                                    <p class="text-gray-500 dark:text-gray-400">Price</p>
+                                    <p class="font-medium text-gray-900 dark:text-white">
+                                        ৳{{ preorder.final_price|default:preorder.estimated_total }}
+                                    </p>
+                                </div>
+                                <div class="text-sm">
+                                    <p class="text-gray-500 dark:text-gray-400">Date</p>
+                                    <p class="font-medium text-gray-900 dark:text-white">{{ preorder.created_at|date:"M d, Y" }}</p>
+                                </div>
+                                
+                                <!-- Status Badge -->
+                                {% include "preorders/includes/status_badge.html" with status=preorder.status %}
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="flex items-center gap-2 lg:ml-4">
+                                <a href="{% url 'preorders:detail' preorder_number=preorder.preorder_number %}" 
+                                   class="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors font-medium">
+                                    View Details
+                                </a>
+                                {% if preorder.status == 'quote_sent' %}
+                                <a href="{% url 'preorders:detail' preorder_number=preorder.preorder_number %}" 
+                                   class="px-4 py-2 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300 text-sm rounded-lg hover:bg-yellow-200 dark:hover:bg-yellow-900/60 transition-colors font-medium">
+                                    Review Quote
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar (for in-progress orders) -->
+                        {% if preorder.status in 'submitted,under_review,quote_sent,quote_accepted,deposit_paid,design_approval,in_production,quality_check' %}
+                        <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-xs text-gray-500 dark:text-gray-400">Progress</span>
+                            </div>
+                            {% with progress_steps='submitted,under_review,quote_sent,quote_accepted,deposit_paid,design_approval,in_production,quality_check,completed' %}
+                            <div class="flex gap-1">
+                                {% for step in progress_steps|make_list %}
+                                <div class="h-2 flex-1 rounded-full 
+                                            {% if step <= preorder.get_progress_step %}bg-primary-500{% else %}bg-gray-200 dark:bg-gray-700{% endif %}">
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endwith %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Alert for action required -->
+                        {% if preorder.status == 'quote_sent' or preorder.status == 'design_approval' %}
+                        <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                            <div class="flex items-center gap-2 text-yellow-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                                <span class="text-sm font-medium">
+                                    {% if preorder.status == 'quote_sent' %}Quote awaiting your response
+                                    {% elif preorder.status == 'design_approval' %}Design awaiting your approval
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if preorders.has_other_pages %}
+            <div class="mt-8 flex justify-center">
+                <nav class="flex items-center gap-1">
+                    {% if preorders.has_previous %}
+                    <a href="?page={{ preorders.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+                       class="px-3 py-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                    </a>
+                    {% endif %}
+                    
+                    {% for num in preorders.paginator.page_range %}
+                    <a href="?page={{ num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+                       class="px-4 py-2 rounded-lg {% if preorders.number == num %}bg-primary-600 text-white{% else %}text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                        {{ num }}
+                    </a>
+                    {% endfor %}
+                    
+                    {% if preorders.has_next %}
+                    <a href="?page={{ preorders.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+                       class="px-3 py-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                    {% endif %}
+                </nav>
+            </div>
+            {% endif %}
+
+            {% else %}
+            <!-- Empty State -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-12 text-center">
+                <div class="w-24 h-24 mx-auto bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-6">
+                    <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Pre-Orders Yet</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-6">
+                    You haven't placed any custom pre-orders. Start creating your first one!
+                </p>
+                <a href="{% url 'preorders:landing' %}" 
+                   class="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Create Pre-Order
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

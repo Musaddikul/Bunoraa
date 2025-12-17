@@ -10,8 +10,10 @@ class WishlistItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name', read_only=True)
     product_slug = serializers.CharField(source='product.slug', read_only=True)
     product_image = serializers.SerializerMethodField()
+    product_price = serializers.DecimalField(source='product.price', max_digits=10, decimal_places=2, read_only=True)
+    product_sale_price = serializers.DecimalField(source='product.sale_price', max_digits=10, decimal_places=2, read_only=True, allow_null=True)
+    discount_percentage = serializers.SerializerMethodField()
     variant_name = serializers.CharField(source='variant.name', read_only=True, allow_null=True)
-    current_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     price_change = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     price_change_percentage = serializers.FloatField(read_only=True)
     is_in_stock = serializers.BooleanField(read_only=True)
@@ -21,13 +23,14 @@ class WishlistItemSerializer(serializers.ModelSerializer):
         model = WishlistItem
         fields = [
             'id', 'product', 'product_name', 'product_slug', 'product_image',
+            'product_price', 'product_sale_price', 'discount_percentage',
             'variant', 'variant_name', 'added_at', 'notes',
-            'price_at_add', 'current_price', 'price_change', 'price_change_percentage',
+            'price_at_add', 'price_change', 'price_change_percentage',
             'notify_on_sale', 'notify_on_restock', 'notify_on_price_drop',
             'is_in_stock', 'is_on_sale'
         ]
         read_only_fields = [
-            'id', 'added_at', 'price_at_add', 'current_price',
+            'id', 'added_at', 'price_at_add',
             'price_change', 'price_change_percentage'
         ]
     
@@ -38,6 +41,13 @@ class WishlistItemSerializer(serializers.ModelSerializer):
             if request:
                 return request.build_absolute_uri(image.image.url)
             return image.image.url
+        return None
+    
+    def get_discount_percentage(self, obj):
+        """Calculate discount percentage if product is on sale."""
+        if obj.product.sale_price and obj.product.price and obj.product.sale_price < obj.product.price:
+            discount = ((obj.product.price - obj.product.sale_price) / obj.product.price) * 100
+            return round(discount)
         return None
 
 

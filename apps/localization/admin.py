@@ -4,8 +4,8 @@ Localization Admin Configuration
 from django.contrib import admin
 
 from .models import (
-    Language, Timezone, Country, UserLocalePreference,
-    Translation, LocalizationSettings
+    Language, Timezone, Country, Division, District, Upazila,
+    UserLocalePreference, Translation, LocalizationSettings
 )
 
 
@@ -24,10 +24,10 @@ class LanguageAdmin(admin.ModelAdmin):
     
     fieldsets = (
         (None, {
-            'fields': ('code', 'name', 'native_name', 'flag_emoji')
+            'fields': ('code', 'name', 'native_name', 'flag_code')
         }),
         ('Settings', {
-            'fields': ('is_rtl', 'is_active', 'is_default', 'translation_progress')
+            'fields': ('is_rtl', 'is_active', 'is_default', 'translation_progress', 'sort_order')
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at'),
@@ -55,7 +55,7 @@ class TimezoneAdmin(admin.ModelAdmin):
             'fields': ('name', 'display_name')
         }),
         ('Settings', {
-            'fields': ('utc_offset', 'is_common', 'is_active')
+            'fields': ('offset', 'offset_minutes', 'is_common', 'is_active')
         }),
     )
 
@@ -79,6 +79,115 @@ class CountryAdmin(admin.ModelAdmin):
         }),
         ('Defaults', {
             'fields': ('default_language', 'default_currency_code', 'default_timezone')
+        }),
+        ('Settings', {
+            'fields': ('is_shipping_available', 'is_active', 'sort_order')
+        }),
+    )
+
+
+class DistrictInline(admin.TabularInline):
+    """Inline for districts within a division."""
+    model = District
+    extra = 0
+    fields = ['code', 'name', 'native_name', 'shipping_zone', 'is_shipping_available', 'is_active']
+    show_change_link = True
+
+
+@admin.register(Division)
+class DivisionAdmin(admin.ModelAdmin):
+    """Admin for Division model."""
+    
+    list_display = [
+        'name', 'code', 'country', 'native_name',
+        'is_shipping_available', 'is_active', 'sort_order'
+    ]
+    list_filter = ['country', 'is_active', 'is_shipping_available']
+    search_fields = ['name', 'code', 'native_name']
+    ordering = ['country', 'sort_order', 'name']
+    autocomplete_fields = ['country']
+    inlines = [DistrictInline]
+    
+    fieldsets = (
+        (None, {
+            'fields': ('country', 'code', 'name', 'native_name')
+        }),
+        ('Location', {
+            'fields': ('latitude', 'longitude'),
+            'classes': ('collapse',)
+        }),
+        ('Settings', {
+            'fields': ('is_shipping_available', 'is_active', 'sort_order')
+        }),
+    )
+
+
+class UpazilaInline(admin.TabularInline):
+    """Inline for upazilas within a district."""
+    model = Upazila
+    extra = 0
+    fields = ['code', 'name', 'native_name', 'upazila_type', 'is_shipping_available', 'is_active']
+    show_change_link = True
+
+
+@admin.register(District)
+class DistrictAdmin(admin.ModelAdmin):
+    """Admin for District model."""
+    
+    list_display = [
+        'name', 'code', 'division', 'native_name', 'shipping_zone',
+        'is_shipping_available', 'is_active', 'sort_order'
+    ]
+    list_filter = ['division__country', 'division', 'is_active', 'is_shipping_available', 'shipping_zone']
+    search_fields = ['name', 'code', 'native_name']
+    ordering = ['division__country', 'division', 'sort_order', 'name']
+    autocomplete_fields = ['division']
+    inlines = [UpazilaInline]
+    
+    fieldsets = (
+        (None, {
+            'fields': ('division', 'code', 'name', 'native_name')
+        }),
+        ('Location', {
+            'fields': ('latitude', 'longitude'),
+            'classes': ('collapse',)
+        }),
+        ('Shipping', {
+            'fields': ('shipping_zone',)
+        }),
+        ('Settings', {
+            'fields': ('is_shipping_available', 'is_active', 'sort_order')
+        }),
+    )
+
+
+@admin.register(Upazila)
+class UpazilaAdmin(admin.ModelAdmin):
+    """Admin for Upazila model."""
+    
+    list_display = [
+        'name', 'code', 'district', 'upazila_type', 'native_name',
+        'is_shipping_available', 'is_active', 'sort_order'
+    ]
+    list_filter = [
+        'district__division__country', 'district__division', 'district',
+        'upazila_type', 'is_active', 'is_shipping_available'
+    ]
+    search_fields = ['name', 'code', 'native_name']
+    ordering = ['district__division__country', 'district__division', 'district', 'sort_order', 'name']
+    autocomplete_fields = ['district']
+    
+    fieldsets = (
+        (None, {
+            'fields': ('district', 'code', 'name', 'native_name', 'upazila_type')
+        }),
+        ('Location', {
+            'fields': ('latitude', 'longitude'),
+            'classes': ('collapse',)
+        }),
+        ('Postal Codes', {
+            'fields': ('postal_codes',),
+            'classes': ('collapse',)
         }),
         ('Settings', {
             'fields': ('is_shipping_available', 'is_active', 'sort_order')
@@ -176,17 +285,14 @@ class LocalizationSettingsAdmin(admin.ModelAdmin):
         ('Default Settings', {
             'fields': ('default_language', 'default_timezone')
         }),
-        ('Format Defaults', {
-            'fields': ('default_date_format', 'default_time_format', 'default_measurement_system')
-        }),
-        ('Machine Translation', {
-            'fields': ('enable_machine_translation', 'translation_api_provider', 'translation_api_key')
+        ('Display Options', {
+            'fields': ('show_language_selector', 'show_timezone_selector')
         }),
         ('Auto Detection', {
             'fields': ('auto_detect_language', 'auto_detect_timezone')
         }),
-        ('Fallback', {
-            'fields': ('fallback_language',)
+        ('Machine Translation', {
+            'fields': ('enable_machine_translation', 'translation_api_provider', 'translation_api_key')
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at'),
