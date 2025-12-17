@@ -7,182 +7,159 @@
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <div class="flex flex-col lg:flex-row gap-8">
-        <!-- Sidebar Navigation -->
         <aside class="lg:w-64 flex-shrink-0">
             {% include 'accounts/partials/sidebar.html' with active='profile' %}
         </aside>
-        
-        <!-- Main Content -->
-        <div class="flex-1">
-            <div class="bg-white rounded-lg shadow-sm">
-                <!-- Header -->
-                <div class="p-6 border-b border-gray-200" id="profile-info">
-                    <h1 class="text-2xl font-bold text-gray-900">My Profile</h1>
-                    <p class="text-gray-600 mt-1">Manage your account information</p>
+
+        <div class="flex-1 flex flex-col gap-6">
+            <div class="flex flex-col gap-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-900">
+                <div>
+                    <p class="text-xs uppercase tracking-[0.2em] text-stone-500 dark:text-stone-400">Account</p>
+                    <h1 class="text-2xl font-bold text-stone-900 dark:text-white">Profile & settings</h1>
                 </div>
-                
+                <div class="inline-flex self-start rounded-xl border border-stone-200 bg-stone-50 p-1 text-sm dark:border-stone-700 dark:bg-stone-800">
+                    <button type="button" data-profile-tab="overview" class="px-4 py-2 rounded-lg font-semibold text-stone-700 hover:text-amber-700 dark:text-stone-200">Overview</button>
+                    <button type="button" data-profile-tab="settings" class="px-4 py-2 rounded-lg font-semibold text-stone-700 hover:text-amber-700 dark:text-stone-200">Settings</button>
+                </div>
+            </div>
+
+
+            <div data-profile-panel="overview" class="flex flex-col gap-6">
+                <!-- Hidden avatar input (used by JS) -->
+                <input type="file" id="avatar-input" name="avatar" accept="image/*" class="hidden" onchange="previewAvatar(this)">
+
                 <!-- Profile Form -->
-                <form id="profile-form" method="POST" action="{% url 'accounts:profile' %}" enctype="multipart/form-data" class="p-6">
+                <form id="profile-form" method="POST" action="{% url 'accounts:profile' %}" enctype="multipart/form-data" class="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-700 dark:bg-stone-900">
                     {% csrf_token %}
-                    
+
                     {% if messages %}
-                    <div class="mb-6">
+                    <div class="mb-6 space-y-2">
                         {% for message in messages %}
-                        <div class="px-4 py-3 rounded-lg {% if message.tags == 'success' %}bg-green-50 text-green-700{% else %}bg-red-50 text-red-700{% endif %}">
+                        <div class="px-4 py-3 rounded-xl text-sm {% if message.tags == 'success' %}bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-100{% else %}bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-100{% endif %}">
                             {{ message }}
                         </div>
                         {% endfor %}
                     </div>
                     {% endif %}
-                    
-                    <!-- Avatar -->
-                    <div class="mb-8">
-                        <label class="block text-sm font-medium text-gray-700 mb-3">Profile Photo</label>
-                        <div class="flex flex-wrap items-center gap-6">
-                            <div class="relative">
-                                  <img id="avatar-preview" 
-                                      src="{% if user.avatar %}{{ user.avatar.url }}{% else %}{% static 'images/default-avatar.svg' %}{% endif %}" 
-                                     alt="{{ user.full_name }}"
-                                     class="w-24 h-24 rounded-full object-cover">
-                                <button type="button" id="change-avatar-btn" onclick="document.getElementById('avatar-input').click()"
-                                        class="absolute bottom-0 right-0 p-1.5 bg-white rounded-full shadow-lg border border-gray-200 hover:bg-gray-50">
-                                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    </svg>
-                                </button>
-                            </div>
-                            <input type="file" id="avatar-input" name="avatar" accept="image/*" class="hidden" onchange="previewAvatar(this)">
-                            <div class="text-sm text-gray-500">
-                                <p class="text-gray-700 font-medium">JPG, GIF or PNG. Max size 2MB</p>
-                                <div class="flex flex-wrap gap-3 mt-3">
-                                    <button type="button" class="px-4 py-2 rounded-lg bg-amber-600 text-white text-sm font-semibold hover:bg-amber-700 transition" onclick="document.getElementById('avatar-input').click()">Upload new photo</button>
-                                    {% if user.avatar %}
-                                    <button type="button" onclick="removeAvatar()" class="text-red-600 hover:text-red-700 text-sm font-medium">Remove photo</button>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Personal Information -->
-                    <div class="grid md:grid-cols-2 gap-6 mb-8">
+
+                    <div class="flex items-center justify-between gap-3 mb-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                            <h3 class="text-lg font-semibold text-stone-900 dark:text-white">Personal details</h3>
+                            <p class="text-sm text-stone-500 dark:text-stone-400">Keep your name and contact info up to date.</p>
+                        </div>
+                        <span class="text-xs px-3 py-1 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">Profile</span>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-stone-700 dark:text-stone-200 mb-1">First Name</label>
                             <input type="text" id="profile-first-name" name="first_name" value="{{ user.first_name }}" required
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                                   class="w-full px-4 py-3 border border-stone-300 rounded-xl focus:ring-amber-200 focus:border-amber-400 dark:bg-stone-800 dark:border-stone-700 dark:text-stone-100">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                            <label class="block text-sm font-medium text-stone-700 dark:text-stone-200 mb-1">Last Name</label>
                             <input type="text" id="profile-last-name" name="last_name" value="{{ user.last_name }}" required
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                                   class="w-full px-4 py-3 border border-stone-300 rounded-xl focus:ring-amber-200 focus:border-amber-400 dark:bg-stone-800 dark:border-stone-700 dark:text-stone-100">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                            <label class="block text-sm font-medium text-stone-700 dark:text-stone-200 mb-1">Email Address</label>
                             <input type="email" id="profile-email" name="email" value="{{ user.email }}" required
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                                   class="w-full px-4 py-3 border border-stone-300 rounded-xl focus:ring-amber-200 focus:border-amber-400 dark:bg-stone-800 dark:border-stone-700 dark:text-stone-100">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                            <label class="block text-sm font-medium text-stone-700 dark:text-stone-200 mb-1">Phone Number</label>
                             <input type="tel" id="profile-phone" name="phone" value="{{ user.phone|default:'' }}"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                                   class="w-full px-4 py-3 border border-stone-300 rounded-xl focus:ring-amber-200 focus:border-amber-400 dark:bg-stone-800 dark:border-stone-700 dark:text-stone-100">
                         </div>
                         <div class="md:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                            <label class="block text-sm font-medium text-stone-700 dark:text-stone-200 mb-1">Date of Birth</label>
                             <input type="date" name="date_of_birth" value="{{ user.date_of_birth|date:'Y-m-d' }}"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                                   class="w-full px-4 py-3 border border-stone-300 rounded-xl focus:ring-amber-200 focus:border-amber-400 dark:bg-stone-800 dark:border-stone-700 dark:text-stone-100">
                         </div>
                     </div>
-                    
-                    <!-- Newsletter Preferences -->
-                    <div class="mb-8">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Email Preferences</h3>
-                        <div class="space-y-3">
-                            <label class="flex items-center">
-                                <input type="checkbox" name="newsletter" {% if user.newsletter_subscribed %}checked{% endif %}
-                                       class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
-                                <span class="ml-2 text-gray-700">Newsletter and promotional emails</span>
-                            </label>
-                            <label class="flex items-center">
-                                <input type="checkbox" name="order_updates" {% if user.order_updates %}checked{% endif %}
-                                       class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
-                                <span class="ml-2 text-gray-700">Order status updates</span>
-                            </label>
-                        </div>
+
+                    <div class="mt-6 space-y-3">
+                        <h4 class="text-sm font-semibold text-stone-800 dark:text-stone-100">Email preferences</h4>
+                        <label class="flex items-start gap-3">
+                            <input type="checkbox" name="newsletter" {% if user.newsletter_subscribed %}checked{% endif %}
+                                   class="mt-1 h-4 w-4 rounded border-stone-300 text-amber-600 focus:ring-amber-400 dark:border-stone-700">
+                            <span class="text-sm text-stone-700 dark:text-stone-200">Newsletter and promotional emails</span>
+                        </label>
+                        <label class="flex items-start gap-3">
+                            <input type="checkbox" name="order_updates" {% if user.order_updates %}checked{% endif %}
+                                   class="mt-1 h-4 w-4 rounded border-stone-300 text-amber-600 focus:ring-amber-400 dark:border-stone-700">
+                            <span class="text-sm text-stone-700 dark:text-stone-200">Order status updates</span>
+                        </label>
                     </div>
-                    
-                    <!-- Save Button -->
-                    <div class="flex justify-end">
-                        <button type="submit" class="bg-primary-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors">
-                            Save Changes
-                        </button>
+
+                    <div class="flex justify-end mt-6">
+                        <button type="submit" class="btn btn-primary">Save changes</button>
                     </div>
                 </form>
             </div>
-            
-            <!-- Change Password -->
-            <div class="bg-white rounded-lg shadow-sm mt-6">
-                <div class="p-6 border-b border-gray-200">
-                    <h2 class="text-xl font-semibold text-gray-900">Change Password</h2>
-                </div>
-                <form id="password-form" method="POST" action="{% url 'accounts:change_password' %}" class="p-6">
+
+            <div data-profile-panel="settings" class="hidden flex flex-col gap-6">
+                <form id="password-form" method="POST" action="{% url 'accounts:change_password' %}" class="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-700 dark:bg-stone-900">
                     {% csrf_token %}
-                    <div class="grid md:grid-cols-2 gap-6 mb-6">
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
-                            <input type="password" name="old_password" required
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h2 class="text-lg font-semibold text-stone-900 dark:text-white">Change password</h2>
+                            <p class="text-sm text-stone-500 dark:text-stone-400">Use a strong, unique password.</p>
+                        </div>
+                        <span class="text-xs px-3 py-1 rounded-full bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-200">Security</span>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-stone-700 dark:text-stone-200 mb-1">Current password</label>
+                            <input type="password" name="current_password" required
+                                   class="w-full px-4 py-3 border border-stone-300 rounded-xl focus:ring-amber-200 focus:border-amber-400 dark:bg-stone-800 dark:border-stone-700 dark:text-stone-100">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-                            <input type="password" name="new_password1" required
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                            <label class="block text-sm font-medium text-stone-700 dark:text-stone-200 mb-1">New password</label>
+                            <input type="password" name="new_password" required
+                                   class="w-full px-4 py-3 border border-stone-300 rounded-xl focus:ring-amber-200 focus:border-amber-400 dark:bg-stone-800 dark:border-stone-700 dark:text-stone-100">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
-                            <input type="password" name="new_password2" required
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                            <label class="block text-sm font-medium text-stone-700 dark:text-stone-200 mb-1">Confirm new password</label>
+                            <input type="password" name="confirm_password" required
+                                   class="w-full px-4 py-3 border border-stone-300 rounded-xl focus:ring-amber-200 focus:border-amber-400 dark:bg-stone-800 dark:border-stone-700 dark:text-stone-100">
                         </div>
                     </div>
-                    <div class="flex justify-end">
-                        <button type="submit" class="bg-gray-800 text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-900 transition-colors">
-                            Update Password
-                        </button>
+                    <div class="flex justify-end mt-6">
+                        <button type="submit" class="btn btn-ghost bg-stone-900 text-white hover:bg-stone-800 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-white">Update password</button>
                     </div>
                 </form>
-            </div>
-            
-            <!-- Danger Zone -->
-            <div class="bg-white rounded-lg shadow-sm mt-6 border border-red-200">
-                <div class="p-6 border-b border-red-200">
-                    <h2 class="text-xl font-semibold text-red-600">Danger Zone</h2>
-                </div>
-                <div class="p-6">
-                    <p class="text-gray-600 mb-4">Once you delete your account, there is no going back. Please be certain.</p>
-                    <button type="button" onclick="openDeleteModal()" class="text-red-600 hover:text-red-700 font-medium">
-                        Delete my account
-                    </button>
-                </div>
+
+                <section class="rounded-2xl border border-red-200 bg-white p-6 shadow-sm dark:border-red-700/60 dark:bg-stone-900">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <h2 class="text-lg font-semibold text-red-600 dark:text-red-400">Danger zone</h2>
+                            <p class="text-sm text-stone-500 dark:text-stone-400">Deleting your account removes all data permanently.</p>
+                        </div>
+                        <span class="text-xs px-3 py-1 rounded-full bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-200">Permanent</span>
+                    </div>
+                    <button type="button" onclick="openDeleteModal()" class="btn btn-ghost text-red-600 hover:text-red-700 dark:text-red-300">Delete my account</button>
+                </section>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Delete Account Modal -->
-<div id="delete-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
-    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-2">Delete Account</h3>
-        <p class="text-gray-600 mb-4">Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed.</p>
+<div id="delete-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-stone-900">
+        <h3 class="text-lg font-semibold text-stone-900 dark:text-white mb-2">Delete account</h3>
+        <p class="text-sm text-stone-600 dark:text-stone-300 mb-4">This action cannot be undone. Please confirm your password to proceed.</p>
         <form method="POST" action="{% url 'accounts:delete_account' %}">
             {% csrf_token %}
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Enter your password to confirm</label>
+                <label class="block text-sm font-medium text-stone-700 dark:text-stone-200 mb-1">Password</label>
                 <input type="password" name="password" required
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500">
+                       class="w-full px-4 py-3 border border-stone-300 rounded-xl focus:ring-red-200 focus:border-red-400 dark:bg-stone-800 dark:border-stone-700 dark:text-stone-100">
             </div>
-            <div class="flex justify-end space-x-3">
-                <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
-                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Delete Account</button>
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="closeDeleteModal()" class="btn btn-ghost">Cancel</button>
+                <button type="submit" class="btn bg-red-600 text-white hover:bg-red-700">Delete account</button>
             </div>
         </form>
     </div>
@@ -202,14 +179,20 @@
     }
     
     function removeAvatar() {
-        // Add hidden input to mark avatar for deletion
-        const form = document.querySelector('form');
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'remove_avatar';
-        input.value = 'true';
-        form.appendChild(input);
-        document.getElementById('avatar-preview').src = "{% static 'images/default-avatar.svg' %}";
+        const form = document.getElementById('profile-form');
+        if (!form) return;
+        let input = form.querySelector('input[name="remove_avatar"]');
+        if (!input) {
+            input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'remove_avatar';
+            input.value = 'true';
+            form.appendChild(input);
+        }
+        const preview = document.getElementById('avatar-preview');
+        if (preview) {
+            preview.src = "{% static 'images/default-avatar.svg' %}";
+        }
     }
     
     function openDeleteModal() {

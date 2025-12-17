@@ -44,8 +44,8 @@
                         data-address-id="{{ address.id }}"
                         data-full-name="{{ address.full_name|escape }}"
                         data-phone="{{ address.phone|escape }}"
-                        data-address-line1="{{ address.address_line1|escape }}"
-                        data-address-line2="{{ address.address_line2|default_if_none:''|escape }}"
+                        data-address-line1="{{ address.address_line_1|escape }}"
+                        data-address-line2="{{ address.address_line_2|default_if_none:''|escape }}"
                         data-city="{{ address.city|escape }}"
                         data-state="{{ address.state|escape }}"
                         data-postal-code="{{ address.postal_code|escape }}"
@@ -117,7 +117,10 @@
             </button>
         </div>
         
-        <form id="address-form" method="POST" action="{% url 'accounts:add_address' %}" data-add-action="{% url 'accounts:add_address' %}">
+        <form id="address-form" method="POST" action="{% url 'accounts:add_address' %}"
+              data-add-action="{% url 'accounts:add_address' %}"
+              data-edit-base="{% url 'accounts:addresses' %}"
+              data-delete-base="{% url 'accounts:addresses' %}">
             {% csrf_token %}
             <input type="hidden" name="address_id" id="address-id">
             
@@ -136,14 +139,14 @@
                 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Address Line 1 *</label>
-                    <input type="text" name="address_line1" id="address_line1" required
+                    <input type="text" name="address_line_1" id="address_line_1" required
                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                            placeholder="Street address, P.O. Box">
                 </div>
                 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Address Line 2</label>
-                    <input type="text" name="address_line2" id="address_line2"
+                    <input type="text" name="address_line_2" id="address_line_2"
                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                            placeholder="Apartment, suite, unit, etc.">
                 </div>
@@ -227,8 +230,8 @@
         return {
             full_name: card.dataset.fullName || '',
             phone: card.dataset.phone || '',
-            address_line1: card.dataset.addressLine1 || '',
-            address_line2: card.dataset.addressLine2 || '',
+            address_line_1: card.dataset.addressLine1 || '',
+            address_line_2: card.dataset.addressLine2 || '',
             city: card.dataset.city || '',
             state: card.dataset.state || '',
             postal_code: card.dataset.postalCode || '',
@@ -252,13 +255,14 @@
         if (!address) return;
         
         document.getElementById('modal-title').textContent = 'Edit Address';
-        document.getElementById('address-form').action = `/accounts/addresses/${id}/edit/`;
+        const base = document.getElementById('address-form').dataset.editBase || '';
+        document.getElementById('address-form').action = `${base}${id}/edit/`;
         document.getElementById('address-id').value = id;
         
         document.getElementById('full_name').value = address.full_name;
         document.getElementById('phone').value = address.phone;
-        document.getElementById('address_line1').value = address.address_line1;
-        document.getElementById('address_line2').value = address.address_line2;
+        document.getElementById('address_line_1').value = address.address_line_1;
+        document.getElementById('address_line_2').value = address.address_line_2;
         document.getElementById('city').value = address.city;
         document.getElementById('state').value = address.state;
         document.getElementById('postal_code').value = address.postal_code;
@@ -275,7 +279,8 @@
     }
     
     function deleteAddress(id) {
-        document.getElementById('delete-form').action = `/accounts/addresses/${id}/delete/`;
+        const base = document.getElementById('address-form').dataset.deleteBase || '';
+        document.getElementById('delete-form').action = `${base}${id}/delete/`;
         document.getElementById('delete-modal').classList.remove('hidden');
         document.getElementById('delete-modal').classList.add('flex');
     }

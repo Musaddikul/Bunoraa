@@ -12,6 +12,10 @@ urlpatterns = [
     path('dashboard/', views.AccountDashboardView.as_view(), name='dashboard'),
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('addresses/', views.AddressListView.as_view(), name='addresses'),
+    path('addresses/add/', views.AddAddressView.as_view(), name='add_address'),
+    path('addresses/<uuid:pk>/edit/', views.EditAddressView.as_view(), name='edit_address'),
+    path('addresses/<uuid:pk>/delete/', views.DeleteAddressView.as_view(), name='delete_address'),
+    path('addresses/<uuid:pk>/set-default/', views.SetDefaultAddressView.as_view(), name='set_default_address'),
     path('login/', views.LoginView.as_view(), name='login'),
     path('register/', views.RegisterView.as_view(), name='register'),
     path('logout/', views.LogoutView.as_view(), name='logout'),
@@ -19,14 +23,12 @@ urlpatterns = [
     path('forgot-password/', views.ForgotPasswordView.as_view(), name='forgot_password'),
     path('password-reset/', views.ForgotPasswordView.as_view(), name='password_reset'),  # Alias
     path('reset-password/<str:token>/', views.ResetPasswordView.as_view(), name='reset_password'),
+    path('change-password/', views.ChangePasswordView.as_view(), name='change_password'),
+    path('delete-account/', views.DeleteAccountView.as_view(), name='delete_account'),
     
     # Placeholder URLs - implement views as needed
     # path('profile/change-password/', views.ChangePasswordView.as_view(), name='change_password'),
     # path('profile/delete-account/', views.DeleteAccountView.as_view(), name='delete_account'),
-    # path('addresses/add/', views.AddAddressView.as_view(), name='add_address'),
-    # path('addresses/<uuid:pk>/edit/', views.EditAddressView.as_view(), name='edit_address'),
-    # path('addresses/<uuid:pk>/delete/', views.DeleteAddressView.as_view(), name='delete_address'),
-    # path('addresses/<uuid:pk>/set-default/', views.SetDefaultAddressView.as_view(), name='set_default_address'),
     # path('payment-methods/', views.PaymentMethodsView.as_view(), name='payment_methods'),
     # path('notifications/', views.NotificationsView.as_view(), name='notifications'),
     # path('orders/', views.OrderListView.as_view(), name='orders'),

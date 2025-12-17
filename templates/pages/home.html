@@ -7,8 +7,8 @@
 
 {% block content %}
 <!-- Hero Section -->
-<section id="hero-section" class="relative bg-gradient-to-br from-primary-900 via-primary-800 to-primary-700 overflow-hidden">
-    <div class="absolute inset-0 opacity-10">
+<section id="hero-section" class="relative bg-gradient-to-br from-primary-900 via-primary-800 to-primary-700 overflow-hidden dark:from-stone-900 dark:via-stone-800 dark:to-stone-900">
+    <div class="absolute inset-0 opacity-10 dark:opacity-20">
         <div class="absolute inset-0 bg-[url('/static/images/pattern.svg')] bg-repeat"></div>
     </div>
     <div class="container mx-auto px-4 py-16 lg:py-24 relative z-10">
@@ -59,11 +59,11 @@
 </section>
 
 <!-- Featured Categories -->
-<section id="featured-categories" class="py-16 lg:py-24 bg-white">
+<section id="featured-categories" class="py-16 lg:py-24 bg-white dark:bg-stone-900">
     <div class="container mx-auto px-4">
         <div class="text-center mb-12">
-            <h2 class="text-3xl lg:text-4xl font-display font-bold text-gray-900 mb-4">Shop by Category</h2>
-            <p class="text-gray-600 max-w-2xl mx-auto">Explore our curated collection of categories tailored just for you</p>
+            <h2 class="text-3xl lg:text-4xl font-display font-bold text-gray-900 mb-4 dark:text-white">Shop by Category</h2>
+            <p class="text-gray-600 max-w-2xl mx-auto dark:text-stone-400">Explore our curated collection of categories tailored just for you</p>
         </div>
         <div id="categories-showcase" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 lg:gap-6">
             <!-- Loaded via JS -->
@@ -98,14 +98,14 @@
 </section>
 
 <!-- Trending Products -->
-<section class="py-16 lg:py-24 bg-gray-50">
+<section class="py-16 lg:py-24 bg-gray-50 dark:bg-stone-800">
     <div class="container mx-auto px-4">
         <div class="flex items-center justify-between mb-12">
             <div>
-                <h2 class="text-3xl lg:text-4xl font-display font-bold text-gray-900 mb-2">Trending Now</h2>
-                <p class="text-gray-600">Discover what everyone's loving this season</p>
+                <h2 class="text-3xl lg:text-4xl font-display font-bold text-gray-900 mb-2 dark:text-white">Trending Now</h2>
+                <p class="text-gray-600 dark:text-stone-400">Discover what everyone's loving this season</p>
             </div>
-            <a href="{% url 'products:list' %}?sort=popular" class="hidden md:flex items-center text-primary-700 font-medium hover:text-primary-800 transition-colors">
+            <a href="{% url 'products:list' %}?sort=popular" class="hidden md:flex items-center text-primary-700 font-medium hover:text-primary-800 transition-colors dark:text-amber-400 dark:hover:text-amber-300">
                 View All
                 <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
             </a>
@@ -123,7 +123,7 @@
 </section>
 
 <!-- Promotion Banners -->
-<section class="py-16 lg:py-24 bg-white">
+<section class="py-16 lg:py-24 bg-white dark:bg-stone-900">
     <div class="container mx-auto px-4">
         <div id="promotion-banners" class="grid md:grid-cols-2 gap-6">
             <!-- Loaded via JS -->
@@ -134,14 +134,14 @@
 </section>
 
 <!-- New Arrivals -->
-<section class="py-16 lg:py-24 bg-gray-50">
+<section class="py-16 lg:py-24 bg-gray-50 dark:bg-stone-800">
     <div class="container mx-auto px-4">
         <div class="flex items-center justify-between mb-12">
             <div>
-                <h2 class="text-3xl lg:text-4xl font-display font-bold text-gray-900 mb-2">New Arrivals</h2>
-                <p class="text-gray-600">The latest additions to our collection</p>
+                <h2 class="text-3xl lg:text-4xl font-display font-bold text-gray-900 mb-2 dark:text-white">New Arrivals</h2>
+                <p class="text-gray-600 dark:text-stone-400">The latest additions to our collection</p>
             </div>
-            <a href="{% url 'products:list' %}?sort=newest" class="hidden md:flex items-center text-primary-700 font-medium hover:text-primary-800 transition-colors">
+            <a href="{% url 'products:list' %}?sort=newest" class="hidden md:flex items-center text-primary-700 font-medium hover:text-primary-800 transition-colors dark:text-amber-400 dark:hover:text-amber-300">
                 View All
                 <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
             </a>
@@ -156,50 +156,50 @@
 </section>
 
 <!-- Features -->
-<section class="py-16 lg:py-24 bg-white">
+<section class="py-16 lg:py-24 bg-white dark:bg-stone-900">
     <div class="container mx-auto px-4">
         <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div class="text-center p-6">
-                <div class="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                <div class="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4 dark:bg-amber-900/30">
+                    <svg class="w-8 h-8 text-primary-700 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
                 </div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">Free Shipping</h3>
-                <p class="text-gray-600 text-sm">Free shipping on orders over $50. Fast and reliable delivery worldwide.</p>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2 dark:text-white">Free Shipping</h3>
+                <p class="text-gray-600 text-sm dark:text-stone-400">Free shipping on orders over $50. Fast and reliable delivery worldwide.</p>
             </div>
             <div class="text-center p-6">
-                <div class="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                <div class="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4 dark:bg-amber-900/30">
+                    <svg class="w-8 h-8 text-primary-700 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
                 </div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">Secure Payment</h3>
-                <p class="text-gray-600 text-sm">100% secure payment with SSL encryption. Shop with confidence.</p>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2 dark:text-white">Secure Payment</h3>
+                <p class="text-gray-600 text-sm dark:text-stone-400">100% secure payment with SSL encryption. Shop with confidence.</p>
             </div>
             <div class="text-center p-6">
-                <div class="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                <div class="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4 dark:bg-amber-900/30">
+                    <svg class="w-8 h-8 text-primary-700 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 </div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">Easy Returns</h3>
-                <p class="text-gray-600 text-sm">30-day hassle-free returns. Not satisfied? Get a full refund.</p>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2 dark:text-white">Easy Returns</h3>
+                <p class="text-gray-600 text-sm dark:text-stone-400">30-day hassle-free returns. Not satisfied? Get a full refund.</p>
             </div>
             <div class="text-center p-6">
-                <div class="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                <div class="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4 dark:bg-amber-900/30">
+                    <svg class="w-8 h-8 text-primary-700 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                 </div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">24/7 Support</h3>
-                <p class="text-gray-600 text-sm">Round-the-clock customer support. We're here to help anytime.</p>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2 dark:text-white">24/7 Support</h3>
+                <p class="text-gray-600 text-sm dark:text-stone-400">Round-the-clock customer support. We're here to help anytime.</p>
             </div>
         </div>
     </div>
 </section>
 
 <!-- Best Sellers -->
-<section class="py-16 lg:py-24 bg-gray-900 text-white">
+<section class="py-16 lg:py-24 bg-gray-900 text-white dark:bg-stone-950">
     <div class="container mx-auto px-4">
         <div class="flex items-center justify-between mb-12">
             <div>
                 <h2 class="text-3xl lg:text-4xl font-display font-bold mb-2">Best Sellers</h2>
-                <p class="text-gray-400">Our most popular products based on sales</p>
+                <p class="text-gray-400 dark:text-stone-500">Our most popular products based on sales</p>
             </div>
-            <a href="{% url 'products:list' %}?sort=bestselling" class="hidden md:flex items-center text-primary-400 font-medium hover:text-primary-300 transition-colors">
+            <a href="{% url 'products:list' %}?sort=bestselling" class="hidden md:flex items-center text-primary-400 font-medium hover:text-primary-300 transition-colors dark:text-amber-400 dark:hover:text-amber-300">
                 View All
                 <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
             </a>
@@ -214,11 +214,11 @@
 </section>
 
 <!-- Testimonials -->
-<section class="py-16 lg:py-24 bg-white">
+<section class="py-16 lg:py-24 bg-white dark:bg-stone-900">
     <div class="container mx-auto px-4">
         <div class="text-center mb-12">
-            <h2 class="text-3xl lg:text-4xl font-display font-bold text-gray-900 mb-4">What Our Customers Say</h2>
-            <p class="text-gray-600 max-w-2xl mx-auto">Real reviews from real customers</p>
+            <h2 class="text-3xl lg:text-4xl font-display font-bold text-gray-900 mb-4 dark:text-white">What Our Customers Say</h2>
+            <p class="text-gray-600 max-w-2xl mx-auto dark:text-stone-400">Real reviews from real customers</p>
         </div>
         <div id="testimonials-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <!-- Loaded via JS -->
@@ -230,14 +230,14 @@
 </section>
 
 <!-- Recently Viewed -->
-<section id="recently-viewed-section" class="hidden py-16 lg:py-24 bg-gray-50">
+<section id="recently-viewed-section" class="hidden py-16 lg:py-24 bg-gray-50 dark:bg-stone-800">
     <div class="container mx-auto px-4">
         <div class="flex items-center justify-between mb-12">
             <div>
-                <h2 class="text-3xl lg:text-4xl font-display font-bold text-gray-900 mb-2">Recently Viewed</h2>
-                <p class="text-gray-600">Pick up where you left off</p>
+                <h2 class="text-3xl lg:text-4xl font-display font-bold text-gray-900 mb-2 dark:text-white">Recently Viewed</h2>
+                <p class="text-gray-600 dark:text-stone-400">Pick up where you left off</p>
             </div>
-            <button id="clear-recently-viewed" class="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+            <button id="clear-recently-viewed" class="text-sm text-gray-500 hover:text-gray-700 transition-colors dark:text-stone-400 dark:hover:text-stone-300">
                 Clear All
             </button>
         </div>
@@ -248,11 +248,11 @@
 </section>
 
 <!-- Brands -->
-<section class="py-16 lg:py-24 bg-white border-t border-gray-100">
+<section class="py-16 lg:py-24 bg-white border-t border-gray-100 dark:bg-stone-900 dark:border-stone-800">
     <div class="container mx-auto px-4">
         <div class="text-center mb-12">
-            <h2 class="text-3xl lg:text-4xl font-display font-bold text-gray-900 mb-4">Shop by Brand</h2>
-            <p class="text-gray-600">Discover products from top brands</p>
+            <h2 class="text-3xl lg:text-4xl font-display font-bold text-gray-900 mb-4 dark:text-white">Shop by Brand</h2>
+            <p class="text-gray-600 dark:text-stone-400">Discover products from top brands</p>
         </div>
         <div id="brands-grid" class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
             <!-- Loaded via JS -->

@@ -12,7 +12,7 @@ const AccountPage = (function() {
         if (!AuthGuard.requireAuth()) return;
 
         await loadUserProfile();
-        initTabs();
+        initProfileTabs();
         initProfileForm();
         initPasswordForm();
         initAddressManagement();
@@ -29,30 +29,70 @@ const AccountPage = (function() {
         }
     }
 
+    function initProfileTabs() {
+        const tabs = document.querySelectorAll('[data-profile-tab]');
+        const panels = document.querySelectorAll('[data-profile-panel]');
+        if (!tabs.length || !panels.length) return;
+
+        const setActive = (target) => {
+            panels.forEach(panel => {
+                panel.classList.toggle('hidden', panel.dataset.profilePanel !== target);
+            });
+            tabs.forEach(btn => {
+                const isActive = btn.dataset.profileTab === target;
+                btn.classList.toggle('bg-amber-600', isActive);
+                btn.classList.toggle('text-white', isActive);
+                btn.classList.toggle('shadow-sm', isActive);
+                btn.classList.toggle('text-stone-700', !isActive);
+                btn.classList.toggle('dark:text-stone-200', !isActive);
+            });
+            localStorage.setItem('profileTab', target);
+        };
+
+        const initial = localStorage.getItem('profileTab') || 'overview';
+        setActive(initial);
+
+        tabs.forEach(btn => {
+            btn.addEventListener('click', () => {
+                setActive(btn.dataset.profileTab);
+            });
+        });
+    }
+
     function renderProfile() {
         const container = document.getElementById('profile-info');
         if (!container || !currentUser) return;
 
+        const name = `${Templates.escapeHtml(currentUser.first_name || '')} ${Templates.escapeHtml(currentUser.last_name || '')}`.trim() || Templates.escapeHtml(currentUser.email || 'User');
+        const memberSince = Templates.formatDate(currentUser.created_at || currentUser.date_joined);
+        const avatarImg = currentUser.avatar ? `<img id="avatar-preview" src="${currentUser.avatar}" alt="Profile" class="w-full h-full object-cover">` : `
+            <span class="flex h-full w-full items-center justify-center text-3xl font-semibold text-stone-500">
+                ${(currentUser.first_name?.[0] || currentUser.email?.[0] || 'U').toUpperCase()}
+            </span>`;
+
         container.innerHTML = `
-            <div class="flex items-center gap-4">
-                <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
-                    ${currentUser.avatar ? `
-                        <img src="${currentUser.avatar}" alt="Profile" class="w-full h-full object-cover">
-                    ` : `
-                        <span class="text-3xl font-semibold text-gray-600">
-                            ${(currentUser.first_name?.[0] || currentUser.email?.[0] || 'U').toUpperCase()}
-                        </span>
-                    `}
+            <div class="absolute inset-0 bg-gradient-to-r from-amber-50/80 via-amber-100/60 to-transparent dark:from-amber-900/20 dark:via-amber-800/10" aria-hidden="true"></div>
+            <div class="relative flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
+                <div class="relative">
+                    <div class="w-24 h-24 rounded-2xl ring-4 ring-amber-100 dark:ring-amber-900/40 overflow-hidden bg-stone-100 dark:bg-stone-800">
+                        ${avatarImg}
+                    </div>
                 </div>
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">
-                        ${Templates.escapeHtml(currentUser.first_name || '')} ${Templates.escapeHtml(currentUser.last_name || '')}
-                    </h1>
-                    <p class="text-gray-600">${Templates.escapeHtml(currentUser.email)}</p>
-                    <p class="text-sm text-gray-500 mt-1">Member since ${Templates.formatDate(currentUser.date_joined)}</p>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-amber-700 dark:text-amber-300">Profile</p>
+                    <h1 class="text-2xl font-bold text-stone-900 dark:text-white leading-tight truncate">${name}</h1>
+                    <p class="text-sm text-stone-600 dark:text-stone-300 truncate">${Templates.escapeHtml(currentUser.email)}</p>
+                    <p class="text-xs text-stone-500 dark:text-stone-400 mt-1">Member since ${memberSince}</p>
+                    <div class="flex flex-wrap gap-2 mt-4">
+                        <button type="button" id="change-avatar-btn" class="btn btn-primary btn-sm">Update photo</button>
+                        ${currentUser.avatar ? `<button type="button" id="remove-avatar-btn" class="btn btn-ghost btn-sm text-red-600 hover:text-red-700 dark:text-red-400">Remove photo</button>` : ''}
+                    </div>
+                    <p class="text-xs text-stone-500 dark:text-stone-400 mt-3">JPG, GIF or PNG. Max size 5MB.</p>
                 </div>
             </div>
         `;
+
+        setupAvatarHandlers();
     }
 
     function initTabs() {
@@ -98,12 +138,21 @@ const AccountPage = (function() {
                 submitBtn.textContent = 'Save Changes';
             }
         });
+    }
 
+    function setupAvatarHandlers() {
         const avatarInput = document.getElementById('avatar-input');
         const avatarBtn = document.getElementById('change-avatar-btn');
+        const removeBtn = document.getElementById('remove-avatar-btn');
 
         avatarBtn?.addEventListener('click', () => {
             avatarInput?.click();
+        });
+
+        removeBtn?.addEventListener('click', () => {
+            if (typeof window.removeAvatar === 'function') {
+                window.removeAvatar();
+            }
         });
 
         avatarInput?.addEventListener('change', async (e) => {

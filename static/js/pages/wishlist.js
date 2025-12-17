@@ -21,7 +21,7 @@ const WishlistPage = (function() {
         Loader.show(container, 'skeleton');
 
         try {
-            const response = await WishlistApi.getAll({ page: currentPage });
+            const response = await WishlistApi.getWishlist({ page: currentPage });
             const items = response.data || [];
             const meta = response.meta || {};
 

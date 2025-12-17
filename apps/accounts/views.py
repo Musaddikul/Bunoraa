@@ -1,16 +1,20 @@
 """
 Account views - Frontend pages
 """
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from django.views.generic import TemplateView, View
 from django.views.generic.edit import FormView
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.forms import PasswordChangeForm
+from django.http import HttpResponseForbidden
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.conf import settings
 from django.utils.http import url_has_allowed_host_and_scheme
-from .services import UserService
+from .services import UserService, AddressService
+from .models import Address
+from apps.localization.services import CountryService
 from .forms import LoginForm, RegistrationForm
 
 
@@ -36,6 +40,44 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         return context
 
 
+class ChangePasswordView(LoginRequiredMixin, View):
+    """Handle password change submission from profile page."""
+    login_url = '/account/login/'
+
+    def post(self, request):
+        form = PasswordChangeForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Password updated successfully.')
+        else:
+            messages.error(request, 'Please correct the errors below and try again.')
+        return redirect('accounts:profile')
+
+    def get(self, request):
+        return redirect('accounts:profile')
+
+
+class DeleteAccountView(LoginRequiredMixin, View):
+    """Handle account deletion from profile modal."""
+    login_url = '/account/login/'
+
+    def post(self, request):
+        password = request.POST.get('password', '')
+        user = request.user
+
+        if not user.check_password(password):
+            messages.error(request, 'Incorrect password. Account not deleted.')
+            return redirect('accounts:profile')
+
+        user.delete()
+        messages.success(request, 'Your account has been deleted. Sorry to see you go.')
+        return redirect('home')
+
+    def get(self, request):
+        return redirect('accounts:profile')
+
+
 class AddressListView(LoginRequiredMixin, TemplateView):
     """User addresses page."""
     template_name = 'accounts/addresses.html'
@@ -44,7 +86,91 @@ class AddressListView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'My Addresses'
+        context['addresses'] = AddressService.get_user_addresses(self.request.user)
+        context['countries'] = CountryService.get_shipping_countries()
         return context
+
+
+class AddAddressView(LoginRequiredMixin, View):
+    """Create a new address from the modal form."""
+    login_url = '/account/login/'
+
+    def post(self, request):
+        data = self._extract_address_data(request)
+        AddressService.create_address(user=request.user, **data)
+        messages.success(request, 'Address added successfully.')
+        return redirect('accounts:addresses')
+
+    def get(self, request):
+        return redirect('accounts:addresses')
+
+    def _extract_address_data(self, request):
+        return {
+            'address_type': request.POST.get('address_type') or Address.AddressType.BOTH,
+            'full_name': request.POST.get('full_name', '').strip(),
+            'phone': request.POST.get('phone', '').strip(),
+            'address_line_1': request.POST.get('address_line_1', '').strip(),
+            'address_line_2': request.POST.get('address_line_2', '').strip(),
+            'city': request.POST.get('city', '').strip(),
+            'state': request.POST.get('state', '').strip(),
+            'postal_code': request.POST.get('postal_code', '').strip(),
+            'country': request.POST.get('country', '').strip(),
+            'is_default': bool(request.POST.get('is_default')),
+        }
+
+
+class EditAddressView(LoginRequiredMixin, View):
+    """Update an existing address for the current user."""
+    login_url = '/account/login/'
+
+    def post(self, request, pk):
+        address = get_object_or_404(Address, pk=pk, user=request.user, is_deleted=False)
+        data = {
+            'full_name': request.POST.get('full_name', '').strip(),
+            'phone': request.POST.get('phone', '').strip(),
+            'address_line_1': request.POST.get('address_line_1', '').strip(),
+            'address_line_2': request.POST.get('address_line_2', '').strip(),
+            'city': request.POST.get('city', '').strip(),
+            'state': request.POST.get('state', '').strip(),
+            'postal_code': request.POST.get('postal_code', '').strip(),
+            'country': request.POST.get('country', '').strip(),
+            'is_default': bool(request.POST.get('is_default')),
+        }
+        AddressService.update_address(address, **data)
+        messages.success(request, 'Address updated successfully.')
+        return redirect('accounts:addresses')
+
+    def get(self, request, pk):
+        return redirect('accounts:addresses')
+
+
+class DeleteAddressView(LoginRequiredMixin, View):
+    """Soft delete a user's address."""
+    login_url = '/account/login/'
+
+    def post(self, request, pk):
+        address = get_object_or_404(Address, pk=pk, user=request.user, is_deleted=False)
+        AddressService.delete_address(address)
+        messages.success(request, 'Address deleted successfully.')
+        return redirect('accounts:addresses')
+
+    def get(self, request, pk):
+        return redirect('accounts:addresses')
+
+
+class SetDefaultAddressView(LoginRequiredMixin, View):
+    """Mark an address as the user's default."""
+    login_url = '/account/login/'
+
+    def post(self, request, pk):
+        address = get_object_or_404(Address, pk=pk, user=request.user, is_deleted=False)
+        address.is_default = True
+        address.save(update_fields=['is_default', 'updated_at'])
+        messages.success(request, 'Default address updated.')
+        return redirect('accounts:addresses')
+
+    def get(self, request, pk):
+        return redirect('accounts:addresses')
 
 
 class LoginView(FormView):

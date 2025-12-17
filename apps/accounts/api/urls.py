@@ -7,6 +7,7 @@ from .views import (
     RegisterView,
     ProfileView,
     PasswordChangeView,
+    AvatarUploadView,
     PasswordResetRequestView,
     PasswordResetView,
     EmailVerifyView,
@@ -20,6 +21,7 @@ router.register(r'addresses', AddressViewSet, basename='address')
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('profile/', ProfileView.as_view(), name='profile'),
+    path('profile/avatar/', AvatarUploadView.as_view(), name='avatar_upload'),
     path('password/change/', PasswordChangeView.as_view(), name='password_change'),
     path('password/reset/request/', PasswordResetRequestView.as_view(), name='password_reset_request'),
     path('password/reset/', PasswordResetView.as_view(), name='password_reset'),

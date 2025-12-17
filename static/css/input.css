@@ -10,8 +10,10 @@
     }
     
     body {
-        @apply font-sans text-gray-900 antialiased bg-stone-50;
+        @apply font-sans text-gray-900 antialiased bg-stone-50 dark:bg-stone-950 dark:text-stone-100;
         min-height: 100vh;
+        color: var(--text-primary);
+        background-color: var(--bg-primary);
     }
     
     /* Focus styles */
@@ -28,9 +30,29 @@
         @apply font-display font-bold text-stone-900;
     }
     
-    /* Links */
+    /* Links - theme aware */
     a {
-        @apply transition-colors duration-200;
+        @apply transition-colors duration-200 text-stone-900 underline-offset-4 decoration-transparent cursor-pointer;
+    }
+
+    a:hover {
+        @apply text-amber-700 decoration-amber-500;
+    }
+
+    a:focus-visible {
+        @apply ring-2 ring-amber-500 ring-offset-2 ring-offset-stone-50 dark:ring-offset-stone-100;
+    }
+
+    .dark a {
+        @apply text-stone-100 decoration-transparent;
+    }
+
+    .dark a:hover {
+        @apply text-amber-300 decoration-amber-300;
+    }
+
+    .dark a:focus-visible {
+        @apply ring-2 ring-amber-400 ring-offset-2 ring-offset-stone-900;
     }
     
     /* Images */
@@ -42,7 +64,9 @@
     input, textarea, select {
         @apply w-full rounded-xl border border-stone-300 px-4 py-3 text-stone-900 
                placeholder-stone-400 transition-all duration-200
-               focus:border-amber-500 focus:ring-4 focus:ring-amber-100;
+               focus:border-amber-500 focus:ring-4 focus:ring-amber-100
+               dark:bg-stone-900 dark:border-stone-700 dark:text-stone-100 dark:placeholder-stone-500 
+               dark:focus:border-amber-400 dark:focus:ring-amber-800/40;
     }
     
     button {
@@ -99,6 +123,7 @@
     .card {
         @apply bg-white rounded-2xl shadow-sm hover:shadow-lg 
                transition-shadow duration-300 overflow-hidden;
+        @apply dark:bg-stone-900 dark:border dark:border-stone-700 dark:shadow-none;
     }
     
     /* Badges */
@@ -145,6 +170,7 @@
         @apply absolute z-50 bg-white rounded-xl shadow-xl border border-stone-200 
                py-2 min-w-[160px] opacity-0 transform scale-95 
                transition-all duration-200 origin-top-right;
+        @apply dark:bg-stone-900 dark:border-stone-700 dark:shadow-none;
     }
     
     .dropdown-menu.open {
@@ -154,6 +180,7 @@
     .dropdown-item {
         @apply flex items-center gap-3 px-4 py-2.5 text-stone-700 
                hover:bg-amber-50 hover:text-amber-700 transition-colors;
+        @apply dark:text-stone-200 dark:hover:bg-stone-800 dark:hover:text-amber-300;
     }
     
     /* Modal */
@@ -163,6 +190,7 @@
     
     .modal-content {
         @apply bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto;
+        @apply dark:bg-stone-900 dark:text-stone-100 dark:shadow-none;
     }
     
     /* Quick View Modal */
@@ -173,6 +201,7 @@
     .quick-view-content {
         @apply bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] 
                overflow-y-auto transform transition-all duration-300;
+        @apply dark:bg-stone-900 dark:text-stone-100 dark:shadow-none;
     }
     
     /* Product Card Hover Actions */
@@ -187,6 +216,7 @@
         @apply p-2.5 bg-white rounded-full shadow-lg 
                hover:bg-amber-50 hover:text-amber-600 
                transition-all duration-200 hover:scale-110;
+        @apply dark:bg-stone-800 dark:hover:bg-stone-700 dark:text-stone-100;
     }
     
     /* Scrollbar Hide */
@@ -269,6 +299,37 @@
     .text-gradient {
         @apply bg-clip-text text-transparent bg-gradient-to-r from-amber-600 to-orange-500;
     }
+
+    /* Theme-aware surface helper */
+    .surface {
+        @apply bg-white text-stone-900 dark:bg-stone-900 dark:text-stone-100;
+    }
+}
+
+/* Dark-mode overrides for legacy light-only sections */
+@layer base {
+    .dark .bg-white,
+    .dark .bg-gray-50,
+    .dark .bg-stone-50 { background-color: #0f172a !important; color: #e5e7eb; }
+
+    .dark .bg-gray-100,
+    .dark .bg-stone-100,
+    .dark .bg-stone-200 { background-color: #1f2937 !important; color: #e5e7eb; }
+
+    .dark .text-gray-900,
+    .dark .text-stone-900,
+    .dark .text-stone-800,
+    .dark .text-stone-700 { color: #f8fafc !important; }
+
+    .dark .text-gray-700,
+    .dark .text-gray-600,
+    .dark .text-stone-600,
+    .dark .text-stone-500 { color: #e5e7eb !important; }
+
+    .dark .border-stone-200,
+    .dark .border-stone-100,
+    .dark .border-gray-200,
+    .dark .border-gray-100 { border-color: #374151 !important; }
 }
 
 /* ===== ANIMATIONS ===== */
