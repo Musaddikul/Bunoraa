@@ -6,7 +6,13 @@ from .base import *
 
 DEBUG = False
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
+# Read ALLOWED_HOSTS from environment, fall back to a safe default.
+_env_allowed = os.environ.get('ALLOWED_HOSTS')
+if _env_allowed:
+    ALLOWED_HOSTS = [h.strip() for h in _env_allowed.split(',') if h.strip()]
+else:
+    # Add your Render URL as the default host
+    ALLOWED_HOSTS = ['bunoraa.onrender.com']
 
 # Security
 SECURE_BROWSER_XSS_FILTER = True
