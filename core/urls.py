@@ -39,9 +39,11 @@ urlpatterns = [
     path('payments/', include('apps.payments.urls')),
     path('preorders/', include('apps.preorders.urls')),
     path('support/', include('apps.support.urls')),
+    path('contacts/', include('apps.contacts.urls')),
+    path('legal/', include('apps.legal.urls')),
+    path('faq/', include('apps.faq.urls')),
     path('notifications/', include('apps.notifications.urls')),
     path('account/', include('apps.accounts.urls')),
-    path('legal/', include('apps.legal.urls')),
     
     # Pages catch-all (must come last)
     path('', include('apps.pages.urls')),
