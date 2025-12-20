@@ -46,6 +46,9 @@ urlpatterns = [
     # Register pages URLs under the 'contacts' namespace for backward compatibility
     # so templates using {% url 'contacts:contact' %} continue to work.
     path('', include(('apps.pages.urls', 'contacts'), namespace='contacts')),
+    path('', include(('apps.pages.urls', 'faq'), namespace='faq')),
+    path('', include(('apps.pages.urls', 'subscribe'), namespace='subscribe')),
+    path('', include(('apps.pages.urls', 'contacts'), namespace='contacts')),
 
     # Pages catch-all (must come last)
     path('', include('apps.pages.urls')),
