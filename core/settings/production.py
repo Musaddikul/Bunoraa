@@ -4,7 +4,7 @@ Production settings
 import os
 from .base import *
 
-DEBUG = os.environ.get('DEBUG', 'False').lower() == 'false'
+DEBUG = os.environ.get('DEBUG', 'False')
 
 # Read ALLOWED_HOSTS from environment, fall back to a safe default.
 _env_allowed = os.environ.get('ALLOWED_HOSTS')
