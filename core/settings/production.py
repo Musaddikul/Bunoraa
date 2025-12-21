@@ -14,6 +14,19 @@ else:
     # Add your Render URL as the default host
     ALLOWED_HOSTS = ['bunoraa.onrender.com']
 
+MEDIA_URL = os.environ.get('MEDIA_URL', '/media/')
+
+# When running behind a proxy (e.g. Render, Cloudflare), honor X-Forwarded-Proto for HTTPS detection
+# Cloudflare will forward the original scheme in X-Forwarded-Proto, so mark that header as trusted.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# CSRF trusted origins must include scheme for Django >=4; allow override via env var or derive from ALLOWED_HOSTS
+_env_csrf = os.environ.get('CSRF_TRUSTED_ORIGINS')
+if _env_csrf:
+    CSRF_TRUSTED_ORIGINS = [u.strip() for u in _env_csrf.split(',') if u.strip()]
+else:
+    CSRF_TRUSTED_ORIGINS = [f'https://{h}' for h in ALLOWED_HOSTS if h]
+
 # Security
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
