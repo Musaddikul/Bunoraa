@@ -16,7 +16,7 @@ except ImportError:
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-this-in-production')
 
-DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
+DEBUG = os.environ.get('DEBUG', 'True')
 
 # # Parse ALLOWED_HOSTS from env var and strip whitespace; fall back to localhost and 127.0.0.1
 # _allowed_hosts = os.environ.get('ALLOWED_HOSTS', 'bunoraa.com,www.bunoraa.com,localhost,127.0.0.1')
