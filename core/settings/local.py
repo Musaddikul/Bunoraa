@@ -3,9 +3,9 @@ Local development settings
 """
 from .base import *
 
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', 'bunoraa.com']
 
 # Use a local media URL in development (can be overridden via LOCAL_MEDIA_URL env var)
 # Fallback order: LOCAL_MEDIA_URL -> MEDIA_URL -> '/media/'
