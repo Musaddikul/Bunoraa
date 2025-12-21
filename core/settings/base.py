@@ -122,7 +122,7 @@ if os.environ.get('DATABASE_URL'):
     DATABASES['default'] = dj_database_url.config(
         default=os.environ.get('DATABASE_URL'),
         conn_max_age=600,
-        ssl_require=not DEBUG,
+        ssl_require=True,
     )
 
 # Password validation
@@ -215,7 +215,7 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'https://bunoraa.com,https://www.bunoraa.com,http://localhost:8000,http://127.0.0.1:8000').split(',')
 CORS_ALLOW_CREDENTIALS = True
 
-CSRF Settings
+# CSRF Settings
 CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'https://bunoraa.com,https://www.bunoraa.com,http://localhost:8000,http://127.0.0.1:8000').split(',')
 
 # Security Settings (enable in production)
