@@ -3,7 +3,7 @@ Local development settings
 """
 from .base import *
 
-DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
+DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', 'bunoraa.com']
 
