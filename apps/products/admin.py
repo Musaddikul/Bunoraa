@@ -17,7 +17,7 @@ class ProductImageInline(admin.TabularInline):
     readonly_fields = ['image_preview']
 
     class Media:
-        js = ('admin/js/image_preview.js',)
+        js = ('js/admin/image_preview.js',)
 
     def image_preview(self, obj):
         # Always render an img tag we can target with JS for live preview.
@@ -35,7 +35,7 @@ class ProductVariantInline(admin.TabularInline):
     readonly_fields = ['image_preview']
 
     class Media:
-        js = ('admin/js/image_preview.js',)
+        js = ('js/admin/image_preview.js',)
 
     def image_preview(self, obj):
         if getattr(obj, 'image', None):
@@ -59,8 +59,8 @@ class ProductAdmin(admin.ModelAdmin):
 
     class Media:
         js = (
-            'admin/js/image_preview.js',
-            'admin/js/attribute_inline.js',
+            'js/admin/image_preview.js',
+            'js/admin/attribute_inline.js',
         )
     
     list_display = [
