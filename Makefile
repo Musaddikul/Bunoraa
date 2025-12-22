@@ -54,7 +54,7 @@ help:
 
 install:
 	pip install -r requirements.txt
-	npm install
+	npm install --legacy-peer-deps
 	python manage.py migrate
 	npm run build:css
 
@@ -178,7 +178,7 @@ compile:
 deploy:
 	git pull origin main
 	pip install -r requirements.txt
-	npm install
+	npm install --legacy-peer-deps
 	npm run build:css
 	python manage.py migrate
 	python manage.py collectstatic --noinput

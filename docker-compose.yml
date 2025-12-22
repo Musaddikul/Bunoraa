@@ -21,7 +21,7 @@ services:
       - media_volume:/app/media
     environment:
       - DEBUG=False
-      - DATABASE_URL=postgres://bunoraa:bunoraa@db:5432/bunoraa
+      - DATABASE_URL=postgres://bunoraa_user:mugdho22:5252/bunoraa_bd
       - REDIS_URL=redis://redis:6379/0
     depends_on:
       - db
@@ -41,9 +41,9 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=bunoraa
-      - POSTGRES_USER=bunoraa
-      - POSTGRES_PASSWORD=bunoraa
+      - POSTGRES_DB=bunoraa_db
+      - POSTGRES_USER=bunoraa_db
+      - POSTGRES_PASSWORD=mugdho22
     networks:
       - bunoraa_network
     healthcheck:
@@ -78,7 +78,7 @@ services:
       - .:/app
     environment:
       - DEBUG=False
-      - DATABASE_URL=postgres://bunoraa:bunoraa@db:5432/bunoraa
+      - DATABASE_URL=postgres://bunoraa_user:mugdho22@db:5252/bunoraa_db
       - REDIS_URL=redis://redis:6379/0
     depends_on:
       - db
@@ -98,7 +98,7 @@ services:
       - .:/app
     environment:
       - DEBUG=False
-      - DATABASE_URL=postgres://bunoraa:bunoraa@db:5432/bunoraa
+      - DATABASE_URL=postgres://bunoraa_user:mugdho22@db:5252/bunoraa_db
       - REDIS_URL=redis://redis:6379/0
     depends_on:
       - db
