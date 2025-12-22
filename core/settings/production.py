@@ -16,8 +16,7 @@ else:
 
 CSRF_TRUSTED_ORIGINS = [f'https://{h}' for h in ALLOWED_HOSTS if h]
 
-MEDIA_URL = os.environ.get('MEDIA_URL', '/media/')
-MEDIA_ROOT = os.environ.get('LOCAL_MEDIA_URL') or os.environ.get('MEDIA_URL')
+MEDIA_URL = os.environ.get('MEDIA_URL')
 
 # Security
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -47,7 +46,8 @@ CACHES = {
         'BACKEND': 'django_redis.cache.RedisCache',
         'LOCATION': os.environ.get('REDIS_URL'),
         'OPTIONS': {
-                        'CONNECTION_POOL_KWARGS': {'ssl_cert_reqs': None},\n        }
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
     }
 }
 
@@ -60,4 +60,3 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 # Logging
 LOGGING['handlers']['console']['level'] = 'INFO'
 LOGGING['loggers']['django']['level'] = 'INFO'
-

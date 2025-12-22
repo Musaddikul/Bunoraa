@@ -255,14 +255,14 @@ CACHES = {
     }
 }
 
-# if os.environ.get('REDIS_URL'):
-#     CACHES['default'] = {
-#         'BACKEND': 'django_redis.cache.RedisCache',
-#         'LOCATION': os.environ.get('REDIS_URL'),
-#         'OPTIONS': {
-#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-#         }
-#     }
+if os.environ.get('REDIS_URL'):
+    CACHES['default'] = {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': os.environ.get('REDIS_URL'),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
 
 # Session Configuration
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
@@ -285,19 +285,11 @@ if os.environ.get('USE_S3', 'False').lower() in ('1', 'true', 'yes') or os.envir
 
     AWS_S3_ENDPOINT_URL = os.environ.get('AWS_S3_ENDPOINT_URL')
     AWS_S3_CUSTOM_DOMAIN = os.environ.get('AWS_S3_CUSTOM_DOMAIN')
-    # Support explicit None value in env for ACL (Cloudflare R2 doesn't support ACLs)
-    _aws_default_acl = os.environ.get('AWS_DEFAULT_ACL', None)
-    if _aws_default_acl in (None, '', 'None'):
-        AWS_DEFAULT_ACL = None
-    else:
-        AWS_DEFAULT_ACL = _aws_default_acl
+    AWS_DEFAULT_ACL = os.environ.get('AWS_DEFAULT_ACL', None)
 
     AWS_S3_OBJECT_PARAMETERS = {
         'CacheControl': os.environ.get('AWS_S3_CACHE_CONTROL', 'max-age=86400')
     }
-    # For S3-compatible services like Cloudflare R2, prefer s3v4 signature
-    AWS_S3_SIGNATURE_VERSION = os.environ.get('AWS_S3_SIGNATURE_VERSION', 's3v4')
-    AWS_S3_ADDRESSING_STYLE = os.environ.get('AWS_S3_ADDRESSING_STYLE', 'virtual')
 
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
