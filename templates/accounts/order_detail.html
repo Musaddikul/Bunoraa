@@ -235,18 +235,18 @@
             <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
                 <div class="flex flex-wrap gap-4">
                     {% if order.status == 'delivered' %}
-                    <a href="{% url 'orders:invoice' order.order_number %}" 
+                    <a href="{% url 'orders:detail' order.id %}" 
                        class="bg-primary-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors">
                         Download Invoice
                     </a>
                     {% if not order.is_reviewed %}
-                    <a href="{% url 'reviews:create' order.order_number %}" 
+                    <a href="{% url 'pages:contact' %}?order={{ order.order_number }}&action=review" 
                        class="border border-primary-600 text-primary-600 px-6 py-2 rounded-lg font-medium hover:bg-primary-50 transition-colors">
                         Write a Review
                     </a>
                     {% endif %}
                     {% if order.can_return %}
-                    <a href="{% url 'returns:request' order.order_number %}" 
+                    <a href="{% url 'pages:contact' %}?order={{ order.order_number }}&action=return" 
                        class="border border-gray-300 text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors">
                         Request Return
                     </a>
@@ -260,7 +260,7 @@
                     </button>
                     {% endif %}
                     
-                    <a href="{% url 'support:contact' %}?order={{ order.order_number }}" 
+                    <a href="{% url 'pages:contact' %}?order={{ order.order_number }}" 
                        class="text-gray-600 hover:text-gray-700 ml-auto">
                         Need Help?
                     </a>

@@ -16,9 +16,11 @@ except ImportError:
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-this-in-production')
 
-DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
+DEBUG = os.environ.get('DEBUG', 'True')
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+# Parse ALLOWED_HOSTS from env var and strip whitespace; fall back to localhost and 127.0.0.1
+_allowed_hosts = os.environ.get('ALLOWED_HOSTS', 'bunoraa.com,www.bunoraa.com,localhost,127.0.0.1')
+ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts.split(',') if h.strip()]
 
 # Application definition
 DJANGO_APPS = [
@@ -120,7 +122,7 @@ if os.environ.get('DATABASE_URL'):
     DATABASES['default'] = dj_database_url.config(
         default=os.environ.get('DATABASE_URL'),
         conn_max_age=600,
-        ssl_require=not DEBUG,
+        ssl_require=True,
     )
 
 # Password validation
@@ -147,8 +149,9 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# Default MEDIA_URL, can be overridden by environment or per-environment settings
+# MEDIA_URL = os.environ.get('MEDIA_URL', '/media/')
+# MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -209,11 +212,11 @@ SIMPLE_JWT = {
 }
 
 # CORS Settings
-CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000').split(',')
+CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'https://bunoraa.com,https://www.bunoraa.com,http://localhost:8000,http://127.0.0.1:8000').split(',')
 CORS_ALLOW_CREDENTIALS = True
 
 # CSRF Settings
-CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000').split(',')
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'https://bunoraa.com,https://www.bunoraa.com,http://localhost:8000,http://127.0.0.1:8000').split(',')
 
 # Security Settings (enable in production)
 if not DEBUG:
@@ -252,14 +255,14 @@ CACHES = {
     }
 }
 
-if os.environ.get('REDIS_URL'):
-    CACHES['default'] = {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': os.environ.get('REDIS_URL'),
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        }
-    }
+# if os.environ.get('REDIS_URL'):
+#     CACHES['default'] = {
+#         'BACKEND': 'django_redis.cache.RedisCache',
+#         'LOCATION': os.environ.get('REDIS_URL'),
+#         'OPTIONS': {
+#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+#         }
+#     }
 
 # Session Configuration
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
@@ -272,16 +275,40 @@ STRIPE_PUBLIC_KEY = os.environ.get('STRIPE_PUBLIC_KEY', '')
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
 
-# AWS S3 Configuration (for media files in production)
-if os.environ.get('AWS_ACCESS_KEY_ID'):
+# AWS S3 / S3-compatible (Cloudflare R2) Configuration (for media files in production)
+if os.environ.get('USE_S3', 'False').lower() in ('1', 'true', 'yes') or os.environ.get('AWS_ACCESS_KEY_ID'):
     AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
     AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+
     AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
     AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'us-east-1')
-    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
-    AWS_DEFAULT_ACL = 'public-read'
-    AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
+
+    AWS_S3_ENDPOINT_URL = os.environ.get('AWS_S3_ENDPOINT_URL')
+    AWS_S3_CUSTOM_DOMAIN = os.environ.get('AWS_S3_CUSTOM_DOMAIN')
+    # Support explicit None value in env for ACL (Cloudflare R2 doesn't support ACLs)
+    _aws_default_acl = os.environ.get('AWS_DEFAULT_ACL', None)
+    if _aws_default_acl in (None, '', 'None'):
+        AWS_DEFAULT_ACL = None
+    else:
+        AWS_DEFAULT_ACL = _aws_default_acl
+
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': os.environ.get('AWS_S3_CACHE_CONTROL', 'max-age=86400')
+    }
+    # For S3-compatible services like Cloudflare R2, prefer s3v4 signature
+    AWS_S3_SIGNATURE_VERSION = os.environ.get('AWS_S3_SIGNATURE_VERSION', 's3v4')
+    AWS_S3_ADDRESSING_STYLE = os.environ.get('AWS_S3_ADDRESSING_STYLE', 'virtual')
+
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+    if os.environ.get('MEDIA_URL'):
+        MEDIA_URL = os.environ['MEDIA_URL']
+    elif AWS_S3_CUSTOM_DOMAIN:
+        MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
+    elif AWS_S3_ENDPOINT_URL:
+        MEDIA_URL = f"{AWS_S3_ENDPOINT_URL.rstrip('/')}/{AWS_STORAGE_BUCKET_NAME}/"
+    else:
+        MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/'
 
 # Logging Configuration
 LOGGING = {
