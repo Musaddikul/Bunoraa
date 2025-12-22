@@ -158,7 +158,7 @@
         "siteLogoDark": "{{ SITE_LOGO_DARK|default:SITE_LOGO|escapejs }}",
         "authenticated": {{ request.user.is_authenticated|yesno:"true,false" }},
         "userFirstName": "{{ request.user.first_name|default:''|escapejs }}",
-        "userAvatar": "{{ request.user.avatar.url|default:''|escapejs }}"
+        "userAvatar": "{% if request.user.avatar %}{{ request.user.avatar.url|escapejs }}{% else %}{% endif %}"
     }</script>
 
     <!-- User JSON for JS (safe, valid JSON) -->
