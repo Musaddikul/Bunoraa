@@ -4,11 +4,22 @@ Production settings
 import os
 from .base import *
 
-DEBUG = False
+DEBUG = os.environ.get('DEBUG', 'False')
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
+# Read ALLOWED_HOSTS from environment, fall back to a safe default.
+_env_allowed = os.environ.get('ALLOWED_HOSTS')
+if _env_allowed:
+    ALLOWED_HOSTS = [h.strip() for h in _env_allowed.split(',') if h.strip()]
+else:
+    # Add your Render URL as the default host
+    ALLOWED_HOSTS = ['bunoraa.onrender.com', 'bunoraa.com', 'www.bunoraa.com']
+
+CSRF_TRUSTED_ORIGINS = [f'https://{h}' for h in ALLOWED_HOSTS if h]
+
+MEDIA_URL = os.environ.get('MEDIA_URL')
 
 # Security
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
@@ -36,7 +47,6 @@ CACHES = {
         'LOCATION': os.environ.get('REDIS_URL'),
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'CONNECTION_POOL_KWARGS': {'ssl_cert_reqs': None},
         }
     }
 }

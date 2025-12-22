@@ -15,30 +15,53 @@ class ProductImageInline(admin.TabularInline):
     extra = 1
     fields = ['image', 'alt_text', 'is_primary', 'order', 'image_preview']
     readonly_fields = ['image_preview']
-    
+
+    class Media:
+        js = ('admin/js/image_preview.js',)
+
     def image_preview(self, obj):
-        if obj.image:
-            return format_html('<img src="{}" width="50" height="50" style="object-fit: cover;" />', obj.image.url)
-        return '-'
+        # Always render an img tag we can target with JS for live preview.
+        if getattr(obj, 'image', None):
+            return format_html('<img class="admin-image-preview" src="{}" width="50" height="50" style="object-fit: cover;" />', obj.image.url)
+        return format_html('<img class="admin-image-preview" src="" width="50" height="50" style="object-fit: cover; display: none;" />')
     image_preview.short_description = 'Preview'
 
 
 class ProductVariantInline(admin.TabularInline):
-    """Inline for product variants."""
+    """Inline for product variants with image upload and preview."""
     model = ProductVariant
-    extra = 0
-    fields = ['name', 'sku', 'price_modifier', 'stock_quantity', 'is_active']
+    extra = 1
+    fields = ['name', 'sku', 'price_modifier', 'stock_quantity', 'is_active', 'image', 'image_preview']
+    readonly_fields = ['image_preview']
+
+    class Media:
+        js = ('admin/js/image_preview.js',)
+
+    def image_preview(self, obj):
+        if getattr(obj, 'image', None):
+            return format_html('<img class="admin-image-preview" src="{}" width="50" height="50" style="object-fit: cover;" data-existing="1" />', obj.image.url)
+        return format_html('<img class="admin-image-preview" src="" width="50" height="50" style="object-fit: cover; display: none;" data-existing="0" />')
+    image_preview.short_description = 'Preview'
 
 
 class ProductAttributeInline(admin.TabularInline):
     """Inline for product attributes."""
     model = ProductAttribute
-    extra = 0
+    extra = 1
+    # Use autocomplete for attribute values for faster lookup and add popup
+    autocomplete_fields = ['attribute_value']
+    fields = ['attribute_value']
 
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     """Product admin."""
+
+    class Media:
+        js = (
+            'admin/js/image_preview.js',
+            'admin/js/attribute_inline.js',
+        )
     
     list_display = [
         'name', 'sku', 'price', 'sale_price', 'stock_quantity',
@@ -113,11 +136,18 @@ class ProductImageAdmin(admin.ModelAdmin):
 class ProductVariantAdmin(admin.ModelAdmin):
     """Product variant admin."""
     
-    list_display = ['product', 'name', 'sku', 'price_modifier', 'stock_quantity', 'is_active']
+    list_display = ['product', 'name', 'sku', 'price_modifier', 'stock_quantity', 'is_active', 'image_preview']
     list_filter = ['is_active', 'created_at']
     search_fields = ['product__name', 'name', 'sku']
     raw_id_fields = ['product']
     filter_horizontal = ['attributes']
+    readonly_fields = ['image_preview']
+
+    def image_preview(self, obj):
+        if obj and obj.image:
+            return format_html('<img src="{}" width="50" height="50" style="object-fit: cover;" />', obj.image.url)
+        return '-'
+    image_preview.short_description = 'Preview'
 
 
 @admin.register(Tag)
