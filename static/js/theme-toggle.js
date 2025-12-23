@@ -16,13 +16,15 @@
         const darkIcon = document.getElementById('theme-toggle-dark-icon');
         if (!lightIcon || !darkIcon) return;
 
-        // Show icon that represents current theme for clarity
-        lightIcon.classList.toggle('hidden', isDark);
-        lightIcon.classList.toggle('block', !isDark);
+        // Only one icon should be visible at a time
+        if (isDark) {
+            lightIcon.classList.add('hidden');
+            darkIcon.classList.remove('hidden');
+        } else {
+            lightIcon.classList.remove('hidden');
+            darkIcon.classList.add('hidden');
+        }
         lightIcon.setAttribute('aria-hidden', isDark ? 'true' : 'false');
-
-        darkIcon.classList.toggle('hidden', !isDark);
-        darkIcon.classList.toggle('block', isDark);
         darkIcon.setAttribute('aria-hidden', isDark ? 'false' : 'true');
     }
 
