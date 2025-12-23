@@ -1,13 +1,3 @@
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
-
-# Smart redirect for /account/ root
-class AccountRootRedirectView(View):
-    @method_decorator(csrf_exempt)
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            return redirect('accounts:dashboard')
-        return redirect('accounts:login')
 """
 Account views - Frontend pages
 """
