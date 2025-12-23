@@ -176,9 +176,20 @@ const ApiClient = (function() {
                         onTokenRefreshed(token);
                     } catch (err) {
                         isRefreshing = false;
-                        if (requiresAuth) {
-                            window.dispatchEvent(new CustomEvent('auth:required'));
-                            throw { status: 401, message: 'Authentication required' };
+                        // If the token refresh fails but the server-side session is active, prefer
+                        // the session auth (cookie) instead of forcing a client-side redirect.
+                        // This avoids redirect loops when the client has stale/expired tokens
+                        // but the user is still authenticated via Django session cookies.
+                        if (window && window.__DJANGO_SESSION_AUTH__) {
+                            // Clear local tokens and proceed without throwing - the subsequent
+                            // request will use cookie-based session auth (credentials: 'same-origin').
+                            clearTokens();
+                            token = null;
+                        } else {
+                            if (requiresAuth) {
+                                window.dispatchEvent(new CustomEvent('auth:required'));
+                                throw { status: 401, message: 'Authentication required' };
+                            }
                         }
                     }
                     isRefreshing = false;
@@ -236,8 +247,9 @@ const ApiClient = (function() {
                             clearTokens();
                             window.dispatchEvent(new CustomEvent('auth:expired'));
                         } else if (usingSessionAuth) {
-                            window.__DJANGO_SESSION_AUTH__ = false;
-                            window.dispatchEvent(new CustomEvent('auth:required'));
+                            // When using session auth, if API returns 401, don't invalidate the session
+                            // or dispatch auth:required, since the page is already protected by LoginRequiredMixin.
+                            // Just throw the error and let the component handle it.
                         }
                     }
 

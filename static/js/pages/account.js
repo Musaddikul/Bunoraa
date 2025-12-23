@@ -20,6 +20,14 @@ const AccountPage = (function() {
 
     async function loadUserProfile() {
         try {
+            // First try to use the user data from the template (window.__DJANGO_USER__)
+            if (window.__DJANGO_USER__) {
+                currentUser = window.__DJANGO_USER__;
+                renderProfile();
+                return;
+            }
+            
+            // Fallback to API call
             const response = await AuthApi.getProfile();
             currentUser = response.data;
             renderProfile();

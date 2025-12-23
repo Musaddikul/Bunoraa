@@ -2,13 +2,13 @@
 Account URL configuration - Frontend views
 """
 from django.urls import path
-from django.views.generic import RedirectView
+from .views import AccountRootRedirectView
 from . import views
 
 app_name = 'accounts'
 
 urlpatterns = [
-    path('', RedirectView.as_view(pattern_name='accounts:login', permanent=False)),
+    path('', AccountRootRedirectView.as_view(), name='root'),
     path('dashboard/', views.AccountDashboardView.as_view(), name='dashboard'),
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('addresses/', views.AddressListView.as_view(), name='addresses'),
