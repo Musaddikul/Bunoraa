@@ -726,7 +726,6 @@
         // Restore auto-saved form data
         AutoSaveHandler.restoreFormData();
 
-        console.log('Checkout initialized successfully');
     }
 
     // Run on DOM ready
