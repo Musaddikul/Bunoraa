@@ -44,7 +44,7 @@
                         <a href="${buildRoute('home')}" class="inline-flex items-center gap-3" aria-label="Homepage">
                             <img data-site-logo class="h-10 w-auto dark:hidden" src="" alt=""/>
                             <img data-site-logo-dark class="h-10 w-auto hidden dark:block" src="" alt=""/>
-                            <div data-site-initial class="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-white font-semibold flex items-center justify-center shadow-inner"></div>
+
                             <span class="sr-only" data-site-name></span>
                         </a>
                     </div>
@@ -110,12 +110,7 @@
         <nav class="hidden lg:block border-t border-stone-200/60 bg-white/80 dark:border-stone-700/60 dark:bg-stone-900/80" data-main-nav>
             <div class="container mx-auto px-4">
                 <div class="flex items-center h-10">
-                    <ul id="featured-nav-list" class="flex items-center gap-1 mx-auto overflow-x-auto scrollbar-hide">
-                        <li class="skeleton h-4 w-24 rounded-lg"></li>
-                        <li class="skeleton h-4 w-20 rounded-lg"></li>
-                        <li class="skeleton h-4 w-28 rounded-lg"></li>
-                        <li class="skeleton h-4 w-16 rounded-lg"></li>
-                    </ul>
+                    <ul id="featured-nav-list" class="flex items-center gap-1 mx-auto overflow-x-auto scrollbar-hide"></ul>
                     <div class="ml-4 flex items-center gap-2">
                         <a href="${buildRoute('productsList')}" class="inline-flex items-center px-3 py-2 text-stone-700 hover:text-amber-700 hover:bg-amber-50 font-medium text-sm rounded-lg transition-all dark:text-stone-300 dark:hover:text-amber-300 dark:hover:bg-stone-700">
                             All Products
@@ -206,7 +201,6 @@
         // Site logo and name
         const logo = mountPoint.querySelector('[data-site-logo]');
         const logoDark = mountPoint.querySelector('[data-site-logo-dark]');
-        const initial = mountPoint.querySelector('[data-site-initial]');
         const siteNameEl = mountPoint.querySelector('[data-site-name]');
         if (logo && logoDark) {
             if (cfg.siteLogo) {
@@ -214,11 +208,10 @@
                 logo.alt = cfg.siteName || '';
                 logoDark.src = cfg.siteLogoDark || cfg.siteLogo;
                 logoDark.alt = cfg.siteName || '';
-                initial.style.display = 'none';
             } else {
+                // No placeholder or fallback: remove image elements so no mock is shown
                 logo.remove();
                 logoDark.remove();
-                initial.textContent = (cfg.siteName || '').charAt(0) || 'S';
             }
         }
         if (siteNameEl) siteNameEl.textContent = cfg.siteName || '';
@@ -231,7 +224,7 @@
                 mobileLogo.src = cfg.siteLogo;
                 mobileLogo.alt = cfg.siteName || '';
             } else {
-                // keep empty or fallback
+                // Remove to avoid showing mock/fallback
                 mobileLogo.remove();
             }
         }
@@ -244,10 +237,9 @@
                 if (cfg.userAvatar) {
                     accSpot.innerHTML = `<img src="${cfg.userAvatar}" alt="${cfg.userFirstName || 'U'}" class="w-9 h-9 rounded-full object-cover ring-2 ring-amber-400/50">`;
                 } else {
-                    const ch = (cfg.userFirstName || '').charAt(0).toUpperCase() || 'U';
-                    accSpot.innerHTML = `<div class="w-9 h-9 bg-gradient-to-br from-amber-500 to-amber-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">${ch}</div>`;
+                    // No placeholder/fallback when authenticated without an avatar — keep empty to avoid mock visuals
+                    accSpot.innerHTML = '';
                 }
-
                 // Mobile account links
                 const mobileAccount = document.getElementById('mobile-account');
                 if (mobileAccount) {
@@ -274,7 +266,8 @@
                     }
                 }
             } else {
-                accSpot.innerHTML = `<div class="w-9 h-9 bg-stone-100 rounded-full flex items-center justify-center dark:bg-stone-800"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></div>`;
+                // No placeholder avatar for unauthenticated users; keep header minimal
+                accSpot.innerHTML = '';
 
                 const mobileAccount = document.getElementById('mobile-account');
                 if (mobileAccount) {
@@ -465,6 +458,8 @@
         const currencyDropdownEl = mountPoint.querySelector('#currency-dropdown');
         const accountToggle = mountPoint.querySelector('#account-toggle');
         const accountDropdown = mountPoint.querySelector('#account-dropdown');
+        // Flag to temporarily suppress global close handler when toggling account dropdown
+        let accountSuppressClose = false;
         if (currencyToggle && currencyDropdownEl) {
             currencyToggle.setAttribute('aria-expanded', 'false');
             currencyDropdownEl.setAttribute('aria-hidden', 'true');
@@ -485,6 +480,36 @@
 
         // Add debugging logs to dropdown toggles (with duplicate-click guard)
         if (accountToggle && accountDropdown) {
+            // Encapsulate open/close logic for robustness
+            function openAccountDropdown() {
+                // if already open nothing to do
+                if (!accountDropdown.classList.contains('hidden') && accountDropdown._floated) return;
+                try {
+                    floatDropdownToBody(accountDropdown, accountToggle);
+                } catch (err) {
+                    accountDropdown.classList.remove('hidden');
+                }
+                accountDropdown.style.zIndex = 9999;
+                accountDropdown.querySelector('a')?.focus();
+                accountToggle.setAttribute('aria-expanded', 'true');
+                accountDropdown.setAttribute('aria-hidden', 'false');
+                console.log('openAccountDropdown executed; hidden=', accountDropdown.classList.contains('hidden'));
+                // Ensure visible (in some race conditions the 'hidden' class may remain)
+                accountDropdown.classList.remove('hidden');
+
+                // Temporarily suppress global document-level close handler to avoid race closing
+                accountSuppressClose = true;
+                setTimeout(() => { accountSuppressClose = false; }, 300);
+            }
+
+            function closeAccountDropdown() {
+                if (accountDropdown._floated) restoreDropdown(accountDropdown);
+                accountDropdown.classList.add('hidden');
+                accountToggle.setAttribute('aria-expanded', 'false');
+                accountDropdown.setAttribute('aria-hidden', 'true');
+                console.log('closeAccountDropdown executed');
+            }
+
             accountToggle.addEventListener('click', (ev) => {
                 const now = Date.now();
                 if (accountToggle._lastToggle && (now - accountToggle._lastToggle) < 250) {
@@ -496,24 +521,31 @@
                 console.log('Account dropdown toggle clicked - before:', accountDropdown.classList.toString());
                 ev.stopPropagation();
                 const isOpen = !accountDropdown.classList.contains('hidden');
-                // Explicitly open/close to avoid race when handler runs twice
                 if (isOpen) {
-                    if (accountDropdown._floated) restoreDropdown(accountDropdown);
-                    accountDropdown.classList.add('hidden');
+                    closeAccountDropdown();
                 } else {
-                    // Move to body to avoid clipping by ancestor overflow and position under toggle
-                    try {
-                        floatDropdownToBody(accountDropdown, accountToggle);
-                    } catch (err) {
-                        // fallback: just show in-place
-                        accountDropdown.classList.remove('hidden');
-                    }
-                    accountDropdown.style.zIndex = 9999;
-                    accountDropdown.querySelector('a')?.focus();
+                    openAccountDropdown();
                 }
-                accountToggle.setAttribute('aria-expanded', String(!isOpen));
-                accountDropdown.setAttribute('aria-hidden', String(isOpen));
-                console.log('Account dropdown toggle clicked - after:', accountDropdown.classList.toString(), 'rect=', accountDropdown.getBoundingClientRect());
+                console.log('Account dropdown toggle clicked - after:', accountDropdown.classList.toString());
+            });
+
+            // Keyboard accessibility: open on Enter/Space
+            accountToggle.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    accountToggle.click();
+                }
+            });
+
+            // Delegated fallback: if click on the button isn't handled for any reason, handle via document
+            document.addEventListener('click', (ev) => {
+                const t = ev.target.closest && ev.target.closest('#account-toggle');
+                if (t) {
+                    // Delay to avoid interfering with existing handlers
+                    setTimeout(() => {
+                        if (accountDropdown.classList.contains('hidden')) openAccountDropdown();
+                    }, 0);
+                }
             });
         }
 
@@ -638,14 +670,20 @@
         // Ensure global click listener closes dropdowns
         console.log('Adding global click listener for dropdowns');
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('#account-dropdown') && !e.target.closest('#account-toggle')) {
-                if (accountDropdown && !accountDropdown.classList.contains('hidden')) {
-                    if (accountDropdown._floated) restoreDropdown(accountDropdown);
-                    accountDropdown.classList.add('hidden');
-                    accountToggle?.setAttribute('aria-expanded', 'false');
-                    accountDropdown.setAttribute('aria-hidden', 'true');
+            // If we are suppressing account close because a toggle just opened it, ignore
+            if (accountSuppressClose) {
+                console.log('Global click handler: skipping account close due to suppress flag');
+            } else {
+                if (!e.target.closest('#account-dropdown') && !e.target.closest('#account-toggle')) {
+                    if (accountDropdown && !accountDropdown.classList.contains('hidden')) {
+                        if (accountDropdown._floated) restoreDropdown(accountDropdown);
+                        accountDropdown.classList.add('hidden');
+                        accountToggle?.setAttribute('aria-expanded', 'false');
+                        accountDropdown.setAttribute('aria-hidden', 'true');
+                    }
                 }
             }
+
             if (!e.target.closest('#currency-dropdown') && !e.target.closest('#currency-toggle')) {
                 if (currencyDropdownEl && !currencyDropdownEl.classList.contains('hidden')) {
                     if (currencyDropdownEl._floated) restoreDropdown(currencyDropdownEl);
@@ -760,13 +798,24 @@
         if (!currencyDropdown) return;
         try {
             console.log('Fetching currencies from backend...');
-            const resp = window.LocalizationApi && typeof window.LocalizationApi.getCurrencies === 'function'
-                ? await window.LocalizationApi.getCurrencies()
-                : await fetch('/api/localization/currencies').then(r => {
-                    if (!r.ok) throw new Error(`Failed to fetch currencies: ${r.status}`);
-                    return r.json();
-                });
-            const list = Array.isArray(resp) ? resp : (resp.data || resp.results || []);
+            let resp;
+            if (window.LocalizationApi && typeof window.LocalizationApi.getCurrencies === 'function') {
+                console.log('loadCurrencies: using LocalizationApi.getCurrencies');
+                resp = await window.LocalizationApi.getCurrencies();
+            } else if (typeof ApiClient !== 'undefined') {
+                console.log('loadCurrencies: using ApiClient.get /currencies/');
+                // Use ApiClient so BASE_URL (/api/v1) is respected
+                const apiResp = await ApiClient.get('/currencies/');
+                resp = apiResp.data || apiResp.results || apiResp;
+            } else {
+                console.log('loadCurrencies: using fetch /api/v1/currencies/ fallback');
+                // Fallback to explicit API v1 path
+                const r = await fetch('/api/v1/currencies/');
+                if (!r.ok) throw new Error(`Failed to fetch currencies: ${r.status}`);
+                resp = await r.json();
+            }
+
+            const list = Array.isArray(resp) ? resp : (resp.data || resp.results || resp);
             if (!list || !list.length) throw new Error('No currencies returned from backend');
 
             const stored = localStorage.getItem('selected_currency');
@@ -790,10 +839,13 @@
                     console.log(`Setting currency to ${code}`);
                     if (window.LocalizationApi && typeof window.LocalizationApi.setCurrency === 'function') {
                         await window.LocalizationApi.setCurrency(code);
+                    } else if (typeof ApiClient !== 'undefined') {
+                        // Try to set server-side preference (requires auth)
+                        await ApiClient.post('/currencies/preference/', { currency_code: code, auto_detect: false });
                     } else {
-                        await fetch('/api/localization/set_currency', {
+                        await fetch('/api/v1/currencies/preference/', {
                             method: 'POST',
-                            body: JSON.stringify({ code }),
+                            body: JSON.stringify({ currency_code: code, auto_detect: false }),
                             headers: { 'Content-Type': 'application/json' },
                         });
                     }

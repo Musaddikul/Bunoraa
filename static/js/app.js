@@ -200,7 +200,18 @@ const App = (function() {
                 
                 if (!AuthApi.isAuthenticated()) {
                     Toast.warning('Please login to add items to your wishlist.');
-                    window.location.href = '/account/login/?next=' + encodeURIComponent(window.location.pathname);
+                    // If wishlist click originates from a link (header 'Wishlist' anchor), prefer that target as `next`,
+                    // otherwise fall back to current pathname so user returns to the same page after login.
+                    let targetHref = wishlistBtn.closest('a')?.getAttribute('href') || wishlistBtn.getAttribute('href') || window.location.pathname;
+                    let nextPath;
+                    try {
+                        const url = new URL(targetHref, window.location.origin);
+                        nextPath = url.pathname + url.search + url.hash;
+                    } catch (e) {
+                        nextPath = window.location.pathname;
+                    }
+                    console.log('Redirecting to login, next=', nextPath);
+                    window.location.href = '/account/login/?next=' + encodeURIComponent(nextPath);
                     return;
                 }
 
