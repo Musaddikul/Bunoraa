@@ -7,7 +7,7 @@ pages_build_output_dir = "staticfiles"
 
 [vars]
 # Use an existing settings module that works during builds; change if needed
-DJANGO_SETTINGS_MODULE = "core.settings.s3"
+DJANGO_SETTINGS_MODULE = "core.settings.production"
 
 # For build commands (install deps / collectstatic), configure them in the Pages project
 # settings in the Cloudflare dashboard or via the CLI rather than in this file.
