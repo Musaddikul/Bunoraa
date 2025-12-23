@@ -200,7 +200,6 @@ const App = (function() {
                     } catch (e) {
                         nextPath = window.location.pathname;
                     }
-                    console.log('Redirecting to login, next=', nextPath);
                     window.location.href = '/account/login/?next=' + encodeURIComponent(nextPath);
                     return;
                 }

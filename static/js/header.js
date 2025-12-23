@@ -24,7 +24,6 @@
     const routePlaceholder = window.BUNORAA_ROUTE_PLACEHOLDER || '__slug__';
     const buildRoute = (name, value) => {
         const template = routeMap[name];
-        console.log('buildRoute', name, template);
         if (!template) return '#';
         if (value === undefined || value === null) return template;
         return template.replace(routePlaceholder, encodeURIComponent(value));
@@ -73,7 +72,7 @@
                     <!-- Right actions -->
                     <div class="flex items-center gap-2">
                         <button id="theme-toggle" class="p-2.5 rounded-lg text-stone-700 hover:bg-stone-100 dark:text-stone-300" aria-label="Toggle theme" aria-pressed="false">
-                            <svg id="theme-toggle-light-icon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1z"/></svg>
+                            <svg id="theme-toggle-light-icon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 4a1 1 0 011-1V2a1 1 0 10-2 0v1a1 1 0 011 1zM15.657 5.343a1 1 0 011.414 0l.707-.707a1 1 0 10-1.414-1.414l-.707.707a1 1 0 000 1.414zM18 11h1a1 1 0 100-2h-1a1 1 0 100 2zM15.657 16.657a1 1 0 001.414 1.414l.707-.707a1 1 0 10-1.414-1.414l-.707.707zM10 18a1 1 0 011 1v1a1 1 0 10-2 0v-1a1 1 0 011-1zM4.343 16.657a1 1 0 001.414-1.414l-.707-.707a1 1 0 10-1.414 1.414l.707.707zM2 11H1a1 1 0 100 2h1a1 1 0 100-2zM4.343 5.343a1 1 0 10-1.414 1.414l.707.707a1 1 0 101.414-1.414l-.707-.707zM10 6a4 4 0 100 8 4 4 0 000-8z"/></svg>
                             <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8 8 0 1010.586 10.586z"/></svg>
                         </button>
 
@@ -464,7 +463,6 @@
             currencyToggle.setAttribute('aria-expanded', 'false');
             currencyDropdownEl.setAttribute('aria-hidden', 'true');
             currencyToggle.addEventListener('click', (e) => {
-                console.log('Currency toggle clicked');
                 e.stopPropagation();
                 const isOpen = !currencyDropdownEl.classList.contains('hidden');
                 currencyDropdownEl.classList.toggle('hidden');
@@ -478,117 +476,84 @@
             });
         }
 
-        // Add debugging logs to dropdown toggles (with duplicate-click guard)
-        if (accountToggle && accountDropdown) {
-            // Encapsulate open/close logic for robustness
-            function openAccountDropdown() {
-                // if already open nothing to do
-                if (!accountDropdown.classList.contains('hidden') && accountDropdown._floated) return;
-                try {
-                    floatDropdownToBody(accountDropdown, accountToggle);
-                } catch (err) {
-                    accountDropdown.classList.remove('hidden');
-                }
-                accountDropdown.style.zIndex = 9999;
-                accountDropdown.querySelector('a')?.focus();
-                accountToggle.setAttribute('aria-expanded', 'true');
-                accountDropdown.setAttribute('aria-hidden', 'false');
-                console.log('openAccountDropdown executed; hidden=', accountDropdown.classList.contains('hidden'));
-                // Ensure visible (in some race conditions the 'hidden' class may remain)
-                accountDropdown.classList.remove('hidden');
-
-                // Temporarily suppress global document-level close handler to avoid race closing
-                accountSuppressClose = true;
-                setTimeout(() => { accountSuppressClose = false; }, 300);
-            }
-
-            function closeAccountDropdown() {
-                if (accountDropdown._floated) restoreDropdown(accountDropdown);
-                accountDropdown.classList.add('hidden');
-                accountToggle.setAttribute('aria-expanded', 'false');
-                accountDropdown.setAttribute('aria-hidden', 'true');
-                console.log('closeAccountDropdown executed');
-            }
-
-            accountToggle.addEventListener('click', (ev) => {
-                const now = Date.now();
-                if (accountToggle._lastToggle && (now - accountToggle._lastToggle) < 250) {
-                    console.log('Account toggle: ignoring duplicate click');
-                    ev.stopPropagation();
-                    return;
-                }
-                accountToggle._lastToggle = now;
-                console.log('Account dropdown toggle clicked - before:', accountDropdown.classList.toString());
-                ev.stopPropagation();
-                const isOpen = !accountDropdown.classList.contains('hidden');
-                if (isOpen) {
-                    closeAccountDropdown();
-                } else {
-                    openAccountDropdown();
-                }
-                console.log('Account dropdown toggle clicked - after:', accountDropdown.classList.toString());
-            });
-
-            // Keyboard accessibility: open on Enter/Space
-            accountToggle.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    accountToggle.click();
-                }
-            });
-
-            // Delegated fallback: if click on the button isn't handled for any reason, handle via document
-            document.addEventListener('click', (ev) => {
-                const t = ev.target.closest && ev.target.closest('#account-toggle');
-                if (t) {
-                    // Delay to avoid interfering with existing handlers
-                    setTimeout(() => {
-                        if (accountDropdown.classList.contains('hidden')) openAccountDropdown();
-                    }, 0);
-                }
-            });
+        // Account dropdown helpers (delegated to survive DOM replacements)
+        function openAccountDropdown() {
+            if (!accountDropdown || !accountToggle) return;
+            // if already open nothing to do
+            if (!accountDropdown.classList.contains('hidden') && accountDropdown._floated) return;
+            try { floatDropdownToBody(accountDropdown, accountToggle); } catch (err) { accountDropdown.classList.remove('hidden'); }
+            accountDropdown.style.zIndex = 9999;
+            accountDropdown.querySelector('a')?.focus();
+            accountToggle.setAttribute('aria-expanded', 'true');
+            accountDropdown.setAttribute('aria-hidden', 'false');
+            // Ensure visible (in some race conditions the 'hidden' class may remain)
+            accountDropdown.classList.remove('hidden');
+            // Temporarily suppress global document-level close handler to avoid race closing
+            accountSuppressClose = true;
+            setTimeout(() => { accountSuppressClose = false; }, 300);
         }
 
-        if (currencyToggle && currencyDropdownEl) {
-            currencyToggle.addEventListener('click', (e) => {
-                const now = Date.now();
-                if (currencyToggle._lastToggle && (now - currencyToggle._lastToggle) < 250) {
-                    console.log('Currency toggle: ignoring duplicate click');
-                    e.stopPropagation();
+        function closeAccountDropdown() {
+            if (!accountDropdown || !accountToggle) return;
+            if (accountDropdown._floated) restoreDropdown(accountDropdown);
+            accountDropdown.classList.add('hidden');
+            accountToggle.setAttribute('aria-expanded', 'false');
+            accountDropdown.setAttribute('aria-hidden', 'true');
+        }
+
+        // Delegated toggle handler for account and currency toggles
+        if (mountPoint) {
+            mountPoint.addEventListener('click', (ev) => {
+                const at = ev.target.closest && ev.target.closest('#account-toggle');
+                if (at) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    const isOpen = accountDropdown && !accountDropdown.classList.contains('hidden');
+                    if (isOpen) closeAccountDropdown(); else openAccountDropdown();
                     return;
                 }
-                currencyToggle._lastToggle = now;
-                console.log('Currency dropdown toggle clicked - before:', currencyDropdownEl.classList.toString());
-                e.stopPropagation();
-                const isOpen = !currencyDropdownEl.classList.contains('hidden');
-                if (isOpen) {
-                    if (currencyDropdownEl._floated) restoreDropdown(currencyDropdownEl);
-                    currencyDropdownEl.classList.add('hidden');
-                } else {
-                    try { floatDropdownToBody(currencyDropdownEl, currencyToggle); } catch (err) { currencyDropdownEl.classList.remove('hidden'); }
-                    currencyDropdownEl.style.zIndex = 9999;
-                    currencyDropdownEl.querySelector('[data-currency]')?.focus();
+
+                const ct = ev.target.closest && ev.target.closest('#currency-toggle');
+                if (ct) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    const isOpen = currencyDropdownEl && !currencyDropdownEl.classList.contains('hidden');
+                    if (isOpen) {
+                        if (currencyDropdownEl._floated) restoreDropdown(currencyDropdownEl);
+                        currencyDropdownEl.classList.add('hidden');
+                        currencyToggle?.setAttribute('aria-expanded', 'false');
+                        currencyDropdownEl.setAttribute('aria-hidden', 'true');
+                    } else {
+                        try { floatDropdownToBody(currencyDropdownEl, currencyToggle); } catch (err) { currencyDropdownEl.classList.remove('hidden'); }
+                        currencyDropdownEl.style.zIndex = 9999;
+                        currencyDropdownEl.querySelector('[data-currency]')?.focus();
+                        currencyDropdownEl.setAttribute('aria-hidden', 'false');
+                        currencyToggle?.setAttribute('aria-expanded', 'true');
+                    }
+                    return;
                 }
-                currencyDropdownEl.setAttribute('aria-hidden', String(isOpen));
-                currencyToggle.setAttribute('aria-expanded', String(!isOpen));
-                console.log('Currency dropdown toggle clicked - after:', currencyDropdownEl.classList.toString());
+            });
+
+            // Keyboard accessibility: open on Enter/Space for account toggle
+            mountPoint.addEventListener('keydown', (e) => {
+                const at = e.target.closest && e.target.closest('#account-toggle');
+                if (at && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    at.click();
+                }
             });
         }
 
         // Helper: move dropdown element to body and position it under `toggle`
-        const _DEBUG_DROPDOWNS = true; // set true temporarily for in-browser diagnostics
+        const _DEBUG_DROPDOWNS = false; // disable diagnostic logs in production
         function debugAndHighlightDropdown(dropdownEl, name) {
             if (!_DEBUG_DROPDOWNS || !dropdownEl) return;
             try {
                 const cs = window.getComputedStyle(dropdownEl);
-                console.log(name, 'computed style:', { display: cs.display, visibility: cs.visibility, opacity: cs.opacity, zIndex: cs.zIndex, hasHiddenClass: dropdownEl.classList.contains('hidden') });
-                console.log(name, 'rect', dropdownEl.getBoundingClientRect());
                 let node = dropdownEl.parentElement;
                 while (node) {
                     const anc = window.getComputedStyle(node);
-                    if (anc.overflow !== 'visible' || anc.transform !== 'none' || anc.zIndex !== 'auto' || anc.display === 'none') {
-                        console.log('ancestor potential issue', node, { overflow: anc.overflow, transform: anc.transform, zIndex: anc.zIndex, display: anc.display });
-                    }
                     node = node.parentElement;
                 }
                 // Visual highlight
@@ -610,7 +575,6 @@
             // Save original location so we can restore later
             dropdownEl._originalParent = dropdownEl.parentNode;
             dropdownEl._originalNextSibling = dropdownEl.nextSibling;
-            console.log('Floating dropdown. originalParent=', dropdownEl._originalParent?.nodeName, 'nextSibling=', dropdownEl._originalNextSibling?.nodeName);
 
             // Temporarily show invisibly to measure
             const wasHidden = dropdownEl.classList.contains('hidden');
@@ -638,13 +602,11 @@
             dropdownEl.style.visibility = '';
             if (wasHidden) dropdownEl.classList.remove('hidden');
             dropdownEl._floated = true;
-            console.log('Dropdown floated. parent now=', dropdownEl.parentNode.nodeName, 'rect=', dropdownEl.getBoundingClientRect(), 'computedDisplay=', window.getComputedStyle(dropdownEl).display);
             debugAndHighlightDropdown(dropdownEl, 'floated-dropdown');
         }
 
         function restoreDropdown(dropdownEl) {
             if (!dropdownEl || !dropdownEl._floated) return;
-            console.log('Restoring dropdown to original parent', dropdownEl._originalParent?.nodeName);
             // Remove inline positioning styles
             dropdownEl.style.position = '';
             dropdownEl.style.left = '';
@@ -662,17 +624,15 @@
             dropdownEl.style.display = '';
             dropdownEl.style.visibility = '';
             dropdownEl._floated = false;
-            console.log('Restore complete. parent=', dropdownEl.parentNode.nodeName, 'rect=', dropdownEl.getBoundingClientRect());
             // Remove highlight
-            dropdownEl.style.outline = '';
+            dropdownEl.style.outline = ''; 
         }
 
         // Ensure global click listener closes dropdowns
-        console.log('Adding global click listener for dropdowns');
         document.addEventListener('click', (e) => {
             // If we are suppressing account close because a toggle just opened it, ignore
             if (accountSuppressClose) {
-                console.log('Global click handler: skipping account close due to suppress flag');
+                // suppressed
             } else {
                 if (!e.target.closest('#account-dropdown') && !e.target.closest('#account-toggle')) {
                     if (accountDropdown && !accountDropdown.classList.contains('hidden')) {
@@ -797,18 +757,14 @@
         const currencyDisplay = mountPoint.querySelector('#current-currency');
         if (!currencyDropdown) return;
         try {
-            console.log('Fetching currencies from backend...');
             let resp;
             if (window.LocalizationApi && typeof window.LocalizationApi.getCurrencies === 'function') {
-                console.log('loadCurrencies: using LocalizationApi.getCurrencies');
                 resp = await window.LocalizationApi.getCurrencies();
             } else if (typeof ApiClient !== 'undefined') {
-                console.log('loadCurrencies: using ApiClient.get /currencies/');
                 // Use ApiClient so BASE_URL (/api/v1) is respected
                 const apiResp = await ApiClient.get('/currencies/');
                 resp = apiResp.data || apiResp.results || apiResp;
             } else {
-                console.log('loadCurrencies: using fetch /api/v1/currencies/ fallback');
                 // Fallback to explicit API v1 path
                 const r = await fetch('/api/v1/currencies/');
                 if (!r.ok) throw new Error(`Failed to fetch currencies: ${r.status}`);
@@ -836,7 +792,6 @@
                 const symbol = btn.dataset.symbol;
                 btn.classList.add('opacity-50');
                 try {
-                    console.log(`Setting currency to ${code}`);
                     if (window.LocalizationApi && typeof window.LocalizationApi.setCurrency === 'function') {
                         await window.LocalizationApi.setCurrency(code);
                     } else if (typeof ApiClient !== 'undefined') {
