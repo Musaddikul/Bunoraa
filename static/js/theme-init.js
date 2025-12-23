@@ -1,6 +1,14 @@
 (function() {
-    const theme = localStorage.getItem('theme') ||
-                 (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    function safeGetTheme() {
+        try {
+            if (typeof Storage !== 'undefined' && Storage.get) return Storage.get('theme');
+            return null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    const theme = safeGetTheme() || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     const root = document.documentElement;
     const useDark = theme === 'dark';
     root.classList.toggle('dark', useDark);

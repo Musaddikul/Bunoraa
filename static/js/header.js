@@ -774,9 +774,9 @@
             const list = Array.isArray(resp) ? resp : (resp.data || resp.results || resp);
             if (!list || !list.length) throw new Error('No currencies returned from backend');
 
-            const stored = localStorage.getItem('selected_currency');
+            const stored = (typeof Storage !== 'undefined' && Storage.get) ? Storage.get('selected_currency', null) : null;
             const active = stored || (list[0] && list[0].code) || 'USD';
-            if (currencyDisplay) currencyDisplay.textContent = active;
+            if (currencyDisplay) currencyDisplay.textContent = active; 
 
             currencyDropdown.innerHTML = list.map(cur => `
                 <button class="w-full px-4 py-2.5 text-left hover:bg-amber-50 dark:hover:bg-stone-700" data-currency="${cur.code}" data-symbol="${cur.symbol}">
@@ -798,14 +798,26 @@
                         // Try to set server-side preference (requires auth)
                         await ApiClient.post('/currencies/preference/', { currency_code: code, auto_detect: false });
                     } else {
+                        // Fallback: ensure cookies and CSRF header are sent
+                        const getCsrfFromCookie = () => {
+                            try {
+                                const m = document.cookie.match(/(^|; )csrftoken=([^;]+)/);
+                                return m ? decodeURIComponent(m[2]) : '';
+                            } catch (e) { return ''; }
+                        };
                         await fetch('/api/v1/currencies/preference/', {
                             method: 'POST',
+                            credentials: 'same-origin',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfFromCookie() },
                             body: JSON.stringify({ currency_code: code, auto_detect: false }),
-                            headers: { 'Content-Type': 'application/json' },
                         });
                     }
-                    localStorage.setItem('selected_currency', code);
-                    localStorage.setItem('selected_currency_symbol', symbol || '');
+                    try {
+                        if (typeof Storage !== 'undefined' && Storage.set) {
+                            Storage.set('selected_currency', code);
+                            Storage.set('selected_currency_symbol', symbol || '');
+                        }
+                    } catch (e) { /* ignore */ }
                     if (currencyDisplay) currencyDisplay.textContent = code;
                     window.dispatchEvent(new Event('currency:changed'));
                 } catch (err) {

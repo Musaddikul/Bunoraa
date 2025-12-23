@@ -18,18 +18,28 @@ const Storage = (function() {
         }
     }
 
+    function getWindowStorage(type) {
+        try {
+            return window && window[type] ? window[type] : null;
+        } catch (e) {
+            return null;
+        }
+    }
+
     const hasLocalStorage = isAvailable('localStorage');
     const hasSessionStorage = isAvailable('sessionStorage');
 
     function set(key, value, persistent = true) {
-        const storage = persistent ? localStorage : sessionStorage;
-        
-        if (!isAvailable(persistent ? 'localStorage' : 'sessionStorage')) {
+        const type = persistent ? 'localStorage' : 'sessionStorage';
+
+        if (!isAvailable(type)) {
             console.warn('Storage not available');
             return false;
         }
 
         try {
+            const storage = getWindowStorage(type);
+            if (!storage) return false;
             const data = {
                 value,
                 timestamp: Date.now()
@@ -43,16 +53,18 @@ const Storage = (function() {
     }
 
     function get(key, defaultValue = null, persistent = true) {
-        const storage = persistent ? localStorage : sessionStorage;
-        
-        if (!isAvailable(persistent ? 'localStorage' : 'sessionStorage')) {
+        const type = persistent ? 'localStorage' : 'sessionStorage';
+
+        if (!isAvailable(type)) {
             return defaultValue;
         }
 
         try {
+            const storage = getWindowStorage(type);
+            if (!storage) return defaultValue;
             const item = storage.getItem(key);
             if (!item) return defaultValue;
-            
+
             const data = JSON.parse(item);
             return data.value !== undefined ? data.value : data;
         } catch (e) {
@@ -61,31 +73,37 @@ const Storage = (function() {
     }
 
     function remove(key, persistent = true) {
-        const storage = persistent ? localStorage : sessionStorage;
-        
-        if (isAvailable(persistent ? 'localStorage' : 'sessionStorage')) {
-            storage.removeItem(key);
+        const type = persistent ? 'localStorage' : 'sessionStorage';
+
+        if (isAvailable(type)) {
+            try {
+                const storage = getWindowStorage(type);
+                storage && storage.removeItem(key);
+            } catch (e) { /* ignore */ }
         }
     }
 
     function clear(persistent = true) {
-        const storage = persistent ? localStorage : sessionStorage;
-        
-        if (isAvailable(persistent ? 'localStorage' : 'sessionStorage')) {
-            storage.clear();
+        const type = persistent ? 'localStorage' : 'sessionStorage';
+
+        if (isAvailable(type)) {
+            try {
+                const storage = getWindowStorage(type);
+                storage && storage.clear();
+            } catch (e) { /* ignore */ }
         }
     }
 
     function getWithExpiry(key, defaultValue = null) {
         const item = get(key, null);
-        
+
         if (!item) return defaultValue;
-        
+
         if (item.expiry && Date.now() > item.expiry) {
             remove(key);
             return defaultValue;
         }
-        
+
         return item.value !== undefined ? item.value : item;
     }
 
@@ -95,32 +113,40 @@ const Storage = (function() {
             expiry: Date.now() + ttl,
             timestamp: Date.now()
         };
-        
+
         return set(key, data);
     }
 
     function keys(persistent = true) {
-        const storage = persistent ? localStorage : sessionStorage;
-        
-        if (!isAvailable(persistent ? 'localStorage' : 'sessionStorage')) {
+        const type = persistent ? 'localStorage' : 'sessionStorage';
+
+        if (!isAvailable(type)) {
             return [];
         }
-        
-        return Object.keys(storage);
+
+        try {
+            const storage = getWindowStorage(type);
+            if (!storage) return [];
+            return Object.keys(storage);
+        } catch (e) { return []; }
     }
 
     function size(persistent = true) {
-        const storage = persistent ? localStorage : sessionStorage;
-        
-        if (!isAvailable(persistent ? 'localStorage' : 'sessionStorage')) {
+        const type = persistent ? 'localStorage' : 'sessionStorage';
+
+        if (!isAvailable(type)) {
             return 0;
         }
-        
-        let total = 0;
-        for (const key of Object.keys(storage)) {
-            total += storage.getItem(key).length;
-        }
-        return total;
+
+        try {
+            const storage = getWindowStorage(type);
+            if (!storage) return 0;
+            let total = 0;
+            for (const key of Object.keys(storage)) {
+                total += (storage.getItem(key) || '').length;
+            }
+            return total;
+        } catch (e) { return 0; }
     }
 
     return {

@@ -23,8 +23,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Initialize currency rate if needed
     const BASE_CURRENCY = 'BDT';
-    const selectedCurrency = localStorage.getItem('selected_currency') || 'BDT';
-    const storedRate = localStorage.getItem('currency_rate');
+    // Prefer the Storage helper (which safely checks availability). Avoid referencing window.localStorage at all.
+    const selectedCurrency = (typeof Storage !== 'undefined' && Storage.get) ? Storage.get('selected_currency', 'BDT') : 'BDT';
+    const storedRate = (typeof Storage !== 'undefined' && Storage.get) ? Storage.get('currency_rate', null) : null;
     
     if (selectedCurrency !== BASE_CURRENCY && (!storedRate || storedRate === '1' || storedRate === 'NaN')) {
         // Fetch exchange rate if not already stored
@@ -32,7 +33,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             try {
                 const rate = await LocalizationApi.getExchangeRate(BASE_CURRENCY, selectedCurrency);
                 if (rate && rate !== 1) {
-                    localStorage.setItem('currency_rate', rate.toString());
+                    try {
+                        if (typeof Storage !== 'undefined' && Storage.set) {
+                            Storage.set('currency_rate', rate.toString());
+                        }
+                    } catch (e) { /* ignore */ }
                     if (typeof window.convertDisplayedPrices === 'function') {
                         window.convertDisplayedPrices();
                     }
@@ -308,8 +313,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // ========== CURRENCY CONVERSION FOR SERVER-RENDERED PRICES ==========
     window.convertDisplayedPrices = function() {
-        const currency = localStorage.getItem('selected_currency') || 'BDT';
-        const rate = parseFloat(localStorage.getItem('currency_rate')) || 1;
+        const currency = (typeof Storage !== 'undefined' && Storage.get) ? Storage.get('selected_currency', 'BDT') : 'BDT';
+        const rate = parseFloat((typeof Storage !== 'undefined' && Storage.get) ? Storage.get('currency_rate', '1') : '1') || 1;
         const BASE_CURRENCY = 'BDT';
 
         // Skip if base currency

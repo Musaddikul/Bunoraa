@@ -20,12 +20,13 @@ const Templates = (function() {
                 return typeof stored === 'string' ? stored : stored.code;
             }
         }
-        return localStorage.getItem('selected_currency') || 'BDT';
+        const fallbackStored = (typeof Storage !== 'undefined' && Storage.get) ? Storage.get('selected_currency', null) : null;
+        return fallbackStored || 'BDT';
     }
     
     function getExchangeRate() {
         // Get stored exchange rate for the selected currency
-        const stored = localStorage.getItem('currency_rate');
+        const stored = (typeof Storage !== 'undefined' && Storage.get) ? Storage.get('currency_rate', null) : null;
         if (stored) {
             try {
                 return parseFloat(stored) || 1;
@@ -37,20 +38,27 @@ const Templates = (function() {
     }
     
     const locale = 'en-BD';
+    const _formatterCache = new Map();
 
     function formatPrice(amount, currencyCode = null) {
         if (amount === null || amount === undefined) return '';
-        
+
         const currency = currencyCode || getSelectedCurrency();
         const rate = currency === BASE_CURRENCY ? 1 : getExchangeRate();
         const convertedAmount = parseFloat(amount) * rate;
-        
-        return new Intl.NumberFormat(locale, {
-            style: 'currency',
-            currency: currency,
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2
-        }).format(convertedAmount);
+
+        const key = `${locale}|${currency}|0|2`;
+        let formatter = _formatterCache.get(key);
+        if (!formatter) {
+            formatter = new Intl.NumberFormat(locale, {
+                style: 'currency',
+                currency: currency,
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            });
+            _formatterCache.set(key, formatter);
+        }
+        return formatter.format(convertedAmount);
     }
 
     function formatDate(date, options = {}) {

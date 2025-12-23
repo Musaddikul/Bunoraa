@@ -49,6 +49,17 @@ jobs:
         run: |
           python manage.py collectstatic --noinput
 
+      - name: Prepare Pages output (add /static prefix)
+        run: |
+          mkdir -p staticfiles/static
+          # Copy collected output into a /static subdirectory so URLs like /static/js/... resolve
+          shopt -s dotglob || true
+          for f in staticfiles/*; do
+            if [ "$f" != "staticfiles/static" ]; then
+              cp -r "$f" staticfiles/static/
+            fi
+          done
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
         with:

@@ -57,49 +57,95 @@ const LocalizationApi = (function() {
     }
 
     async function setCurrency(code) {
-        localStorage.setItem(CURRENCY_KEY, code);
+        try {
+            if (typeof Storage !== 'undefined' && Storage.set) {
+                Storage.set(CURRENCY_KEY, code);
+            }
+        } catch (e) { /* ignore */ }
         
         // Fetch and store exchange rate
         if (code !== BASE_CURRENCY) {
             try {
                 const rate = await getExchangeRate(BASE_CURRENCY, code);
-                localStorage.setItem(CURRENCY_RATE_KEY, rate.toString());
+                try {
+                    if (typeof Storage !== 'undefined' && Storage.set) {
+                        Storage.set(CURRENCY_RATE_KEY, rate.toString());
+                    }
+                } catch (e) { /* ignore */ }
             } catch (error) {
                 console.error('Error setting exchange rate:', error);
-                localStorage.setItem(CURRENCY_RATE_KEY, '1');
+                try {
+                    if (typeof Storage !== 'undefined' && Storage.set) {
+                        Storage.set(CURRENCY_RATE_KEY, '1');
+                    }
+                } catch (e) { /* ignore */ }
             }
         } else {
-            localStorage.setItem(CURRENCY_RATE_KEY, '1');
+            try {
+                if (typeof Storage !== 'undefined' && Storage.set) {
+                    Storage.set(CURRENCY_RATE_KEY, '1');
+                }
+            } catch (e) { /* ignore */ }
         }
         
         window.dispatchEvent(new CustomEvent('currency:changed', { detail: code }));
     }
 
     function getCurrency() {
-        return localStorage.getItem(CURRENCY_KEY) || 'BDT';
+        try {
+            if (typeof Storage !== 'undefined' && Storage.get) return Storage.get(CURRENCY_KEY, 'BDT');
+            return 'BDT';
+        } catch (e) {
+            return 'BDT';
+        }
     }
     
     function getStoredExchangeRate() {
-        const rate = localStorage.getItem(CURRENCY_RATE_KEY);
-        return rate ? parseFloat(rate) : 1;
+        try {
+            if (typeof Storage !== 'undefined' && Storage.get) {
+                const r = Storage.get(CURRENCY_RATE_KEY, '1');
+                return r ? parseFloat(r) : 1;
+            }
+            return 1;
+        } catch (e) {
+            return 1;
+        }
     }
 
     function setLanguage(code) {
-        localStorage.setItem(LANGUAGE_KEY, code);
+        try {
+            if (typeof Storage !== 'undefined' && Storage.set) {
+                Storage.set(LANGUAGE_KEY, code);
+            }
+        } catch (e) { /* ignore */ }
         window.dispatchEvent(new CustomEvent('language:changed', { detail: code }));
     }
 
     function getLanguage() {
-        return localStorage.getItem(LANGUAGE_KEY) || 'en';
+        try {
+            if (typeof Storage !== 'undefined' && Storage.get) return Storage.get(LANGUAGE_KEY, 'en');
+            return 'en';
+        } catch (e) {
+            return 'en';
+        }
     }
 
     function setTimezone(tz) {
-        localStorage.setItem(TIMEZONE_KEY, tz);
+        try {
+            if (typeof Storage !== 'undefined' && Storage.set) {
+                Storage.set(TIMEZONE_KEY, tz);
+            }
+        } catch (e) { /* ignore */ }
         window.dispatchEvent(new CustomEvent('timezone:changed', { detail: tz }));
     }
 
     function getTimezone() {
-        return localStorage.getItem(TIMEZONE_KEY) || Intl.DateTimeFormat().resolvedOptions().timeZone;
+        try {
+            if (typeof Storage !== 'undefined' && Storage.get) return Storage.get(TIMEZONE_KEY, Intl.DateTimeFormat().resolvedOptions().timeZone);
+            return Intl.DateTimeFormat().resolvedOptions().timeZone;
+        } catch (e) {
+            return Intl.DateTimeFormat().resolvedOptions().timeZone;
+        }
     }
 
     return {

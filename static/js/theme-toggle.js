@@ -2,7 +2,14 @@
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
     const metaTheme = document.querySelector('meta[name="theme-color"]');
 
-    const getStoredTheme = () => localStorage.getItem('theme');
+    const getStoredTheme = () => {
+        try {
+            if (typeof Storage !== 'undefined' && Storage.get) return Storage.get('theme');
+            return null;
+        } catch (e) {
+            return null;
+        }
+    };
     const resolveTheme = () => getStoredTheme() || (prefersDark.matches ? 'dark' : 'light');
 
     function updateMetaThemeColor(useDark) {
@@ -37,7 +44,13 @@
         document.body?.classList.toggle('dark', useDark);
 
         if (persist) {
-            localStorage.setItem('theme', useDark ? 'dark' : 'light');
+            try {
+                if (typeof Storage !== 'undefined' && Storage.set) {
+                    Storage.set('theme', useDark ? 'dark' : 'light');
+                }
+            } catch (e) {
+                // Ignore storage errors
+            }
         }
 
         updateThemeIcons(useDark);
