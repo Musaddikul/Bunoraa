@@ -30,6 +30,15 @@ const AuthGuard = (function() {
 
     function redirectToLogin(returnUrl = null) {
         const url = returnUrl || window.location.pathname + window.location.search;
+        // Avoid re-redirecting if we're already on the login page to prevent loops
+        try {
+            // Normalize paths (strip trailing slashes) to avoid false negatives
+            const currentPath = (window.location.pathname || '').replace(/\/+$/, '');
+            const normalizedLogin = (loginUrl || '').replace(/\/+$/, '');
+            if (currentPath === normalizedLogin || currentPath.startsWith(normalizedLogin + '/')) return;
+        } catch (e) {
+            // ignore
+        }
         window.location.href = `${loginUrl}?${redirectParam}=${encodeURIComponent(url)}`;
     }
 

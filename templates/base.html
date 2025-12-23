@@ -152,14 +152,16 @@
 
 
     <!-- Config for client-side header (JSON): contains site and user data for rendering -->
+    {% with logo_dark=SITE_LOGO_DARK|default:'' logo=SITE_LOGO|default:'' %}
     <script id="header-config" type="application/json">{
         "siteName": "{{ SITE_NAME|escapejs }}",
-        "siteLogo": "{{ SITE_LOGO|default:''|escapejs }}",
-        "siteLogoDark": "{{ SITE_LOGO_DARK|default:SITE_LOGO|escapejs }}",
+        "siteLogo": "{{ logo|escapejs }}",
+        "siteLogoDark": "{{ logo_dark|default:logo|escapejs }}",
         "authenticated": {{ request.user.is_authenticated|yesno:"true,false" }},
         "userFirstName": "{{ request.user.first_name|default:''|escapejs }}",
         "userAvatar": "{% if request.user.avatar %}{{ request.user.avatar.url|escapejs }}{% else %}{% endif %}"
     }</script>
+    {% endwith %}
 
     <!-- User JSON for JS (safe, valid JSON) -->
 {% if request.user.is_authenticated %}
@@ -259,14 +261,16 @@
                 <!-- Brand -->
                 <div class="col-span-2 md:col-span-3 lg:col-span-2">
                     <a href="{% url 'home' %}" class="inline-flex items-center gap-2 mb-6 group">
-                        {% if SITE_LOGO_DARK or SITE_LOGO %}
-                        <img src="{{ SITE_LOGO_DARK|default:SITE_LOGO }}" alt="{{ SITE_NAME }}" class="h-10 w-auto">
+                        {% with logo_dark=SITE_LOGO_DARK|default:'' logo=SITE_LOGO|default:'' %}
+                        {% if logo_dark or logo %}
+                        <img src="{{ logo_dark|default:logo }}" alt="{{ SITE_NAME|default:'Site' }}" class="h-10 w-auto">
                         {% else %}
                         <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
                         </div>
-                        <span class="text-2xl font-display font-bold text-white">{{ SITE_NAME }}</span>
+                        <span class="text-2xl font-display font-bold text-white">{{ SITE_NAME|default:'Site' }}</span>
                         {% endif %}
+                        {% endwith %}
                     </a>
                     <p class="text-stone-400 mb-6 leading-relaxed">A curated marketplace celebrating the beauty of handmade. Every purchase supports independent artisans and their craft.</p>
                     
