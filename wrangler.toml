@@ -1,0 +1,24 @@
+name = "bunoraa"
+type = "python"
+account_id = "558bc0d014e2ae8268244260bf05b597"
+workers_dev = true
+route = "https://bunoraa.com/api/v1/*"
+zone_id = "033097027d7efb67e7209804551abe08"
+compatibility_date = "2025-12-24"
+
+[build]
+command = "pip install -r requirements.txt && python manage.py makemigrations && python manage.py migrate && python manage.py collectstatic --noinput"
+
+[env.production]
+route = "https://bunoraa.com/api/v1/*"
+zone_id = "033097027d7efb67e7209804551abe08"
+
+[triggers]
+crons = []
+
+[vars]
+DJANGO_SETTINGS_MODULE = "core.settings.production"
+
+# Add any secrets or environment variables below
+# [secrets]
+# SECRET_KEY = "bunoraa_secret_key_b7d4d4e620a09a013600ff3891257741"
