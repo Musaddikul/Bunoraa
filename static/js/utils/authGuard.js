@@ -67,7 +67,9 @@ const AuthGuard = (function() {
                     if (options.showModal) {
                         Toast.info('Please log in to continue');
                     }
-                    redirectToLogin();
+                    // Prefer explicit return URL if provided on options, data-return-url, or element href
+                    const returnUrl = options.returnUrl || element.dataset.returnUrl || (element.getAttribute ? element.getAttribute('href') : null);
+                    redirectToLogin(returnUrl || null);
                 });
             }
         }

@@ -31,8 +31,9 @@ const App = (function() {
         initCartBadge();
         initGlobalEventListeners();
         initMobileMenu();
-        initLanguageSelector();
-        initCurrencySelector();
+        // Remove duplicate dropdown initializations if header.js handles them
+        // initLanguageSelector();
+        // initCurrencySelector();
     }
 
     function detectCurrentPage() {
@@ -61,7 +62,7 @@ const App = (function() {
             currentPage = 'cart';
         } else if (path.startsWith('/checkout')) {
             currentPage = 'checkout';
-        } else if (path.startsWith('/account') || path.startsWith('/accounts/profile')) {
+        } else if ((path.startsWith('/account') && !path.startsWith('/account/login') && !path.startsWith('/account/register')) || path.startsWith('/accounts/profile')) {
             currentPage = 'account';
         } else if (path.startsWith('/orders')) {
             currentPage = 'orders';
@@ -79,22 +80,11 @@ const App = (function() {
     function initGlobalComponents() {
         // Initialize global UI components
         // Modal, Toast, and Dropdown are lazy-initialized when needed
-        
-        // Initialize tabs if present on page
+        // Tabs only
         if (typeof Tabs !== 'undefined' && document.querySelector('[data-tabs]')) {
             Tabs.init();
         }
-        
-        // Initialize any existing dropdowns on the page
-        if (typeof Dropdown !== 'undefined') {
-            document.querySelectorAll('[data-dropdown-trigger]').forEach(trigger => {
-                const targetId = trigger.dataset.dropdownTarget;
-                const target = document.getElementById(targetId);
-                if (target) {
-                    Dropdown.create(trigger, { content: target.innerHTML });
-                }
-            });
-        }
+        // Dropdowns are handled by header.js
     }
 
     function initCurrentPage() {
@@ -345,50 +335,11 @@ const App = (function() {
     }
 
     function initLanguageSelector() {
-        const languageBtn = document.querySelector('[data-language-selector]');
-        const languageDropdown = document.getElementById('language-dropdown');
-
-        if (languageBtn && languageDropdown) {
-            Dropdown.create(languageBtn, languageDropdown);
-
-            languageDropdown.querySelectorAll('[data-language]').forEach(item => {
-                item.addEventListener('click', async () => {
-                    const lang = item.dataset.language;
-                    
-                    try {
-                        await LocalizationApi.setLanguage(lang);
-                        Storage.set('language', lang);
-                        window.location.reload();
-                    } catch (error) {
-                        Toast.error('Failed to change language.');
-                    }
-                });
-            });
-        }
+        // Disabled: handled by header.js
     }
 
     function initCurrencySelector() {
-        const currencyBtn = document.querySelector('[data-currency-selector]');
-        const currencyDropdown = document.getElementById('currency-dropdown');
-
-        if (currencyBtn && currencyDropdown) {
-            Dropdown.create(currencyBtn, currencyDropdown);
-
-            currencyDropdown.querySelectorAll('[data-currency]').forEach(item => {
-                item.addEventListener('click', async () => {
-                    const currency = item.dataset.currency;
-                    const symbol = item.dataset.symbol;
-                    
-                    try {
-                        await LocalizationApi.setCurrency(currency);
-                        Storage.set('currency', { code: currency, symbol });
-                        window.location.reload();
-                    } catch (error) {
-                        Toast.error('Failed to change currency.');
-                    }
-                });
-            });
-        }
+        // Disabled: handled by header.js
     }
 
     function destroy() {

@@ -9,7 +9,7 @@ const AccountPage = (function() {
     let currentUser = null;
 
     async function init() {
-        if (!AuthGuard.requireAuth()) return;
+        if (!AuthGuard.protectPage()) return;
 
         await loadUserProfile();
         initProfileTabs();

@@ -10,7 +10,7 @@ const OrdersPage = (function() {
     let currentFilter = 'all';
 
     async function init() {
-        if (!AuthGuard.requireAuth()) return;
+        if (!AuthGuard.protectPage()) return;
 
         const orderId = getOrderIdFromUrl();
         if (orderId) {

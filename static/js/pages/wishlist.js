@@ -9,7 +9,7 @@ const WishlistPage = (function() {
     let currentPage = 1;
 
     async function init() {
-        if (!AuthGuard.requireAuth()) return;
+        if (!AuthGuard.protectPage()) return;
 
         await loadWishlist();
     }
