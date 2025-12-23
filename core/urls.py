@@ -5,6 +5,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic import RedirectView
 from django.contrib.sitemaps.views import sitemap
 from .sitemaps import StaticViewSitemap, ProductSitemap, CategorySitemap
 from .views import HomeView, health_check
@@ -41,6 +42,8 @@ urlpatterns = [
     path('support/', include('apps.support.urls')),
     path('notifications/', include('apps.notifications.urls')),
     path('account/', include('apps.accounts.urls')),
+    # Browser requests '/favicon.ico' by default; serve our static favicon via a redirect
+    path('favicon.ico', RedirectView.as_view(url=settings.STATIC_URL + 'images/favicon.ico', permanent=False)),
     path('legal/', include('apps.legal.urls')),
 
     # Register pages URLs under the 'contacts' namespace for backward compatibility

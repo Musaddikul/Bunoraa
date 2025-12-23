@@ -159,6 +159,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Site ID
 SITE_ID = 1
 
+# Authentication redirects
+LOGIN_URL = '/account/login/'
+LOGIN_REDIRECT_URL = '/account/dashboard/'
+
 # REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
