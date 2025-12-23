@@ -36,8 +36,32 @@ This guide explains how to deploy your project to Cloudflare Pages (static asset
 - If Worker deployment fails due to missing secrets, ensure `wrangler secret list --env production` shows them.
 
 ---
-If you'd like, I can:
-- Create a small `workers/` example (a proxy middleware) and a minimal `requirements-worker.txt` for the worker runtime.
-- Add GitHub Actions or a sample CI job to automatically set secrets and publish the Worker when you push to `main`.
 
-Which next step would you like me to implement? (example: add a sample Worker script, or add CI deployment config) ✨
+## Worker CI example (GitHub Actions)
+Use the provided `.github/workflows/worker-deploy.yml` to publish the Worker automatically. Add these repository secrets in GitHub before running the workflow:
+
+- `CF_API_TOKEN` — Cloudflare API token with `account.workers.*` and `account.secrets` permissions.
+- `CF_ACCOUNT_ID` — Cloudflare account id for your account (used by some workflows / logs).
+- `DATABASE_URL` — (optional) DB URL used by the origin or for build-time checks (only if required).
+- `SECRET_KEY` — (optional) Django `SECRET_KEY` (if your Worker/Build requires it).
+- `SENTRY_DSN` — (optional) Sentry DSN for error reporting.
+
+Tip: Commit a `package-lock.json` to the repository to allow `npm ci` in CI for faster, reproducible installs. If you can't commit a lockfile, the workflows now fall back to `npm install` automatically.
+
+The workflow will:
+- Install `wrangler` and publish with `npx wrangler publish --config ./wrangler.worker.toml --env production`.
+- For secrets defined in GitHub Secrets, it will call `npx wrangler secret put <NAME> --env production` (non-interactive) to install them into Cloudflare for the Worker.
+
+### Example local commands
+- Publish locally (after setting `CLOUDFLARE_API_TOKEN` env var):
+  - `npx wrangler publish --config ./wrangler.worker.toml --env production`
+- Put a secret locally:
+  - `printf '%s' "${DATABASE_URL}" | npx wrangler secret put DATABASE_URL --env production --config ./wrangler.worker.toml`
+
+---
+
+If you'd like, I can also:
+- Create a minimal `workers/` proxy example and `requirements-worker.txt` for packaging worker code.
+- Add deployment checks (smoke tests) to the workflow.
+
+Which of those should I create next?
