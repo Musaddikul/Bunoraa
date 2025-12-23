@@ -1,0 +1,60 @@
+# Production-ready Cloudflare Workers configuration (bunoraa-worker)
+# Use this file to publish an Edge Worker that proxies or augments your API endpoints.
+# DO NOT include sensitive secrets here — use `wrangler secret put` or the Cloudflare Dashboard.
+
+name = "bunoraa-worker"
+type = "python"
+account_id = "558bc0d014e2ae8268244260bf05b597"
+workers_dev = false
+route = "https://bunoraa.com/api/v1/*"
+zone_id = "033097027d7efb67e7209804551abe08"
+compatibility_date = "2025-12-24"
+# Add compatibility flags only if you need them. Keep this minimal in production.
+compatibility_flags = []
+
+[build]
+# Build should prepare a small, focused worker package. Avoid installing heavy server dependencies
+# (like full Django) into the Worker. If your Worker needs to call your Django backend, treat
+# the Worker as a reverse proxy or middleware and keep heavy work on your origin servers.
+# Example: install lightweight dependencies for the worker runtime (requests, etc) into a
+# virtual environment and copy only the packaged worker code to the publish directory.
+command = "python -m pip install --upgrade pip && pip install -r requirements-worker.txt -t build/ && cp -r workers/ build/"
+
+# If you compile or bundle, configure `upload` settings below (optional)
+[build.upload]
+format = "service-worker"
+
+[triggers]
+# Optional cron triggers to run scheduled tasks in your Worker (example: hourly-cleanup)
+# crons = ["0 */6 * * *"]
+crons = []
+
+[vars]
+# Non-sensitive build-time or runtime variables (safe defaults only)
+# Set production-only settings using the Cloudflare Dashboard or `wrangler publish --env production`.
+DJANGO_ORIGIN = "https://origin.example.com"  # change to your origin (internal/private origin)
+
+# SECRETS
+# Secrets must be set via `wrangler secret put NAME --env production` or Cloudflare Dashboard
+# Example (run locally):
+#   wrangler secret put SECRET_KEY --env production
+#   wrangler secret put DATABASE_URL --env production
+
+[env.production]
+# Production-specific overrides
+route = "https://bunoraa.com/api/v1/*"
+zone_id = "033097027d7efb67e7209804551abe08"
+workers_dev = false
+
+# Optionally include env-specific vars (non-sensitive)
+[env.production.vars]
+DJANGO_ORIGIN = "https://origin.bunoraa.com"
+
+# Do NOT put secrets here. Use `wrangler secret put <NAME> --env production`.
+
+# NOTES & RECOMMENDATIONS
+# 1) Keep your Worker code small: do auth, header-management, caching and proxying at the edge,
+#    leave heavy compute and DB operations to origin servers (Heroku, Render, etc.).
+# 2) Use Cloudflare R2 or KV for persistent storage if you need edge-accessible assets.
+# 3) Use `wrangler tail --env production` to tail logs during debugging, and `wrangler publish --env production` to deploy.
+# 4) Use a CI job to set secrets in production (via `wrangler secret put` or the Cloudflare API) and to run any DB migrations on your origin.
