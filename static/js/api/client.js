@@ -27,25 +27,71 @@ const ApiClient = (function() {
         return '';
     }
 
+    function getWindowStorage(name) {
+        try {
+            return window && window[name] ? window[name] : null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function safeGet(storageOrName, key) {
+        try {
+            const storage = typeof storageOrName === 'string' ? getWindowStorage(storageOrName) : storageOrName;
+            if (!storage) return null;
+            return storage.getItem(key);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function safeSet(storageOrName, key, value) {
+        try {
+            const storage = typeof storageOrName === 'string' ? getWindowStorage(storageOrName) : storageOrName;
+            if (!storage) return false;
+            storage.setItem(key, value);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function safeRemove(storageOrName, key) {
+        try {
+            const storage = typeof storageOrName === 'string' ? getWindowStorage(storageOrName) : storageOrName;
+            if (!storage) return;
+            storage.removeItem(key);
+        } catch (e) { /* ignore */ }
+    }
+
     function getAccessToken() {
-        return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
+        return safeGet('localStorage', TOKEN_KEY) || safeGet('sessionStorage', TOKEN_KEY) || null;
     }
 
     function getRefreshToken() {
-        return localStorage.getItem(REFRESH_KEY) || sessionStorage.getItem(REFRESH_KEY);
+        return safeGet('localStorage', REFRESH_KEY) || safeGet('sessionStorage', REFRESH_KEY) || null;
     }
 
     function setTokens(access, refresh, persistent = true) {
-        const storage = persistent ? localStorage : sessionStorage;
-        if (access) storage.setItem(TOKEN_KEY, access);
-        if (refresh) storage.setItem(REFRESH_KEY, refresh);
+        const primaryName = persistent ? 'localStorage' : 'sessionStorage';
+        const fallbackName = persistent ? 'sessionStorage' : 'localStorage';
+        if (access) {
+            if (!safeSet(primaryName, TOKEN_KEY, access)) {
+                safeSet(fallbackName, TOKEN_KEY, access);
+            }
+        }
+        if (refresh) {
+            if (!safeSet(primaryName, REFRESH_KEY, refresh)) {
+                safeSet(fallbackName, REFRESH_KEY, refresh);
+            }
+        }
     }
 
     function clearTokens() {
-        localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem(REFRESH_KEY);
-        sessionStorage.removeItem(TOKEN_KEY);
-        sessionStorage.removeItem(REFRESH_KEY);
+        safeRemove('localStorage', TOKEN_KEY);
+        safeRemove('localStorage', REFRESH_KEY);
+        safeRemove('sessionStorage', TOKEN_KEY);
+        safeRemove('sessionStorage', REFRESH_KEY);
     }
 
     function isTokenExpired(token) {
@@ -89,7 +135,7 @@ const ApiClient = (function() {
         }
 
         const data = await response.json();
-        const persistent = !!localStorage.getItem(REFRESH_KEY);
+        const persistent = !!safeGet('localStorage', REFRESH_KEY);
         setTokens(data.access, data.refresh || refresh, persistent);
         return data.access;
     }
