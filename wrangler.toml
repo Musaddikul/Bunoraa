@@ -1,16 +1,15 @@
 # Cloudflare Pages configuration for Bunoraa 🔧
-# This file is Pages-compatible: it must include `pages_build_output_dir` and should NOT contain
-# worker-specific fields like `type`, `account_id`, `zone_id`, or `route`.
+# Minimal Pages-compatible config: includes project name and build output directory only.
+
+name = "bunoraa"
 
 pages_build_output_dir = "staticfiles"
-
-[build]
-# Install dependencies and collect static files only (skip migrations during Pages build)
-command = "pip install -r requirements.txt && python manage.py collectstatic --noinput"
 
 [vars]
 # Use an existing settings module that works during builds; change if needed
 DJANGO_SETTINGS_MODULE = "core.settings.s3"
 
+# For build commands (install deps / collectstatic), configure them in the Pages project
+# settings in the Cloudflare dashboard or via the CLI rather than in this file.
 # If you need Worker deployment, create a separate `wrangler.worker.toml` with Worker-specific
 # fields (name, type, account_id, zone_id, route, compatibility_date, etc.).
