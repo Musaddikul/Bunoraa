@@ -22,3 +22,5 @@ DJANGO_SETTINGS_MODULE = "core.settings.production"
 # Add any secrets or environment variables below
 # [secrets]
 # SECRET_KEY = "bunoraa_secret_key_b7d4d4e620a09a013600ff3891257741"
+
+pages_build_output_dir = "staticfiles"
