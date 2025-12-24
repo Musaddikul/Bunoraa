@@ -9,3 +9,8 @@ try:
     from .production import *
 except ImportError:
     pass
+
+try:
+    from .s3 import *
+except ImportError:
+    pass

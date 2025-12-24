@@ -49,6 +49,27 @@ const ProductPage = (function() {
         initAddToCartFromExisting();
         // Bind wishlist
         initWishlistFromExisting();
+        markWishlistButtonIfNeeded();
+            async function markWishlistButtonIfNeeded() {
+                const btn = document.getElementById('add-to-wishlist-btn');
+                if (!btn) return;
+                const productId = document.getElementById('product-detail')?.dataset.productId;
+                if (!productId) return;
+                if (typeof WishlistApi === 'undefined') return;
+                try {
+                    const resp = await WishlistApi.getWishlist({ pageSize: 100 });
+                    if (resp.success && resp.data?.items) {
+                        const found = resp.data.items.some(item => item.product_id === productId || item.product === productId);
+                        if (found) {
+                            btn.querySelector('svg')?.setAttribute('fill', 'currentColor');
+                            btn.classList.add('text-red-500');
+                        } else {
+                            btn.querySelector('svg')?.setAttribute('fill', 'none');
+                            btn.classList.remove('text-red-500');
+                        }
+                    }
+                } catch (e) {}
+            }
         // Bind variant selection
         initVariantSelectionFromExisting();
         // Bind image gallery
@@ -109,15 +130,26 @@ const ProductPage = (function() {
         btn.addEventListener('click', async () => {
             const productId = document.getElementById('product-detail')?.dataset.productId;
             const quantity = parseInt(document.getElementById('quantity')?.value) || 1;
+            const variantInput = document.querySelector('input[name="variant"]');
+            const hasVariants = !!variantInput;
             const variantId = document.querySelector('input[name="variant"]:checked')?.value;
 
             if (!productId) return;
+
+            // If product has variants, enforce selection
+            if (hasVariants && !variantId) {
+                Toast.warning('Please select a variant before adding to cart.');
+                return;
+            }
 
             btn.disabled = true;
             const originalHtml = btn.innerHTML;
             btn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
 
+
+
             try {
+
                 await CartApi.addItem(productId, quantity, variantId || null);
 
                 Toast.success('Added to cart!');
@@ -146,16 +178,34 @@ const ProductPage = (function() {
             }
 
             try {
-                await WishlistApi.addItem(productId);
-                Toast.success('Added to wishlist!');
-                btn.querySelector('svg')?.setAttribute('fill', 'currentColor');
-                btn.classList.add('text-red-500');
-            } catch (error) {
-                if (error.message?.includes('already')) {
-                    Toast.info('This item is already in your wishlist.');
-                } else {
-                    Toast.error(error.message || 'Failed to add to wishlist.');
+                // Check if already in wishlist
+                let inWishlist = false;
+                if (typeof WishlistApi !== 'undefined') {
+                    const resp = await WishlistApi.getWishlist({ pageSize: 100 });
+                    if (resp.success && resp.data?.items) {
+                        inWishlist = resp.data.items.some(item => item.product_id === productId || item.product === productId);
+                    }
                 }
+                if (inWishlist) {
+                    // Remove from wishlist
+                    // Find the wishlist item id
+                    const resp = await WishlistApi.getWishlist({ pageSize: 100 });
+                    const item = resp.data.items.find(item => item.product_id === productId || item.product === productId);
+                    if (item) {
+                        await WishlistApi.removeItem(item.id);
+                        Toast.success('Removed from wishlist!');
+                        btn.querySelector('svg')?.setAttribute('fill', 'none');
+                        btn.classList.remove('text-red-500');
+                    }
+                } else {
+                    // Add to wishlist
+                    await WishlistApi.addItem(productId);
+                    Toast.success('Added to wishlist!');
+                    btn.querySelector('svg')?.setAttribute('fill', 'currentColor');
+                    btn.classList.add('text-red-500');
+                }
+            } catch (error) {
+                Toast.error(error.message || 'Wishlist action failed.');
             }
         });
     }

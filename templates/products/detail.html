@@ -106,7 +106,7 @@
             {% endif %}
             
             <!-- Variants -->
-            {% if product.variants.all %}
+            {% if product.variants.all and product.variants.all|length > 0 %}
             <div class="mb-6">
                 {% regroup product.variants.all by attribute_type as variant_groups %}
                 {% for group in variant_groups %}
@@ -121,6 +121,8 @@
                                 data-type="{{ group.grouper }}">
                             {{ variant.attribute_value }}
                         </button>
+                        <!-- Hidden radio input for JS to check -->
+                        <input type="radio" name="variant" value="{{ variant.id }}" style="display:none;" autocomplete="off">
                         {% endfor %}
                     </div>
                 </div>
@@ -155,7 +157,8 @@
                     Out of Stock
                 </button>
                 {% endif %}
-                
+            </div>
+            <div class="mb-6">
                 <button id="add-to-wishlist-btn" 
                         class="p-3 border border-gray-300 rounded-lg hover:border-primary-500 hover:text-primary-600 transition-colors"
                         title="Add to Wishlist">
@@ -279,6 +282,25 @@
 
 {% block extra_js %}
 <!-- Product page JS is handled by static/js/pages/product.js -->
+<script>
+    function selectVariant(variantId, group, value) {
+        // Find the corresponding input and check it
+        var input = document.querySelector('input[name="variant"][value="' + variantId + '"]');
+        if (input) {
+            input.checked = true;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    }
+</script>
+<script>
+    function changeImage(imageUrl) {
+        // Find the main product image element by id
+        var mainImage = document.getElementById('main-image');
+        if (mainImage) {
+            mainImage.src = imageUrl;
+        }
+    }
+</script>
 <script>
     // Pass server-side data to the JS module (strings for safety)
     window.BUNORAA_PRODUCT = {
