@@ -57,8 +57,8 @@
     const Api = {
         getCategories: () => window.ApiClient.get('/categories/'),
         getCurrencies: () => window.ApiClient.get('/currencies/'),
-        getAnnouncements: () => window.ApiClient.get('/pages/promotions/', { params: { type: 'announcement', active: 'true' } }),
-        searchProducts: (query) => window.ApiClient.get('/products/', { params: { search: query, limit: 5 } })
+        getAnnouncements: () => window.ApiClient.get('/pages/promotions/', { type: 'announcement', active: 'true' }),
+        searchProducts: (query) => window.ApiClient.get('/products/', { search: query, limit: 5 })
     };
 
     // --- COMPONENT RENDERING ---
