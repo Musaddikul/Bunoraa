@@ -57,8 +57,8 @@
     const Api = {
         getCategories: () => window.ApiClient.get('/categories/'),
         getCurrencies: () => window.ApiClient.get('/currencies/'),
-        getAnnouncements: () => window.ApiClient.get('/pages/promotions/', { type: 'announcement', active: 'true' }),
-        searchProducts: (query) => window.ApiClient.get('/products/', { search: query, limit: 5 })
+        getAnnouncements: () => window.ApiClient.get('/promotions/sales/', { is_active: true }), // Fetch all active sales
+        searchProducts: (query) => window.ApiClient.get('/products/search/', { q: query, limit: 5 })
     };
 
     // --- COMPONENT RENDERING ---
@@ -128,23 +128,19 @@
 
     function createRightActions() {
         return E('div', { class: 'flex items-center gap-2' }, [
-            // Theme Toggle
             E('button', { id: 'theme-toggle', class: 'p-2.5 rounded-lg text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800', 'aria-label': 'Toggle theme' }, [
                 E('svg', { id: 'theme-light-icon', class: 'w-5 h-5', fill: 'currentColor', viewBox: '0 0 20 20' }, [ E('path', { d: 'M10 4a1 1 0 011-1V2a1 1 0 10-2 0v1a1 1 0 011 1zM15.657 5.343a1 1 0 011.414 0l.707-.707a1 1 0 10-1.414-1.414l-.707.707a1 1 0 000 1.414zM18 11h1a1 1 0 100-2h-1a1 1 0 100 2zM15.657 16.657a1 1 0 001.414 1.414l.707-.707a1 1 0 10-1.414-1.414l-.707.707zM10 18a1 1 0 011 1v1a1 1 0 10-2 0v-1a1 1 0 011-1zM4.343 16.657a1 1 0 001.414-1.414l-.707-.707a1 1 0 10-1.414 1.414l.707.707zM2 11H1a1 1 0 100 2h1a1 1 0 100-2zM4.343 5.343a1 1 0 10-1.414 1.414l.707.707a1 1 0 101.414-1.414l-.707-.707zM10 6a4 4 0 100 8 4 4 0 000-8z' }) ]),
                 E('svg', { id: 'theme-dark-icon', class: 'w-5 h-5 hidden', fill: 'currentColor', viewBox: '0 0 20 20' }, [ E('path', { d: 'M17.293 13.293A8 8 0 016.707 2.707a8 8 0 1010.586 10.586z' }) ])
             ]),
-            // Mobile Search
             E('button', { id: 'mobile-search-toggle', class: 'lg:hidden p-2.5 rounded-lg text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800' }, [
                  E('svg', { class: 'w-5 h-5', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [ E('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' }) ])
             ]),
-            // Currency Selector
             E('div', { class: 'relative hidden lg:block' }, [
                 E('button', { id: 'currency-toggle', 'data-dropdown-toggle': 'currency-dropdown', class: 'p-2 rounded-lg text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800' }, [
                     E('span', { id: 'current-currency', class: 'font-medium' }, ['USD'])
                 ]),
                 E('div', { id: 'currency-dropdown', class: 'hidden absolute z-50 right-0 mt-2 bg-white dark:bg-stone-800 rounded-xl shadow-lg border border-stone-200 dark:border-stone-700 overflow-hidden py-2 min-w-[140px]' })
             ]),
-            // Account Menu
             E('div', { class: 'relative' }, [
                 E('button', { id: 'account-toggle', 'data-dropdown-toggle': 'account-dropdown', class: 'p-2 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800' }, [
                     E('div', { id: 'account-placeholder', class: 'w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center' }, [
@@ -153,11 +149,9 @@
                 ]),
                 E('div', { id: 'account-dropdown', class: 'hidden absolute z-50 right-0 mt-2 bg-white dark:bg-stone-800 rounded-2xl shadow-lg border border-stone-200 dark:border-stone-700 overflow-hidden py-2 min-w-[220px]' })
             ]),
-            // Wishlist
             E('a', { href: buildRoute('wishlistList'), class: 'relative p-2.5 text-stone-700 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all dark:text-stone-300 dark:hover:text-rose-400 dark:hover:bg-rose-950' }, [
                 E('svg', { class: 'w-5 h-5', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [ E('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z' }) ])
             ]),
-            // Cart
             E('button', { 'data-cart-toggle': '', class: 'relative p-2.5 text-stone-700 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all dark:text-stone-300 dark:hover:text-amber-400 dark:hover:bg-amber-950' }, [
                 E('svg', { class: 'w-5 h-5', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [ E('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z' }) ]),
                 E('span', { 'data-cart-count': '', class: 'absolute -top-1 -right-1 bg-rose-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center', style: 'display: none;' }, ['0'])
@@ -196,7 +190,6 @@
             loadCurrencies()
         ]);
         populateAccountMenu();
-        // Dispatch a single ready event after all content is loaded
         document.dispatchEvent(new CustomEvent('header:ready'));
     }
 
@@ -210,7 +203,7 @@
                 if (announcements.length > 0) {
                     announcementText.innerHTML = `
                         <svg class="w-4 h-4 animate-pulse" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                        <span>${announcements[0].message || announcements[0].title}</span>
+                        <span>${announcements[0].message || announcements[0].name || announcements[0].title}</span>
                     `;
                      announcementBar.classList.remove('hidden');
                 } else {
@@ -271,7 +264,6 @@
                     display.textContent = code;
                     dropdown.classList.add('hidden');
                     window.dispatchEvent(new Event('currency:changed'));
-                    // Optionally, reload or update prices
                     window.location.reload();
                 }
             });
@@ -339,17 +331,14 @@
         document.addEventListener('click', e => {
             const toggle = e.target.closest('[data-dropdown-toggle]');
             
-            // Close all dropdowns first
             document.querySelectorAll('[data-dropdown-toggle]').forEach(t => {
                 const dropdownId = t.dataset.dropdownToggle;
                 const dropdown = document.getElementById(dropdownId);
-                // If the current toggle is not the one being clicked, close its dropdown
                 if (t !== toggle && dropdown) {
                     dropdown.classList.add('hidden');
                 }
             });
 
-            // Then, toggle the clicked one
             if (toggle) {
                 const dropdownId = toggle.dataset.dropdownToggle;
                 const dropdown = document.getElementById(dropdownId);
