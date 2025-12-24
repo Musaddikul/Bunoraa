@@ -9,7 +9,7 @@ const AccountPage = (function() {
     let currentUser = null;
 
     async function init() {
-        if (!AuthGuard.protectPage()) return;
+        if (!AuthGuard.requireAuth()) return;
 
         await loadUserProfile();
         initProfileTabs();
@@ -20,22 +20,12 @@ const AccountPage = (function() {
 
     async function loadUserProfile() {
         try {
-            // First try to use the user data from the template (window.__DJANGO_USER__)
-            if (window.__DJANGO_USER__) {
-                currentUser = window.__DJANGO_USER__;
-                renderProfile();
-                return;
-            }
-            
-            // Fallback to API call
             const response = await AuthApi.getProfile();
             currentUser = response.data;
             renderProfile();
         } catch (error) {
             console.error('Failed to load profile:', error);
-            if (window.Toast?.error) {
-                window.Toast.error('Failed to load profile.');
-            }
+            Toast.error('Failed to load profile.');
         }
     }
 
@@ -123,9 +113,6 @@ const AccountPage = (function() {
         if (emailInput) emailInput.value = currentUser.email || '';
         if (phoneInput) phoneInput.value = currentUser.phone || '';
 
-        // Remove old listener if it exists (prevent multiple event handlers)
-        form.onsubmit = null;
-        
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -142,14 +129,10 @@ const AccountPage = (function() {
 
             try {
                 await AuthApi.updateProfile(data);
-                if (window.Toast?.success) {
-                    window.Toast.success('Profile updated successfully!');
-                }
-                currentUser = { ...currentUser, ...data };
+                Toast.success('Profile updated successfully!');
+                await loadUserProfile();
             } catch (error) {
-                if (window.Toast?.error) {
-                    window.Toast.error(error.message || 'Failed to update profile.');
-                }
+                Toast.error(error.message || 'Failed to update profile.');
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Save Changes';
@@ -177,21 +160,21 @@ const AccountPage = (function() {
             if (!file) return;
 
             if (!file.type.startsWith('image/')) {
-                window.Toast?.error('Please select an image file.');
+                Toast.error('Please select an image file.');
                 return;
             }
 
             if (file.size > 5 * 1024 * 1024) {
-                window.Toast?.error('Image must be smaller than 5MB.');
+                Toast.error('Image must be smaller than 5MB.');
                 return;
             }
 
             try {
                 await AuthApi.uploadAvatar(file);
-                window.Toast?.success('Avatar updated!');
+                Toast.success('Avatar updated!');
                 await loadUserProfile();
             } catch (error) {
-                window.Toast?.error(error.message || 'Failed to update avatar.');
+                Toast.error(error.message || 'Failed to update avatar.');
             }
         });
     }
@@ -208,14 +191,13 @@ const AccountPage = (function() {
             const newPassword = formData.get('new_password');
             const confirmPassword = formData.get('confirm_password');
 
-
             if (newPassword !== confirmPassword) {
-                window.Toast?.error('Passwords do not match.');
+                Toast.error('Passwords do not match.');
                 return;
             }
 
             if (newPassword.length < 8) {
-                window.Toast?.error('Password must be at least 8 characters.');
+                Toast.error('Password must be at least 8 characters.');
                 return;
             }
 
@@ -225,10 +207,10 @@ const AccountPage = (function() {
 
             try {
                 await AuthApi.changePassword(currentPassword, newPassword);
-                window.Toast?.success('Password updated successfully!');
+                Toast.success('Password updated successfully!');
                 form.reset();
             } catch (error) {
-                window.Toast?.error(error.message || 'Failed to update password.');
+                Toast.error(error.message || 'Failed to update password.');
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Update Password';
@@ -309,7 +291,7 @@ const AccountPage = (function() {
                     const response = await AuthApi.getAddress(addressId);
                     showAddressModal(response.data);
                 } catch (error) {
-                    window.Toast?.error('Failed to load address.');
+                    Toast.error('Failed to load address.');
                 }
             });
         });
@@ -319,10 +301,10 @@ const AccountPage = (function() {
                 const addressId = btn.dataset.addressId;
                 try {
                     await AuthApi.setDefaultAddress(addressId);
-                    window.Toast?.success('Default address updated.');
+                    Toast.success('Default address updated.');
                     await loadAddresses();
                 } catch (error) {
-                    window.Toast?.error('Failed to update default address.');
+                    Toast.error('Failed to update default address.');
                 }
             });
         });
@@ -340,10 +322,10 @@ const AccountPage = (function() {
                 if (confirmed) {
                     try {
                         await AuthApi.deleteAddress(addressId);
-                        window.Toast?.success('Address deleted.');
+                        Toast.success('Address deleted.');
                         await loadAddresses();
                     } catch (error) {
-                        window.Toast?.error('Failed to delete address.');
+                        Toast.error('Failed to delete address.');
                     }
                 }
             });
@@ -434,15 +416,15 @@ const AccountPage = (function() {
                 try {
                     if (isEdit) {
                         await AuthApi.updateAddress(address.id, data);
-                        window.Toast?.success('Address updated!');
+                        Toast.success('Address updated!');
                     } else {
                         await AuthApi.addAddress(data);
-                        window.Toast?.success('Address added!');
+                        Toast.success('Address added!');
                     }
                     await loadAddresses();
                     return true;
                 } catch (error) {
-                    window.Toast?.error(error.message || 'Failed to save address.');
+                    Toast.error(error.message || 'Failed to save address.');
                     return false;
                 }
             }

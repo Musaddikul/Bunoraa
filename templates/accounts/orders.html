@@ -99,12 +99,12 @@
                                 View Details
                             </a>
                             {% if order.status == 'delivered' %}
-                            <a href="{% url 'orders:detail' order.id %}" 
+                            <a href="{% url 'orders:invoice' order.order_number %}" 
                                class="text-sm text-gray-600 hover:text-gray-700">
                                 Download Invoice
                             </a>
                             {% if not order.is_reviewed %}
-                            <a href="{% url 'pages:contact' %}?order={{ order.order_number }}&action=review" 
+                            <a href="{% url 'reviews:create' order.order_number %}" 
                                class="text-sm text-gray-600 hover:text-gray-700">
                                 Write a Review
                             </a>

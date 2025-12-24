@@ -42,6 +42,7 @@ THIRD_PARTY_APPS = [
     'corsheaders',
     'django_filters',
     'storages',
+    'django_hugeicons_stroke',
 ]
 
 LOCAL_APPS = [

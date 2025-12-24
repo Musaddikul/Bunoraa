@@ -9,17 +9,8 @@ def site_settings(request):
     """Add site settings to template context."""
     # Cache the site settings for performance
     cache_key = 'site_settings_context'
-
-    # If using local-memory cache in a multi-process production environment, cache invalidation
-    # via SiteSettings.save() (which deletes the key) will NOT propagate to other processes.
-    # Detect common locmem backend and avoid caching in that case so admin edits are visible immediately.
-    cache_backend = settings.CACHES.get('default', {}).get('BACKEND', '')
-    use_cache = True
-    if ('locmem' in cache_backend.lower() or 'LocMem' in cache_backend) and not settings.DEBUG:
-        use_cache = False
-
-    cached_settings = cache.get(cache_key) if use_cache else None
-
+    cached_settings = cache.get(cache_key)
+    
     if cached_settings is None:
         try:
             from apps.pages.models import SiteSettings
@@ -47,29 +38,8 @@ def site_settings(request):
                 'CUSTOM_HEAD_SCRIPTS': site.custom_head_scripts or '',
                 'CUSTOM_BODY_SCRIPTS': site.custom_body_scripts or '',
             }
-            # Expose commonly used page URLs in footer (use Page if present & published)
-            try:
-                from apps.pages.models import Page
-                def _page_url(slug):
-                    p = Page.objects.filter(slug=slug, is_published=True).first()
-                    return p.get_absolute_url() if p else None
-                cached_settings.update({
-                    'SHIPPING_URL': _page_url('shipping'),
-                    'RETURNS_URL': _page_url('returns'),
-                    'PRIVACY_URL': _page_url('privacy-policy'),
-                    'TERMS_URL': _page_url('terms-of-service'),
-                    'COOKIE_URL': _page_url('cookie-policy'),
-                    'SELLER_TERMS_URL': _page_url('seller-terms'),
-                    'ABOUT_URL': _page_url('about'),
-                    'CONTACT_URL': _page_url('contact'),
-                    'FAQ_URL': _page_url('faq'),
-                })
-            except Exception:
-                # ignore failures when DB is not reachable
-                pass
-            # Cache for 5 minutes (only if using a cache that propagates across processes)
-            if use_cache:
-                cache.set(cache_key, cached_settings, 300)
+            # Cache for 5 minutes
+            cache.set(cache_key, cached_settings, 300)
         except Exception:
             # Fallback if database is not available
             cached_settings = {
