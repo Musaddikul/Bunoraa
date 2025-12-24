@@ -1,4 +1,4 @@
-﻿"""
+"""
 Production settings
 """
 import os
