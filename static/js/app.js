@@ -29,10 +29,19 @@ const App = (function() {
         initGlobalComponents();
         initCurrentPage();
         initCartBadge();
+        initWishlistBadge();
         initGlobalEventListeners();
         initMobileMenu();
         initLanguageSelector();
         initCurrencySelector();
+    }
+    async function initWishlistBadge() {
+        // Update wishlist badge on page load
+        try {
+            await WishlistApi.getWishlist({ pageSize: 1 });
+        } catch (error) {
+            // Ignore errors (e.g., not logged in)
+        }
     }
 
     function detectCurrentPage() {
@@ -107,11 +116,8 @@ const App = (function() {
     }
 
     async function initCartBadge() {
-        const cartBadge = document.getElementById('cart-badge');
-        const cartCount = document.getElementById('cart-count');
-
-        if (!cartBadge && !cartCount) return;
-
+        const cartBadges = document.querySelectorAll('[data-cart-count]');
+        if (!cartBadges.length) return;
         try {
             const response = await CartApi.getCart();
             const count = response.data?.item_count || 0;
@@ -135,27 +141,22 @@ const App = (function() {
     }
 
     function updateCartBadge(count) {
-        const cartBadge = document.getElementById('cart-badge');
-        const cartCount = document.getElementById('cart-count');
-
-        if (cartCount) {
-            cartCount.textContent = count;
-        }
-
-        if (cartBadge) {
-            if (count > 0) {
-                cartBadge.textContent = count > 99 ? '99+' : count;
-                cartBadge.classList.remove('hidden');
-            } else {
-                cartBadge.classList.add('hidden');
-            }
-        }
+        const cartBadges = document.querySelectorAll('[data-cart-count]');
+        cartBadges.forEach(badge => {
+            badge.textContent = count > 99 ? '99+' : count;
+            badge.classList.toggle('hidden', count === 0);
+        });
     }
 
     function initGlobalEventListeners() {
         // Listen for cart updates
         document.addEventListener('cart:updated', async () => {
             await initCartBadge();
+        });
+
+        // Listen for wishlist updates
+        document.addEventListener('wishlist:updated', async () => {
+            await initWishlistBadge();
         });
 
         // Listen for auth state changes
