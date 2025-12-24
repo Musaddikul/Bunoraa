@@ -8,7 +8,7 @@ const HomePage = (function() {
 
     // --- Polyfills/Shims for legacy dependencies ---
     const Templates = window.Templates || {
-        escapeHtml: (str) => str.replace(/[&<>"']/g, (match) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[match])
+        escapeHtml: (str) => str ? str.replace(/[&<>"']/g, (match) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[match]) : ''
     };
 
     const ProductCard = window.ProductCard || {
@@ -42,7 +42,7 @@ const HomePage = (function() {
         if (!container) return;
 
         try {
-            const response = await window.ApiClient.get('/pages/banners/', { params: { type: 'home_hero' } });
+            const response = await window.ApiClient.get('/pages/banners/', { type: 'home_hero' });
             const banners = getResults(response);
 
             if (banners.length === 0) {
@@ -118,6 +118,7 @@ const HomePage = (function() {
         const nextBtn = document.querySelector('.hero-next');
 
         function goToSlide(index) {
+            if (!slides[currentSlide]) return;
             slides[currentSlide].classList.add('hidden');
             dots[currentSlide]?.classList.remove('bg-white');
             dots[currentSlide]?.classList.add('bg-white/50');
@@ -164,7 +165,7 @@ const HomePage = (function() {
         window.Loader.show(grid);
 
         try {
-            const response = await window.ApiClient.get('/products/featured/', { params: { limit: 8 } });
+            const response = await window.ApiClient.get('/products/featured/', { limit: 8 });
             const products = getResults(response);
 
             if (products.length === 0) {
@@ -189,7 +190,7 @@ const HomePage = (function() {
         window.Loader.show(container);
 
         try {
-            const response = await window.ApiClient.get('/categories/', { params: { page_size: 6, featured: true } });
+            const response = await window.ApiClient.get('/categories/', { page_size: 6, featured: true });
             const categories = getResults(response);
 
             if (categories.length === 0) {
@@ -230,7 +231,7 @@ const HomePage = (function() {
         window.Loader.show(grid);
 
         try {
-            const response = await window.ApiClient.get('/products/new-arrivals/', { params: { limit: 4 } });
+            const response = await window.ApiClient.get('/products/new-arrivals/', { limit: 4 });
             const products = getResults(response);
 
             if (products.length === 0) {
