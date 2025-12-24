@@ -508,38 +508,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return `${CONFIG.currencySymbol}${parseFloat(amount).toFixed(2)}`;
         },
         
-        showToast(message, type = 'info') {
-            const colors = {
-                success: 'bg-green-600',
-                error: 'bg-red-600',
-                info: 'bg-blue-600',
-                warning: 'bg-yellow-500'
-            };
-            
-            const toast = document.createElement('div');
-            toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-500 translate-y-full opacity-0 ${colors[type]} text-white`;
-            toast.innerHTML = `
-                <div class="flex items-center">
-                    <span>${message}</span>
-                    <button onclick="this.parentElement.parentElement.remove()" class="ml-3 text-white/80 hover:text-white">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
-            `;
-            document.body.appendChild(toast);
-            
-            requestAnimationFrame(() => {
-                toast.classList.remove('translate-y-full', 'opacity-0');
-            });
-            
-            setTimeout(() => {
-                toast.classList.add('translate-y-full', 'opacity-0');
-                setTimeout(() => toast.remove(), 500);
-            }, 4000);
-        },
-        
         animateElement(element, animation, duration = 300) {
             element.style.animation = `${animation} ${duration}ms ease-out forwards`;
             setTimeout(() => element.style.animation = '', duration);
@@ -664,7 +632,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        Utils.showToast('Billing address synced from shipping', 'success');
+        window.Toast.success('Billing address synced from shipping');
     }
     
     if (sameAsShipping) {
@@ -711,7 +679,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectedMethod = document.querySelector('input[name="payment_method"]:checked')?.value;
         
         if (!selectedMethod) {
-            Utils.showToast('Please select a payment method', 'warning');
+            window.Toast.warning('Please select a payment method');
             return;
         }
         
@@ -727,7 +695,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const cardholderName = document.getElementById('cardholder-name')?.value;
         
         if (!cardholderName) {
-            Utils.showToast('Please enter cardholder name', 'warning');
+            window.Toast.warning('Please enter cardholder name');
             setLoadingState(false);
             return;
         }
@@ -741,7 +709,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (error) {
                 document.getElementById('card-errors').textContent = error.message;
-                Utils.showToast(error.message, 'error');
+                window.Toast.error(error.message);
                 setLoadingState(false);
                 return;
             }
@@ -749,7 +717,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('payment-method-id').value = paymentMethod.id;
             form.submit();
         } catch (err) {
-            Utils.showToast('Payment processing error. Please try again.', 'error');
+            window.Toast.error('Payment processing error. Please try again.');
             setLoadingState(false);
         }
     });

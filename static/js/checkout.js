@@ -47,33 +47,6 @@
             return `${symbol}${num.toFixed(2)}`;
         },
 
-        // Show toast notification
-        showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-y-full opacity-0
-                ${type === 'success' ? 'bg-green-600 text-white' : ''}
-                ${type === 'error' ? 'bg-red-600 text-white' : ''}
-                ${type === 'info' ? 'bg-blue-600 text-white' : ''}
-                ${type === 'warning' ? 'bg-yellow-500 text-white' : ''}`;
-            toast.innerHTML = `
-                <div class="flex items-center">
-                    ${type === 'success' ? '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' : ''}
-                    ${type === 'error' ? '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>' : ''}
-                    <span>${message}</span>
-                </div>
-            `;
-            document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.classList.remove('translate-y-full', 'opacity-0');
-            }, 10);
-
-            setTimeout(() => {
-                toast.classList.add('translate-y-full', 'opacity-0');
-                setTimeout(() => toast.remove(), CONFIG.animationDuration);
-            }, 3000);
-        },
-
         // API fetch wrapper
         async apiRequest(endpoint, options = {}) {
             const defaultOptions = {
@@ -206,7 +179,7 @@
             const code = input?.value.trim();
 
             if (!code) {
-                Utils.showToast('Please enter a coupon code', 'warning');
+                window.Toast.warning('Please enter a coupon code');
                 return;
             }
 
@@ -222,13 +195,13 @@
                 });
 
                 if (response.success) {
-                    Utils.showToast(response.message, 'success');
+                    window.Toast.success(response.message);
                     this.updateOrderSummary(response.data);
                 } else {
-                    Utils.showToast(response.message, 'error');
+                    window.Toast.error(response.message);
                 }
             } catch (error) {
-                Utils.showToast(error.message || 'Failed to apply coupon', 'error');
+                window.Toast.error(error.message || 'Failed to apply coupon');
             } finally {
                 btn.disabled = false;
                 btn.textContent = originalText;
@@ -242,14 +215,14 @@
                 });
 
                 if (response.success) {
-                    Utils.showToast('Coupon removed', 'info');
+                    window.Toast.info('Coupon removed');
                     const discountRow = document.getElementById('discount-row');
                     if (discountRow) discountRow.classList.add('hidden');
                     this.updateOrderSummary(response.data);
                     document.getElementById('coupon-code').value = '';
                 }
             } catch (error) {
-                Utils.showToast('Failed to remove coupon', 'error');
+                window.Toast.error('Failed to remove coupon');
             }
         },
 
@@ -563,7 +536,7 @@
         handleFormSubmit(e, form) {
             if (!Validation.validateForm(form)) {
                 e.preventDefault();
-                Utils.showToast('Please fill in all required fields', 'error');
+                window.Toast.error('Please fill in all required fields');
                 return;
             }
 
@@ -574,7 +547,7 @@
             e.preventDefault();
 
             if (!Validation.validateForm(form)) {
-                Utils.showToast('Please fill in all required fields', 'error');
+                window.Toast.error('Please fill in all required fields');
                 return;
             }
 
@@ -589,7 +562,7 @@
                         document.getElementById('payment-method-id').value = paymentMethod.id;
                     }
                 } catch (error) {
-                    Utils.showToast(error.message, 'error');
+                    window.Toast.error(error.message);
                     this.hideLoadingState(form);
                     return;
                 }
@@ -603,7 +576,7 @@
             
             if (!termsCheckbox?.checked) {
                 e.preventDefault();
-                Utils.showToast('Please accept the terms and conditions', 'warning');
+                window.Toast.warning('Please accept the terms and conditions');
                 return;
             }
 

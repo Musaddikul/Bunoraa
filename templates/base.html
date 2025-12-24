@@ -2,7 +2,9 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
+    <!-- Theme Initialization (must be first to prevent flashing) -->
     <script src="{% static 'js/theme-init.js' %}"></script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="{% block meta_description %}{{ SITE_NAME }} - {{ SITE_TAGLINE }}{% endblock %}">
@@ -24,660 +26,105 @@
     
     <title>{% block title %}{{ SITE_NAME }}{% endblock %}</title>
     
-    <!-- Core Styles -->
+    <!-- Tailwind CSS -->
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     {% block extra_head %}{% endblock %}
-    
-    <!-- Custom Styles -->
-    <style>
-        /* Dark mode colors */
-        :root {
-            --bg-primary: #ffffff;
-            --bg-secondary: #f9fafb;
-            --bg-tertiary: #f3f4f6;
-            --text-primary: #111827;
-            --text-secondary: #6b7280;
-            --border-color: #e5e7eb;
-        }
-        .dark {
-            --bg-primary: #1f2937;
-            --bg-secondary: #111827;
-            --bg-tertiary: #0f172a;
-            --text-primary: #f9fafb;
-            --text-secondary: #d1d5db;
-            --border-color: #374151;
-        }
-        
-        /* Smooth scrollbar */
-        ::-webkit-scrollbar {
-            width: 10px;
-            height: 10px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        .dark ::-webkit-scrollbar-track {
-            background: #1f2937;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 5px;
-        }
-        .dark ::-webkit-scrollbar-thumb {
-            background: #4b5563;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-        .dark ::-webkit-scrollbar-thumb:hover {
-            background: #6b7280;
-        }
-        
-        /* Thin scrollbar for dropdowns */
-        .scrollbar-thin::-webkit-scrollbar {
-            width: 6px;
-        }
-        .scrollbar-thin::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .scrollbar-thin::-webkit-scrollbar-thumb {
-            background: #d1d5db;
-            border-radius: 3px;
-        }
-        .dark .scrollbar-thin::-webkit-scrollbar-thumb {
-            background: #4b5563;
-        }
-        .scrollbar-thin {
-            scrollbar-width: thin;
-            scrollbar-color: #d1d5db transparent;
-        }
-        .dark .scrollbar-thin {
-            scrollbar-color: #4b5563 transparent;
-        }
-        
-        /* Text utilities */
-        .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        
-        /* Glass effect */
-        .glass {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-        }
-        
-        /* Loading states */
-        .skeleton {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: skeleton-loading 1.5s infinite;
-        }
-        .dark .skeleton {
-            background: linear-gradient(90deg, #27272a 25%, #1f2937 50%, #27272a 75%);
-            background-size: 200% 100%;
-            animation: skeleton-loading 1.5s infinite;
-        }
-
-        @keyframes skeleton-loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-    </style>
-    
-    <!-- Skip to content -->
-    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-amber-700 text-white px-4 py-2 rounded-lg z-50">
-        Skip to content
-    </a>
-
+</head>
+<body class="bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-100">
     <!-- Announcement Bar -->
-    {% block announcement_bar %}
     <div id="announcement-bar" class="bg-gradient-to-r from-amber-800 via-amber-700 to-amber-800 text-white py-2.5 text-center text-sm relative overflow-hidden hidden">
         <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M0%200h20v20H0V0zm10%2017a7%207%200%20100-14%207%207%200%20000%2014z%22%20fill%3D%22%23fff%22%20fill-opacity%3D%22.03%22%2F%3E%3C%2Fsvg%3E')] opacity-50"></div>
         <div class="container mx-auto px-4 relative">
             <p id="announcement-text" class="font-medium flex items-center justify-center gap-2">
-                <svg class="w-4 h-4 animate-pulse" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                 <span class="sr-only">Announcement</span>
             </p>
         </div>
-        <button onclick="document.getElementById('announcement-bar').remove()" class="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 hover:bg-white/10 rounded-full transition-colors" aria-label="Close announcement">
+        <button onclick="document.getElementById('announcement-bar')?.remove()" class="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 hover:bg-white/10 rounded-full transition-colors" aria-label="Close announcement">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
     </div>
-    {% endblock %}
 
-    <!-- Header will be rendered client-side by static/js/header.js; server values are passed via JSON in #header-config -->
-    <header id="main-header" data-js-header class="min-h-[66px]"></header>
+    <!-- Header: Rendered by JavaScript -->
+    <header id="main-header" class="min-h-[66px]"></header>
 
-
-
-    <!-- Config for client-side header (JSON): contains site and user data for rendering -->
+    <!-- Config for JS (must come before scripts that use it) -->
     {% with logo_dark=SITE_LOGO_DARK|default:'' logo=SITE_LOGO|default:'' %}
-    <script id="header-config" type="application/json">{
-        "siteName": "{{ SITE_NAME|escapejs }}",
-        "siteLogo": "{{ logo|escapejs }}",
-        "siteLogoDark": "{{ logo_dark|default:logo|escapejs }}",
-        "authenticated": {{ request.user.is_authenticated|yesno:"true,false" }},
-        "userFirstName": "{{ request.user.first_name|default:''|escapejs }}",
-        "userAvatar": "{% if request.user.avatar %}{{ request.user.avatar.url|escapejs }}{% else %}{% endif %}"
-    }</script>
+    <script id="header-config" type="application/json">{"siteName":"{{SITE_NAME|escapejs}}","siteLogo":"{{logo|escapejs}}","siteLogoDark":"{{logo_dark|default:logo|escapejs}}","authenticated":{{request.user.is_authenticated|yesno:"true,false"}}}</script>
     {% endwith %}
-
-    <!-- User JSON for JS (safe, valid JSON) -->
-{% if request.user.is_authenticated %}
-<script type="application/json" id="user-json">{"first_name": "{{ request.user.first_name|escapejs }}", "last_name": "{{ request.user.last_name|escapejs }}", "email": "{{ request.user.email|escapejs }}", "avatar": {% if request.user.avatar %}"{{ request.user.avatar.url|escapejs }}"{% else %}null{% endif %}}</script>
-{% else %}
-<script type="application/json" id="user-json">null</script>
-{% endif %}
-
-    <!-- Ensure route map is available before header.js -->
-    <script src="{% static 'js/auth-state.js' %}" defer></script>
-    <!-- Override routes with correct Django URLs -->
+    {% if request.user.is_authenticated %}
+    <script type="application/json" id="user-json">{"first_name":"{{request.user.first_name|escapejs}}","last_name":"{{request.user.last_name|escapejs}}","email":"{{request.user.email|escapejs}}","avatar":{% if request.user.avatar %}"{{ request.user.avatar.url|escapejs }}"{% else %}null{% endif %}}</script>
+    {% else %}
+    <script type="application/json" id="user-json">null</script>
+    {% endif %}
     <script>
-    window.BUNORAA_ROUTES = {
-        'home': '{% url "home" %}',
-        'categoryDetail': '{% url "categories:detail" slug="__slug__" %}',
-        'productDetail': '{% url "products:detail" slug="__slug__" %}',
-        'productsList': '{% url "products:list" %}',
-        'productsSearch': '{% url "products:search" %}',
-        'productsSale': '{% url "products:sale" %}',
-        'accountsDashboard': '{% url "accounts:dashboard" %}',
-        'accountsProfile': '{% url "accounts:profile" %}',
-        'accountsLogin': '{% url "accounts:login" %}',
-        'accountsRegister': '{% url "accounts:register" %}',
-        'accountsLogout': '{% url "accounts:logout" %}',
-        'ordersList': '{% url "orders:list" %}',
-        'ordersTrack': '{% url "orders:track" %}',
-        'wishlistList': '{% url "wishlist:list" %}',
-        'pagesFaq': '{% url "pages:faq" %}',
-        'pagesContact': '{% url "pages:contact" %}',
-        'pagesAbout': '{% url "pages:about" %}',
-        'pagesDetail': '{% url "pages:detail" slug="__slug__" %}',
-        'preordersLanding': '{% url "preorders:landing" %}',
-        'preordersWizard': '{% url "preorders:wizard" %}',
-        'preordersMyOrders': '{% url "preorders:my_preorders" %}',
-        'preordersTracking': '{% url "preorders:tracking" %}'
-    };
+    window.BUNORAA_ROUTES = { 'home': '{% url "home" %}', 'categoryDetail': '{% url "categories:detail" slug="__slug__" %}', 'productDetail': '{% url "products:detail" slug="__slug__" %}', 'productsList': '{% url "products:list" %}', 'accountsDashboard': '{% url "accounts:dashboard" %}', 'accountsProfile': '{% url "accounts:profile" %}', 'accountsLogin': '{% url "accounts:login" %}', 'accountsRegister': '{% url "accounts:register" %}', 'accountsLogout': '{% url "accounts:logout" %}', 'ordersList': '{% url "orders:list" %}', 'wishlistList': '{% url "wishlist:list" %}', 'cartView': '{% url "cart:view" %}' };
     </script>
-
-    <!-- Minimal Loader shim so header loads and other scripts can use Loader immediately -->
-    <script>
-      window.Loader = window.Loader || {
-        show(target) {
-          const host = target && target.appendChild ? target : document.body;
-          const overlay = document.createElement('div');
-          overlay.className = 'fixed inset-0 bg-black/20 z-50 flex items-center justify-center';
-          overlay.setAttribute('data-loader-overlay', '');
-          const spinner = document.createElement('div');
-          spinner.className = 'w-8 h-8 border-4 border-white/60 border-t-transparent rounded-full animate-spin';
-          overlay.appendChild(spinner);
-          host.appendChild(overlay);
-          return overlay;
-        },
-        hide(target) {
-          const root = target && target.querySelector ? target : document;
-          const el = root.querySelector('[data-loader-overlay]');
-          if (el && el.parentNode) el.parentNode.removeChild(el);
-        }
-      };
-    </script>
-
-    <!-- Ensure ApiClient and LocalizationApi are available for header to use -->
-    <script src="{% static 'js/api/client.js' %}"></script>
-    <script src="{% static 'js/api/localization.js' %}"></script>
-
-    <!-- Script to build header via JS (runs immediately so header renders before page content) -->
-    <script src="{% static 'js/header.js' %}"></script>
-
-    <!-- Search Drawer (used for all breakpoints) -->
-    <div id="mobile-search-overlay" class="hidden fixed inset-0 z-50 bg-white dark:bg-stone-900">
-        <div class="p-4">
-            <div class="flex items-center gap-4 mb-4">
-                <button id="mobile-search-close" class="p-2 text-stone-500 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition-colors" aria-label="Close search">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                </button>
-                <form action="{% url 'products:search' %}" method="GET" class="flex-1">
-                    <input type="search" name="q" placeholder="Search..." class="w-full px-4 py-3 border-2 border-stone-200 rounded-xl focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition-all dark:bg-stone-800 dark:border-stone-700 dark:text-stone-100" id="mobile-search-input" autofocus>
-                </form>
-            </div>
-            <div id="mobile-search-results">
-                <!-- Results loaded via JS -->
-            </div>
-        </div>
-    </div>
 
     <!-- Main Content -->
     <main id="main-content" class="min-h-screen page-enter bg-stone-50 dark:bg-stone-950">
         {% block content %}{% endblock %}
     </main>
 
+    <!-- Cart Drawer & Other Overlays -->
     {% include 'includes/cart_drawer.html' %}
+    <div id="mobile-search-overlay" class="hidden fixed inset-0 z-50 bg-white dark:bg-stone-900"></div>
 
-    <!-- Footer -->
-    <footer class="bg-stone-900 text-stone-300 mt-auto">
-        <!-- Main Footer -->
-        <div class="container mx-auto px-4 py-16">
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 lg:gap-12">
-                <!-- Brand -->
-                <div class="col-span-2 md:col-span-3 lg:col-span-2">
-                    <a href="{% url 'home' %}" class="inline-flex items-center gap-2 mb-6 group">
-                        {% with logo_dark=SITE_LOGO_DARK|default:'' logo=SITE_LOGO|default:'' %}
-                        {% if logo_dark or logo %}
-                        <img src="{{ logo_dark|default:logo }}" alt="{{ SITE_NAME|default:'Site' }}" class="h-10 w-auto">
-                        {% else %}
-                        <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
-                        </div>
-                        <span class="text-2xl font-display font-bold text-white">{{ SITE_NAME|default:'Site' }}</span>
-                        {% endif %}
-                        {% endwith %}
-                    </a>
-                    <p class="text-stone-400 mb-6 leading-relaxed">A curated marketplace celebrating the beauty of handmade. Every purchase supports independent artisans and their craft.</p>
-                    
-                    <!-- Trust Badges -->
-                    <div class="flex flex-wrap items-center gap-4 mb-6">
-                        <div class="flex items-center gap-2 text-sm text-stone-400">
-                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                            Secure Checkout
-                        </div>
-                        <div class="flex items-center gap-2 text-sm text-stone-400">
-                            <svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                            Trusted Sellers
-                        </div>
-                    </div>
-                    
-                    <!-- Social Links -->
-                    <div class="flex items-center gap-3">
-                        <a href="#" class="w-10 h-10 bg-stone-800 hover:bg-amber-600 rounded-xl flex items-center justify-center text-stone-400 hover:text-white transition-all duration-200" aria-label="Facebook">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                        </a>
-                        <a href="#" class="w-10 h-10 bg-stone-800 hover:bg-amber-600 rounded-xl flex items-center justify-center text-stone-400 hover:text-white transition-all duration-200" aria-label="Instagram">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
-                        </a>
-                        <a href="#" class="w-10 h-10 bg-stone-800 hover:bg-amber-600 rounded-xl flex items-center justify-center text-stone-400 hover:text-white transition-all duration-200" aria-label="Pinterest">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 01.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z"/></svg>
-                        </a>
-                        <a href="#" class="w-10 h-10 bg-stone-800 hover:bg-amber-600 rounded-xl flex items-center justify-center text-stone-400 hover:text-white transition-all duration-200" aria-label="Twitter/X">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                        </a>
-                    </div>
-                </div>
-                
-                <!-- Shop Categories -->
-                <div>
-                    <h4 class="text-white font-semibold mb-5 text-lg">Shop</h4>
-                    <ul id="footer-categories" class="space-y-3">
-                        <!-- Loaded via JS -->
-                    </ul>
-                </div>
-                
-                <!-- Customer Service -->
-                <div>
-                    <h4 class="text-white font-semibold mb-5 text-lg">Help</h4>
-                    <ul class="space-y-3">
-                        {% if FAQ_URL %}
-                        <li><a href="{{ FAQ_URL }}" class="text-stone-400 hover:text-amber-400 transition-colors flex items-center gap-2"><span>FAQ</span></a></li>
-                        {% else %}
-                        <li><a href="{% url 'pages:faq' %}" class="text-stone-400 hover:text-amber-400 transition-colors flex items-center gap-2"><span>FAQ</span></a></li>
-                        {% endif %}
-                        <li><a href="{% url 'orders:track' %}" class="text-stone-400 hover:text-amber-400 transition-colors flex items-center gap-2"><span>Track Order</span></a></li>
-                        {% if SHIPPING_URL %}
-                        <li><a href="{{ SHIPPING_URL }}" class="text-stone-400 hover:text-amber-400 transition-colors flex items-center gap-2"><span>Shipping Info</span></a></li>
-                        {% else %}
-                        <li><a href="{% url 'pages:detail' slug='shipping' %}" class="text-stone-400 hover:text-amber-400 transition-colors flex items-center gap-2"><span>Shipping Info</span></a></li>
-                        {% endif %}
-                        {% if RETURNS_URL %}
-                        <li><a href="{{ RETURNS_URL }}" class="text-stone-400 hover:text-amber-400 transition-colors flex items-center gap-2"><span>Returns & Exchanges</span></a></li>
-                        {% else %}
-                        <li><a href="{% url 'pages:detail' slug='returns' %}" class="text-stone-400 hover:text-amber-400 transition-colors flex items-center gap-2"><span>Returns & Exchanges</span></a></li>
-                        {% endif %}
-                        {% if CONTACT_URL %}
-                        <li><a href="{{ CONTACT_URL }}" class="text-stone-400 hover:text-amber-400 transition-colors flex items-center gap-2"><span>Contact Us</span></a></li>
-                        {% else %}
-                        <li><a href="{% url 'pages:contact' %}" class="text-stone-400 hover:text-amber-400 transition-colors flex items-center gap-2"><span>Contact Us</span></a></li>
-                        {% endif %}
-                    </ul>
-                </div>
-                
-                <!-- Company -->
-                <div>
-                    <h4 class="text-white font-semibold mb-5 text-lg">About</h4>
-                    <ul class="space-y-3">
-                        {% if ABOUT_URL %}
-                        <li><a href="{{ ABOUT_URL }}" class="text-stone-400 hover:text-amber-400 transition-colors">Our Story</a></li>
-                        {% else %}
-                        <li><a href="{% url 'pages:about' %}" class="text-stone-400 hover:text-amber-400 transition-colors">Our Story</a></li>
-                        {% endif %}
-                        <li><a href="{% url 'pages:detail' slug='artisans' %}" class="text-stone-400 hover:text-amber-400 transition-colors">Meet Artisans</a></li>
-                        <li><a href="{% url 'pages:detail' slug='sustainability' %}" class="text-stone-400 hover:text-amber-400 transition-colors">Sustainability</a></li>
-                        <li><a href="{% url 'pages:detail' slug='careers' %}" class="text-stone-400 hover:text-amber-400 transition-colors">Careers</a></li>
-                        <li><a href="{% url 'pages:detail' slug='press' %}" class="text-stone-400 hover:text-amber-400 transition-colors">Press</a></li>
-                    </ul>
-                </div>
-                
-                <!-- Legal -->
-                <div>
-                    <h4 class="text-white font-semibold mb-5 text-lg">Legal</h4>
-                    <ul class="space-y-3">
-                        {% if PRIVACY_URL %}
-                        <li><a href="{{ PRIVACY_URL }}" class="text-stone-400 hover:text-amber-400 transition-colors">Privacy Policy</a></li>
-                        {% else %}
-                        <li><a href="{% url 'pages:detail' slug='privacy-policy' %}" class="text-stone-400 hover:text-amber-400 transition-colors">Privacy Policy</a></li>
-                        {% endif %}
-                        {% if TERMS_URL %}
-                        <li><a href="{{ TERMS_URL }}" class="text-stone-400 hover:text-amber-400 transition-colors">Terms of Service</a></li>
-                        {% else %}
-                        <li><a href="{% url 'pages:detail' slug='terms-of-service' %}" class="text-stone-400 hover:text-amber-400 transition-colors">Terms of Service</a></li>
-                        {% endif %}
-                        {% if COOKIE_URL %}
-                        <li><a href="{{ COOKIE_URL }}" class="text-stone-400 hover:text-amber-400 transition-colors">Cookie Policy</a></li>
-                        {% else %}
-                        <li><a href="{% url 'pages:detail' slug='cookie-policy' %}" class="text-stone-400 hover:text-amber-400 transition-colors">Cookie Policy</a></li>
-                        {% endif %}
-                        {% if SELLER_TERMS_URL %}
-                        <li><a href="{{ SELLER_TERMS_URL }}" class="text-stone-400 hover:text-amber-400 transition-colors">Seller Terms</a></li>
-                        {% else %}
-                        <li><a href="{% url 'pages:detail' slug='seller-terms' %}" class="text-stone-400 hover:text-amber-400 transition-colors">Seller Terms</a></li>
-                        {% endif %}
-                    </ul>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Bottom Bar -->
-        <div class="border-t border-stone-800">
-            <div class="container mx-auto px-4 py-6">
-                <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
-                    <div class="flex flex-col sm:flex-row items-center gap-4 text-sm text-stone-500">
-                        <p>&copy; {% now "Y" %} {{ SITE_NAME }}. {% if COPYRIGHT_TEXT %}{{ COPYRIGHT_TEXT }}{% else %}All rights reserved.{% endif %}</p>
-                        <span class="hidden sm:inline text-stone-700">•</span>
-                        <p class="flex items-center gap-1">
-                            Made with <svg class="w-4 h-4 text-rose-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/></svg> for artisans worldwide
-                        </p>
-                    </div>
-                    
-                    <!-- Payment Methods -->
-                    <div class="flex items-center gap-3">
-                        <span class="text-xs text-stone-500 mr-2">We accept:</span>
-                        <div class="flex items-center gap-2">
-                            <div class="w-10 h-6 bg-stone-800 rounded flex items-center justify-center" title="Visa">
-                                <svg class="h-4" viewBox="0 0 50 16" fill="none"><path d="M19.5 15.5h-3.3l2.1-12.6h3.3l-2.1 12.6zm13.7-12.3c-.7-.3-1.7-.5-3-.5-3.3 0-5.6 1.7-5.6 4.2 0 1.8 1.7 2.8 3 3.4 1.3.6 1.8 1 1.8 1.6 0 .8-1.1 1.2-2.1 1.2-1.4 0-2.1-.2-3.3-.7l-.5-.2-.5 3c.8.4 2.3.7 3.8.7 3.5 0 5.8-1.7 5.8-4.4 0-1.5-1-2.6-3-3.5-1.2-.6-2-1-2-1.6 0-.5.6-1.1 2-1.1 1.2 0 2 .2 2.7.5l.3.1.6-2.7zm8.6-.3h-2.6c-.8 0-1.4.2-1.7 1l-4.9 11.6h3.5l.7-1.9h4.3l.4 1.9h3.1l-2.8-12.6zm-4.2 8.2l1.4-3.6.8-1.4.5 2.2.8 2.8h-3.5zM17.9 2.9l-3.3 8.6-.4-1.8c-.6-2.1-2.6-4.4-4.8-5.5l3 11.3h3.5l5.3-12.6h-3.3z" fill="#1A1F71"/><path d="M11.5 2.9H6.1l-.1.3c4.2 1 6.9 3.5 8.1 6.4l-1.2-5.9c-.2-.8-.8-1-1.4-1v.2z" fill="#F9A533"/></svg>
-                            </div>
-                            <div class="w-10 h-6 bg-stone-800 rounded flex items-center justify-center" title="Mastercard">
-                                <svg class="h-4" viewBox="0 0 32 20" fill="none"><circle cx="11" cy="10" r="8" fill="#EB001B"/><circle cx="21" cy="10" r="8" fill="#F79E1B"/><path d="M16 4.5c1.8 1.4 3 3.4 3 5.5s-1.2 4.1-3 5.5c-1.8-1.4-3-3.4-3-5.5s1.2-4.1 3-5.5z" fill="#FF5F00"/></svg>
-                            </div>
-                            <div class="w-10 h-6 bg-stone-800 rounded flex items-center justify-center" title="American Express">
-                                <svg class="h-3" viewBox="0 0 40 12" fill="none"><path d="M4.5 0L0 11.5h5l.7-1.7h1.6l.7 1.7h5.5V10l.5 1.5h2.8l.5-1.5v1.5h11.3l1.4-1.4 1.3 1.4h5.8l-4-5.7L35.5 0h-5.7l-1.3 1.4L27.2 0H14.6l-1.1 2.4L12.4 0H7.3l-.7 1.7h-1L5.1.5H0l4.5 11h5l.7-1.7h1.6l.7 1.7h11.1V10l.9 1.5h5.1l.9-1.5v1.5h2.7l2.7-2.8 2.5 2.8h5.7l-5.7-5.7L40 0h-5.7l-2.6 2.7L29.2 0h-11l-.9 2-.9-2H7.3z" fill="#2E77BC"/></svg>
-                            </div>
-                            <div class="w-10 h-6 bg-stone-800 rounded flex items-center justify-center" title="PayPal">
-                                <svg class="h-3" viewBox="0 0 40 11" fill="none"><path d="M15.3 1.2h-4.9c-.3 0-.6.3-.7.6L8 10.6c0 .2.2.4.4.4h2.3c.3 0 .6-.3.7-.6l.5-3c0-.3.3-.6.7-.6h1.5c3.2 0 5-1.5 5.5-4.6.2-1.3 0-2.4-.6-3.1-.7-.8-2-1.2-3.7-1.2v.3z" fill="#253B80"/><path d="M31.7 1.2h-4.9c-.3 0-.6.3-.7.6l-1.7 8.8c0 .2.2.4.4.4h2.5c.2 0 .4-.2.5-.4l.5-2.8c0-.3.3-.6.7-.6h1.5c3.2 0 5-1.5 5.5-4.6.2-1.3 0-2.4-.6-3.1-.7-.8-2-1.2-3.7-1.2v-.1z" fill="#179BD7"/><path d="M4.7 4.5c.2-1.4 1.3-2.3 2.7-2.3.7 0 1.3.2 1.7.5.4.4.5.9.4 1.5-.2 1.4-1.3 2.4-2.7 2.4-.7 0-1.3-.2-1.7-.6-.4-.3-.5-.9-.4-1.5z" fill="#253B80"/><path d="M21.1 4.5c.2-1.4 1.3-2.3 2.7-2.3.7 0 1.3.2 1.7.5.4.4.5.9.4 1.5-.2 1.4-1.3 2.4-2.7 2.4-.7 0-1.3-.2-1.7-.6-.4-.3-.5-.9-.4-1.5z" fill="#179BD7"/></svg>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </footer>
+    <!-- Footer: Rendered by JavaScript -->
+    <footer id="main-footer" class="bg-stone-900 text-stone-300 mt-auto"></footer>
 
-    <!-- Scroll to Top -->
+    <!-- Scroll to Top Button -->
     <button data-scroll-top class="hidden fixed bottom-6 right-6 z-40 p-3 bg-amber-600 text-white rounded-xl shadow-lg hover:bg-amber-700 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 items-center justify-center" aria-label="Scroll to top">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
     </button>
 
-    <!-- (moved above to ensure correct order) -->
-
-    <!-- Scripts -->
-    <!-- API Layer -->
-    <script src="{% static 'js/api/auth.js' %}"></script>
-    <script src="{% static 'js/api/products.js' %}"></script>
-    <script src="{% static 'js/api/categories.js' %}"></script>
-    <script src="{% static 'js/api/cart.js' %}"></script>
-    <script src="{% static 'js/api/checkout.js' %}"></script>
-    <script src="{% static 'js/api/orders.js' %}"></script>
-    <script src="{% static 'js/api/wishlist.js' %}"></script>
-    <script src="{% static 'js/api/shipping.js' %}"></script>
-    <script src="{% static 'js/api/support.js' %}"></script>
-    <script src="{% static 'js/api/pages.js' %}"></script>
-    <script src="{% static 'js/api/preorders.js' %}"></script>
-    
-    <!-- Utilities -->
-    <script src="{% static 'js/utils/dom.js' %}"></script>
-    <script src="{% static 'js/utils/router.js' %}"></script>
-    <script src="{% static 'js/utils/templates.js' %}"></script>
-    <script src="{% static 'js/utils/debounce.js' %}"></script>
-    <script src="{% static 'js/utils/storage.js' %}"></script>
-    <script src="{% static 'js/utils/authGuard.js' %}"></script>
-    
-    <script src="{% static 'js/theme-toggle.js' %}" defer></script>
-    
-        <!-- Components (modern) -->
-        <script type="module">
-            import {
-                Dialog,
-                DropdownMenu,
-                Breadcrumb,
-                Tabs,
-                Pagination,
-                Spinner,
-                Skeleton,
-                Form,
-                formatCurrency
-            } from "{% static 'js/components/index.js' %}";
-
-            // Expose modern components under a namespaced global
-            window.Components = {
-                Dialog,
-                DropdownMenu,
-                Breadcrumb,
-                Tabs,
-                Pagination,
-                Spinner,
-                Skeleton,
-                Form
+    <!-- Toast Proxy for early calls -->
+    <script>
+        (function() {
+            const queue = [];
+            window.Toast = {
+                _queue: queue,
+                success: (msg, opts) => queue.push({ type: 'success', msg, opts }),
+                error: (msg, opts) => queue.push({ type: 'error', msg, opts }),
+                warning: (msg, opts) => queue.push({ type: 'warning', msg, opts }),
+                info: (msg, opts) => queue.push({ type: 'info', msg, opts }),
             };
-
-            // Back-compat shims for legacy global usage
-            window.Breadcrumb = window.Breadcrumb || Breadcrumb;
-            window.Tabs = window.Tabs || Tabs;
-            window.Pagination = window.Pagination || Pagination;
-            window.Modal = window.Modal || Dialog;
-            window.Dropdown = window.Dropdown || DropdownMenu;
-
-            // Minimal Loader shim using Spinner
-            window.Loader = window.Loader || {
-                show(target) {
-                    const host = target && target.appendChild ? target : document.body;
-                    const overlay = document.createElement('div');
-                    overlay.className = 'fixed inset-0 bg-black/20 z-50 flex items-center justify-center';
-                    overlay.setAttribute('data-loader-overlay', '');
-                    const spinner = document.createElement('div');
-                    spinner.className = 'w-8 h-8 border-4 border-white/60 border-t-transparent rounded-full animate-spin';
-                    overlay.appendChild(spinner);
-                    host.appendChild(overlay);
-                    return overlay;
-                },
-                hide(target) {
-                    const root = target && target.querySelector ? target : document;
-                    const el = root.querySelector('[data-loader-overlay]');
-                    if (el && el.parentNode) el.parentNode.removeChild(el);
-                }
-            };
-
-            // Minimal Price shim - with currency conversion support
-            window.Price = window.Price || {
-                format(value, currency = null, locale = navigator.language) {
-                    // Use Templates.formatPrice if available for proper currency conversion
-                    if (window.Templates?.formatPrice) {
-                        return window.Templates.formatPrice(value, currency);
-                    }
-                    try { return formatCurrency ? formatCurrency(value, currency || 'BDT', locale) : String(value); } catch { return String(value); }
-                },
-                render({ price, salePrice = null, size = 'medium' } = {}) {
-                    const baseCls = size === 'large' ? 'text-3xl' : size === 'small' ? 'text-sm' : 'text-lg';
-                    
-                    // Always use Templates.formatPrice dynamically for proper currency conversion
-                    const formatPrice = (val) => {
-                        if (window.Templates?.formatPrice) {
-                            return window.Templates.formatPrice(val);
-                        }
-                        return '৳' + val;
-                    };
-                    
-                    if (salePrice && Number(salePrice) < Number(price)) {
-                        return `
-                            <div class="flex items-center gap-3 ${baseCls}">
-                                <span class="font-bold text-red-600">${formatPrice(salePrice)}</span>
-                                <span class="line-through text-gray-400">${formatPrice(price)}</span>
-                            </div>
-                        `;
-                    }
-                    return `<span class="font-bold ${baseCls}">${formatPrice(price)}</span>`;
-                }
-            };
-
-            // ProductCard shim used by multiple pages
-            window.ProductCard = window.ProductCard || {
-                getImageUrl(p) {
-                    if (!p) return '';
-                    if (typeof p.primary_image === 'string' && p.primary_image) return p.primary_image;
-                    if (p.primary_image && typeof p.primary_image === 'object') {
-                        if (typeof p.primary_image.image === 'string' && p.primary_image.image) return p.primary_image.image;
-                        if (p.primary_image.image && typeof p.primary_image.image === 'object' && typeof p.primary_image.image.url === 'string') return p.primary_image.image.url;
-                        if (typeof p.primary_image.url === 'string' && p.primary_image.url) return p.primary_image.url;
-                    }
-                    if (typeof p.image === 'string' && p.image) return p.image;
-                    if (Array.isArray(p.images) && p.images.length) {
-                        const first = p.images[0];
-                        if (typeof first === 'string') return first;
-                        if (first && typeof first === 'object') {
-                            if (typeof first.image === 'string' && first.image) return first.image;
-                            if (first.image && typeof first.image === 'object' && typeof first.image.url === 'string') return first.image.url;
-                            if (typeof first.url === 'string' && first.url) return first.url;
-                        }
-                    }
-                    if (typeof p.image_url === 'string' && p.image_url) return p.image_url;
-                    if (typeof p.thumbnail === 'string' && p.thumbnail) return p.thumbnail;
-                    return '';
-                },
-                render(product, options = {}) {
-                    const p = product || {};
-                    const href = p.slug ? `/products/${p.slug}/` : '#';
-                    const img = this.getImageUrl(p);
-                    const category = p.category || null;
-                    // Check stock: API uses is_in_stock field, fallback to stock_quantity
-                    const inStock = p.is_in_stock !== undefined ? p.is_in_stock : (p.stock_quantity || 0) > 0;
-                    const onSale = p.sale_price && Number(p.sale_price) < Number(p.price);
-                    const showBadge = options.showBadge && options.badge;
-                    return `
-                        <div class="product-card group bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100" data-product-id="${p.id || ''}" data-product-slug="${p.slug || ''}">
-                            <a href="${href}" class="block relative aspect-square overflow-hidden">
-                                ${img ? `
-                                    <img src="${img}" alt="${(window.Templates?.escapeHtml?.(p.name)) || ''}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy">
-                                ` : `
-                                    <div class="w-full h-full bg-gray-100"></div>
-                                `}
-                                <div class="absolute top-2 left-2 flex flex-col space-y-1">
-                                    ${showBadge ? `<span class="bg-blue-500 text-white text-xs px-2 py-1 rounded">${options.badge}</span>` : ''}
-                                    ${onSale ? `<span class="bg-red-500 text-white text-xs px-2 py-1 rounded">Sale</span>` : ''}
-                                </div>
-                                <div class="absolute bottom-2 right-2 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button class="wishlist-btn bg-white rounded-full p-2 shadow" title="Add to Wishlist">
-                                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                                    </button>
-                                </div>
-                            </a>
-                            <div class="p-4">
-                                ${category && category.slug ? `
-                                    <a href="/categories/${category.slug}/" class="text-xs text-gray-500 hover:text-primary-600">${(window.Templates?.escapeHtml?.(category.name)) || ''}</a>
-                                ` : ''}
-                                <h3 class="mt-1 font-medium text-gray-900 line-clamp-2"><a href="${href}" class="hover:text-primary-600">${(window.Templates?.escapeHtml?.(p.name)) || ''}</a></h3>
-                                <div class="mt-2">
-                                    ${window.Price.render({ price: p.price, salePrice: p.sale_price })}
-                                </div>
-                                <button class="add-to-cart-btn mt-4 w-full bg-primary-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-primary-700 ${inStock ? '' : 'disabled bg-gray-300 cursor-not-allowed'}" ${inStock ? '' : 'disabled'}> ${inStock ? 'Add to Cart' : 'Out of Stock'} </button>
-                            </div>
-                        </div>
-                    `;
-                },
-                bindEvents(root = document) {
-                    const container = root && root.querySelectorAll ? root : document;
-                    container.querySelectorAll('.product-card').forEach(card => {
-                        const productId = card.dataset.productId;
-                        card.querySelector('.add-to-cart-btn')?.addEventListener('click', async (e) => {
-                            const btn = e.currentTarget;
-                            if (!productId || btn.disabled) return;
-                            btn.disabled = true;
-                            const original = btn.textContent;
-                            btn.textContent = 'Adding...';
-                            try {
-                                await CartApi.addItem(productId, 1);
-                                window.Toast?.success('Added to cart!');
-                                document.dispatchEvent(new CustomEvent('cart:updated'));
-                            } catch (err) {
-                                window.Toast?.error(err.message || 'Failed to add to cart.');
-                            } finally {
-                                btn.disabled = false;
-                                btn.textContent = original;
-                            }
-                        });
-                        card.querySelector('.wishlist-btn')?.addEventListener('click', async () => {
-                            if (!productId) return;
-                            try {
-                                await WishlistApi.addItem(productId);
-                                window.Toast?.success('Added to wishlist!');
-                            } catch (err) {
-                                window.Toast?.error(err.message || 'Failed to add to wishlist.');
-                            }
-                        });
-                    });
-                }
-            };
-        </script>
-    
-    <!-- Pages -->
-    <script src="{% static 'js/pages/home.js' %}"></script>
-    <script src="{% static 'js/pages/category.js' %}"></script>
-    <script src="{% static 'js/pages/product.js' %}"></script>
-    <script src="{% static 'js/pages/cart.js' %}"></script>
-    <script src="{% static 'js/pages/checkout.js' %}"></script>
-    <script src="{% static 'js/pages/account.js' %}"></script>
-    <script src="{% static 'js/pages/orders.js' %}"></script>
-    <script src="{% static 'js/pages/search.js' %}"></script>
-    <script src="{% static 'js/pages/contact.js' %}"></script>
-    <script src="{% static 'js/pages/wishlist.js' %}"></script>
-    <script src="{% static 'js/pages/faq.js' %}"></script>
-    <script src="{% static 'js/pages/legal.js' %}"></script>
-    
-    <!-- Main Application -->
-    <script src="{% static 'js/app.js' %}"></script>
-    <!-- Cart Drawer Component -->
-    <script src="{% static 'js/components/cart-drawer.js' %}"></script>
-    
-    <!-- Component shims: expose window.Toast using new component API -->
-    <script type="module">
-    import { Toast as ToastComponent } from "{% static 'js/components/index.js' %}";
-    const queued = Array.isArray(window.Toast?._q) ? window.Toast._q.slice() : [];
-    window.Toast = {
-        show: (message, options = {}) => ToastComponent.show(message, options),
-        success: (message, options = {}) => ToastComponent.show(message, { ...options, type: 'success' }),
-        error: (message, options = {}) => ToastComponent.show(message, { ...options, type: 'error' }),
-        info: (message, options = {}) => ToastComponent.show(message, { ...options, type: 'info' }),
-        warning: (message, options = {}) => ToastComponent.show(message, { ...options, type: 'warning' })
-    };
-    if (queued.length) {
-        queued.forEach(([method, message, options]) => {
-            if (method === 'show') {
-                ToastComponent.show(message, options || {});
-            } else {
-                ToastComponent.show(message, { ...(options || {}), type: method });
-            }
-        });
-        window.Toast._q = [];
-    }
+        })();
     </script>
 
-           
-    <script src="{% static 'js/header-init.js' %}" defer></script>
+    <!-- Core App Scripts (DEFERRED) -->
+    <!-- Libraries & Utils -->
+    <script src="{% static 'js/utils/storage.js' %}" defer></script>
+    <script src="{% static 'js/utils/dom.js' %}" defer></script>
+    
+    <!-- API Layer -->
+    <script src="{% static 'js/api/client.js' %}" defer></script>
+    
+    <!-- Main Components -->
+    <script src="{% static 'js/components/header.js' %}" defer></script>
+    <script src="{% static 'js/components/footer.js' %}" defer></script>
+    <script src="{% static 'js/components/cart-drawer.js' %}" defer></script>
+    <script src="{% static 'js/components/toast-init.js' %}" defer></script>
+
+    <!-- Page-Specific Scripts -->
+    <script src="{% static 'js/pages/home.js' %}" defer></script>
+    <script src="{% static 'js/pages/category.js' %}" defer></script>
+    <script src="{% static 'js/pages/product.js' %}" defer></script>
+    <script src="{% static 'js/pages/cart.js' %}" defer></script>
+    <script src="{% static 'js/pages/checkout.js' %}" defer></script>
+    <script src="{% static 'js/pages/account.js' %}" defer></script>
+    <script src="{% static 'js/pages/orders.js' %}" defer></script>
+    <script src="{% static 'js/pages/search.js' %}" defer></script>
+    <script src="{% static 'js/pages/contact.js' %}" defer></script>
+    <script src="{% static 'js/pages/wishlist.js' %}" defer></script>
+    <script src="{% static 'js/pages/faq.js' %}" defer></script>
+    <script src="{% static 'js/pages/legal.js' %}" defer></script>
+    <script src="{% static 'js/pages/preorders.js' %}" defer></script>
+
+    <!-- App Entry Point -->
+    <script src="{% static 'js/app.js' %}" defer></script>
+    
+    <!-- Other deferred scripts -->
+    <script src="{% static 'js/theme-toggle.js' %}" defer></script>
     
     {% block extra_js %}{% endblock %}
 </body>
