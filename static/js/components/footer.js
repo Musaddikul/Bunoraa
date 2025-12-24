@@ -7,6 +7,10 @@
         const element = document.createElement(tag);
         for (const key in attributes) {
             if (key === 'class') element.className = attributes[key];
+            else if (key.startsWith('data-')) {
+                const dataKey = key.substring(5).replace(/-(\w)/g, (match, letter) => letter.toUpperCase());
+                element.dataset[dataKey] = attributes[key];
+            }
             else element.setAttribute(key, attributes[key]);
         }
         children.forEach(child => {
@@ -14,6 +18,13 @@
             else if (child instanceof Node) element.appendChild(child);
         });
         return element;
+    }
+
+    function getResults(response) {
+        if (!response || !response.data) return [];
+        if (Array.isArray(response.data)) return response.data;
+        if (Array.isArray(response.data.results)) return response.data.results;
+        return [];
     }
 
     // --- CONFIG & STATE ---
@@ -45,8 +56,8 @@
                 Api.getCategories()
             ]);
 
-            const settings = settingsRes.data.results[0] || {};
-            const categories = categoriesRes.data.results || [];
+            const settings = settingsRes.data || {};
+            const categories = getResults(categoriesRes);
 
             const mainFooter = createMainFooter(settings, categories);
             const bottomBar = createBottomBar(settings);
