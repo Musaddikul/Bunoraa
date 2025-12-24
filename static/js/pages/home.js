@@ -54,7 +54,7 @@ const HomePage = (function() {
                 <div class="relative overflow-hidden w-full h-[70vh]">
                     <div class="hero-slides relative w-full h-full">
                         ${banners.map((banner, index) => `
-                            <div class="hero-slide ${index === 0 ? '' : 'hidden'} w-full h-[70vh]" data-index="${index}">
+                            <div class="hero-slide ${index === 0 ? '' : 'hidden'} w-full h-full" data-index="${index}">
                                 <a href="${banner.link_url || '#'}" class="block relative w-full h-full">
                                     <img 
                                         src="${banner.image}" 
@@ -361,7 +361,7 @@ const HomePage = (function() {
                                         <div class="flex items-start gap-4">
                                             <div class="w-12 h-12 bg-purple-500/30 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-xl font-bold">1</div>
                                             <div>
-                                                <h4 class="text-sm font-semibold text-white mb-1">Choose Category</h4>
+                                                <h4 class="text-sm font-semibold text-white mb-1">Choose Category</h4> 
                                                 <p class="text-xs text-white/60">Select from custom apparel, gifts, home decor & more</p>
                                             </div>
                                         </div>
@@ -375,7 +375,7 @@ const HomePage = (function() {
                                         <div class="flex items-start gap-4">
                                             <div class="w-12 h-12 bg-pink-500/30 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-xl font-bold">3</div>
                                             <div>
-                                                <h4 class="text-sm font-semibold text-white mb-1">Get Your Quote</h4>
+                                                <h4 class="text-sm font-semibold text-white mb-1">Get Your Quote</h4>  
                                                 <p class="text-xs text-white/60">Receive pricing and timeline from our team</p>
                                             </div>
                                         </div>
@@ -397,7 +397,7 @@ const HomePage = (function() {
             console.warn('Custom order CTA failed to load:', error);
             container.innerHTML = `
                 <div class="container mx-auto px-4 text-center text-white">
-                    <h2 class="text-3xl lg:text-4xl font-display font-bold mb-4">Create Your Perfect Custom Order</h2>
+                    <h2 class="text-3xl lg:text-4xl font-display font-bold mb-4">Create Your Perfect Custom Order</h2> 
                     <p class="text-white/80 mb-8 max-w-2xl mx-auto">Have a unique vision? Our skilled artisans will bring your ideas to life.</p>
                     <a href="${wizardUrl}" class="inline-flex items-center gap-2 px-8 py-4 bg-white text-purple-900 font-bold rounded-xl">
                         Start Your Custom Order
