@@ -26,6 +26,28 @@
     
     <title>{% block title %}{{ SITE_NAME }}{% endblock %}</title>
     
+    <!-- Loader Shim (for early loading states) -->
+    <script>
+        window.Loader = window.Loader || {
+            show(target) {
+                const host = target && target.appendChild ? target : document.body;
+                const overlay = document.createElement('div');
+                overlay.className = 'fixed inset-0 bg-black/20 z-50 flex items-center justify-center';
+                overlay.setAttribute('data-loader-overlay', '');
+                const spinner = document.createElement('div');
+                spinner.className = 'w-8 h-8 border-4 border-white/60 border-t-transparent rounded-full animate-spin';
+                overlay.appendChild(spinner);
+                host.appendChild(overlay);
+                return overlay;
+            },
+            hide(target) {
+                const root = target && target.querySelector ? target : document;
+                const el = root.querySelector('[data-loader-overlay]');
+                if (el && el.parentNode) el.parentNode.removeChild(el);
+            }
+        };
+    </script>
+
     <!-- Tailwind CSS -->
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     {% block extra_head %}{% endblock %}
@@ -92,12 +114,28 @@
     </script>
 
     <!-- Core App Scripts (DEFERRED) -->
-    <!-- Libraries & Utils -->
-    <script src="{% static 'js/utils/storage.js' %}" defer></script>
+    <!-- Utility Libraries -->
     <script src="{% static 'js/utils/dom.js' %}" defer></script>
-    
-    <!-- API Layer -->
+    <script src="{% static 'js/utils/storage.js' %}" defer></script>
+    <script src="{% static 'js/utils/debounce.js' %}" defer></script>
+    <script src="{% static 'js/utils/authGuard.js' %}" defer></script>
+    <script src="{% static 'js/utils/router.js' %}" defer></script>
+    <script src="{% static 'js/utils/templates.js' %}" defer></script>
+
+    <!-- API Client Layer -->
     <script src="{% static 'js/api/client.js' %}" defer></script>
+    <script src="{% static 'js/api/localization.js' %}" defer></script>
+    <script src="{% static 'js/api/auth.js' %}" defer></script>
+    <script src="{% static 'js/api/products.js' %}" defer></script>
+    <script src="{% static 'js/api/categories.js' %}" defer></script>
+    <script src="{% static 'js/api/cart.js' %}" defer></script>
+    <script src="{% static 'js/api/checkout.js' %}" defer></script>
+    <script src="{% static 'js/api/orders.js' %}" defer></script>
+    <script src="{% static 'js/api/wishlist.js' %}" defer></script>
+    <script src="{% static 'js/api/shipping.js' %}" defer></script>
+    <script src="{% static 'js/api/support.js' %}" defer></script>
+    <script src="{% static 'js/api/pages.js' %}" defer></script>
+    <script src="{% static 'js/api/preorders.js' %}" defer></script>
     
     <!-- Main Components -->
     <script src="{% static 'js/components/header.js' %}" defer></script>

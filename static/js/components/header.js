@@ -11,7 +11,8 @@
             } else if (key.startsWith('on')) {
                 element.addEventListener(key.substring(2).toLowerCase(), attributes[key]);
             } else if (key.startsWith('data-')) {
-                element.dataset[key.substring(5)] = attributes[key];
+                const dataKey = key.substring(5).replace(/-(\w)/g, (match, letter) => letter.toUpperCase());
+                element.dataset[dataKey] = attributes[key];
             } else {
                 element.setAttribute(key, attributes[key]);
             }
@@ -32,6 +33,13 @@
             clearTimeout(timeout);
             timeout = setTimeout(() => func.apply(this, args), wait);
         };
+    }
+
+    function getResults(response) {
+        if (!response || !response.data) return [];
+        if (Array.isArray(response.data)) return response.data;
+        if (Array.isArray(response.data.results)) return response.data.results;
+        return [];
     }
 
     // --- CONFIG & STATE ---
@@ -198,7 +206,7 @@
             const announcementText = document.getElementById('announcement-text');
             if (announcementText && announcementBar) {
                 const response = await Api.getAnnouncements();
-                const announcements = response.data || [];
+                const announcements = getResults(response);
                 if (announcements.length > 0) {
                     announcementText.innerHTML = `
                         <svg class="w-4 h-4 animate-pulse" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
@@ -222,7 +230,7 @@
 
         try {
             const response = await Api.getCategories();
-            const categories = response.data.results || [];
+            const categories = getResults(response);
             
             mainNav.innerHTML = categories.slice(0, 6).map(c => `
                 <li><a href="${buildRoute('categoryDetail', c.slug)}" class="px-3 py-2 text-stone-700 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors dark:text-stone-300 dark:hover:bg-stone-800">${c.name}</a></li>
@@ -244,7 +252,7 @@
         
         try {
             const response = await Api.getCurrencies();
-            const currencies = response.data.results || [];
+            const currencies = getResults(response);
             const selectedCurrency = localStorage.getItem('selected_currency') || 'USD';
             display.textContent = selectedCurrency;
 
@@ -366,7 +374,7 @@
             }
             try {
                 const results = await Api.searchProducts(query);
-                const items = results.data.results || [];
+                const items = getResults(results);
                 suggestions.innerHTML = items.map(p => `
                     <a href="${buildRoute('productDetail', p.slug)}" class="block px-4 py-3 hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors">
                         <div class="font-medium text-stone-900 dark:text-stone-100">${p.name}</div>
