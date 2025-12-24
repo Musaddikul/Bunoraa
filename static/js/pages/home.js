@@ -6,23 +6,6 @@
 const HomePage = (function() {
     'use strict';
 
-    // --- Polyfills/Shims for legacy dependencies ---
-    const Templates = window.Templates || {
-        escapeHtml: (str) => str ? str.replace(/[&<>"']/g, (match) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&#x22;',"'":'&#x27;'})[match]) : ''
-    };
-
-    const ProductCard = window.ProductCard || {
-        render: (product) => `<div class="p-4 border rounded">Product: ${Templates.escapeHtml(product.name)}</div>`,
-        bindEvents: () => {}
-    };
-
-    function getResults(response) {
-        if (!response || !response.data) return [];
-        if (Array.isArray(response.data)) return response.data;
-        if (Array.isArray(response.data.results)) return response.data.results;
-        return [];
-    }
-
     let heroSliderInterval = null;
 
     async function init() {
@@ -42,8 +25,8 @@ const HomePage = (function() {
         if (!container) return;
 
         try {
-            const response = await window.ApiClient.get('/promotions/banners/hero/');
-            const banners = getResults(response);
+            const response = await PagesApi.getBanners('home_hero');
+            const banners = response.data?.results || response.data || response.results || [];
 
             if (banners.length === 0) {
                 container.innerHTML = '';
@@ -106,7 +89,8 @@ const HomePage = (function() {
                 initHeroSlider(banners.length);
             }
         } catch (error) {
-            console.warn('Hero banners unavailable:', error);
+            // Gracefully ignore missing banners endpoint and render a simple fallback hero
+            console.warn('Hero banners unavailable:', error?.status || error);
         }
     }
 
@@ -118,7 +102,6 @@ const HomePage = (function() {
         const nextBtn = document.querySelector('.hero-next');
 
         function goToSlide(index) {
-            if (!slides[currentSlide]) return;
             slides[currentSlide].classList.add('hidden');
             dots[currentSlide]?.classList.remove('bg-white');
             dots[currentSlide]?.classList.add('bg-white/50');
@@ -162,11 +145,11 @@ const HomePage = (function() {
         if (!container) return;
 
         const grid = container.querySelector('.products-grid') || container;
-        window.Loader.show(grid);
+        Loader.show(grid, 'skeleton');
 
         try {
-            const response = await window.ApiClient.get('/products/featured/', { limit: 8 });
-            const products = getResults(response);
+            const response = await ProductsApi.getFeatured(8);
+            const products = response.data?.results || response.data || response.results || [];
 
             if (products.length === 0) {
                 grid.innerHTML = '<p class="text-gray-500 text-center py-8">No featured products available.</p>';
@@ -174,12 +157,21 @@ const HomePage = (function() {
             }
 
             grid.innerHTML = products.map(product => ProductCard.render(product)).join('');
+            // Ensure top-of-viewport product images load eagerly for better LCP
+            try {
+                const imgs = grid.querySelectorAll('img');
+                imgs.forEach((img, i) => {
+                    if (i < 2) {
+                        img.setAttribute('loading', 'eager');
+                        img.setAttribute('fetchpriority', 'high');
+                        img.setAttribute('decoding', 'async');
+                    }
+                });
+            } catch {}
             ProductCard.bindEvents(grid);
         } catch (error) {
             console.error('Failed to load featured products:', error);
             grid.innerHTML = '<p class="text-red-500 text-center py-8">Failed to load products. Please try again later.</p>';
-        } finally {
-            window.Loader.hide(grid);
         }
     }
 
@@ -187,30 +179,69 @@ const HomePage = (function() {
         const container = document.getElementById('categories-showcase');
         if (!container) return;
 
-        window.Loader.show(container);
+        Loader.show(container, 'skeleton');
 
         try {
-            const response = await window.ApiClient.get('/categories/', { page_size: 6, featured: true });
-            const categories = getResults(response);
+            const response = await CategoriesApi.getCategories({ pageSize: 6, featured: true });
+            const categories = response.data?.results || response.data || response.results || [];
 
             if (categories.length === 0) {
                 container.innerHTML = '';
                 return;
             }
 
-            const getCategoryImage = (cat) => cat?.image?.url || cat?.image || cat?.banner_image?.url || cat?.banner_image || '';
+            const getCategoryImage = (cat) => {
+                if (!cat) return '';
+                if (typeof cat.image === 'string' && cat.image) return cat.image;
+                if (cat.image && typeof cat.image === 'object') {
+                    if (typeof cat.image.url === 'string' && cat.image.url) return cat.image.url;
+                    if (typeof cat.image.src === 'string' && cat.image.src) return cat.image.src;
+                }
+                if (typeof cat.banner_image === 'string' && cat.banner_image) return cat.banner_image;
+                if (cat.banner_image && typeof cat.banner_image === 'object') {
+                    if (typeof cat.banner_image.url === 'string' && cat.banner_image.url) return cat.banner_image.url;
+                    if (typeof cat.banner_image.src === 'string' && cat.banner_image.src) return cat.banner_image.src;
+                }
+                if (typeof cat.hero_image === 'string' && cat.hero_image) return cat.hero_image;
+                if (cat.hero_image && typeof cat.hero_image === 'object') {
+                    if (typeof cat.hero_image.url === 'string' && cat.hero_image.url) return cat.hero_image.url;
+                    if (typeof cat.hero_image.src === 'string' && cat.hero_image.src) return cat.hero_image.src;
+                }
+                if (typeof cat.thumbnail === 'string' && cat.thumbnail) return cat.thumbnail;
+                if (cat.thumbnail && typeof cat.thumbnail === 'object') {
+                    if (typeof cat.thumbnail.url === 'string' && cat.thumbnail.url) return cat.thumbnail.url;
+                    if (typeof cat.thumbnail.src === 'string' && cat.thumbnail.src) return cat.thumbnail.src;
+                }
+                return '';
+            };
 
             container.innerHTML = `
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                     ${categories.map(category => `
                         <a href="/categories/${category.slug}/" class="group block">
                             <div class="relative aspect-square rounded-xl overflow-hidden bg-gray-100">
-                                <img src="${getCategoryImage(category)}" alt="${Templates.escapeHtml(category.name || '')}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy">
+                                ${(() => { const img = getCategoryImage(category); return img ? `
+                                    <img 
+                                        src="${img}" 
+                                        alt="${Templates.escapeHtml(category.name || '')}"
+                                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                        loading="lazy"
+                                    >
+                                ` : `
+                                    <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-200">
+                                        <svg class="w-12 h-12 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                                        </svg>
+                                    </div>
+                                `; })()}
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                             </div>
                             <h3 class="mt-3 text-sm font-medium text-gray-900 group-hover:text-primary-600 transition-colors text-center">
                                 ${Templates.escapeHtml(category.name)}
                             </h3>
+                            ${category.product_count ? `
+                                <p class="text-xs text-gray-500 text-center">${category.product_count} products</p>
+                            ` : ''}
                         </a>
                     `).join('')}
                 </div>
@@ -218,8 +249,6 @@ const HomePage = (function() {
         } catch (error) {
             console.error('Failed to load categories:', error);
             container.innerHTML = '';
-        } finally {
-            window.Loader.hide(container);
         }
     }
 
@@ -228,11 +257,11 @@ const HomePage = (function() {
         if (!container) return;
 
         const grid = container.querySelector('.products-grid') || container;
-        window.Loader.show(grid);
+        Loader.show(grid, 'skeleton');
 
         try {
-            const response = await window.ApiClient.get('/products/new_arrivals/', { limit: 4 });
-            const products = getResults(response);
+            const response = await ProductsApi.getNewArrivals(4);
+            const products = response.data?.results || response.data || response.results || [];
 
             if (products.length === 0) {
                 grid.innerHTML = '<p class="text-gray-500 text-center py-8">No new products available.</p>';
@@ -240,22 +269,38 @@ const HomePage = (function() {
             }
 
             grid.innerHTML = products.map(product => ProductCard.render(product, { showBadge: true, badge: 'New' })).join('');
+            // Eager-load first images to reduce lazy-load intervention note
+            try {
+                const imgs = grid.querySelectorAll('img');
+                imgs.forEach((img, i) => {
+                    if (i < 2) {
+                        img.setAttribute('loading', 'eager');
+                        img.setAttribute('fetchpriority', 'high');
+                        img.setAttribute('decoding', 'async');
+                    }
+                });
+            } catch {}
             ProductCard.bindEvents(grid);
         } catch (error) {
             console.error('Failed to load new arrivals:', error);
             grid.innerHTML = '<p class="text-red-500 text-center py-8">Failed to load products.</p>';
-        } finally {
-            window.Loader.hide(grid);
         }
     }
 
     async function loadPromotions() {
-        const container = document.getElementById('promotions-banner');
+        const container = document.getElementById('promotions-banner') || document.getElementById('promotion-banners');
         if (!container) return;
 
         try {
-            const response = await window.ApiClient.get('/promotions/sales/', { is_active: true });
-            const promotions = getResults(response);
+            const response = await PagesApi.getPromotions();
+            let promotions = response?.data?.results ?? response?.results ?? response?.data ?? [];
+            if (!Array.isArray(promotions)) {
+                if (promotions && typeof promotions === 'object') {
+                    promotions = Array.isArray(promotions.items) ? promotions.items : [promotions];
+                } else {
+                    promotions = [];
+                }
+            }
 
             if (promotions.length === 0) {
                 container.innerHTML = '';
@@ -267,13 +312,40 @@ const HomePage = (function() {
                 <div class="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl overflow-hidden">
                     <div class="px-6 py-8 md:px-12 md:py-12 flex flex-col md:flex-row items-center justify-between gap-6">
                         <div class="text-center md:text-left">
-                            <h3 class="text-2xl md:text-3xl font-bold text-white mb-2">${Templates.escapeHtml(promo.name || '')}</h3>
+                            <span class="inline-block px-3 py-1 bg-white/20 text-white text-sm font-medium rounded-full mb-3">
+                                Limited Time Offer
+                            </span>
+                            <h3 class="text-2xl md:text-3xl font-bold text-white mb-2">
+                                ${Templates.escapeHtml(promo.title || promo.name || '')}
+                            </h3>
+                            ${promo.description ? `
+                                <p class="text-white/90 max-w-lg">${Templates.escapeHtml(promo.description)}</p>
+                            ` : ''}
+                            ${promo.discount_value ? `
+                                <p class="text-3xl font-bold text-white mt-4">
+                                    ${promo.discount_type === 'percentage' ? `${promo.discount_value}% OFF` : `Save ${Templates.formatPrice(promo.discount_value)}`}
+                                </p>
+                            ` : ''}
+                        </div>
+                        <div class="flex flex-col items-center gap-4">
+                            ${promo.code ? `
+                                <div class="bg-white/10 backdrop-blur-sm px-6 py-3 rounded-lg border-2 border-dashed border-white/30">
+                                    <p class="text-sm text-white/80 mb-1">Use code:</p>
+                                    <p class="text-2xl font-mono font-bold text-white tracking-wider">${Templates.escapeHtml(promo.code)}</p>
+                                </div>
+                            ` : ''}
+                            <a href="/products/?promotion=${promo.id || ''}" class="inline-flex items-center px-6 py-3 bg-white text-primary-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors">
+                                Shop Now
+                                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                                </svg>
+                            </a>
                         </div>
                     </div>
                 </div>
             `;
         } catch (error) {
-            console.warn('Promotions unavailable:', error);
+            console.warn('Promotions unavailable:', error?.status || error);
             container.innerHTML = '';
         }
     }
@@ -287,9 +359,16 @@ const HomePage = (function() {
         const landingUrl = routeMap.preordersLanding || '/preorders/';
 
         try {
+            // Try to load featured pre-order categories
             let categories = [];
-            const response = await window.ApiClient.get('/preorders/categories/', { featured: true, page_size: 4 });
-            categories = getResults(response);
+            if (typeof PreordersApi !== 'undefined' && PreordersApi.getCategories) {
+                try {
+                    const response = await PreordersApi.getCategories({ featured: true, pageSize: 4 });
+                    categories = response?.data?.results || response?.data || response?.results || [];
+                } catch (e) {
+                    console.warn('Pre-order categories unavailable:', e);
+                }
+            }
 
             container.innerHTML = `
                 <div class="container mx-auto px-4 relative">
@@ -361,29 +440,29 @@ const HomePage = (function() {
                                         <div class="flex items-start gap-4">
                                             <div class="w-12 h-12 bg-purple-500/30 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-xl font-bold">1</div>
                                             <div>
-                                                <h4 class="text-sm font-semibold text-white mb-1">Choose Category</h4> 
-                                                <p class="text-xs text-white/60">Select from custom apparel, gifts, home decor & more</p>
+                                                <h4 class="text-white font-semibold mb-1">Choose Category</h4>
+                                                <p class="text-white/60 text-sm">Select from custom apparel, gifts, home decor & more</p>
                                             </div>
                                         </div>
                                         <div class="flex items-start gap-4">
                                             <div class="w-12 h-12 bg-indigo-500/30 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-xl font-bold">2</div>
                                             <div>
-                                                <h4 class="text-sm font-semibold text-white mb-1">Share Your Vision</h4>
-                                                <p class="text-xs text-white/60">Upload designs, describe your requirements</p>
+                                                <h4 class="text-white font-semibold mb-1">Share Your Vision</h4>
+                                                <p class="text-white/60 text-sm">Upload designs, describe your requirements</p>
                                             </div>
                                         </div>
                                         <div class="flex items-start gap-4">
                                             <div class="w-12 h-12 bg-pink-500/30 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-xl font-bold">3</div>
                                             <div>
-                                                <h4 class="text-sm font-semibold text-white mb-1">Get Your Quote</h4>  
-                                                <p class="text-xs text-white/60">Receive pricing and timeline from our team</p>
+                                                <h4 class="text-white font-semibold mb-1">Get Your Quote</h4>
+                                                <p class="text-white/60 text-sm">Receive pricing and timeline from our team</p>
                                             </div>
                                         </div>
                                         <div class="flex items-start gap-4">
                                             <div class="w-12 h-12 bg-emerald-500/30 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-xl font-bold">4</div>
                                             <div>
-                                                <h4 class="text-sm font-semibold text-white mb-1">We Create & Deliver</h4>
-                                                <p class="text-xs text-white/60">Track progress and receive your masterpiece</p>
+                                                <h4 class="text-white font-semibold mb-1">We Create & Deliver</h4>
+                                                <p class="text-white/60 text-sm">Track progress and receive your masterpiece</p>
                                             </div>
                                         </div>
                                     </div>
@@ -395,9 +474,10 @@ const HomePage = (function() {
             `;
         } catch (error) {
             console.warn('Custom order CTA failed to load:', error);
+            // Fallback static content
             container.innerHTML = `
                 <div class="container mx-auto px-4 text-center text-white">
-                    <h2 class="text-3xl lg:text-4xl font-display font-bold mb-4">Create Your Perfect Custom Order</h2> 
+                    <h2 class="text-3xl lg:text-4xl font-display font-bold mb-4">Create Your Perfect Custom Order</h2>
                     <p class="text-white/80 mb-8 max-w-2xl mx-auto">Have a unique vision? Our skilled artisans will bring your ideas to life.</p>
                     <a href="${wizardUrl}" class="inline-flex items-center gap-2 px-8 py-4 bg-white text-purple-900 font-bold rounded-xl">
                         Start Your Custom Order
@@ -419,19 +499,23 @@ const HomePage = (function() {
             const email = emailInput?.value?.trim();
 
             if (!email) {
-                window.Toast.error('Please enter your email address.');
+                Toast.error('Please enter your email address.');
                 return;
             }
 
+            const originalText = submitBtn.textContent;
             submitBtn.disabled = true;
+            submitBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+
             try {
-                await window.ApiClient.post('/support/contact/', { email: email, type: 'newsletter' });
-                window.Toast.success('Thank you for subscribing!');
+                await SupportApi.submitContactForm({ email, type: 'newsletter' });
+                Toast.success('Thank you for subscribing!');
                 emailInput.value = '';
             } catch (error) {
-                window.Toast.error(error.message || 'Failed to subscribe. Please try again.');
+                Toast.error(error.message || 'Failed to subscribe. Please try again.');
             } finally {
                 submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
             }
         });
     }

@@ -25,7 +25,7 @@
             <div class="bg-white rounded-lg shadow-sm p-6 sticky top-24">
                 <h2 class="font-semibold text-gray-900 mb-4">Filter Results</h2>
                 
-                <form id="filter-form" method="GET" action="{% url 'products:search' %}">
+                <form id="filter-form" method="GET" action="{% url 'search:results' %}">
                     <input type="hidden" name="q" value="{{ query }}">
                     
                     <!-- Categories -->
@@ -125,7 +125,7 @@
                         <button type="submit" class="flex-1 bg-primary-600 text-white py-2 rounded-lg hover:bg-primary-700 transition-colors">
                             Apply
                         </button>
-                        <a href="{% url 'products:search' %}?q={{ query }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+                        <a href="{% url 'search:results' %}?q={{ query }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
                             Clear
                         </a>
                     </div>
@@ -235,7 +235,7 @@
         </ul>
         
         <!-- Search Box -->
-        <form action="{% url 'products:search' %}" method="GET" class="max-w-md mx-auto mb-12">
+        <form action="{% url 'search:results' %}" method="GET" class="max-w-md mx-auto mb-12">
             <div class="relative">
                 <input type="text" name="q" placeholder="Try another search..."
                        class="w-full px-6 py-4 border border-gray-300 rounded-lg pr-12 focus:ring-primary-500 focus:border-primary-500">
@@ -272,7 +272,7 @@
         <h2 class="text-xl font-semibold text-gray-900 mb-4">Trending Searches</h2>
         <div class="flex flex-wrap gap-3">
             {% for search in trending_searches %}
-            <a href="{% url 'products:search' %}?q={{ search.query }}" 
+            <a href="{% url 'search:results' %}?q={{ search.query }}" 
                class="px-4 py-2 bg-white border border-gray-200 rounded-full hover:border-primary-500 hover:text-primary-600 transition-colors">
                 {{ search.query }}
             </a>

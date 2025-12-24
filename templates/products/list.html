@@ -243,18 +243,14 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Initialize currency from localStorage if previously selected
     (function initCurrencyFromStorage() {
         try {
-            let storedCurrency = null;
-            if (typeof Storage !== 'undefined' && Storage.get) {
-                storedCurrency = Storage.get('selected_currency', null);
-                if (typeof storedCurrency === 'object' && storedCurrency?.code) storedCurrency = storedCurrency.code;
-            }
+            const storedCurrency = localStorage.getItem('selected_currency');
             if (storedCurrency && storedCurrency !== currency.code) {
                 const normalized = storedCurrency.toUpperCase();
                 currency.code = normalized;
                 currency.symbol = currencySymbolsMap[normalized] || currency.symbol;
             }
         } catch (e) {
-            // Ignore storage errors
+            // Ignore localStorage errors
         }
     })();
     
@@ -550,7 +546,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <div class="product-card bg-white rounded-2xl shadow-soft overflow-hidden flex group col-span-full">
                     <div class="relative w-48 flex-shrink-0 overflow-hidden">
                         <img src="${product.primary_image || '/static/images/placeholder.jpg'}" alt="${escapeHtml(product.name)}" 
-                             loading="lazy" decoding="async" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
                         ${discount > 0 ? `<span class="absolute top-3 left-3 px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-lg">-${discount}%</span>` : ''}
                     </div>
                     <div class="flex-1 p-6 flex flex-col">
@@ -596,7 +592,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             <div class="product-card group bg-white rounded-2xl shadow-soft overflow-hidden">
                 <div class="relative overflow-hidden aspect-square">
                     <img src="${product.primary_image || '/static/images/placeholder.jpg'}" alt="${escapeHtml(product.name)}" 
-                         loading="lazy" decoding="async" class="product-image w-full h-full object-cover transition-transform duration-500">
+                         class="product-image w-full h-full object-cover transition-transform duration-500">
                     ${discount > 0 ? `<span class="absolute top-3 left-3 px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-lg">-${discount}%</span>` : ''}
                     ${product.is_new ? `<span class="absolute top-3 ${discount > 0 ? 'left-16' : 'left-3'} px-2 py-1 bg-green-500 text-white text-xs font-bold rounded-lg">NEW</span>` : ''}
                     <div class="product-actions absolute bottom-3 left-3 right-3 flex gap-2">

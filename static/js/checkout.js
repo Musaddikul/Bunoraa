@@ -47,6 +47,33 @@
             return `${symbol}${num.toFixed(2)}`;
         },
 
+        // Show toast notification
+        showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-y-full opacity-0
+                ${type === 'success' ? 'bg-green-600 text-white' : ''}
+                ${type === 'error' ? 'bg-red-600 text-white' : ''}
+                ${type === 'info' ? 'bg-blue-600 text-white' : ''}
+                ${type === 'warning' ? 'bg-yellow-500 text-white' : ''}`;
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    ${type === 'success' ? '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' : ''}
+                    ${type === 'error' ? '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>' : ''}
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-full', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-full', 'opacity-0');
+                setTimeout(() => toast.remove(), CONFIG.animationDuration);
+            }, 3000);
+        },
+
         // API fetch wrapper
         async apiRequest(endpoint, options = {}) {
             const defaultOptions = {
@@ -179,7 +206,7 @@
             const code = input?.value.trim();
 
             if (!code) {
-                window.Toast.warning('Please enter a coupon code');
+                Utils.showToast('Please enter a coupon code', 'warning');
                 return;
             }
 
@@ -195,13 +222,13 @@
                 });
 
                 if (response.success) {
-                    window.Toast.success(response.message);
+                    Utils.showToast(response.message, 'success');
                     this.updateOrderSummary(response.data);
                 } else {
-                    window.Toast.error(response.message);
+                    Utils.showToast(response.message, 'error');
                 }
             } catch (error) {
-                window.Toast.error(error.message || 'Failed to apply coupon');
+                Utils.showToast(error.message || 'Failed to apply coupon', 'error');
             } finally {
                 btn.disabled = false;
                 btn.textContent = originalText;
@@ -215,14 +242,14 @@
                 });
 
                 if (response.success) {
-                    window.Toast.info('Coupon removed');
+                    Utils.showToast('Coupon removed', 'info');
                     const discountRow = document.getElementById('discount-row');
                     if (discountRow) discountRow.classList.add('hidden');
                     this.updateOrderSummary(response.data);
                     document.getElementById('coupon-code').value = '';
                 }
             } catch (error) {
-                window.Toast.error('Failed to remove coupon');
+                Utils.showToast('Failed to remove coupon', 'error');
             }
         },
 
@@ -536,7 +563,7 @@
         handleFormSubmit(e, form) {
             if (!Validation.validateForm(form)) {
                 e.preventDefault();
-                window.Toast.error('Please fill in all required fields');
+                Utils.showToast('Please fill in all required fields', 'error');
                 return;
             }
 
@@ -547,7 +574,7 @@
             e.preventDefault();
 
             if (!Validation.validateForm(form)) {
-                window.Toast.error('Please fill in all required fields');
+                Utils.showToast('Please fill in all required fields', 'error');
                 return;
             }
 
@@ -562,7 +589,7 @@
                         document.getElementById('payment-method-id').value = paymentMethod.id;
                     }
                 } catch (error) {
-                    window.Toast.error(error.message);
+                    Utils.showToast(error.message, 'error');
                     this.hideLoadingState(form);
                     return;
                 }
@@ -576,7 +603,7 @@
             
             if (!termsCheckbox?.checked) {
                 e.preventDefault();
-                window.Toast.warning('Please accept the terms and conditions');
+                Utils.showToast('Please accept the terms and conditions', 'warning');
                 return;
             }
 
@@ -699,6 +726,7 @@
         // Restore auto-saved form data
         AutoSaveHandler.restoreFormData();
 
+        console.log('Checkout initialized successfully');
     }
 
     // Run on DOM ready
