@@ -138,7 +138,7 @@ const HomePage = (function() {
             }
 
             container.innerHTML = `
-                <div class="relative overflow-hidden w-full h-[70vh]">
+                <div class="relative overflow-hidden w-full h-[80vh]">
                     <div class="hero-slides relative w-full h-full">
                         ${banners.map((banner, index) => `
                             <div class="hero-slide ${index === 0 ? '' : 'hidden'} w-full h-full" data-index="${index}">
@@ -170,19 +170,19 @@ const HomePage = (function() {
                         `).join('')}
                     </div>
                     ${banners.length > 1 ? `
-                        <button class="hero-prev absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-colors" aria-label="Previous slide">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button class="hero-prev absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 dark:bg-stone-800/70 hover:bg-white dark:hover:bg-stone-700 rounded-full text-stone-900 dark:text-stone-100 flex items-center justify-center shadow-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500" aria-label="Previous slide">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                             </svg>
                         </button>
-                        <button class="hero-next absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-colors" aria-label="Next slide">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button class="hero-next absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 dark:bg-stone-800/70 hover:bg-white dark:hover:bg-stone-700 rounded-full text-stone-900 dark:text-stone-100 flex items-center justify-center shadow-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500" aria-label="Next slide">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                             </svg>
                         </button>
                         <div class="hero-dots absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                             ${banners.map((_, index) => `
-                                <button class="w-3 h-3 rounded-full transition-colors ${index === 0 ? 'bg-white' : 'bg-white/50 hover:bg-white/75'}" data-slide="${index}" aria-label="Go to slide ${index + 1}"></button>
+                                <button class="w-3 h-3 rounded-full transition-colors ${index === 0 ? 'bg-white dark:bg-stone-200' : 'bg-white/50 dark:bg-stone-600/60 hover:bg-white/75 dark:hover:bg-stone-500/80'}" data-slide="${index}" aria-label="Go to slide ${index + 1}"></button>
                             `).join('')}
                         </div>
                     ` : ''}
