@@ -85,11 +85,11 @@ class ProductViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         queryset = Product.objects.filter(is_deleted=False)
-        
+
         # For non-admin users, only show active products
         if not self.request.user.is_staff:
             queryset = queryset.filter(is_active=True)
-        
+
         # Apply filters
         category = self.request.query_params.get('category')
         categories_param = self.request.query_params.get('categories')
@@ -99,7 +99,8 @@ class ProductViewSet(viewsets.ModelViewSet):
         in_stock = self.request.query_params.get('in_stock')
         is_featured = self.request.query_params.get('is_featured')
         is_on_sale = self.request.query_params.get('is_on_sale')
-        
+        is_bestseller = self.request.query_params.get('bestseller')
+
         def split_values(raw):
             if not raw:
                 return []
@@ -127,15 +128,15 @@ class ProductViewSet(viewsets.ModelViewSet):
 
             if matched_category_ids:
                 queryset = queryset.filter(categories__id__in=matched_category_ids)
-        
+
         if tag:
             queryset = queryset.filter(tags__id=tag)
-        
+
         if min_price:
             queryset = queryset.filter(price__gte=min_price)
         if max_price:
             queryset = queryset.filter(price__lte=max_price)
-        
+
         if in_stock == 'true':
             queryset = queryset.filter(
                 Q(track_inventory=False) |
@@ -148,17 +149,20 @@ class ProductViewSet(viewsets.ModelViewSet):
                 stock_quantity=0,
                 allow_backorder=False
             )
-        
+
         if is_featured == 'true':
             queryset = queryset.filter(is_featured=True)
-        
+
         if is_on_sale == 'true':
             from django.db.models import F
             queryset = queryset.filter(
                 sale_price__isnull=False,
                 sale_price__lt=F('price')
             )
-        
+
+        if is_bestseller == 'true':
+            queryset = queryset.filter(is_bestseller=True)
+
         return queryset.distinct()
     
     def list(self, request, *args, **kwargs):

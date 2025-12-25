@@ -18,7 +18,8 @@ const ProductsApi = (function() {
             max_price: params.maxPrice || undefined,
             in_stock: params.inStock ? 'true' : undefined,
             is_featured: params.featured ? 'true' : undefined,
-            is_on_sale: params.onSale ? 'true' : undefined
+            is_on_sale: params.onSale ? 'true' : undefined,
+            bestseller: params.bestseller ? 'true' : undefined
         };
 
         return ApiClient.get('/products/', queryParams, { useCache: true, cacheTTL: 60000 });
