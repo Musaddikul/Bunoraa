@@ -15,9 +15,105 @@ const HomePage = (function() {
             loadCategoriesShowcase(),
             loadNewArrivals(),
             loadPromotions(),
-            loadCustomOrderCTA()
+            loadCustomOrderCTA(),
+            loadBestSellers(),
+            loadTestimonials()
         ]);
         initNewsletterForm();
+    }
+
+
+        async function loadTestimonials() {
+            const container = document.getElementById('testimonials-grid');
+            if (!container) return;
+            Loader.show(container, 'skeleton');
+            try {
+                // Fetch featured categories
+                let categoriesResponse = await CategoriesApi.getCategories({ pageSize: 6, featured: true });
+                let categories = categoriesResponse?.data?.results || categoriesResponse?.data || categoriesResponse?.results || [];
+                let allReviews = [];
+                // For each category, fetch featured products and their reviews
+                for (const category of categories) {
+                    let productsResponse = await ProductsApi.getProducts({ category: category.id, featured: true, pageSize: 3 });
+                    let products = productsResponse?.data?.results || productsResponse?.data || productsResponse?.results || [];
+                    for (const product of products) {
+                        let reviewsResponse = await ProductsApi.getReviews(product.id, { pageSize: 2 });
+                        let reviews = reviewsResponse?.data?.results || reviewsResponse?.data || reviewsResponse?.results || [];
+                        // Attach product/category info to review
+                        reviews.forEach(r => {
+                            r._product = product;
+                            r._category = category;
+                        });
+                        allReviews.push(...reviews);
+                    }
+                }
+                container.innerHTML = '';
+                if (!allReviews.length) {
+                    container.innerHTML = '<p class="text-gray-500 text-center py-8">No testimonials available.</p>';
+                    return;
+                }
+                // Optionally, limit to 6 testimonials
+                allReviews = allReviews.slice(0, 6);
+                allReviews.forEach(review => {
+                    const card = document.createElement('div');
+                    card.className = 'rounded-2xl bg-white dark:bg-stone-800 shadow p-6 flex flex-col gap-3';
+                    card.innerHTML = `
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="w-10 h-10 rounded-full bg-primary-100 dark:bg-stone-700 flex items-center justify-center text-lg font-bold text-primary-700 dark:text-amber-400">
+                                ${review.user?.first_name?.[0] || review.user?.username?.[0] || '?'}
+                            </div>
+                            <div>
+                                <div class="font-semibold text-gray-900 dark:text-white">${review.user?.first_name || review.user?.username || 'Anonymous'}</div>
+                                <div class="text-xs text-gray-500 dark:text-stone-400">${review.created_at ? new Date(review.created_at).toLocaleDateString() : ''}</div>
+                            </div>
+                        </div>
+                        <div class="flex gap-1 mb-1">
+                            ${'<svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.178c.969 0 1.371 1.24.588 1.81l-3.385 2.46a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.54 1.118l-3.385-2.46a1 1 0 00-1.175 0l-3.385 2.46c-.784.57-1.838-.196-1.54-1.118l1.287-3.966a1 1 0 00-.364-1.118l-3.385-2.46c-.783-.57-.38-1.81.588-1.81h4.178a1 1 0 00.95-.69l1.286-3.967z"/></svg>'.repeat(Math.round(review.rating || 5))}
+                        </div>
+                        <div class="text-gray-800 dark:text-stone-200 text-base mb-2">${Templates.escapeHtml(review.title || '')}</div>
+                        <div class="text-gray-600 dark:text-stone-400 text-sm">${Templates.escapeHtml(review.content || '')}</div>
+                        <div class="mt-2 text-xs text-primary-700 dark:text-amber-400 font-semibold">${review._category ? Templates.escapeHtml(review._category.name) : ''}${review._product ? ' - ' + Templates.escapeHtml(review._product.name) : ''}</div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Failed to load testimonials:', error);
+                container.innerHTML = '<p class="text-red-500 text-center py-8">Failed to load testimonials. Please try again later.</p>';
+            }
+        }
+    async function loadBestSellers() {
+        const container = document.getElementById('best-sellers');
+        if (!container) return;
+
+        const grid = container.querySelector('.products-grid') || container;
+        Loader.show(grid, 'skeleton');
+
+        try {
+            const response = await ProductsApi.getBestSellers(5);
+            const products = response.data?.results || response.data || response.results || [];
+
+            if (products.length === 0) {
+                grid.innerHTML = '<p class="text-gray-500 text-center py-8">No best sellers available.</p>';
+                return;
+            }
+
+            grid.innerHTML = products.map(product => ProductCard.render(product, { showBadge: true, badge: 'Best Seller' })).join('');
+            // Eager-load first images
+            try {
+                const imgs = grid.querySelectorAll('img');
+                imgs.forEach((img, i) => {
+                    if (i < 2) {
+                        img.setAttribute('loading', 'eager');
+                        img.setAttribute('fetchpriority', 'high');
+                        img.setAttribute('decoding', 'async');
+                    }
+                });
+            } catch {}
+            ProductCard.bindEvents(grid);
+        } catch (error) {
+            console.error('Failed to load best sellers:', error);
+            grid.innerHTML = '<p class="text-red-500 text-center py-8">Failed to load products. Please try again later.</p>';
+        }
     }
 
     async function loadHeroBanners() {
