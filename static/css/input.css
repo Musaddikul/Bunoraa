@@ -157,6 +157,18 @@
                transition-shadow duration-300 overflow-hidden;
         @apply dark:bg-stone-900 dark:border dark:border-stone-700 dark:shadow-none;
     }
+
+    /* Product card: force square corners across the site */
+    .product-card {
+        @apply rounded-none;
+        border-radius: 0 !important; /* Extra safeguard against accidental utility classes */
+    }
+
+    .product-card img,
+    .product-card .skeleton {
+        @apply rounded-none;
+        border-radius: 0 !important;
+    }
     
     /* Badges */
     .badge {
@@ -293,15 +305,15 @@
     }
     
     /* Product Card Hover Actions */
+    /* Product Card Hover Actions - positioning should be controlled by markup (left/right/top/bottom) to avoid stretching */
     .product-actions {
-        @apply absolute top-3 right-3 flex flex-col gap-2 
+        @apply absolute flex flex-col gap-2 
                opacity-0 group-hover:opacity-100 
-               transform translate-x-4 group-hover:translate-x-0 
                transition-all duration-300;
     }
     
     .product-action-btn {
-        @apply p-2.5 bg-white rounded-full shadow-lg 
+        @apply p-2.5 bg-white rounded-full shadow-lg flex-none 
                hover:bg-amber-50 hover:text-amber-600 
                transition-all duration-200 hover:scale-110;
         @apply dark:bg-stone-800 dark:hover:bg-stone-700 dark:text-stone-100;

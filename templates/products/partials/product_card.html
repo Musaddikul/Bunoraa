@@ -1,5 +1,5 @@
 <!-- Product Card Partial -->
-<div class="product-card group bg-white dark:bg-stone-900 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow border border-stone-100 dark:border-stone-800" 
+<div class="product-card group bg-white dark:bg-stone-900 rounded-none shadow-sm overflow-hidden hover:shadow-md transition-shadow border border-stone-200 dark:border-stone-800" 
      data-product-id="{{ product.id }}" 
      data-product-slug="{{ product.slug }}">
     <!-- Product Image -->
@@ -30,18 +30,18 @@
         
         <!-- Quick Actions -->
         <div class="absolute bottom-2 right-2 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button class="wishlist-btn bg-white dark:bg-stone-800 rounded-full p-2 shadow hover:bg-gray-100 dark:hover:bg-stone-700"
+            <button class="wishlist-btn product-action-btn"
                     data-product-id="{{ product.id }}"
-                    title="Add to Wishlist">
-                <svg class="w-5 h-5 text-gray-600 dark:text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    title="Add to Wishlist" aria-label="Add to wishlist">
+                <svg class="w-5 h-5 text-gray-600 dark:text-stone-300" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                 </svg>
             </button>
-            <button class="quick-view-btn bg-white dark:bg-stone-800 rounded-full p-2 shadow hover:bg-gray-100 dark:hover:bg-stone-700"
+            <button class="quick-view-btn product-action-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
                     data-product-id="{{ product.id }}"
                     data-product-slug="{{ product.slug }}"
-                    title="Quick View">
-                <svg class="w-5 h-5 text-gray-600 dark:text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    title="Quick View" aria-label="Quick view">
+                <svg class="w-5 h-5 text-gray-600 dark:text-stone-300" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                 </svg>
@@ -50,14 +50,16 @@
     </a>
     
     <!-- Product Info -->
-    <div class="p-4 bg-white dark:bg-stone-900">
+    <div class="p-4">
         <!-- Category -->
-        {% if product.category %}
-          <a href="{% url 'categories:detail' product.category.slug %}" 
-              class="text-xs text-gray-500 dark:text-stone-400 hover:text-primary-600 dark:hover:text-amber-400 uppercase tracking-wide">
-            {{ product.category.name }}
-        </a>
-        {% endif %}
+        {% with category=product.categories.first %}
+            {% if category %}
+            <a href="{% url 'categories:detail' category.slug %}" 
+                class="text-xs text-gray-500 dark:text-stone-400 hover:text-primary-600 dark:hover:text-amber-400 uppercase tracking-wide">
+                {{ category.name }}
+            </a>
+            {% endif %}
+        {% endwith %}
         
         <!-- Title -->
         <h3 class="mt-1">

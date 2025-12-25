@@ -543,7 +543,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         if (viewMode === 'list') {
             return `
-                <div class="product-card bg-white rounded-2xl shadow-soft overflow-hidden flex group col-span-full">
+                <div class="product-card bg-white dark:bg-stone-900 rounded-none shadow-sm overflow-hidden flex group col-span-full border border-stone-200 dark:border-stone-800">
                     <div class="relative w-48 flex-shrink-0 overflow-hidden">
                         <img src="${product.primary_image || '/static/images/placeholder.jpg'}" alt="${escapeHtml(product.name)}" 
                              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
@@ -552,14 +552,14 @@ document.addEventListener('DOMContentLoaded', async function() {
                     <div class="flex-1 p-6 flex flex-col">
                         <div class="flex-1">
                             <a href="${buildRoute('productDetail', product.slug)}">
-                                <p class="text-sm text-gray-500 mb-1">${escapeHtml(product.category?.name || '')}</p>
+                                <p class="text-sm text-gray-500 mb-1">${escapeHtml((product.categories && product.categories.length) ? product.categories[0].name : '')}</p>
                                 <h3 class="font-semibold text-gray-900 text-lg mb-2 hover:text-primary-600 transition-colors">${escapeHtml(product.name)}</h3>
                             </a>
                             ${product.short_description ? `<p class="text-gray-600 text-sm mb-3 line-clamp-2">${escapeHtml(product.short_description)}</p>` : ''}
                             ${product.average_rating ? `
                             <div class="flex items-center gap-1 mb-3">
                                 <div class="flex text-yellow-400">
-                                    ${[1,2,3,4,5].map(i => `<svg class="w-4 h-4 ${i <= Math.round(product.average_rating) ? 'fill-current' : 'fill-gray-300'}" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>`).join('')}
+                                    ${[1,2,3,4,5].map(i => `<svg class="w-4 h-4 ${i <= Math.round(product.average_rating) ? 'fill-current text-yellow-400' : 'fill-gray-300'}" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>`).join('')}
                                 </div>
                                 <span class="text-sm text-gray-500">(${product.review_count || 0} reviews)</span>
                             </div>
@@ -575,8 +575,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                                 `}
                             </div>
                             <div class="flex gap-2">
-                                <button data-add-to-wishlist="${product.id}" class="p-2 border border-gray-200 rounded-lg text-gray-400 hover:text-gray-600 transition-colors">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                                <button data-add-to-wishlist="${product.id}" title="Add to wishlist" aria-label="Add to wishlist" class="p-2 border border-gray-200 rounded-lg text-gray-400 hover:text-amber-600 transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
                                 </button>
                                 <button data-add-to-cart="${product.id}" class="px-4 py-2 bg-primary-700 text-white font-medium rounded-lg hover:bg-primary-800 transition-colors">
                                     Add to Cart
@@ -589,15 +589,15 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
         
         return `
-            <div class="product-card group bg-white rounded-2xl shadow-soft overflow-hidden">
+            <div class="product-card group bg-white dark:bg-stone-900 rounded-none shadow-sm overflow-hidden border border-stone-200 dark:border-stone-800">
                 <div class="relative overflow-hidden" style="aspect-ratio: ${product?.aspect?.css || '1/1'};">
                     <img src="${product.primary_image || '/static/images/placeholder.jpg'}" alt="${escapeHtml(product.name)}" 
                          class="product-image w-full h-full object-cover transition-transform duration-500">
                     ${discount > 0 ? `<span class="absolute top-3 left-3 px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-lg">-${discount}%</span>` : ''}
                     ${product.is_new ? `<span class="absolute top-3 ${discount > 0 ? 'left-16' : 'left-3'} px-2 py-1 bg-green-500 text-white text-xs font-bold rounded-lg">NEW</span>` : ''}
-                    <div class="product-actions absolute bottom-3 left-3 right-3 flex gap-2">
-                        <button data-quick-view="${product.id}" class="p-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                    <div class="product-actions absolute bottom-3 left-3 flex gap-2">
+                        <button data-quick-view="${product.id}" title="Quick view" aria-label="Quick view" class="product-action-btn">
+                            <svg class="w-5 h-5 text-gray-700 dark:text-stone-300" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                         </button>
                     </div>
                     <button data-add-to-wishlist="${product.id}" class="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur rounded-full text-gray-600 hover:scale-110 transition-all">
@@ -606,13 +606,13 @@ document.addEventListener('DOMContentLoaded', async function() {
                 </div>
                 <div class="p-4">
                     <a href="${buildRoute('productDetail', product.slug)}" class="block">
-                        <p class="text-xs text-gray-500 mb-1">${escapeHtml(product.category?.name || '')}</p>
+                        <p class="text-xs text-gray-500 mb-1">${escapeHtml((product.categories && product.categories.length) ? product.categories[0].name : '')}</p>
                         <h3 class="font-medium text-gray-900 line-clamp-2 mb-2 hover:text-primary-600 transition-colors">${escapeHtml(product.name)}</h3>
                     </a>
                     ${product.average_rating ? `
                     <div class="flex items-center gap-1 mb-2">
                         <div class="flex text-yellow-400">
-                            ${[1,2,3,4,5].map(i => `<svg class="w-4 h-4 ${i <= Math.round(product.average_rating) ? 'fill-current' : 'fill-gray-300'}" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>`).join('')}
+                            ${[1,2,3,4,5].map(i => `<svg class="w-4 h-4 ${i <= Math.round(product.average_rating) ? 'fill-current text-yellow-400' : 'fill-gray-300'}" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>`).join('')}
                         </div>
                         <span class="text-xs text-gray-500">(${product.review_count || 0})</span>
                     </div>
@@ -636,7 +636,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         isLoading = true;
         
         if (!append) {
-            productsGrid.innerHTML = Array(8).fill('<div class="skeleton h-80 rounded-2xl"></div>').join('');
+            productsGrid.innerHTML = Array(8).fill('<div class="skeleton h-80 rounded-none"></div>').join('');
             currentPage = 1;
         } else {
             loadMoreBtn.querySelector('.load-more-text').classList.add('hidden');

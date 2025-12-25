@@ -21,7 +21,7 @@ def site_settings(request):
             try:
                 qs = site.social_links.filter(is_active=True).order_by('order')
                 social_links = [
-                    {'name': s.name, 'url': s.url, 'icon': s.icon.url if s.icon else None}
+                    {'name': s.name, 'url': s.url, 'icon': s.get_icon_url()}
                     for s in qs
                 ]
             except Exception:
@@ -29,7 +29,7 @@ def site_settings(request):
                 try:
                     qs = SocialLink.objects.filter(is_active=True).order_by('order')
                     social_links = [
-                        {'name': s.name, 'url': s.url, 'icon': s.icon.url if s.icon else None}
+                        {'name': s.name, 'url': s.url, 'icon': s.get_icon_url()}
                         for s in qs
                     ]
                 except Exception:

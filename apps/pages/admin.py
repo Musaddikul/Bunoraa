@@ -4,6 +4,7 @@ Pages admin configuration
 from django.contrib import admin
 from django.db import models
 from django.forms import URLInput
+from django.utils.html import format_html
 from .models import Page, FAQ, ContactMessage, SiteSettings, Subscriber, SocialLink
 
 
@@ -107,6 +108,14 @@ class SocialLinkInline(admin.TabularInline):
     formfield_overrides = {
         models.URLField: {'widget': URLInput(attrs={'style': 'max-width:40ch; width:100%; display:block;'})},
     }
+    readonly_fields = ['icon_preview']
+
+    def icon_preview(self, obj):
+        url = obj.get_icon_url() if obj else None
+        if url:
+            return format_html('<img src="{}" width="24" height="24" style="object-fit: contain;" />', url)
+        return '-'
+    icon_preview.short_description = 'Preview'
 
 
 @admin.register(Subscriber)
