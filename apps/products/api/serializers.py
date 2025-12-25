@@ -89,6 +89,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     review_count = serializers.IntegerField(read_only=True)
     
     aspect = serializers.SerializerMethodField()
+    category = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -97,8 +98,14 @@ class ProductListSerializer(serializers.ModelSerializer):
             'price', 'sale_price', 'current_price', 'discount_percentage',
             'is_on_sale', 'is_in_stock', 'is_featured', 'is_new',
             'primary_image', 'average_rating', 'review_count',
-            'created_at', 'aspect'
+            'created_at', 'aspect', 'category'
         ]
+
+    def get_category(self, obj):
+        category = obj.categories.filter(is_active=True, is_deleted=False).first()
+        if category:
+            return {'id': str(category.id), 'name': category.name, 'slug': category.slug}
+        return None
 
     def get_aspect(self, obj):
         eff = obj.get_effective_aspect()

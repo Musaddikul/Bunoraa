@@ -12,6 +12,12 @@ const AccountPage = (function() {
         if (!AuthGuard.requireAuth()) return;
 
         await loadUserProfile();
+        // Ensure avatar handlers are bound even when renderProfile cannot inject the header (e.g., server-rendered sidebar present)
+        try {
+            setupAvatarHandlers();
+        } catch (e) {
+            // ignore
+        }
         initProfileTabs();
         initProfileForm();
         initPasswordForm();
@@ -141,21 +147,36 @@ const AccountPage = (function() {
     }
 
     function setupAvatarHandlers() {
-        const avatarInput = document.getElementById('avatar-input');
+        let avatarInput = document.getElementById('avatar-input');
         const avatarBtn = document.getElementById('change-avatar-btn');
         const removeBtn = document.getElementById('remove-avatar-btn');
 
-        avatarBtn?.addEventListener('click', () => {
-            avatarInput?.click();
-        });
+        // If the hidden file input is missing, create it so buttons still work
+        if (!avatarInput) {
+            avatarInput = document.createElement('input');
+            avatarInput.type = 'file';
+            avatarInput.id = 'avatar-input';
+            avatarInput.name = 'avatar';
+            avatarInput.accept = 'image/*';
+            avatarInput.className = 'hidden';
+            document.body.appendChild(avatarInput);
+        }
 
-        removeBtn?.addEventListener('click', () => {
+        // Bind to all elements that may act as avatar trigger (sidebar + main profile)
+        const avatarBtns = document.querySelectorAll('#change-avatar-btn');
+        avatarBtns.forEach(btn => btn.addEventListener('click', () => avatarInput.click()));
+
+        // Bind remove buttons (may be multiple)
+        const removeBtns = document.querySelectorAll('#remove-avatar-btn');
+        removeBtns.forEach(btn => btn.addEventListener('click', () => {
             if (typeof window.removeAvatar === 'function') {
                 window.removeAvatar();
             }
-        });
+        }));
 
-        avatarInput?.addEventListener('change', async (e) => {
+        // Ensure the handler is not attached multiple times
+        avatarInput.removeEventListener?.('change', window._avatarChangeHandler);
+        window._avatarChangeHandler = async function (e) {
             const file = e.target.files?.[0];
             if (!file) return;
 
@@ -176,7 +197,9 @@ const AccountPage = (function() {
             } catch (error) {
                 Toast.error(error.message || 'Failed to update avatar.');
             }
-        });
+        };
+
+        avatarInput.addEventListener('change', window._avatarChangeHandler);
     }
 
     function initPasswordForm() {

@@ -181,8 +181,13 @@
                 {% block content %}{% endblock %}
             </div>
             <div class="email-footer">
-                <p style="margin-bottom: 10px;">© {% now "Y" %} Bunoraa. All rights reserved.</p>
-                <p style="margin-bottom: 10px;">123 Commerce Street, New York, NY 10001</p>
+                <p style="margin-bottom: 10px;">© {% now "Y" %} {{ SITE_NAME }}. All rights reserved.</p>
+                {% if CONTACT_ADDRESS %}
+                <p style="margin-bottom: 10px;">{{ CONTACT_ADDRESS }}</p>
+                {% endif %}
+                {% if CONTACT_EMAIL %}
+                <p style="margin-bottom: 10px;"><a href="mailto:{{ CONTACT_EMAIL }}">{{ CONTACT_EMAIL }}</a></p>
+                {% endif %}
                 <div class="social-links">
                     {% for s in SOCIAL_LINKS %}{% if not forloop.first %} | {% endif %}<a href="{{ s.url }}" target="_blank" rel="noopener noreferrer">{{ s.name }}</a>{% endfor %}
                 </div>

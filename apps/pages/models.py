@@ -228,6 +228,16 @@ class SiteSettings(models.Model):
         return obj
 
 
+from django.core.exceptions import ValidationError
+
+
+def validate_svg_file(fieldfile_obj):
+    """Basic validator for SVG files: checks extension and content type when available."""
+    name = getattr(fieldfile_obj, 'name', '')
+    if name and not name.lower().endswith('.svg'):
+        raise ValidationError('Only SVG files are allowed for SVG icon field.')
+
+
 class SocialLink(models.Model):
     """
     Social link to show in footer and emails. Managed as part of SiteSettings (inline in admin).
@@ -235,7 +245,15 @@ class SocialLink(models.Model):
     site = models.ForeignKey('pages.SiteSettings', on_delete=models.CASCADE, related_name='social_links', null=True, blank=True)
     name = models.CharField(max_length=100)
     url = models.URLField()
-    icon = models.ImageField(upload_to='site/social/', blank=True, null=True)
+    def validate_icon_file(fieldfile_obj):
+        """Allow common raster images and SVG for icons."""
+        name = getattr(fieldfile_obj, 'name', '')
+        if name:
+            allowed = ('.svg', '.png', '.jpg', '.jpeg', '.gif', '.webp')
+            if not any(name.lower().endswith(ext) for ext in allowed):
+                raise ValidationError('Icon must be one of: svg, png, jpg, jpeg, gif, webp')
+
+    icon = models.FileField(upload_to='site/social/', validators=[validate_icon_file], blank=True, null=True, help_text='Upload an image or SVG (preferred).')
     order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -248,6 +266,15 @@ class SocialLink(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_icon_url(self):
+        """Return the stored icon URL (svg or raster)."""
+        if self.icon:
+            try:
+                return self.icon.url
+            except Exception:
+                pass
+        return None
 
     def save(self, *args, **kwargs):
         # Ensure the SocialLink is associated with the singleton SiteSettings when possible

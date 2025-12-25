@@ -157,8 +157,8 @@
     </div>
     {% endblock %}
 
-    <header id="main-header" class="sticky top-0 inset-x-0 z-40 border-b border-stone-200/70 bg-white/95 backdrop-blur-xl shadow-[0_8px_30px_rgba(15,23,42,0.05)] supports-[backdrop-filter]:bg-white/70 dark:border-stone-700/70 dark:bg-stone-900/95 dark:supports-[backdrop-filter]:bg-stone-900/70">
-        <div class="bg-white/90 dark:bg-stone-900/90">
+    <header id="main-header" class="sticky top-0 inset-x-0 z-40 border-transparent bg-transparent backdrop-blur-none shadow-none transition-colors transition-shadow">
+        <div class="bg-transparent">
             <div class="container mx-auto px-4">
                 <div class="main-header-row flex flex-wrap items-center gap-3 py-2 relative">
                     <div class="flex items-center gap-2 z-10">
@@ -403,13 +403,30 @@
                             Trusted Sellers
                         </div>
                     </div>
-                    
+
+                    <!-- Contact Info (from Site Settings) -->
+                    <div class="mb-6 text-sm text-stone-400">
+                        {% if CONTACT_EMAIL or CONTACT_PHONE or CONTACT_ADDRESS %}
+                        <ul class="space-y-1">
+                            {% if CONTACT_EMAIL %}
+                            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8m0 8V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h14a2 2 0 002-2z"/></svg><a href="mailto:{{ CONTACT_EMAIL }}" class="hover:text-amber-400">{{ CONTACT_EMAIL }}</a></li>
+                            {% endif %}
+                            {% if CONTACT_PHONE %}
+                            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.95.68l.68 2.02a1 1 0 01-.24.98L8.12 9.88a16.06 16.06 0 006.99 6.99l2.5-1.33a1 1 0 01.98-.24l2.02.68a1 1 0 01.68.95V19a2 2 0 01-2 2h-1C6 21 3 18 3 14V5z"/></svg><a href="tel:{{ CONTACT_PHONE }}" class="hover:text-amber-400">{{ CONTACT_PHONE }}</a></li>
+                            {% endif %}
+                            {% if CONTACT_ADDRESS %}
+                            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-stone-400 mt-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.14 2 5 5.14 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.86-3.14-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/></svg><span>{{ CONTACT_ADDRESS }}</span></li>
+                            {% endif %}
+                        </ul>
+                        {% endif %}
+                    </div>
+
                     <!-- Social Links -->
                     <div class="flex items-center gap-3">
                         {% for s in SOCIAL_LINKS %}
                         <a href="{{ s.url }}" target="_blank" rel="noopener noreferrer" class="w-10 h-10 bg-stone-800 hover:bg-amber-600 rounded-xl flex items-center justify-center text-stone-400 hover:text-white transition-all duration-200" aria-label="{{ s.name }}">
                             {% if s.icon %}
-                            <img src="{{ s.icon }}" alt="{{ s.name }}" class="w-5 h-5">
+                            <img src="{{ s.icon }}" alt="{{ s.name }}" class="w-5 h-5 object-contain">
                             {% else %}
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 14.5v-5h3l-4-6-4 6h3v5h2z"/></svg>
                             {% endif %}
@@ -775,7 +792,7 @@
                     const aspectCss = (p?.aspect && (p.aspect.css || (p.aspect.width && p.aspect.height ? `${p.aspect.width}/${p.aspect.height}` : null))) || '1/1';
 
                     return `
-                        <div class="product-card group bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100" data-product-id="${p.id || ''}" data-product-slug="${p.slug || ''}">
+                        <div class="product-card group bg-white dark:bg-stone-900 rounded-none shadow-sm overflow-hidden border border-stone-200 dark:border-stone-800" data-product-id="${p.id || ''}" data-product-slug="${p.slug || ''}">
                             <a href="${href}" class="block relative overflow-hidden" style="aspect-ratio: ${aspectCss};">
                                 ${img ? `
                                     <img src="${img}" alt="${(window.Templates?.escapeHtml?.(p.name)) || ''}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy">
@@ -1095,7 +1112,8 @@
             const mobileAccount = document.getElementById('mobile-account');
             
             if (user && accountName) {
-                accountName.textContent = user.first_name || 'My Account';
+                const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+                accountName.textContent = fullName || user.email || 'My Account';
             }
             
             if (accountDropdown) {
@@ -1103,7 +1121,7 @@
                     accountDropdown.innerHTML = `
                         <div class="px-4 py-3 border-b border-stone-100 dark:border-stone-700">
                             <p class="text-sm text-stone-500 dark:text-stone-400">Welcome back,</p>
-                            <p class="font-semibold text-stone-900 dark:text-stone-100">${escapeHtml ? escapeHtml(user.first_name || user.email) : (user.first_name || user.email)}</p>
+                            <p class="font-semibold text-stone-900 dark:text-stone-100">${escapeHtml ? escapeHtml((user.first_name || user.last_name) ? `${(user.first_name || '')} ${(user.last_name || '')}`.trim() : user.email) : ((user.first_name || user.last_name) ? `${(user.first_name || '')} ${(user.last_name || '')}`.trim() : user.email)}</p>
                         </div>
                         <a href="${buildRoute('accountsDashboard')}" class="flex items-center gap-3 px-4 py-2.5 text-stone-700 hover:bg-amber-50 hover:text-amber-700 transition-colors dark:text-stone-300 dark:hover:bg-stone-700 dark:hover:text-amber-300">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
@@ -1154,10 +1172,10 @@
                     mobileAccount.innerHTML = `
                         <div class="flex items-center gap-3 mb-4">
                             <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center text-amber-700 font-bold text-lg">
-                                ${(user.first_name || user.email || 'U').charAt(0).toUpperCase()}
+                                ${((user.first_name || user.last_name) ? `${(user.first_name || '')} ${(user.last_name || '')}`.trim() : (user.email || 'U')).charAt(0).toUpperCase()}
                             </div>
                             <div>
-                                <p class="font-semibold text-stone-900">${escapeHtml ? escapeHtml(user.first_name || 'User') : (user.first_name || 'User')}</p>
+                                <p class="font-semibold text-stone-900">${escapeHtml ? escapeHtml((user.first_name || user.last_name) ? `${(user.first_name || '')} ${(user.last_name || '')}`.trim() : 'User') : ((user.first_name || user.last_name) ? `${(user.first_name || '')} ${(user.last_name || '')}`.trim() : 'User')}</p>
                                 <p class="text-sm text-stone-500">${escapeHtml ? escapeHtml(user.email) : user.email}</p>
                             </div>
                         </div>
@@ -1337,11 +1355,25 @@
                 const handleScroll = () => {
                     const currentScroll = window.scrollY;
                     
-                    // Add shadow when scrolled
+                    // Add background/border/blur and shadow when scrolled; restore transparent header at top
                     if (currentScroll > 10) {
-                        header.classList.add('shadow-lg', 'shadow-stone-200/50');
+                        header.classList.add(
+                            'shadow-lg', 'shadow-stone-200/50',
+                            'bg-white/95', 'dark:bg-stone-900/95',
+                            'border-b', 'border-stone-200/70', 'dark:border-stone-700/70',
+                            'supports-[backdrop-filter]:bg-white/70', 'dark:supports-[backdrop-filter]:bg-stone-900/70',
+                            'backdrop-blur-xl'
+                        );
+                        header.classList.remove('bg-transparent', 'border-transparent', 'backdrop-blur-none', 'shadow-none');
                     } else {
-                        header.classList.remove('shadow-lg', 'shadow-stone-200/50');
+                        header.classList.remove(
+                            'shadow-lg', 'shadow-stone-200/50',
+                            'bg-white/95', 'dark:bg-stone-900/95',
+                            'border-b', 'border-stone-200/70', 'dark:border-stone-700/70',
+                            'supports-[backdrop-filter]:bg-white/70', 'dark:supports-[backdrop-filter]:bg-stone-900/70',
+                            'backdrop-blur-xl'
+                        );
+                        header.classList.add('bg-transparent', 'border-transparent', 'backdrop-blur-none', 'shadow-none');
                     }
 
                     if (!isCollapsed && currentScroll > collapseThreshold) {
