@@ -89,7 +89,8 @@ const HomePage = (function() {
         Loader.show(grid, 'skeleton');
 
         try {
-            const response = await ProductsApi.getBestSellers(5);
+            // Use backend bestseller logic, like featured
+            const response = await ProductsApi.getProducts({ bestseller: true, pageSize: 5 });
             const products = response.data?.results || response.data || response.results || [];
 
             if (products.length === 0) {
@@ -97,7 +98,14 @@ const HomePage = (function() {
                 return;
             }
 
-            grid.innerHTML = products.map(product => ProductCard.render(product, { showBadge: true, badge: 'Best Seller' })).join('');
+            grid.innerHTML = products.map(product => {
+                // Only show discount badge if available
+                let badge = null;
+                if (product.discount_percent && product.discount_percent > 0) {
+                    badge = `-${product.discount_percent}%`;
+                }
+                return ProductCard.render(product, { showBadge: !!badge, badge });
+            }).join('');
             // Eager-load first images
             try {
                 const imgs = grid.querySelectorAll('img');
@@ -252,7 +260,13 @@ const HomePage = (function() {
                 return;
             }
 
-            grid.innerHTML = products.map(product => ProductCard.render(product)).join('');
+            grid.innerHTML = products.map(product => {
+                let badge = null;
+                if (product.discount_percent && product.discount_percent > 0) {
+                    badge = `-${product.discount_percent}%`;
+                }
+                return ProductCard.render(product, { showBadge: !!badge, badge });
+            }).join('');
             // Ensure top-of-viewport product images load eagerly for better LCP
             try {
                 const imgs = grid.querySelectorAll('img');
@@ -286,62 +300,21 @@ const HomePage = (function() {
                 return;
             }
 
-            const getCategoryImage = (cat) => {
-                if (!cat) return '';
-                if (typeof cat.image === 'string' && cat.image) return cat.image;
-                if (cat.image && typeof cat.image === 'object') {
-                    if (typeof cat.image.url === 'string' && cat.image.url) return cat.image.url;
-                    if (typeof cat.image.src === 'string' && cat.image.src) return cat.image.src;
-                }
-                if (typeof cat.banner_image === 'string' && cat.banner_image) return cat.banner_image;
-                if (cat.banner_image && typeof cat.banner_image === 'object') {
-                    if (typeof cat.banner_image.url === 'string' && cat.banner_image.url) return cat.banner_image.url;
-                    if (typeof cat.banner_image.src === 'string' && cat.banner_image.src) return cat.banner_image.src;
-                }
-                if (typeof cat.hero_image === 'string' && cat.hero_image) return cat.hero_image;
-                if (cat.hero_image && typeof cat.hero_image === 'object') {
-                    if (typeof cat.hero_image.url === 'string' && cat.hero_image.url) return cat.hero_image.url;
-                    if (typeof cat.hero_image.src === 'string' && cat.hero_image.src) return cat.hero_image.src;
-                }
-                if (typeof cat.thumbnail === 'string' && cat.thumbnail) return cat.thumbnail;
-                if (cat.thumbnail && typeof cat.thumbnail === 'object') {
-                    if (typeof cat.thumbnail.url === 'string' && cat.thumbnail.url) return cat.thumbnail.url;
-                    if (typeof cat.thumbnail.src === 'string' && cat.thumbnail.src) return cat.thumbnail.src;
-                }
-                return '';
-            };
+            // Import CategoryCard component
+            let CategoryCard;
+            try {
+                CategoryCard = (await import('../components/CategoryCard.js')).CategoryCard;
+            } catch (e) {
+                console.error('Failed to import CategoryCard:', e);
+                return;
+            }
 
-            container.innerHTML = `
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                    ${categories.map(category => `
-                        <a href="/categories/${category.slug}/" class="group block">
-                            <div class="relative aspect-square rounded-xl overflow-hidden bg-gray-100">
-                                ${(() => { const img = getCategoryImage(category); return img ? `
-                                    <img 
-                                        src="${img}" 
-                                        alt="${Templates.escapeHtml(category.name || '')}"
-                                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                        loading="lazy"
-                                    >
-                                ` : `
-                                    <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-200">
-                                        <svg class="w-12 h-12 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-                                        </svg>
-                                    </div>
-                                `; })()}
-                                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                            </div>
-                            <h3 class="mt-3 text-sm font-medium text-gray-900 group-hover:text-primary-600 transition-colors text-center">
-                                ${Templates.escapeHtml(category.name)}
-                            </h3>
-                            ${category.product_count ? `
-                                <p class="text-xs text-gray-500 text-center">${category.product_count} products</p>
-                            ` : ''}
-                        </a>
-                    `).join('')}
-                </div>
-            `;
+            container.innerHTML = '';
+            categories.forEach(category => {
+                const card = CategoryCard(category);
+                container.appendChild(card);
+            });
+            container.classList.add('grid','grid-cols-2','md:grid-cols-3','lg:grid-cols-6','gap-4','lg:gap-6');
         } catch (error) {
             console.error('Failed to load categories:', error);
             container.innerHTML = '';
@@ -364,7 +337,13 @@ const HomePage = (function() {
                 return;
             }
 
-            grid.innerHTML = products.map(product => ProductCard.render(product, { showBadge: true, badge: 'New' })).join('');
+            grid.innerHTML = products.map(product => {
+                let badge = null;
+                if (product.discount_percent && product.discount_percent > 0) {
+                    badge = `-${product.discount_percent}%`;
+                }
+                return ProductCard.render(product, { showBadge: !!badge, badge });
+            }).join('');
             // Eager-load first images to reduce lazy-load intervention note
             try {
                 const imgs = grid.querySelectorAll('img');
