@@ -287,7 +287,7 @@ const ProductPage = (function() {
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
                 <!-- Gallery -->
                 <div id="product-gallery" class="product-gallery">
-                    <div class="main-image-container relative aspect-square rounded-xl overflow-hidden bg-gray-100">
+                    <div class="main-image-container relative rounded-xl overflow-hidden bg-gray-100" style="aspect-ratio: ${product?.aspect?.css || '1/1'};">
                         <img 
                             src="${mainImage}" 
                             alt="${Templates.escapeHtml(product.name)}"

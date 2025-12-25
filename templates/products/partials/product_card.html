@@ -3,7 +3,8 @@
      data-product-id="{{ product.id }}" 
      data-product-slug="{{ product.slug }}">
     <!-- Product Image -->
-    <a href="{% url 'products:detail' product.slug %}" class="block relative aspect-square overflow-hidden">
+    {% with aspect=product.get_effective_aspect %}
+    <a href="{% url 'products:detail' product.slug %}" class="block relative overflow-hidden" style="aspect-ratio: {{ aspect.width }}/{{ aspect.height }};">
         {% if product.primary_image %}
         <img src="{{ product.primary_image.image.url }}" alt="{{ product.primary_image.alt_text|default:product.name }}" 
              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">

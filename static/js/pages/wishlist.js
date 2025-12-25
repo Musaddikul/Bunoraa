@@ -204,7 +204,7 @@ const WishlistPage = (function() {
 
         return `
             <div class="wishlist-item relative bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" data-item-id="${item.id}" data-product-id="${product.id || item.product}">
-                <div class="relative aspect-square bg-gray-100">
+                <div class="relative" style="aspect-ratio: ${product?.aspect?.css || '1/1'};">
                     ${item.discount_percentage ? `
                         <div class="absolute top-2 left-2 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
                             -${item.discount_percentage}%

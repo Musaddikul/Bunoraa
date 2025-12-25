@@ -77,7 +77,9 @@ class Product(models.Model):
     """Main product model."""
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    
+
+
+
     # Basic info
     name = models.CharField(_('name'), max_length=300)
     slug = models.SlugField(_('slug'), max_length=350, unique=True)
@@ -152,6 +154,19 @@ class Product(models.Model):
     length = models.DecimalField(_('length (cm)'), max_digits=8, decimal_places=2, null=True, blank=True)
     width = models.DecimalField(_('width (cm)'), max_digits=8, decimal_places=2, null=True, blank=True)
     height = models.DecimalField(_('height (cm)'), max_digits=8, decimal_places=2, null=True, blank=True)
+
+    # Image aspect (product-level override). If unset, inherits from category chain.
+    aspect_width = models.DecimalField(_('aspect width'), max_digits=8, decimal_places=4, null=True, blank=True, help_text=_('Width value used to compute aspect ratio (decimal allowed).'))
+    aspect_height = models.DecimalField(_('aspect height'), max_digits=8, decimal_places=4, null=True, blank=True, help_text=_('Height value used to compute aspect ratio (decimal allowed).'))
+    ASPECT_UNIT_CHOICES = [
+        ('ratio', 'Ratio (unitless)'),
+        ('in', 'Inches'),
+        ('ft', 'Feet'),
+        ('cm', 'Centimeters'),
+        ('mm', 'Millimeters'),
+        ('px', 'Pixels'),
+    ]
+    aspect_unit = models.CharField(_('aspect unit'), max_length=10, choices=ASPECT_UNIT_CHOICES, default='ratio')
     
     # SEO
     meta_title = models.CharField(_('meta title'), max_length=200, blank=True)
@@ -196,7 +211,69 @@ class Product(models.Model):
         if not self.sku:
             self.sku = generate_sku('PRD')
         super().save(*args, **kwargs)
-    
+
+    def get_effective_aspect(self):
+        """Return effective aspect for product: product override -> first category chain -> default 1:1.
+
+        Returns a dict: {'width': Decimal, 'height': Decimal, 'unit': str, 'ratio': Decimal, 'css': 'w/h'}
+        """
+        from decimal import Decimal
+
+        # Product-level override
+        if self.aspect_width and self.aspect_height:
+            try:
+                ratio = Decimal(self.aspect_width) / Decimal(self.aspect_height)
+            except Exception:
+                ratio = Decimal('1')
+            return {
+                'width': self.aspect_width,
+                'height': self.aspect_height,
+                'unit': self.aspect_unit or 'ratio',
+                'ratio': ratio,
+                'css': f"{self.aspect_width}/{self.aspect_height}"
+            }
+
+        # Try categories (prefer the most specific/deepest category that has an aspect)
+        categories = list(self.categories.all())
+        if categories:
+            categories.sort(key=lambda c: getattr(c, 'level', 0), reverse=True)
+            for category in categories:
+                eff = category.get_effective_aspect()
+                if eff and eff.get('ratio'):
+                    return {
+                        'width': eff.get('width'),
+                        'height': eff.get('height'),
+                        'unit': eff.get('unit'),
+                        'ratio': eff.get('ratio'),
+                        'css': f"{eff.get('width')}/{eff.get('height')}"
+                    }
+
+        # Default
+        return {
+            'width': Decimal('1'),
+            'height': Decimal('1'),
+            'unit': 'ratio',
+            'ratio': Decimal('1'),
+            'css': '1/1'
+        }
+
+    # Proxy model to surface Category in the Products admin section
+    try:
+        from apps.categories.models import Category as CategoryModel
+
+        class CategoryProxy(CategoryModel):
+            """Proxy for Category registered under the 'products' app label so it appears in Products section of admin."""
+            class Meta:
+                proxy = True
+                app_label = 'products'
+                # Use explicit translatable strings to avoid import-time resolution issues
+                verbose_name = _('category')
+                verbose_name_plural = _('categories')
+    except Exception:
+        # Import may fail during manage commands; ignore gracefully
+        CategoryProxy = None
+
+
     @property
     def current_price(self):
         """Get the current selling price."""

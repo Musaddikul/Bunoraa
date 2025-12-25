@@ -2,7 +2,9 @@
 Pages admin configuration
 """
 from django.contrib import admin
-from .models import Page, FAQ, ContactMessage, SiteSettings, Subscriber
+from django.db import models
+from django.forms import URLInput
+from .models import Page, FAQ, ContactMessage, SiteSettings, Subscriber, SocialLink
 
 
 @admin.register(Page)
@@ -71,12 +73,7 @@ class SiteSettingsAdmin(admin.ModelAdmin):
         ('Contact', {
             'fields': ('contact_email', 'contact_phone', 'contact_address')
         }),
-        ('Social Media', {
-            'fields': (
-                'facebook_url', 'instagram_url', 'twitter_url',
-                'linkedin_url', 'youtube_url', 'tiktok_url'
-            )
-        }),
+    
         ('SEO', {
             'fields': ('default_meta_title', 'default_meta_description')
         }),
@@ -103,6 +100,15 @@ class SiteSettingsAdmin(admin.ModelAdmin):
         return False
 
 
+class SocialLinkInline(admin.TabularInline):
+    model = SocialLink
+    fields = ('name', 'url', 'icon', 'is_active', 'order')
+    extra = 1
+    formfield_overrides = {
+        models.URLField: {'widget': URLInput(attrs={'style': 'max-width:40ch; width:100%; display:block;'})},
+    }
+
+
 @admin.register(Subscriber)
 class SubscriberAdmin(admin.ModelAdmin):
     list_display = ['email', 'name', 'is_active', 'is_verified', 'source', 'subscribed_at']
@@ -111,7 +117,7 @@ class SubscriberAdmin(admin.ModelAdmin):
     readonly_fields = ['subscribed_at']
     
     actions = ['mark_verified', 'mark_unverified']
-    
+
     def mark_verified(self, request, queryset):
         queryset.update(is_verified=True)
         self.message_user(request, 'Selected subscribers marked as verified.')
@@ -121,3 +127,7 @@ class SubscriberAdmin(admin.ModelAdmin):
         queryset.update(is_verified=False)
         self.message_user(request, 'Selected subscribers marked as unverified.')
     mark_unverified.short_description = 'Mark as unverified'
+
+
+# Attach SocialLinkInline to SiteSettingsAdmin (so social links are managed inside SiteSettings)
+SiteSettingsAdmin.inlines = getattr(SiteSettingsAdmin, 'inlines', ()) + (SocialLinkInline,)
