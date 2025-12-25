@@ -282,46 +282,44 @@ class PreOrderCreateWizardView(View):
                     import uuid
                     from django.conf import settings
                     
-                    temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp_preorders')
-                    os.makedirs(temp_dir, exist_ok=True)
-                    
-                    # Use existing session folder or create new one
+                    from django.core.files.storage import default_storage
+                    from django.core.files.base import ContentFile
+
+                    # Use existing session folder or create new one (stored in remote storage)
                     session_folder = existing_session_folder or str(uuid.uuid4())
-                    session_path = os.path.join(temp_dir, session_folder)
-                    os.makedirs(session_path, exist_ok=True)
-                    
+                    storage_base = f'temp_preorders/{session_folder}'
+
                     # Handle removed files from form
                     removed_design_ids = request.POST.getlist('remove_design_files', [])
                     removed_ref_ids = request.POST.getlist('remove_reference_files', [])
-                    
+
                     # Filter out removed files from existing files
                     design_files_info = [f for i, f in enumerate(existing_design_files) 
                                         if str(i) not in removed_design_ids]
                     reference_files_info = [f for i, f in enumerate(existing_reference_files) 
                                            if str(i) not in removed_ref_ids]
-                    
-                    # Save new design files
+
+                    # Save new design files directly to configured storage
                     for f in new_design_files:
-                        file_path = os.path.join(session_path, f'design_{uuid.uuid4().hex}_{f.name}')
-                        with open(file_path, 'wb+') as dest:
-                            for chunk in f.chunks():
-                                dest.write(chunk)
+                        filename = f'design_{uuid.uuid4().hex}_{f.name}'
+                        storage_path = f"{storage_base}/{filename}"
+                        # Use default_storage.save which will upload to S3/R2 in production
+                        saved_path = default_storage.save(storage_path, ContentFile(f.read()))
                         design_files_info.append({
                             'name': f.name,
-                            'path': file_path,
+                            'path': saved_path,
                             'size': f.size,
                             'content_type': f.content_type,
                         })
-                    
-                    # Save new reference images
+
+                    # Save new reference images directly to configured storage
                     for f in new_reference_files:
-                        file_path = os.path.join(session_path, f'ref_{uuid.uuid4().hex}_{f.name}')
-                        with open(file_path, 'wb+') as dest:
-                            for chunk in f.chunks():
-                                dest.write(chunk)
+                        filename = f'ref_{uuid.uuid4().hex}_{f.name}'
+                        storage_path = f"{storage_base}/{filename}"
+                        saved_path = default_storage.save(storage_path, ContentFile(f.read()))
                         reference_files_info.append({
                             'name': f.name,
-                            'path': file_path,
+                            'path': saved_path,
                             'size': f.size,
                             'content_type': f.content_type,
                         })
@@ -470,12 +468,14 @@ class PreOrderCreateWizardView(View):
             files_data = request.session.get('preorder_files', {})
             session_folder = files_data.get('session_folder')
             
-            # Process design files
+            from django.core.files.storage import default_storage
+
+            # Process design files (read from storage)
             for file_info in files_data.get('design_files', []):
-                temp_path = file_info.get('path')
-                if temp_path and os.path.exists(temp_path):
+                storage_path = file_info.get('path')
+                if storage_path and default_storage.exists(storage_path):
                     try:
-                        with open(temp_path, 'rb') as f:
+                        with default_storage.open(storage_path, 'rb') as f:
                             PreOrderDesign.objects.create(
                                 preorder=preorder,
                                 title=file_info.get('name', 'Design'),
@@ -483,13 +483,13 @@ class PreOrderCreateWizardView(View):
                             )
                     except Exception as e:
                         logger.warning(f"Failed to save design file: {e}")
-            
-            # Process reference images
+
+            # Process reference images (read from storage)
             for file_info in files_data.get('reference_images', []):
-                temp_path = file_info.get('path')
-                if temp_path and os.path.exists(temp_path):
+                storage_path = file_info.get('path')
+                if storage_path and default_storage.exists(storage_path):
                     try:
-                        with open(temp_path, 'rb') as f:
+                        with default_storage.open(storage_path, 'rb') as f:
                             PreOrderReference.objects.create(
                                 preorder=preorder,
                                 title=file_info.get('name', 'Reference'),
@@ -497,15 +497,27 @@ class PreOrderCreateWizardView(View):
                             )
                     except Exception as e:
                         logger.warning(f"Failed to save reference image: {e}")
-            
-            # Clean up temp folder
-            if session_folder:
-                temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp_preorders', session_folder)
-                if os.path.exists(temp_dir):
-                    try:
-                        shutil.rmtree(temp_dir)
-                    except Exception as e:
-                        logger.warning(f"Failed to clean temp folder: {e}")
+
+            # Clean up temp files from storage
+            try:
+                for file_info in files_data.get('design_files', []):
+                    storage_path = file_info.get('path')
+                    if storage_path and default_storage.exists(storage_path):
+                        try:
+                            default_storage.delete(storage_path)
+                        except Exception:
+                            logger.warning(f"Failed to delete temporary stored file: {storage_path}")
+
+                for file_info in files_data.get('reference_images', []):
+                    storage_path = file_info.get('path')
+                    if storage_path and default_storage.exists(storage_path):
+                        try:
+                            default_storage.delete(storage_path)
+                        except Exception:
+                            logger.warning(f"Failed to delete temporary stored file: {storage_path}")
+            except Exception:
+                # Ignore storage cleanup errors
+                pass
             
             # Submit the pre-order
             preorder = PreOrderService.submit_preorder(preorder, user)
