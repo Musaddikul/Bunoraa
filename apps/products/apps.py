@@ -7,7 +7,12 @@ class ProductsConfig(AppConfig):
     verbose_name = 'Products'
     
     def ready(self):
-        import apps.products.signals  # noqa
+        # Import and connect signal handlers after models are ready
+        try:
+            import apps.products.signals as signals  # noqa
+            signals.connect_signals()
+        except Exception:
+            pass
         # Ensure image fields use the current default storage (S3 or local) at runtime.
         try:
             from django.conf import settings as _settings

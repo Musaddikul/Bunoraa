@@ -55,6 +55,19 @@ class Category(models.Model):
     is_featured = models.BooleanField(_('featured'), default=False)
     is_deleted = models.BooleanField(_('deleted'), default=False)
     
+    # Image aspect ratio (override for category and inheritable by children/products)
+    aspect_width = models.DecimalField(_('aspect width'), max_digits=8, decimal_places=4, null=True, blank=True, help_text=_('Width value used to compute aspect ratio. Leave blank to inherit from parent.'))
+    aspect_height = models.DecimalField(_('aspect height'), max_digits=8, decimal_places=4, null=True, blank=True, help_text=_('Height value used to compute aspect ratio. Leave blank to inherit from parent.'))
+    ASPECT_UNIT_CHOICES = [
+        ('ratio', 'Ratio (unitless)'),
+        ('in', 'Inches'),
+        ('ft', 'Feet'),
+        ('cm', 'Centimeters'),
+        ('mm', 'Millimeters'),
+        ('px', 'Pixels'),
+    ]
+    aspect_unit = models.CharField(_('aspect unit'), max_length=10, choices=ASPECT_UNIT_CHOICES, default='ratio')
+
     # Timestamps
     created_at = models.DateTimeField(_('created at'), auto_now_add=True)
     updated_at = models.DateTimeField(_('updated at'), auto_now=True)
@@ -129,7 +142,51 @@ class Category(models.Model):
         
         collect_children(self)
         return descendants
-    
+
+    def get_effective_aspect(self):
+        """Return effective aspect (width, height, unit) inheriting from ancestors.
+
+        Returns a dict: {'width': Decimal, 'height': Decimal, 'unit': str, 'ratio': Decimal}
+        Defaults to 1:1 if nothing is set on the category chain.
+        """
+        from decimal import Decimal
+
+        # If this category has both width and height specified, use it
+        if self.aspect_width and self.aspect_height:
+            try:
+                ratio = Decimal(self.aspect_width) / Decimal(self.aspect_height)
+            except Exception:
+                ratio = Decimal('1')
+            return {
+                'width': self.aspect_width,
+                'height': self.aspect_height,
+                'unit': self.aspect_unit or 'ratio',
+                'ratio': ratio
+            }
+
+        # Walk up ancestors
+        parent = self.parent
+        while parent:
+            if parent.aspect_width and parent.aspect_height:
+                try:
+                    ratio = Decimal(parent.aspect_width) / Decimal(parent.aspect_height)
+                except Exception:
+                    ratio = Decimal('1')
+                return {
+                    'width': parent.aspect_width,
+                    'height': parent.aspect_height,
+                    'unit': parent.aspect_unit or 'ratio',
+                    'ratio': ratio
+                }
+            parent = parent.parent
+
+        # Default 1:1
+        return {
+            'width': Decimal('1'),
+            'height': Decimal('1'),
+            'unit': 'ratio',
+            'ratio': Decimal('1')
+        }    
     def get_descendant_ids(self, include_self=False):
         """Get IDs of all descendant categories for efficient queries."""
         descendants = self.get_descendants(include_self=include_self)

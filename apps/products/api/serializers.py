@@ -88,6 +88,8 @@ class ProductListSerializer(serializers.ModelSerializer):
     average_rating = serializers.FloatField(read_only=True)
     review_count = serializers.IntegerField(read_only=True)
     
+    aspect = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
         fields = [
@@ -95,9 +97,18 @@ class ProductListSerializer(serializers.ModelSerializer):
             'price', 'sale_price', 'current_price', 'discount_percentage',
             'is_on_sale', 'is_in_stock', 'is_featured', 'is_new',
             'primary_image', 'average_rating', 'review_count',
-            'created_at'
+            'created_at', 'aspect'
         ]
-    
+
+    def get_aspect(self, obj):
+        eff = obj.get_effective_aspect()
+        return {
+            'width': str(eff.get('width')),
+            'height': str(eff.get('height')),
+            'unit': eff.get('unit'),
+            'ratio': str(eff.get('ratio')),
+            'css': eff.get('css') if eff.get('css') else f"{eff.get('width')}/{eff.get('height')}"
+        }    
     def get_primary_image(self, obj):
         image = obj.primary_image
         if image:
@@ -125,6 +136,8 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     breadcrumbs = serializers.SerializerMethodField()
     related_products = serializers.SerializerMethodField()
     
+    aspect = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
         fields = [
@@ -137,9 +150,18 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'images', 'variants', 'tags', 'categories',
             'average_rating', 'review_count', 'view_count', 'sold_count',
             'breadcrumbs', 'related_products',
-            'created_at', 'updated_at'
+            'created_at', 'updated_at', 'aspect'
         ]
-    
+
+    def get_aspect(self, obj):
+        eff = obj.get_effective_aspect()
+        return {
+            'width': str(eff.get('width')),
+            'height': str(eff.get('height')),
+            'unit': eff.get('unit'),
+            'ratio': str(eff.get('ratio')),
+            'css': eff.get('css') if eff.get('css') else f"{eff.get('width')}/{eff.get('height')}"
+        }    
     def get_categories(self, obj):
         from apps.categories.api.serializers import CategorySerializer
         return CategorySerializer(
@@ -184,6 +206,8 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             'stock_quantity', 'low_stock_threshold', 'track_inventory', 'allow_backorder',
             'categories', 'tags',
             'weight', 'length', 'width', 'height',
+            # Image aspect override
+            'aspect_width', 'aspect_height', 'aspect_unit',
             'meta_title', 'meta_description', 'meta_keywords',
             'is_active', 'is_featured', 'is_new', 'is_bestseller'
         ]

@@ -13,8 +13,28 @@ def site_settings(request):
     
     if cached_settings is None:
         try:
-            from apps.pages.models import SiteSettings
+            from apps.pages.models import SiteSettings, SocialLink
             site = SiteSettings.get_settings()
+
+            # Build social links list (name, url, icon-url) from the settings' related links
+            social_links = []
+            try:
+                qs = site.social_links.filter(is_active=True).order_by('order')
+                social_links = [
+                    {'name': s.name, 'url': s.url, 'icon': s.icon.url if s.icon else None}
+                    for s in qs
+                ]
+            except Exception:
+                # Fallback to global SocialLink objects for compatibility
+                try:
+                    qs = SocialLink.objects.filter(is_active=True).order_by('order')
+                    social_links = [
+                        {'name': s.name, 'url': s.url, 'icon': s.icon.url if s.icon else None}
+                        for s in qs
+                    ]
+                except Exception:
+                    social_links = []
+
             cached_settings = {
                 'SITE_NAME': site.site_name or 'Bunoraa',
                 'SITE_TAGLINE': site.site_tagline or 'Premium Quality Products',
@@ -37,6 +57,7 @@ def site_settings(request):
                 'FACEBOOK_PIXEL_ID': site.facebook_pixel_id or '',
                 'CUSTOM_HEAD_SCRIPTS': site.custom_head_scripts or '',
                 'CUSTOM_BODY_SCRIPTS': site.custom_body_scripts or '',
+                'SOCIAL_LINKS': social_links,
             }
             # Cache for 5 minutes
             cache.set(cache_key, cached_settings, 300)
@@ -64,6 +85,7 @@ def site_settings(request):
                 'FACEBOOK_PIXEL_ID': '',
                 'CUSTOM_HEAD_SCRIPTS': '',
                 'CUSTOM_BODY_SCRIPTS': '',
+                'SOCIAL_LINKS': [],
             }
     
     return {

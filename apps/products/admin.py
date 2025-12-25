@@ -3,6 +3,7 @@ Product admin configuration
 """
 from django.contrib import admin
 from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
 from .models import (
     Product, ProductImage, ProductVariant, ProductAttribute,
     Tag, Attribute, AttributeValue
@@ -73,7 +74,37 @@ class ProductAdmin(admin.ModelAdmin):
     ]
     search_fields = ['name', 'sku', 'description']
     prepopulated_fields = {'slug': ('name',)}
-    filter_horizontal = ['categories', 'tags', 'related_products']
+    filter_horizontal = ['tags', 'related_products']
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        """Use a simple dropdown (SelectMultiple) for categories and add related links.
+
+        This replaces the search/raw id behavior with a selectable multi-option box
+        while preserving add/change/view links via RelatedFieldWidgetWrapper.
+        """
+        from django import forms
+        formfield = super().formfield_for_manytomany(db_field, request, **kwargs)
+        try:
+            from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
+            if db_field.name == 'categories' and formfield is not None:
+                # Use a simple SelectMultiple for dropdown-like behavior
+                formfield.widget = forms.SelectMultiple(attrs={'size': 8})
+
+                rel = db_field.remote_field
+                can_add = self.has_add_permission(request)
+                can_change = self.has_change_permission(request)
+                can_view = getattr(self, 'has_view_permission', lambda req, obj=None: True)(request, None)
+
+                formfield.widget = RelatedFieldWidgetWrapper(
+                    formfield.widget, rel, self.admin_site,
+                    can_add_related=can_add,
+                    can_change_related=can_change,
+                    can_view_related=can_view
+                )
+        except Exception:
+            # If anything goes wrong, fallback to default widget
+            pass
+        return formfield
     readonly_fields = ['view_count', 'sold_count', 'created_at', 'updated_at']
     inlines = [ProductImageInline, ProductVariantInline, ProductAttributeInline]
     
@@ -86,6 +117,10 @@ class ProductAdmin(admin.ModelAdmin):
         ('Categories & Tags', {'fields': ('categories', 'tags')}),
         ('Physical Properties', {
             'fields': ('weight', 'length', 'width', 'height'),
+            'classes': ('collapse',)
+        }),
+        ('Image Aspect Ratio', {
+            'fields': ('aspect_width', 'aspect_height', 'aspect_unit'),
             'classes': ('collapse',)
         }),
         ('SEO', {
@@ -161,6 +196,24 @@ class TagAdmin(admin.ModelAdmin):
     def product_count(self, obj):
         return obj.products.filter(is_active=True, is_deleted=False).count()
     product_count.short_description = 'Products'
+
+# Register a Category proxy under Products admin so Categories appear in the Products app section
+try:
+    from apps.categories.models import Category as CategoryModel
+    from apps.categories.admin import CategoryAdmin
+
+    class CategoryProxy(CategoryModel):
+        """Proxy for Category registered under the 'products' app label."""
+        class Meta:
+            proxy = True
+            app_label = 'products'
+            verbose_name = _('category')
+            verbose_name_plural = _('categories')
+
+    admin.site.register(CategoryProxy, CategoryAdmin)
+except Exception:
+    # Do not fail on import in manage commands
+    pass
 
 
 @admin.register(Attribute)

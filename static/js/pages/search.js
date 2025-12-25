@@ -155,7 +155,7 @@ const SearchPage = (function() {
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                     ${categories.map(cat => `
                         <a href="/categories/${cat.slug}/" class="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
-                            <div class="aspect-square bg-gray-100 relative overflow-hidden">
+                            <div class="relative overflow-hidden" style="aspect-ratio: ${product?.aspect?.css || '1/1'};">
                                 ${cat.image ? `
                                     <img src="${cat.image}" alt="${Templates.escapeHtml(cat.name)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                                 ` : `

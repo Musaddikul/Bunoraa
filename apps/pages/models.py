@@ -228,6 +228,47 @@ class SiteSettings(models.Model):
         return obj
 
 
+class SocialLink(models.Model):
+    """
+    Social link to show in footer and emails. Managed as part of SiteSettings (inline in admin).
+    """
+    site = models.ForeignKey('pages.SiteSettings', on_delete=models.CASCADE, related_name='social_links', null=True, blank=True)
+    name = models.CharField(max_length=100)
+    url = models.URLField()
+    icon = models.ImageField(upload_to='site/social/', blank=True, null=True)
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['order']
+        verbose_name = 'Social Link'
+        verbose_name_plural = 'Social Links'
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        # Ensure the SocialLink is associated with the singleton SiteSettings when possible
+        if not self.site:
+            try:
+                self.site = SiteSettings.get_settings()
+            except Exception:
+                try:
+                    from apps.pages.models import SiteSettings
+                    self.site = SiteSettings.get_settings()
+                except Exception:
+                    self.site = None
+        super().save(*args, **kwargs)
+        # Clear cached site settings
+        try:
+            SiteSettings._clear_cache()
+        except Exception:
+            from django.core.cache import cache
+            cache.delete('site_settings_context')
+
+
 class Subscriber(models.Model):
     """
     Newsletter subscriber.

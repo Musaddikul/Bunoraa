@@ -6,7 +6,6 @@ from django.utils.html import format_html
 from .models import Category
 
 
-@admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     """Category admin with tree display."""
     
@@ -17,12 +16,12 @@ class CategoryAdmin(admin.ModelAdmin):
     list_filter = ['is_active', 'is_featured', 'is_deleted', 'level', 'created_at']
     search_fields = ['name', 'slug', 'description']
     prepopulated_fields = {'slug': ('name',)}
-    raw_id_fields = ['parent']
+    # Use default dropdown select for parent (not raw id search)
     ordering = ['level', 'order', 'name']
     
     fieldsets = (
         (None, {'fields': ('name', 'slug', 'description', 'parent')}),
-        ('Display', {'fields': ('image', 'icon', 'order')}),
+        ('Display', {'fields': ('image', 'icon', 'order', 'aspect_width', 'aspect_height', 'aspect_unit')}),
         ('SEO', {
             'fields': ('meta_title', 'meta_description', 'meta_keywords'),
             'classes': ('collapse',)

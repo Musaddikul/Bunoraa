@@ -11,14 +11,25 @@ class CategorySerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
     product_count = serializers.IntegerField(read_only=True)
     
+    aspect = serializers.SerializerMethodField()
+
     class Meta:
         model = Category
         fields = [
             'id', 'name', 'slug', 'description', 'image_url', 'icon',
             'level', 'is_featured', 'product_count', 'meta_title',
-            'meta_description', 'created_at'
+            'meta_description', 'created_at', 'aspect'
         ]
-    
+
+    def get_aspect(self, obj):
+        eff = obj.get_effective_aspect()
+        return {
+            'width': str(eff.get('width')),
+            'height': str(eff.get('height')),
+            'unit': eff.get('unit'),
+            'ratio': str(eff.get('ratio')),
+            'css': f"{eff.get('width')}/{eff.get('height')}"
+        }    
     def get_image_url(self, obj):
         if obj.image:
             request = self.context.get('request')
@@ -78,6 +89,8 @@ class CategoryCreateSerializer(serializers.ModelSerializer):
         fields = [
             'name', 'slug', 'description', 'parent', 'image', 'icon',
             'order', 'meta_title', 'meta_description', 'meta_keywords',
+            # Image aspect for category
+            'aspect_width', 'aspect_height', 'aspect_unit',
             'is_active', 'is_featured'
         ]
         extra_kwargs = {

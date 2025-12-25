@@ -184,9 +184,7 @@
                 <p style="margin-bottom: 10px;">© {% now "Y" %} Bunoraa. All rights reserved.</p>
                 <p style="margin-bottom: 10px;">123 Commerce Street, New York, NY 10001</p>
                 <div class="social-links">
-                    <a href="#">Facebook</a> |
-                    <a href="#">Twitter</a> |
-                    <a href="#">Instagram</a>
+                    {% for s in SOCIAL_LINKS %}{% if not forloop.first %} | {% endif %}<a href="{{ s.url }}" target="_blank" rel="noopener noreferrer">{{ s.name }}</a>{% endfor %}
                 </div>
                 <p style="margin-top: 20px; font-size: 12px; color: #999999;">
                     You received this email because you have an account with Bunoraa.<br>
