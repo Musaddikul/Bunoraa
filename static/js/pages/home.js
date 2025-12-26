@@ -49,10 +49,10 @@ const HomePage = (function() {
                 }
                 container.innerHTML = '';
                 if (!allReviews.length) {
-                    container.innerHTML = '<p class="text-gray-500 text-center py-8">No testimonials available.</p>';
+                    container.innerHTML = '<p class="text-gray-500 text-center py-8">No user reviews available.</p>';
                     return;
                 }
-                // Optionally, limit to 6 testimonials
+                // Optionally, limit to 6 user reviews
                 allReviews = allReviews.slice(0, 6);
                 allReviews.forEach(review => {
                     const card = document.createElement('div');
@@ -104,7 +104,7 @@ const HomePage = (function() {
                 if (product.discount_percent && product.discount_percent > 0) {
                     badge = `-${product.discount_percent}%`;
                 }
-                return ProductCard.render(product, { showBadge: !!badge, badge });
+                return ProductCard.render(product, { showBadge: !!badge, badge, priceSize: 'small' });
             }).join('');
             // Eager-load first images
             try {
@@ -170,12 +170,12 @@ const HomePage = (function() {
                         `).join('')}
                     </div>
                     ${banners.length > 1 ? `
-                        <button class="hero-prev absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 dark:bg-stone-800/70 hover:bg-white dark:hover:bg-stone-700 rounded-full text-stone-900 dark:text-stone-100 flex items-center justify-center shadow-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500" aria-label="Previous slide">
+                        <button class="hero-prev absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/30 dark:bg-stone-800/30 hover:bg-white/40 dark:hover:bg-stone-700/40 rounded-full text-stone-900 dark:text-stone-100 flex items-center justify-center shadow-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500" aria-label="Previous slide">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                             </svg>
                         </button>
-                        <button class="hero-next absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 dark:bg-stone-800/70 hover:bg-white dark:hover:bg-stone-700 rounded-full text-stone-900 dark:text-stone-100 flex items-center justify-center shadow-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500" aria-label="Next slide">
+                        <button class="hero-next absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/30 dark:bg-stone-800/30 hover:bg-white/40 dark:hover:bg-stone-700/40 rounded-full text-stone-900 dark:text-stone-100 flex items-center justify-center shadow-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500" aria-label="Next slide">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                             </svg>
@@ -265,7 +265,7 @@ const HomePage = (function() {
                 if (product.discount_percent && product.discount_percent > 0) {
                     badge = `-${product.discount_percent}%`;
                 }
-                return ProductCard.render(product, { showBadge: !!badge, badge });
+                return ProductCard.render(product, { showBadge: !!badge, badge, priceSize: 'small' });
             }).join('');
             // Ensure top-of-viewport product images load eagerly for better LCP
             try {
@@ -289,10 +289,15 @@ const HomePage = (function() {
         const container = document.getElementById('categories-showcase');
         if (!container) return;
 
+
+
         Loader.show(container, 'skeleton');
 
         try {
-            const response = await CategoriesApi.getCategories({ pageSize: 6, featured: true });
+            // Clear any client cache for categories and fetch fresh data
+            try { window.ApiClient?.clearCache('/api/v1/categories/'); } catch (e) {}
+            const response = await window.ApiClient.get('/categories/', { page_size: 6, is_featured: true }, { useCache: false });
+            console.info('[Home] raw categories response', response);
             const categories = response.data?.results || response.data || response.results || [];
 
             if (categories.length === 0) {
@@ -310,8 +315,14 @@ const HomePage = (function() {
             }
 
             container.innerHTML = '';
+            console.info('[Home] fetched categories', categories.map(c => ({ name: c.name, image_url: c.image_url || c.image || c.thumbnail || null })) );
             categories.forEach(category => {
                 const card = CategoryCard(category);
+                // Log whether the created card contains an <img> and its src (if present)
+                try {
+                    const imgEl = card.querySelector('img');
+                    console.info('[Home] card image for', category.name, imgEl ? imgEl.src : 'NO_IMAGE');
+                } catch (e) { console.error('[Home] card image check failed', e); }
                 container.appendChild(card);
             });
             container.classList.add('grid','grid-cols-2','md:grid-cols-3','lg:grid-cols-6','gap-4','lg:gap-6');
@@ -342,7 +353,7 @@ const HomePage = (function() {
                 if (product.discount_percent && product.discount_percent > 0) {
                     badge = `-${product.discount_percent}%`;
                 }
-                return ProductCard.render(product, { showBadge: !!badge, badge });
+                return ProductCard.render(product, { showBadge: !!badge, badge, priceSize: 'small' });
             }).join('');
             // Eager-load first images to reduce lazy-load intervention note
             try {
@@ -428,6 +439,22 @@ const HomePage = (function() {
     async function loadCustomOrderCTA() {
         const container = document.getElementById('custom-order-cta');
         if (!container) return;
+        // prevent double initialization
+        if (container.dataset?.loaded) return;
+        container.dataset.loaded = '1';
+
+        // Insert a lightweight skeleton first to avoid layout shift / flash
+        container.innerHTML = `
+            <div class="container mx-auto px-4">
+                <div class="max-w-full w-full mx-auto rounded-3xl p-6 md:p-10">
+                    <div class="animate-pulse">
+                        <div class="h-6 w-1/3 bg-gray-200 dark:bg-stone-700 rounded mb-4"></div>
+                        <div class="h-10 w-full bg-gray-200 dark:bg-stone-700 rounded mb-4"></div>
+                        <div class="h-44 bg-gray-200 dark:bg-stone-800 rounded"></div>
+                    </div>
+                </div>
+            </div>
+        `;
 
         const routeMap = window.BUNORAA_ROUTES || {};
         const wizardUrl = routeMap.preordersWizard || '/preorders/create/';
@@ -447,49 +474,50 @@ const HomePage = (function() {
 
             container.innerHTML = `
                 <div class="container mx-auto px-4 relative">
-                    <div class="grid lg:grid-cols-2 gap-12 items-center">
-                        <div class="text-white">
-                            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-xs uppercase tracking-[0.2em] mb-6">
+                    <div class="max-w-full w-full mx-auto rounded-3xl shadow-lg overflow-hidden bg-white dark:bg-neutral-900 p-6 md:p-10 border border-stone-100 dark:border-stone-700">
+                      <div class="grid lg:grid-cols-2 gap-12 items-center">
+                        <div class="text-stone-900 dark:text-white">
+                            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-100/40 dark:bg-amber-700/20 text-xs uppercase tracking-[0.2em] mb-6 text-amber-800 dark:text-white">
                                 <span class="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></span>
                                 Made Just For You
                             </span>
-                            <h2 class="text-3xl lg:text-5xl font-display font-bold mb-6 leading-tight">Create Your Perfect Custom Order</h2>
-                            <p class="text-white/80 text-lg mb-8 max-w-xl">Have a unique vision? Our skilled artisans will bring your ideas to life. From personalized gifts to custom designs, we craft exactly what you need.</p>
+                            <h2 class="text-3xl lg:text-5xl font-display font-bold mb-6 leading-tight text-stone-900 dark:text-white">Create Your Perfect Custom Order</h2>
+                            <p class="text-stone-700 dark:text-white/80 text-lg mb-8 max-w-xl">Have a unique vision? Our skilled artisans will bring your ideas to life. From personalized gifts to custom designs, we craft exactly what you need.</p>
                             <div class="grid sm:grid-cols-3 gap-4 mb-8">
-                                <div class="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                                <div class="flex items-center gap-3 bg-white/5 dark:bg-stone-800/40 backdrop-blur-sm rounded-xl p-4 border border-stone-100 dark:border-stone-700">
                                     <div class="w-10 h-10 bg-purple-500/30 rounded-lg flex items-center justify-center">
                                         <svg class="w-5 h-5 text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                     </div>
                                     <div>
-                                        <p class="text-sm font-semibold text-white">Custom Design</p>
-                                        <p class="text-xs text-white/60">Your vision, our craft</p>
+                                        <p class="text-sm font-semibold text-stone-900 dark:text-white">Custom Design</p>
+                                        <p class="text-xs text-stone-600 dark:text-white/60">Your vision, our craft</p>
                                     </div>
                                 </div>
-                                <div class="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                                <div class="flex items-center gap-3 bg-white/5 dark:bg-stone-800/40 backdrop-blur-sm rounded-xl p-4 border border-stone-100 dark:border-stone-700">
                                     <div class="w-10 h-10 bg-indigo-500/30 rounded-lg flex items-center justify-center">
-                                        <svg class="w-5 h-5 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                        <svg class="w-5 h-5 text-indigo-700 dark:text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                                     </div>
                                     <div>
-                                        <p class="text-sm font-semibold text-white">Direct Chat</p>
-                                        <p class="text-xs text-white/60">Talk to artisans</p>
+                                        <p class="text-sm font-semibold text-stone-900 dark:text-white">Direct Chat</p>
+                                        <p class="text-xs text-stone-600 dark:text-white/60">Talk to artisans</p>
                                     </div>
                                 </div>
-                                <div class="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                                <div class="flex items-center gap-3 bg-white/5 dark:bg-stone-800/40 backdrop-blur-sm rounded-xl p-4 border border-stone-100 dark:border-stone-700">
                                     <div class="w-10 h-10 bg-pink-500/30 rounded-lg flex items-center justify-center">
-                                        <svg class="w-5 h-5 text-pink-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        <svg class="w-5 h-5 text-pink-700 dark:text-pink-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                     </div>
                                     <div>
-                                        <p class="text-sm font-semibold text-white">Quality Assured</p>
-                                        <p class="text-xs text-white/60">Satisfaction guaranteed</p>
+                                        <p class="text-sm font-semibold text-stone-900 dark:text-white">Quality Assured</p>
+                                        <p class="text-xs text-stone-600 dark:text-white/60">Satisfaction guaranteed</p>
                                     </div>
                                 </div>
                             </div>
                             ${categories.length > 0 ? `
                                 <div class="mb-8">
-                                    <p class="text-white/60 text-sm mb-3">Popular categories:</p>
+                                    <p class="text-stone-600 dark:text-white/60 text-sm mb-3">Popular categories:</p>
                                     <div class="flex flex-wrap gap-2">
                                         ${categories.slice(0, 4).map(cat => `
-                                            <a href="${landingUrl}category/${cat.slug}/" class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-sm text-white transition-colors">
+                                            <a href="${landingUrl}category/${cat.slug}/" class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 dark:bg-stone-800/30 hover:bg-white/20 dark:hover:bg-stone-700 rounded-full text-sm text-stone-900 dark:text-white transition-colors">
                                                 ${cat.icon ? `<span>${cat.icon}</span>` : ''}
                                                 ${Templates.escapeHtml(cat.name)}
                                             </a>
@@ -498,11 +526,11 @@ const HomePage = (function() {
                                 </div>
                             ` : ''}
                             <div class="flex flex-wrap gap-4">
-                                <a href="${wizardUrl}" class="inline-flex items-center gap-2 px-8 py-4 bg-white text-purple-900 font-bold rounded-xl shadow-lg hover:shadow-xl hover:bg-purple-50 transition-all group">
+                                <a href="${wizardUrl}" class="cta-unlock inline-flex items-center gap-2 px-8 py-4 bg-amber-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:bg-amber-700 transition-colors group dark:bg-amber-600 dark:text-white focus:outline-none focus-visible:text-white dark:focus-visible:text-white">
                                     Start Your Custom Order
                                     <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                                 </a>
-                                <a href="${landingUrl}" class="inline-flex items-center gap-2 px-8 py-4 bg-white/10 text-white font-semibold rounded-xl border-2 border-white/20 hover:bg-white/20 transition-all">
+                                <a href="${landingUrl}" class="inline-flex items-center gap-2 px-8 py-4 bg-transparent text-stone-900 dark:text-white font-semibold rounded-xl border-2 border-stone-200 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800 transition-all">
                                     Learn More
                                 </a>
                             </div>
@@ -510,34 +538,34 @@ const HomePage = (function() {
                         <div class="hidden lg:block">
                             <div class="relative">
                                 <div class="absolute -inset-4 bg-gradient-to-r from-purple-500/30 to-indigo-500/30 rounded-3xl blur-2xl"></div>
-                                <div class="relative bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20">
+                                <div class="relative bg-white/5 dark:bg-stone-800/40 backdrop-blur-md rounded-3xl p-8 border border-stone-100 dark:border-stone-700">
                                     <div class="space-y-6">
                                         <div class="flex items-start gap-4">
-                                            <div class="w-12 h-12 bg-purple-500/30 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-xl font-bold">1</div>
+                                            <div class="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-xl font-bold shadow-sm ring-1 ring-stone-100 dark:ring-stone-700">1</div>
                                             <div>
-                                                <h4 class="text-white font-semibold mb-1">Choose Category</h4>
-                                                <p class="text-white/60 text-sm">Select from custom apparel, gifts, home decor & more</p>
+                                                <h4 class="text-stone-900 dark:text-white font-semibold mb-1">Choose Category</h4>
+                                                <p class="text-stone-600 dark:text-white/60 text-sm">Select from custom apparel, gifts, home decor & more</p>
                                             </div>
                                         </div>
                                         <div class="flex items-start gap-4">
-                                            <div class="w-12 h-12 bg-indigo-500/30 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-xl font-bold">2</div>
+                                            <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-xl font-bold shadow-sm ring-1 ring-stone-100 dark:ring-stone-700">2</div>
                                             <div>
-                                                <h4 class="text-white font-semibold mb-1">Share Your Vision</h4>
-                                                <p class="text-white/60 text-sm">Upload designs, describe your requirements</p>
+                                                <h4 class="text-stone-900 dark:text-white font-semibold mb-1">Share Your Vision</h4>
+                                                <p class="text-stone-600 dark:text-white/60 text-sm">Upload designs, describe your requirements</p>
                                             </div>
                                         </div>
                                         <div class="flex items-start gap-4">
-                                            <div class="w-12 h-12 bg-pink-500/30 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-xl font-bold">3</div>
+                                            <div class="w-12 h-12 bg-amber-600 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-xl font-bold shadow-sm ring-1 ring-stone-100 dark:ring-stone-700">3</div>
                                             <div>
-                                                <h4 class="text-white font-semibold mb-1">Get Your Quote</h4>
-                                                <p class="text-white/60 text-sm">Receive pricing and timeline from our team</p>
+                                                <h4 class="text-stone-900 dark:text-white font-semibold mb-1">Get Your Quote</h4>
+                                                <p class="text-stone-600 dark:text-white/60 text-sm">Receive pricing and timeline from our team</p>
                                             </div>
                                         </div>
                                         <div class="flex items-start gap-4">
-                                            <div class="w-12 h-12 bg-emerald-500/30 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-xl font-bold">4</div>
+                                            <div class="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-xl font-bold shadow-sm ring-1 ring-stone-100 dark:ring-stone-700">4</div>
                                             <div>
-                                                <h4 class="text-white font-semibold mb-1">We Create & Deliver</h4>
-                                                <p class="text-white/60 text-sm">Track progress and receive your masterpiece</p>
+                                                <h4 class="text-stone-900 dark:text-white font-semibold mb-1">We Create & Deliver</h4>
+                                                <p class="text-stone-600 dark:text-white/60 text-sm">Track progress and receive your masterpiece</p>
                                             </div>
                                         </div>
                                     </div>
@@ -551,10 +579,10 @@ const HomePage = (function() {
             console.warn('Custom order CTA failed to load:', error);
             // Fallback static content
             container.innerHTML = `
-                <div class="container mx-auto px-4 text-center text-white">
-                    <h2 class="text-3xl lg:text-4xl font-display font-bold mb-4">Create Your Perfect Custom Order</h2>
-                    <p class="text-white/80 mb-8 max-w-2xl mx-auto">Have a unique vision? Our skilled artisans will bring your ideas to life.</p>
-                    <a href="${wizardUrl}" class="inline-flex items-center gap-2 px-8 py-4 bg-white text-purple-900 font-bold rounded-xl">
+                <div class="container mx-auto px-4 text-center text-stone-900 dark:text-white">
+                    <h2 class="text-3xl lg:text-4xl font-display font-bold mb-4 text-stone-900 dark:text-white">Create Your Perfect Custom Order</h2>
+                    <p class="text-stone-700 dark:text-white/80 mb-8 max-w-2xl mx-auto">Have a unique vision? Our skilled artisans will bring your ideas to life.</p>
+                    <a href="${wizardUrl}" class="cta-unlock inline-flex items-center gap-2 px-8 py-4 bg-amber-600 text-white font-bold rounded-xl focus:outline-none focus-visible:text-white dark:focus-visible:text-white">
                         Start Your Custom Order
                     </a>
                 </div>

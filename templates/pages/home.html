@@ -37,29 +37,12 @@
     </div>
 </section>
 
-<!-- Custom Order CTA -->
-<section id="custom-order-cta" class="py-16 lg:py-24 bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 relative overflow-hidden">
-    <div class="absolute inset-0 opacity-20">
-        <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23fff%22 fill-opacity=%22.1%22%3E%3Cpath d=%22M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]"></div>
-    </div>
-    <!-- Content loaded via JS -->
-    <div class="container mx-auto px-4 relative">
-        <div class="grid lg:grid-cols-2 gap-12 items-center">
-            <div class="text-white text-center lg:text-left">
-                <div class="skeleton h-6 w-40 rounded-full bg-white/10 mb-6 mx-auto lg:mx-0"></div>
-                <div class="skeleton h-12 w-3/4 rounded-lg bg-white/10 mb-4 mx-auto lg:mx-0"></div>
-                <div class="skeleton h-6 w-full max-w-xl rounded-lg bg-white/10 mb-8 mx-auto lg:mx-0"></div>
-                <div class="flex gap-4 justify-center lg:justify-start">
-                    <div class="skeleton h-14 w-48 rounded-xl bg-white/20"></div>
-                    <div class="skeleton h-14 w-32 rounded-xl bg-white/10"></div>
-                </div>
-            </div>
-            <div class="hidden lg:block">
-                <div class="skeleton h-80 w-full rounded-3xl bg-white/10"></div>
-            </div>
-        </div>
-    </div>
-</section>
+<!-- Custom Order CTA (dynamic; rendered by JS) -->
+<section id="custom-order-cta" aria-labelledby="custom-order-heading" class="py-16 lg:py-24">
+  <div class="container mx-auto px-4">
+    <!-- Populated by JS: loadCustomOrderCTA() inserts content here -->
+  </div>
+</section> 
 
 <!-- Trending Products -->
 <section class="py-16 lg:py-24 bg-gray-50 dark:bg-stone-800">
@@ -103,12 +86,12 @@
 </section>
 
 <!-- Best Sellers -->
-<section class="py-16 lg:py-24 bg-gray-900 dark:bg-stone-950 text-white dark:text-white">
+<section class="py-16 lg:py-24 bg-white dark:bg-stone-950 text-stone-900 dark:text-white">
     <div class="container mx-auto px-4">
         <div class="flex items-center justify-between mb-12">
             <div>
-                <h2 class="text-3xl lg:text-4xl font-display font-bold mb-2 text-white dark:text-white">Best Sellers</h2>
-                <p class="text-gray-300 dark:text-stone-400">Our most popular products based on sales</p>
+                <h2 class="text-3xl lg:text-4xl font-display font-bold mb-2 text-stone-900 dark:text-white">Best Sellers</h2>
+                <p class="text-gray-600 dark:text-stone-400">Our most popular products based on sales</p>
             </div>
             <a href="{% url 'products:list' %}?sort=bestselling" class="hidden md:flex items-center text-primary-300 font-medium hover:text-primary-200 transition-colors dark:text-amber-400 dark:hover:text-amber-300">
                 View All
@@ -118,7 +101,7 @@
         <div id="best-sellers" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
             <!-- Loaded via JS -->
             {% for i in "12345" %}
-            <div class="skeleton h-80 rounded-2xl bg-gray-800 dark:bg-stone-900"></div>
+            <div class="skeleton h-80 rounded-2xl bg-stone-50 dark:bg-stone-900"></div>
             {% endfor %}
         </div>
     </div>
@@ -148,32 +131,36 @@
 </section>
 
 <!-- Signature Experience (uses component Tabs/Toast) - Moved to bottom -->
-<section class="py-16 lg:py-24 bg-gradient-to-br from-stone-950 via-stone-900 to-stone-950 text-white dark:text-white">
+<section class="py-16 lg:py-24 bg-white dark:bg-gradient-to-br dark:from-stone-950 dark:via-stone-900 dark:to-stone-950 text-stone-900 dark:text-white">
     <div class="container mx-auto px-4">
         <div class="grid lg:grid-cols-[1fr,1.3fr] gap-12 items-start">
-            <div class="space-y-6">
-                <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 dark:bg-white/5 text-xs uppercase tracking-[0.2em]">
-                    <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
-                    Curated Edition
-                </span>
-                <h2 class="text-3xl lg:text-4xl font-display font-bold leading-tight text-white dark:text-white">Bunoraa Black</h2>
-                <p class="text-white/70 dark:text-stone-300 max-w-xl">Elevated edits from our stylists, concierge-level perks, and drops that feel like a private showroom.</p>
-                <div class="flex flex-wrap gap-3">
-                    <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 dark:bg-emerald-900/20 text-emerald-200 dark:text-emerald-300 border border-emerald-500/30 dark:border-emerald-900/30 text-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        Concierge styling
-                    </span>
-                    <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 dark:bg-indigo-900/20 text-indigo-200 dark:text-indigo-300 border border-indigo-500/30 dark:border-indigo-900/30 text-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                        48h early access
-                    </span>
+            <div>
+                <div class="bg-white border border-stone-200 rounded-3xl p-6 shadow-sm dark:bg-stone-900 dark:border-stone-800">
+                    <div class="space-y-6">
+                        <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 text-amber-700 border border-amber-100 dark:bg-amber-700 dark:text-white dark:border-amber-800 text-xs uppercase tracking-[0.2em]">
+                            <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                            Curated Edition
+                        </span>
+                        <h2 class="text-3xl lg:text-4xl font-display font-bold leading-tight text-stone-900 dark:text-white">Bunoraa Black</h2>
+                        <p class="text-stone-700 dark:text-stone-300 max-w-xl">Elevated edits from our stylists, concierge-level perks, and drops that feel like a private showroom.</p>
+                        <div class="flex flex-wrap gap-3">
+                            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-900/30 text-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Concierge styling
+                            </span>
+                            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-300 dark:border-indigo-900/30 text-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                48h early access
+                            </span>
+                        </div>
+                        <a href="{% url 'accounts:register' %}" class="cta-unlock inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-700 dark:text-white font-semibold shadow-lg transition focus:outline-none focus-visible:ring-3 focus-visible:ring-amber-500 dark:focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-100 dark:focus-visible:ring-offset-stone-900 focus-visible:shadow-lg focus-visible:text-white dark:focus-visible:text-white" aria-label="Unlock Bunoraa membership">
+                            Unlock membership
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                        </a>
+                    </div>
                 </div>
-                <a href="{% url 'accounts:register' %}" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white dark:bg-stone-900 text-stone-900 dark:text-white font-semibold shadow-lg hover:shadow-xl transition">
-                    Unlock membership
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-                </a>
-            </div>
-            <div class="bg-white/5 dark:bg-stone-800 border border-white/10 dark:border-stone-700 rounded-3xl p-2 shadow-2xl backdrop-blur" id="signature-tabs-shell">
+            </div> 
+            <div class="bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-3xl p-2 shadow-2xl backdrop-blur" id="signature-tabs-shell">
                 <div id="signature-tabs" class="w-full"></div>
             </div>
         </div>
@@ -261,21 +248,6 @@
     </div>
 </section>
 
-<!-- Brands -->
-<section class="py-16 lg:py-24 bg-white border-t border-gray-100 dark:bg-stone-900 dark:border-stone-800">
-    <div class="container mx-auto px-4">
-        <div class="text-center mb-12">
-            <h2 class="text-3xl lg:text-4xl font-display font-bold text-gray-900 mb-4 dark:text-white">Shop by Brand</h2>
-            <p class="text-gray-600 dark:text-stone-400">Discover products from top brands</p>
-        </div>
-        <div id="brands-grid" class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            <!-- Loaded via JS -->
-            {% for i in "123456" %}
-            <div class="skeleton h-20 rounded-xl"></div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
 
 <!-- Newsletter Section -->
 <section class="bg-gradient-to-br from-amber-700 via-amber-600 to-amber-700 dark:from-stone-900 dark:via-stone-800 dark:to-stone-900 relative overflow-hidden">
@@ -320,43 +292,44 @@
                     label: 'Curated drops',
                     content: `
                         <div class="grid sm:grid-cols-2 gap-3">
-                            <div class="p-4 rounded-2xl bg-gradient-to-br from-emerald-500/20 via-emerald-500/10 to-transparent border border-emerald-400/30">
-                                <p class="text-sm text-emerald-100 mb-2">Tailored edits</p>
-                                <h3 class="text-lg font-semibold mb-2">One-of-one capsules</h3>
-                                <p class="text-sm text-white/70">Pieces matched to your style DNA with guaranteed exclusivity windows.</p>
+                            <div class="p-4 rounded-2xl bg-gradient-to-br from-emerald-100 via-emerald-50 to-transparent dark:from-emerald-900/10 dark:via-emerald-800/10 dark:to-transparent border border-emerald-100 dark:border-emerald-700">
+                                <p class="text-sm text-emerald-700 dark:text-emerald-100 mb-2">Tailored edits</p>
+                                <h3 class="text-lg font-semibold mb-2 text-stone-900 dark:text-white">One-of-one capsules</h3>
+                                <p class="text-sm text-stone-600 dark:text-white/70">Pieces matched to your style DNA with guaranteed exclusivity windows.</p>
                             </div>
-                            <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
-                                <p class="text-sm text-white/60 mb-2">Signature lines</p>
+                            <div class="p-4 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700">
+                                <p class="text-sm text-stone-600 dark:text-white/60 mb-2">Signature lines</p>
                                 <div class="space-y-2">
-                                    <div class="flex items-center justify-between text-sm"><span>Maison Solstice</span><span class="text-white/60">12 hrs early</span></div>
-                                    <div class="flex items-center justify-between text-sm"><span>Kyoto Atelier</span><span class="text-white/60">Concierge hold</span></div>
-                                    <div class="flex items-center justify-between text-sm"><span>Nord Studio</span><span class="text-white/60">Limited run</span></div>
+                                    <div class="flex items-center justify-between text-sm"><span class="text-stone-900 dark:text-white">Maison Solstice</span><span class="text-stone-600 dark:text-white/60">12 hrs early</span></div>
+                                    <div class="flex items-center justify-between text-sm"><span class="text-stone-900 dark:text-white">Kyoto Atelier</span><span class="text-stone-600 dark:text-white/60">Concierge hold</span></div>
+                                    <div class="flex items-center justify-between text-sm"><span class="text-stone-900 dark:text-white">Nord Studio</span><span class="text-stone-600 dark:text-white/60">Limited run</span></div>
                                 </div>
                             </div>
                         </div>
                     `
                 },
+
                 {
                     label: 'Elevated services',
                     content: `
                         <div class="grid sm:grid-cols-2 gap-3">
-                            <div class="p-4 rounded-2xl bg-gradient-to-br from-indigo-500/15 via-indigo-500/5 to-transparent border border-indigo-400/20">
-                                <h3 class="text-lg font-semibold mb-2">Concierge delivery</h3>
-                                <p class="text-sm text-white/70">White-glove handling, discrete packaging, and timed arrivals that fit your calendar.</p>
-                                <ul class="mt-3 space-y-2 text-sm text-white/70 list-disc list-inside">
+                            <div class="p-4 rounded-2xl bg-gradient-to-br from-indigo-100 via-indigo-50 to-transparent dark:from-indigo-900/10 dark:via-indigo-800/10 dark:to-transparent border border-indigo-100 dark:border-indigo-700">
+                                <h3 class="text-lg font-semibold mb-2 text-stone-900 dark:text-white">Concierge delivery</h3>
+                                <p class="text-sm text-stone-600 dark:text-white/70">White-glove handling, discrete packaging, and timed arrivals that fit your calendar.</p>
+                                <ul class="mt-3 space-y-2 text-sm text-stone-700 dark:text-white/80 list-disc list-inside">
                                     <li>Private fitting windows</li>
                                     <li>Return-on-pickup</li>
                                     <li>Same-day metro lanes</li>
                                 </ul>
                             </div>
-                            <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
-                                <h3 class="text-lg font-semibold mb-2">Member protections</h3>
-                                <p class="text-sm text-white/70 mb-3">Upgraded guarantees that keep your cart risk-free.</p>
-                                <div class="grid grid-cols-2 gap-2 text-sm text-white/80">
-                                    <div class="p-3 rounded-xl bg-white/5">Instant replacements</div>
-                                    <div class="p-3 rounded-xl bg-white/5">48h price locking</div>
-                                    <div class="p-3 rounded-xl bg-white/5">Priority support</div>
-                                    <div class="p-3 rounded-xl bg-white/5">Seamless exchanges</div>
+                            <div class="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700">
+                                <h3 class="text-lg font-semibold mb-2 text-stone-900 dark:text-white">Member protections</h3>
+                                <p class="text-sm text-stone-600 dark:text-white/70 mb-3">Upgraded guarantees that keep your cart risk-free.</p>
+                                <div class="grid grid-cols-2 gap-2 text-sm text-stone-700 dark:text-white/80">
+                                    <div class="p-3 rounded-xl bg-stone-50 dark:bg-stone-800">Instant replacements</div>
+                                    <div class="p-3 rounded-xl bg-stone-50 dark:bg-stone-800">48h price locking</div>
+                                    <div class="p-3 rounded-xl bg-stone-50 dark:bg-stone-800">Priority support</div>
+                                    <div class="p-3 rounded-xl bg-stone-50 dark:bg-stone-800">Seamless exchanges</div>
                                 </div>
                             </div>
                         </div>
@@ -367,13 +340,13 @@
                     content: `
                         <div class="grid sm:grid-cols-3 gap-3">
                             ${['Studio Noir', 'Glasshouse', 'Lumen'].map(name => `
-                                <div class="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-                                    <div class="aspect-[4/5] bg-gradient-to-br from-white/10 via-white/5 to-transparent group-hover:from-white/20 transition"></div>
+                                <div class="group relative overflow-hidden rounded-2xl border border-stone-200 bg-stone-50 dark:border-stone-700 dark:bg-stone-800">
+                                    <div class="aspect-[4/5] bg-gradient-to-br from-stone-100 dark:from-white/5 to-transparent group-hover:from-stone-200 dark:group-hover:from-white/10 transition"></div>
                                     <div class="absolute inset-0 p-4 flex flex-col justify-between">
-                                        <div class="text-xs uppercase tracking-[0.2em] text-white/60">Edit</div>
+                                        <div class="text-xs uppercase tracking-[0.2em] text-stone-600 dark:text-white/60">Edit</div>
                                         <div class="space-y-1">
-                                            <h4 class="text-lg font-semibold">${name}</h4>
-                                            <p class="text-sm text-white/70">Layered textures, sculpted silhouettes, and luminous metals.</p>
+                                            <h4 class="text-lg font-semibold text-stone-900 dark:text-white">${name}</h4>
+                                            <p class="text-sm text-stone-600 dark:text-white/70">Layered textures, sculpted silhouettes, and luminous metals.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -392,7 +365,7 @@
         renderSignatureTabs();
         setTimeout(() => {
             try {
-                Toast.show('Welcome to Bunoraa Black -- your signature edit awaits.', {
+                Toast.show('Welcome to Bunoraa -- Where Comfort Meets Creativity.', {
                     type: 'info',
                     duration: 3000,
                     position: 'top-right'
