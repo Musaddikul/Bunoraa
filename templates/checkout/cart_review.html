@@ -66,11 +66,11 @@
                             </div>
                             <div>
                                 <p class="text-gray-500">Unit Price</p>
-                                <p class="font-semibold text-gray-900 text-base">{{ currency_symbol|default:'$' }}{{ item.unit_price }}</p>
+                                <p class="font-semibold text-gray-900 text-base">{{ item.formatted_unit_price }}</p>
                             </div>
                             <div class="text-right">
                                 <p class="text-gray-500">Line Total</p>
-                                <p class="text-lg font-semibold text-gray-900">{{ currency_symbol|default:'$' }}{{ item.total }}</p>
+                                <p class="text-lg font-semibold text-gray-900">{{ item.formatted_total }}</p>
                             </div>
                         </div>
                     </div>
@@ -89,7 +89,7 @@
                     <p class="text-sm text-gray-500">Coupon Applied</p>
                     <p class="font-semibold text-gray-900">{{ cart.coupon.code }}</p>
                 </div>
-                <p class="text-green-600 font-semibold">-{{ currency_symbol|default:'$' }}{{ cart.discount_amount }}</p>
+                <p class="text-green-600 font-semibold">-{{ cart_summary.currency.symbol|default:currency_symbol }}{{ cart_summary.discount_amount }}</p>
             </div>
             {% endif %}
         </div>
@@ -103,12 +103,12 @@
                 <div class="space-y-3 border-b border-gray-200 pb-4">
                     <div class="flex justify-between text-gray-600">
                         <span>Items ({{ cart_summary.item_count }})</span>
-                        <span>{{ currency_symbol|default:'$' }}{{ cart_summary.subtotal }}</span>
+                        <span>{{ cart_summary.formatted_subtotal }}</span>
                     </div>
                     {% if cart and cart.coupon %}
                     <div class="flex justify-between text-green-600">
                         <span>Discount{% if cart.coupon %} ({{ cart.coupon.code }}){% endif %}</span>
-                        <span>-{{ currency_symbol|default:'$' }}{{ cart.discount_amount }}</span>
+                        <span>-{{ cart_summary.formatted_discount }}</span>
                     </div>
                     {% endif %}
                     <div class="flex justify-between text-gray-600">
@@ -119,7 +119,7 @@
 
                 <div class="flex justify-between text-xl font-bold text-gray-900 mt-4">
                     <span>Total</span>
-                    <span>{{ currency_symbol|default:'$' }}{{ cart_summary.total }}</span>
+                    <span>{{ cart_summary.currency.symbol|default:currency_symbol }}{{ cart_summary.total }}</span>
                 </div>
                 {% else %}
                 <p class="text-sm text-gray-500">We could not load your cart summary. Please return to the cart page.</p>

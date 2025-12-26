@@ -489,8 +489,13 @@
                     // Animate
                     Animations.pulse(option);
                     
-                    // Update shipping cost display
-                    const price = parseFloat(option.dataset.price) || 0;
+                    // Update shipping cost display (use radio.__price fallback when available)
+                    let price = 0;
+                    if (option.dataset && option.dataset.price) {
+                        price = parseFloat(option.dataset.price) || 0;
+                    } else if (radio && typeof radio.__price !== 'undefined') {
+                        price = parseFloat(radio.__price) || 0;
+                    }
                     OrderSummary.updateShipping(price);
                 });
             });

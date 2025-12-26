@@ -61,7 +61,7 @@
         </tr>
         <tr>
             <td style="padding: 4px 0; color: #6b7280; font-size: 14px;">Price</td>
-            <td style="padding: 4px 0; color: #1f2937; font-size: 14px; font-weight: 600; text-align: right;">৳{{ preorder.final_price|default:preorder.estimated_total }}</td>
+            <td style="padding: 4px 0; color: #1f2937; font-size: 14px; font-weight: 600; text-align: right;">{{ currency_symbol }}{{ preorder.final_price|default:preorder.estimated_total }}</td>
         </tr>
     </table>
 </div>

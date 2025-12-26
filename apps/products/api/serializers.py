@@ -58,13 +58,14 @@ class ProductVariantSerializer(serializers.ModelSerializer):
     """Product variant serializer."""
     
     price = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    price_converted = serializers.SerializerMethodField()
     attributes = AttributeValueSerializer(many=True, read_only=True)
     image_url = serializers.SerializerMethodField()
     
     class Meta:
         model = ProductVariant
         fields = [
-            'id', 'name', 'sku', 'price', 'price_modifier',
+            'id', 'name', 'sku', 'price', 'price_converted', 'price_modifier',
             'stock_quantity', 'is_in_stock', 'attributes', 'image_url'
         ]
     
@@ -76,12 +77,46 @@ class ProductVariantSerializer(serializers.ModelSerializer):
             return obj.image.url
         return None
 
+    def get_price_converted(self, obj):
+        request = self.context.get('request') if self.context else None
+        target_code = None
+        if request:
+            target_code = request.query_params.get('currency')
+            if not target_code:
+                try:
+                    from apps.currencies.services import CurrencyService
+                    cur = CurrencyService.get_user_currency(user=request.user if request.user.is_authenticated else None, request=request)
+                    if cur:
+                        target_code = cur.code
+                except Exception:
+                    target_code = None
+        from_currency = obj.product.get_currency() if hasattr(obj.product, 'get_currency') else None
+        from_code = (from_currency.code.upper() if from_currency and getattr(from_currency, 'code', None) else 'BDT')
+        try:
+            if target_code and target_code.upper() != from_code:
+                from apps.currencies.services import CurrencyConversionService
+                converted = CurrencyConversionService.convert_by_code(obj.price, from_code, target_code.upper())
+                return converted
+        except Exception:
+            pass
+        return obj.price
+
 
 class ProductListSerializer(serializers.ModelSerializer):
     """Serializer for product listings (compact)."""
     
     primary_image = serializers.SerializerMethodField()
-    current_price = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    # current_price will be converted to request currency when requested
+    current_price = serializers.SerializerMethodField()
+    # Per-request converted price fields
+    price_converted = serializers.SerializerMethodField()
+    sale_price_converted = serializers.SerializerMethodField()
+    currency = serializers.SerializerMethodField()
+
+    def get_currency(self, obj):
+        cur = obj.get_currency() if hasattr(obj, 'get_currency') else None
+        return cur.code if cur else None
+
     discount_percentage = serializers.IntegerField(read_only=True)
     is_on_sale = serializers.BooleanField(read_only=True)
     is_in_stock = serializers.BooleanField(read_only=True)
@@ -95,7 +130,7 @@ class ProductListSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'id', 'name', 'slug', 'sku', 'short_description',
-            'price', 'sale_price', 'current_price', 'discount_percentage',
+            'price', 'sale_price', 'price_converted', 'sale_price_converted', 'current_price', 'currency', 'discount_percentage',
             'is_on_sale', 'is_in_stock', 'is_featured', 'is_new',
             'primary_image', 'average_rating', 'review_count',
             'created_at', 'aspect', 'category'
@@ -125,6 +160,71 @@ class ProductListSerializer(serializers.ModelSerializer):
             return image.image.url
         return None
 
+    def get_current_price(self, obj):
+        """Return current price possibly converted to caller's currency.
+
+        If request includes ?currency=XXX it will convert product's price from product.currency to the requested currency.
+        Otherwise it returns product.current_price (original amount).
+        """
+        request = self.context.get('request') if self.context else None
+        target_code = None
+        if request:
+            target_code = request.query_params.get('currency')
+            # If no explicit param, use user's/session currency
+            if not target_code:
+                try:
+                    from apps.currencies.services import CurrencyService
+                    cur = CurrencyService.get_user_currency(user=request.user if request.user.is_authenticated else None, request=request)
+                    if cur:
+                        target_code = cur.code
+                except Exception:
+                    target_code = None
+        # Determine product's source currency via FK or default
+        from_currency = obj.get_currency() if hasattr(obj, 'get_currency') else None
+        from_code = (from_currency.code.upper() if from_currency and getattr(from_currency, 'code', None) else 'BDT')
+        try:
+            if target_code and target_code.upper() != from_code:
+                from apps.currencies.services import CurrencyConversionService
+                converted = CurrencyConversionService.convert_by_code(obj.current_price, from_code, target_code.upper())
+                return converted
+        except Exception:
+            pass
+        return obj.current_price
+
+    def _convert_amount(self, amount, obj, request=None):
+        """Helper to convert an arbitrary amount from product's currency to target/request currency."""
+        if amount is None:
+            return None
+        target_code = None
+        if request:
+            target_code = request.query_params.get('currency')
+            if not target_code:
+                try:
+                    from apps.currencies.services import CurrencyService
+                    cur = CurrencyService.get_user_currency(user=request.user if request.user.is_authenticated else None, request=request)
+                    if cur:
+                        target_code = cur.code
+                except Exception:
+                    target_code = None
+        from_currency = obj.get_currency() if hasattr(obj, 'get_currency') else None
+        from_code = (from_currency.code.upper() if from_currency and getattr(from_currency, 'code', None) else 'BDT')
+        try:
+            if target_code and target_code.upper() != from_code:
+                from apps.currencies.services import CurrencyConversionService
+                converted = CurrencyConversionService.convert_by_code(amount, from_code, target_code.upper())
+                return converted
+        except Exception:
+            pass
+        return amount
+
+    def get_price_converted(self, obj):
+        request = self.context.get('request') if self.context else None
+        return self._convert_amount(obj.price, obj, request=request)
+
+    def get_sale_price_converted(self, obj):
+        request = self.context.get('request') if self.context else None
+        return self._convert_amount(obj.sale_price, obj, request=request)
+
 
 class ProductDetailSerializer(serializers.ModelSerializer):
     """Detailed product serializer."""
@@ -133,7 +233,17 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     variants = ProductVariantSerializer(many=True, read_only=True)
     tags = TagSerializer(many=True, read_only=True)
     categories = serializers.SerializerMethodField()
-    current_price = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    # current_price converted to request currency when requested
+    current_price = serializers.SerializerMethodField()
+    # Per-request converted price fields
+    price_converted = serializers.SerializerMethodField()
+    sale_price_converted = serializers.SerializerMethodField()
+    currency = serializers.SerializerMethodField()
+
+    def get_currency(self, obj):
+        cur = obj.get_currency() if hasattr(obj, 'get_currency') else None
+        return cur.code if cur else None
+    
     discount_percentage = serializers.IntegerField(read_only=True)
     is_on_sale = serializers.BooleanField(read_only=True)
     is_in_stock = serializers.BooleanField(read_only=True)
@@ -149,7 +259,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'id', 'name', 'slug', 'sku', 'description', 'short_description',
-            'price', 'sale_price', 'current_price', 'discount_percentage',
+            'price', 'sale_price', 'price_converted', 'sale_price_converted', 'current_price', 'currency', 'discount_percentage',
             'stock_quantity', 'is_on_sale', 'is_in_stock', 'is_low_stock',
             'is_featured', 'is_new', 'is_bestseller',
             'weight', 'length', 'width', 'height',
@@ -190,6 +300,65 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         related = ProductService.get_related_products(obj, limit=4)
         return ProductListSerializer(related, many=True, context=self.context).data
 
+    def get_current_price(self, obj):
+        request = self.context.get('request') if self.context else None
+        target_code = None
+        if request:
+            target_code = request.query_params.get('currency')
+            if not target_code:
+                try:
+                    from apps.currencies.services import CurrencyService
+                    cur = CurrencyService.get_user_currency(user=request.user if request.user.is_authenticated else None, request=request)
+                    if cur:
+                        target_code = cur.code
+                except Exception:
+                    target_code = None
+        # Determine product's source currency via FK or default
+        from_currency = obj.get_currency() if hasattr(obj, 'get_currency') else None
+        from_code = (from_currency.code.upper() if from_currency and getattr(from_currency, 'code', None) else 'BDT')
+        try:
+            if target_code and target_code.upper() != from_code:
+                from apps.currencies.services import CurrencyConversionService
+                converted = CurrencyConversionService.convert_by_code(obj.current_price, from_code, target_code.upper())
+                return converted
+        except Exception:
+            pass
+        return obj.current_price
+
+    def _convert_amount(self, amount, obj, request=None):
+        """Helper to convert an arbitrary amount from product's currency to target/request currency."""
+        if amount is None:
+            return None
+        target_code = None
+        if request:
+            target_code = request.query_params.get('currency')
+            if not target_code:
+                try:
+                    from apps.currencies.services import CurrencyService
+                    cur = CurrencyService.get_user_currency(user=request.user if request.user.is_authenticated else None, request=request)
+                    if cur:
+                        target_code = cur.code
+                except Exception:
+                    target_code = None
+        from_currency = obj.get_currency() if hasattr(obj, 'get_currency') else None
+        from_code = (from_currency.code.upper() if from_currency and getattr(from_currency, 'code', None) else 'BDT')
+        try:
+            if target_code and target_code.upper() != from_code:
+                from apps.currencies.services import CurrencyConversionService
+                converted = CurrencyConversionService.convert_by_code(amount, from_code, target_code.upper())
+                return converted
+        except Exception:
+            pass
+        return amount
+
+    def get_price_converted(self, obj):
+        request = self.context.get('request') if self.context else None
+        return self._convert_amount(obj.price, obj, request=request)
+
+    def get_sale_price_converted(self, obj):
+        request = self.context.get('request') if self.context else None
+        return self._convert_amount(obj.sale_price, obj, request=request)
+
 
 class ProductCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating products."""
@@ -209,7 +378,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'name', 'slug', 'sku', 'description', 'short_description',
-            'price', 'sale_price', 'cost_price',
+            'price', 'sale_price', 'cost_price', 'currency',
             'stock_quantity', 'low_stock_threshold', 'track_inventory', 'allow_backorder',
             'categories', 'tags',
             'weight', 'length', 'width', 'height',
@@ -226,7 +395,23 @@ class ProductCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         category_ids = validated_data.pop('categories', [])
         tag_ids = validated_data.pop('tags', [])
-        
+
+        # Allow passing currency as ISO code (e.g., 'USD') or as a Currency PK
+        currency_val = validated_data.pop('currency', None)
+        if currency_val:
+            try:
+                from apps.currencies.services import CurrencyService
+                cur = None
+                if isinstance(currency_val, str):
+                    cur = CurrencyService.get_currency_by_code(currency_val)
+                if not cur:
+                    from apps.currencies.models import Currency
+                    cur = Currency.objects.filter(id=currency_val).first() if currency_val else None
+                if cur:
+                    validated_data['currency'] = cur
+            except Exception:
+                pass
+
         product = Product.objects.create(**validated_data)
         
         if category_ids:
@@ -259,7 +444,7 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'name', 'slug', 'sku', 'description', 'short_description',
-            'price', 'sale_price', 'cost_price',
+            'price', 'sale_price', 'cost_price', 'currency',
             'stock_quantity', 'low_stock_threshold', 'track_inventory', 'allow_backorder',
             'categories', 'tags',
             'weight', 'length', 'width', 'height',
@@ -270,7 +455,26 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         category_ids = validated_data.pop('categories', None)
         tag_ids = validated_data.pop('tags', None)
-        
+
+        # Handle currency code or PK
+        if 'currency' in validated_data:
+            currency_val = validated_data.pop('currency')
+            try:
+                from apps.currencies.services import CurrencyService
+                cur = None
+                if isinstance(currency_val, str):
+                    cur = CurrencyService.get_currency_by_code(currency_val)
+                if not cur:
+                    from apps.currencies.models import Currency
+                    cur = Currency.objects.filter(id=currency_val).first() if currency_val else None
+                if cur is not None:
+                    instance.currency = cur
+                else:
+                    instance.currency = None
+            except Exception:
+                # Leave existing value if something goes wrong
+                pass
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()

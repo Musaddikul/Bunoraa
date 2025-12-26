@@ -117,7 +117,25 @@ class ProductDetailView(DetailView):
         context['variants'] = product.variants.filter(is_active=True)
         context['related_products'] = ProductService.get_related_products(product)
         context['breadcrumbs'] = self._get_breadcrumbs(product)
-        
+
+        # Explicitly provide currency code/symbol for templates (prefer product-level currency)
+        try:
+            # Prefer product's currency if set
+            prod_currency = product.get_currency() if hasattr(product, 'get_currency') else None
+            if prod_currency and getattr(prod_currency, 'code', None):
+                context['currency_code'] = prod_currency.code
+                context['currency_symbol'] = prod_currency.symbol
+            else:
+                # Fall back to user/request currency or default
+                from apps.currencies.services import CurrencyService
+                user_currency = CurrencyService.get_user_currency(user=self.request.user if self.request.user.is_authenticated else None, request=self.request)
+                context['currency_code'] = user_currency.code if user_currency else context.get('currency_code', 'BDT')
+                context['currency_symbol'] = user_currency.symbol if user_currency else context.get('currency_symbol', '৳')
+        except Exception:
+            # Keep existing context values or sensible defaults
+            context['currency_code'] = context.get('currency_code', 'BDT')
+            context['currency_symbol'] = context.get('currency_symbol', '৳')
+
         return context
     
     def _get_breadcrumbs(self, product):

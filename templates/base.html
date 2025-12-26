@@ -1,4 +1,4 @@
-{% load static %}
+{% load static currency_tags %}
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
@@ -203,22 +203,7 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </button>
 
-                    <!-- Theme Toggle -->
-                    <button id="theme-toggle" class="p-2.5 text-stone-700 hover:text-amber-700 hover:bg-amber-50 rounded-xl transition-all dark:text-stone-300 dark:hover:text-amber-300 dark:hover:bg-stone-700" aria-label="Toggle theme" aria-pressed="false">
-                        <svg id="theme-toggle-light-icon" class="w-5 h-5" aria-hidden="false" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"/></svg>
-                        <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
-                    </button>
-
-                    <!-- Currency Selector -->
-                    <div class="relative dropdown-container hidden lg:block">
-                        <button class="dropdown-toggle flex items-center gap-1.5 hover:text-amber-700 transition-colors text-stone-700 py-2 px-2 rounded-xl hover:bg-stone-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:text-stone-300 dark:hover:text-amber-400 dark:hover:bg-stone-700 dark:focus-visible:ring-amber-400">
-                            <span id="current-currency" class="font-medium text-sm">USD</span>
-                            <svg class="w-3 h-3 opacity-60 dropdown-arrow transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </button>
-                        <div id="currency-dropdown" class="dropdown-menu hidden absolute right-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-stone-200 py-1 min-w-[120px] max-h-[280px] overflow-y-auto z-50 opacity-0 transform scale-95 transition-all duration-200 dark:bg-stone-800 dark:border-stone-700 scrollbar-thin scrollbar-thumb-stone-300 dark:scrollbar-thumb-stone-600">
-                            <!-- Currencies loaded via JS -->
-                        </div>
-                    </div>
+                    {% include 'includes/currency_selector.html' %}
                     
                     <!-- Account -->
                     <div class="relative hidden lg:block dropdown-container">
@@ -343,6 +328,7 @@
             </div>
             
             <!-- Mobile Account -->
+            {% include 'includes/currency_selector.html' %}
             <div id="mobile-account" class="p-4 border-t border-stone-200 bg-stone-50">
                 <!-- Account links loaded via JS -->
             </div>
@@ -560,6 +546,20 @@
     </script>
 
     <!-- Scripts -->
+    <!-- Expose server-configured currency metadata (from SiteSettings) for frontend use -->
+    <script>
+        window.BUNORAA_CURRENCY = {
+            code: '{{ currency_code|escapejs }}',
+            symbol: '{{ currency_symbol|escapejs }}',
+            locale: '{{ currency_locale|escapejs }}',
+            decimal_places: Number('{{ currency_decimal_places|default:"2" }}'),
+            thousand_separator: '{{ currency_thousand_separator|escapejs }}',
+            decimal_separator: '{{ currency_decimal_separator|escapejs }}',
+            symbol_position: '{{ currency_symbol_position|escapejs }}'
+        };
+        // Client-side currency selection is available via the currency selector component; server will persist preference and templates will re-render in chosen currency.
+    </script>
+
     <!-- API Layer -->
     <script src="{% static 'js/api/client.js' %}"></script>
     <script src="{% static 'js/api/auth.js' %}"></script>
@@ -815,7 +815,10 @@
                                 ` : ''}
                                 <h3 class="mt-1 font-medium text-gray-900 line-clamp-2"><a href="${href}" class="hover:text-primary-600">${(window.Templates?.escapeHtml?.(p.name)) || ''}</a></h3>
                                 <div class="mt-2">
-                                    ${window.Price.render({ price: p.price, salePrice: p.sale_price })}
+                                    ${window.Price.render({
+                                        price: p.current_price ?? p.sale_price_converted ?? p.price_converted ?? p.sale_price ?? p.price,
+                                        salePrice: p.sale_price_converted ?? p.sale_price
+                                    })}
                                 </div>
                                 <button class="add-to-cart-btn mt-4 w-full bg-primary-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-primary-700 ${inStock ? '' : 'disabled bg-gray-300 cursor-not-allowed'}" ${inStock ? '' : 'disabled'}> ${inStock ? 'Add to Cart' : 'Out of Stock'} </button>
                             </div>
@@ -923,27 +926,7 @@
                 return template.replace(routePlaceholder, encodeURIComponent(value));
             };
             
-            // Initialize currency rate if needed
-            const BASE_CURRENCY = 'BDT';
-            const selectedCurrency = localStorage.getItem('selected_currency') || 'BDT';
-            const storedRate = localStorage.getItem('currency_rate');
-            
-            if (selectedCurrency !== BASE_CURRENCY && (!storedRate || storedRate === '1' || storedRate === 'NaN')) {
-                // Fetch exchange rate if not already stored
-                if (LocalizationApi?.getExchangeRate) {
-                    try {
-                        const rate = await LocalizationApi.getExchangeRate(BASE_CURRENCY, selectedCurrency);
-                        if (rate && rate !== 1) {
-                            localStorage.setItem('currency_rate', rate.toString());
-                            if (typeof window.convertDisplayedPrices === 'function') {
-                                window.convertDisplayedPrices();
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Error fetching exchange rate on init:', error);
-                    }
-                }
-            }
+            // Currency exchange initialization disabled (single-currency mode).
             
             // Load announcement
             try {
@@ -1018,71 +1001,7 @@
                 console.error('Error loading categories:', error);
             }
             
-            // Load currencies
-            try {
-                if (LocalizationApi) {
-                    const response = await LocalizationApi.getCurrencies();
-                    const currencies = Array.isArray(response) ? response : (response.data || response.results || []);
-                    const storedCurrency = Storage?.get ? Storage.get('currency') : null;
-                    const storedCode = typeof storedCurrency === 'string' ? storedCurrency : storedCurrency?.code;
-                    const storedSymbol = typeof storedCurrency === 'object' ? storedCurrency?.symbol : null;
-                    const fallbackCode = typeof LocalizationApi.getCurrency === 'function' ? LocalizationApi.getCurrency() : null;
-                    const currentCurrency = {
-                        code: storedCode || fallbackCode || 'USD',
-                        symbol: storedSymbol || null
-                    };
-                    const currencyDisplay = document.getElementById('current-currency');
-                    const currencyDropdown = document.getElementById('currency-dropdown');
-
-                    if (currencyDisplay && currentCurrency.code) {
-                        currencyDisplay.textContent = currentCurrency.code;
-                    }
-
-                    if (Array.isArray(currencies) && currencies.length > 0 && currencyDropdown) {
-                        const activeMeta = currencies.find(cur => cur.code === currentCurrency.code) || currencies[0];
-
-                        if (activeMeta && (!storedCurrency || !currentCurrency.symbol)) {
-                            currentCurrency.symbol = activeMeta.symbol;
-                            if (Storage?.set) {
-                                Storage.set('currency', { code: currentCurrency.code, symbol: currentCurrency.symbol });
-                            }
-                        }
-
-                        currencyDropdown.innerHTML = currencies.map(cur => {
-                            const isActive = cur.code === currentCurrency.code;
-                            return `
-                                <button class="w-full px-4 py-2.5 text-left hover:bg-amber-50 transition-colors flex items-center justify-between ${isActive ? 'text-amber-700 bg-amber-50 font-medium dark:text-amber-300 dark:bg-stone-700' : 'text-stone-700 dark:text-stone-300'} dark:hover:bg-stone-700 dark:hover:text-amber-300" data-currency="${cur.code}" data-symbol="${cur.symbol}">
-                                    <span>${cur.code}</span>
-                                    <span class="text-stone-400 dark:text-stone-500">${cur.symbol}</span>
-                                </button>
-                            `;
-                        }).join('');
-
-                        // Currency change handler
-                        currencyDropdown.addEventListener('click', async (e) => {
-                            const btn = e.target.closest('[data-currency]');
-                            if (btn) {
-                                const code = btn.dataset.currency;
-                                const symbol = btn.dataset.symbol;
-                                
-                                // Show loading state
-                                btn.classList.add('opacity-50');
-                                btn.style.pointerEvents = 'none';
-                                
-                                // Set currency and fetch exchange rate (async)
-                                await LocalizationApi.setCurrency(code);
-                                
-                                if (Storage?.set) {
-                                    Storage.set('currency', { code, symbol });
-                                }
-                                window.location.reload();
-                            }
-                        });
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading currencies:', error);
-            }
+            // Client-side currency list & selector disabled (single-currency mode). Removed interactive dropdown logic.
             
             // Update account dropdown based on auth state
             const storedUser = Storage?.get('user');
@@ -1514,50 +1433,7 @@
                 }
             });
             
-            // ========== CURRENCY CONVERSION FOR SERVER-RENDERED PRICES ==========
-            window.convertDisplayedPrices = function() {
-                const currency = localStorage.getItem('selected_currency') || 'BDT';
-                const rate = parseFloat(localStorage.getItem('currency_rate')) || 1;
-                const BASE_CURRENCY = 'BDT';
-                
-                // Skip if base currency
-                if (currency === BASE_CURRENCY || rate === 1) return;
-                
-                // Currency symbols map
-                const currencySymbols = {
-                    'BDT': '৳', 'USD': '$', 'EUR': '€', 'GBP': '£', 'INR': '₹',
-                    'JPY': '¥', 'CNY': '¥', 'AUD': 'A$', 'CAD': 'C$', 'CHF': 'CHF'
-                };
-                const symbol = currencySymbols[currency] || currency + ' ';
-                
-                // Find all price elements with data-price attribute
-                document.querySelectorAll('.price-display[data-price]').forEach(el => {
-                    const originalPrice = parseFloat(el.dataset.price);
-                    if (isNaN(originalPrice)) return;
-                    
-                    const convertedPrice = originalPrice * rate;
-                    
-                    // Format the price
-                    try {
-                        const formatted = new Intl.NumberFormat('en-US', {
-                            style: 'currency',
-                            currency: currency,
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 2
-                        }).format(convertedPrice);
-                        el.textContent = formatted;
-                    } catch (e) {
-                        // Fallback formatting
-                        el.textContent = symbol + convertedPrice.toFixed(2);
-                    }
-                });
-            };
-            
-            // Run price conversion on page load
-            window.convertDisplayedPrices();
-            
-            // Also listen for currency change events (for SPA-like updates)
-            window.addEventListener('currency:changed', window.convertDisplayedPrices);
+            // Client-side price conversion removed; prices are shown using server-formatted values.
         });
     </script>
     

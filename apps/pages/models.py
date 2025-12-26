@@ -177,15 +177,11 @@ class SiteSettings(models.Model):
     default_meta_description = models.TextField(blank=True, max_length=300)
     
     # E-commerce settings
-    currency = models.CharField(max_length=3, default='USD')
-    currency_symbol = models.CharField(max_length=5, default='$')
-    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    currency = models.CharField(max_length=3, default='BDT')
+    currency_symbol = models.CharField(max_length=5, default='৳')
+    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=10)
     
-    # Free shipping threshold
-    free_shipping_threshold = models.DecimalField(
-        max_digits=10, decimal_places=2,
-        null=True, blank=True
-    )
+
     
     # Footer content
     footer_text = models.TextField(blank=True)

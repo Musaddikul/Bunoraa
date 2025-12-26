@@ -3,7 +3,7 @@
  * @module pages/checkout
  */
 
-const CheckoutPage = (function() {
+const CheckoutPage = (async function() {
     'use strict';
 
     let cart = null;
@@ -268,6 +268,13 @@ const CheckoutPage = (function() {
 
         try {
             const address = checkoutData.shipping_address;
+
+            if (!address) {
+                // No address available yet (user hasn't filled or selected one)
+                container.innerHTML = '<p class="text-gray-500">Please provide a shipping address to view shipping methods.</p>';
+                return;
+            }
+
             const params = typeof address === 'object' ? {
                 country: address.country,
                 postal_code: address.postal_code,
@@ -308,9 +315,11 @@ const CheckoutPage = (function() {
             `;
 
             const shippingRadios = container.querySelectorAll('input[name="shipping_method"]');
-            shippingRadios.forEach(radio => {
+            shippingRadios.forEach((radio, idx) => {
+                // Store price on the radio element without using DOM data-attributes
+                radio.__price = methods[idx] ? methods[idx].price : 0;
                 radio.addEventListener('change', () => {
-                    updateShippingCost(parseFloat(radio.dataset.price) || 0);
+                    updateShippingCost(parseFloat(radio.__price) || 0);
                 });
             });
 
@@ -318,11 +327,185 @@ const CheckoutPage = (function() {
                 checkoutData.shipping_method = methods[0].id;
                 updateShippingCost(methods[0].price || 0);
             }
-        } catch (error) {
+        } 
+        catch (error) {
             console.error('Failed to load shipping methods:', error);
             container.innerHTML = '<p class="text-red-500">Failed to load shipping methods. Please try again.</p>';
         }
     }
+
+    // -----------------------------
+    // Payment gateways (dynamic)
+    // -----------------------------
+    async function fetchAndRenderPaymentGateways() {
+        const container = document.getElementById('payment-methods-container');
+        if (!container) return;
+
+        try {
+            const params = new URLSearchParams();
+            // Client-side currency parameter removed; server handles currency formatting.
+            if (window.CONFIG && CONFIG.shippingData && CONFIG.shippingData.countryCode) params.set('country', CONFIG.shippingData.countryCode);
+            if (cart && (cart.total || cart.total === 0)) params.set('amount', cart.total);
+
+            const resp = await fetch(`/api/v1/payments/gateways/available/?${params.toString()}`, {
+                credentials: 'same-origin'
+            });
+            const data = await resp.json();
+
+            const gateways = (data && data.data) || [];
+
+            // If server already rendered gateways (non-empty) we won't re-render unless none exist
+            const existing = container.querySelectorAll('.payment-option');
+            if (existing && existing.length > 0 && gateways.length === 0) {
+                // nothing to do
+                return;
+            }
+
+            // If no gateways, show informative block (template also handles this case)
+            if (!gateways || gateways.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl">
+                        <svg class="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No payment methods are configured</h3>
+                        <p class="text-gray-500 dark:text-gray-400 mb-2">We don't have any payment providers configured for your currency or location. Please contact support to enable online payments.</p>
+                        <p class="text-sm text-gray-400">You can still place an order if Cash on Delivery or Bank Transfer is available from admin.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Build radio options
+            container.innerHTML = '';
+            gateways.forEach((g, idx) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'relative payment-option transform transition-all duration-300 hover:scale-[1.01]';
+                wrapper.dataset.gateway = g.code;
+
+                const input = document.createElement('input');
+                input.type = 'radio';
+                input.name = 'payment_method';
+                input.value = g.code;
+                input.id = `payment-${g.code}`;
+                input.className = 'peer sr-only';
+                if (idx === 0) input.checked = true;
+
+                const label = document.createElement('label');
+                label.setAttribute('for', input.id);
+                label.className = 'flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all duration-300 hover:border-gray-400 border-gray-200';
+
+                label.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mr-4">
+                            ${g.icon_url ? `<img src="${g.icon_url}" class="h-6" alt="${g.name}">` : `<span class="font-bold">${g.code.toUpperCase()}</span>`}
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">${Templates.escapeHtml(g.name)}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">${Templates.escapeHtml(g.description || '')}</p>
+                            ${g.fee_text ? `<p class="text-xs text-amber-600 dark:text-amber-400 mt-1">${Templates.escapeHtml(g.fee_text)}</p>` : ''}
+                            ${g.instructions ? `<p class="text-xs text-gray-500 dark:text-gray-400 mt-2">${g.instructions}</p>` : ''}
+                        </div>
+                    </div>
+                `;
+
+                wrapper.appendChild(input);
+                wrapper.appendChild(label);
+
+                // Append selection indicator
+                const indicator = document.createElement('div');
+                indicator.className = 'absolute top-4 right-4 opacity-0';
+                indicator.innerHTML = `<svg class="w-6 h-6 text-primary-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>`;
+                wrapper.appendChild(indicator);
+
+                container.appendChild(wrapper);
+
+                // If gateway requires client side (Stripe), load JS and init
+                if (g.public_key && g.requires_client) {
+                    loadStripeJsIfNeeded(g.public_key).catch(err => console.error('Failed to load Stripe:', err));
+                }
+            });
+
+            // Re-bind form handlers
+            initFormValidation();
+
+        } catch (error) {
+            console.error('Failed to load payment gateways:', error);
+        }
+    }
+
+    function loadStripeJsIfNeeded(publishableKey) {
+        return new Promise((resolve, reject) => {
+            if (window.Stripe && window.STRIPE_PUBLISHABLE_KEY === publishableKey) {
+                // Already configured
+                resolve();
+                return;
+            }
+
+            // Set global publishable key
+            window.STRIPE_PUBLISHABLE_KEY = publishableKey;
+
+            // If Stripe script is already loaded, just initialize elements
+            if (window.Stripe) {
+                initStripeElements(publishableKey);
+                resolve();
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.src = 'https://js.stripe.com/v3/';
+            script.async = true;
+            script.onload = () => {
+                try {
+                    initStripeElements(publishableKey);
+                    resolve();
+                } catch (err) {
+                    reject(err);
+                }
+            };
+            script.onerror = (e) => reject(e);
+            document.head.appendChild(script);
+        });
+    }
+
+    function initStripeElements(publishableKey) {
+        if (typeof Stripe === 'undefined') throw new Error('Stripe script not loaded');
+
+        try {
+            const stripe = Stripe(publishableKey);
+            const elements = stripe.elements();
+            const cardEl = elements.create('card');
+            const mountPoint = document.getElementById('card-element');
+            if (mountPoint) {
+                // Clean previous mount if any
+                mountPoint.innerHTML = '';
+                cardEl.mount('#card-element');
+
+                // Show realtime validation errors
+                cardEl.on('change', (e) => {
+                    const errContainer = document.getElementById('card-errors');
+                    if (errContainer) errContainer.textContent = e.error ? e.error.message : '';
+                });
+
+                // Expose card element for confirmCardPayment
+                window.stripeInstance = stripe;
+                window.stripeCard = cardEl;
+            }
+        } catch (err) {
+            console.error('Error initializing Stripe elements:', err);
+            throw err;
+        }
+    }
+
+    // Call dynamic loading on init
+    (function autoInitGateways() {
+        // Delay slightly to let server-rendered DOM settle
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                fetchAndRenderPaymentGateways();
+            }, 50);
+        });
+    })();
+
+
 
     function updateShippingCost(cost) {
         const shippingCostEl = document.getElementById('shipping-cost');
@@ -443,13 +626,14 @@ const CheckoutPage = (function() {
     async function processStripePayment(order) {
         try {
             const response = await CheckoutApi.createPaymentIntent(order.id);
-            const { client_secret, publishable_key } = response.data;
+            const { client_secret } = response.data;
+            const publishable_key = response.data.publishable_key || window.STRIPE_PUBLISHABLE_KEY || (window.stripeInstance ? window.STRIPE_PUBLISHABLE_KEY : null);
 
-            if (typeof Stripe === 'undefined') {
+            if (typeof Stripe === 'undefined' && !window.stripeInstance) {
                 throw new Error('Stripe is not loaded.');
             }
 
-            const stripe = Stripe(publishable_key);
+            const stripe = window.stripeInstance || Stripe(publishable_key);
             const result = await stripe.confirmCardPayment(client_secret, {
                 payment_method: {
                     card: window.stripeCard,
@@ -506,6 +690,6 @@ const CheckoutPage = (function() {
         init,
         destroy
     };
-})();
+}());
 
 window.CheckoutPage = CheckoutPage;

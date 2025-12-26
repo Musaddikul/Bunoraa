@@ -229,28 +229,28 @@
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Price Estimate</h3>
                         <div class="space-y-3 text-sm">
                             <div class="flex justify-between">
-                                <span class="text-gray-600 dark:text-gray-400">Base Price ({{ session_data.quantity }} × ৳{{ category.base_price }})</span>
-                                <span class="text-gray-900 dark:text-white">৳{{ base_subtotal }}</span>
+                                <span class="text-gray-600 dark:text-gray-400">Base Price ({{ session_data.quantity }} × {{ currency_symbol }}{{ category.base_price }})</span>
+                                <span class="text-gray-900 dark:text-white">{{ currency_symbol }}{{ base_subtotal }}</span>
                             </div>
                             {% if options_total > 0 %}
                             <div class="flex justify-between">
                                 <span class="text-gray-600 dark:text-gray-400">Options</span>
-                                <span class="text-gray-900 dark:text-white">+৳{{ options_total }}</span>
+                                <span class="text-gray-900 dark:text-white">+{{ currency_symbol }}{{ options_total }}</span>
                             </div>
                             {% endif %}
                             {% if session_data.is_rush_order and rush_fee > 0 %}
                             <div class="flex justify-between text-orange-600">
                                 <span>Rush Order Fee ({{ category.rush_order_fee_percentage }}%)</span>
-                                <span>+৳{{ rush_fee }}</span>
+                                <span>+{{ currency_symbol }}{{ rush_fee }}</span>
                             </div>
                             {% endif %}
                             <div class="border-t border-primary-200 dark:border-primary-700 pt-3 flex justify-between items-center">
                                 <span class="text-lg font-semibold text-gray-900 dark:text-white">Estimated Total</span>
-                                <span class="text-2xl font-bold text-primary-600">৳{{ estimated_total }}</span>
+                                <span class="text-2xl font-bold text-primary-600">{{ currency_symbol }}{{ estimated_total }}</span>
                             </div>
                             <div class="flex justify-between pt-2 text-primary-700 dark:text-primary-400">
                                 <span>Deposit Required ({{ category.deposit_percentage }}%)</span>
-                                <span class="font-semibold">৳{{ deposit_amount }}</span>
+                                <span class="font-semibold">{{ currency_symbol }}{{ deposit_amount }}</span>
                             </div>
                         </div>
                         <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">

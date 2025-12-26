@@ -9,6 +9,9 @@ from django.core.cache import cache
 from .models import Currency, ExchangeRate, ExchangeRateHistory, UserCurrencyPreference, CurrencySettings
 
 
+from django.conf import settings
+
+
 class CurrencyService:
     """Service for currency operations."""
     
@@ -28,6 +31,14 @@ class CurrencyService:
                 cache.set(cache_key, currency, CurrencyService.CACHE_TIMEOUT)
         
         return currency
+
+    @staticmethod
+    def get_user_currency(user=None, request=None):
+        """Get currency for a user or request."""
+        # If site is configured to force default currency, return it immediately
+        if getattr(settings, 'FORCE_DEFAULT_CURRENCY', False):
+            return CurrencyService.get_default_currency()
+
     
     @staticmethod
     def get_active_currencies():
@@ -57,11 +68,29 @@ class CurrencyService:
     @staticmethod
     def get_user_currency(user=None, request=None):
         """Get currency for a user or request."""
-        # Check user preference
+        # Check localization user's preference first (localization app should own per-user locale choices)
+        if user and user.is_authenticated:
+            try:
+                from apps.localization.models import UserLocalePreference
+                ulp = UserLocalePreference.objects.filter(user=user).select_related('currency').first()
+                if ulp and getattr(ulp, 'currency', None):
+                    return ulp.currency
+            except Exception:
+                pass
+
+        # Fallback to currencies app's UserCurrencyPreference for backward compatibility
         if user and user.is_authenticated:
             pref = UserCurrencyPreference.objects.filter(user=user).select_related('currency').first()
             if pref and pref.currency and not pref.auto_detect:
                 return pref.currency
+
+        # Honor X-User-Currency header if present (client-side selection)
+        if request and getattr(request, 'META', None):
+            header_currency = request.META.get('HTTP_X_USER_CURRENCY')
+            if header_currency:
+                currency = CurrencyService.get_currency_by_code(header_currency)
+                if currency:
+                    return currency
         
         # Check session
         if request and hasattr(request, 'session'):

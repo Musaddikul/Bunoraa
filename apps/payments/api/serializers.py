@@ -2,6 +2,7 @@
 Payments API serializers
 """
 from rest_framework import serializers
+from django.conf import settings
 
 from ..models import Payment, PaymentMethod, Refund, PaymentGateway
 
@@ -9,13 +10,34 @@ from ..models import Payment, PaymentMethod, Refund, PaymentGateway
 class PaymentGatewaySerializer(serializers.ModelSerializer):
     """Serializer for payment gateways (public facing)."""
     icon_url = serializers.SerializerMethodField()
+    public_key = serializers.SerializerMethodField()
+    requires_client = serializers.SerializerMethodField()
     
     class Meta:
         model = PaymentGateway
         fields = [
             'code', 'name', 'description', 'icon_url', 'icon_class',
-            'color', 'fee_type', 'fee_amount', 'fee_text', 'instructions'
+            'color', 'fee_type', 'fee_amount', 'fee_text', 'instructions',
+            'public_key', 'requires_client'
         ]
+
+    def get_icon_url(self, obj):
+        if obj.icon:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.icon.url)
+            return obj.icon.url
+        return None
+
+    def get_public_key(self, obj):
+        # Expose only publishable/public keys to frontend. For Stripe, 'api_key' is publishable in admin.
+        if obj.code == PaymentGateway.CODE_STRIPE:
+            return obj.api_key or getattr(settings, 'STRIPE_PUBLISHABLE_KEY', '')
+        return None
+
+    def get_requires_client(self, obj):
+        # Indicate whether the gateway requires client-side JS (e.g., Stripe)
+        return obj.code in (PaymentGateway.CODE_STRIPE,)
     
     def get_icon_url(self, obj):
         if obj.icon:

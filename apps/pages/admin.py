@@ -79,7 +79,9 @@ class SiteSettingsAdmin(admin.ModelAdmin):
             'fields': ('default_meta_title', 'default_meta_description')
         }),
         ('E-commerce', {
-            'fields': ('currency', 'currency_symbol', 'tax_rate', 'free_shipping_threshold')
+            'fields': (
+                'currency', 'currency_symbol', 'tax_rate'
+            )
         }),
         ('Footer', {
             'fields': ('footer_text', 'copyright_text')

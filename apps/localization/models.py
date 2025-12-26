@@ -296,6 +296,14 @@ class UserLocalePreference(models.Model):
         null=True,
         blank=True
     )
+    # Preferred currency (user-level override stored in localization app)
+    currency = models.ForeignKey(
+        'currencies.Currency',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='user_locale_preferences'
+    )
     
     # Date/Time formatting preferences
     date_format = models.CharField(

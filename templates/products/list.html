@@ -102,12 +102,12 @@
                         <div id="price-filter" data-filter-content>
                             <div class="flex items-center gap-3 mb-4">
                                 <div class="relative flex-1">
-                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-stone-500" data-price-symbol>{{ currency_symbol|default:'৳' }}</span>
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-stone-500">{{ currency_symbol }}</span>
                                     <input type="number" id="price-min" class="w-full pl-7 pr-3 py-2 border border-gray-200 dark:border-stone-700 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 dark:focus:ring-amber-900 focus:border-primary-500 dark:focus:border-amber-700 bg-white dark:bg-stone-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-stone-500" placeholder="Min">
                                 </div>
                                 <span class="text-gray-400 dark:text-stone-500">–</span>
                                 <div class="relative flex-1">
-                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-stone-500" data-price-symbol>{{ currency_symbol|default:'৳' }}</span>
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-stone-500">{{ currency_symbol }}</span>
                                     <input type="number" id="price-max" class="w-full pl-7 pr-3 py-2 border border-gray-200 dark:border-stone-700 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 dark:focus:ring-amber-900 focus:border-primary-500 dark:focus:border-amber-700 bg-white dark:bg-stone-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-stone-500" placeholder="Max">
                                 </div>
                             </div>
@@ -220,39 +220,9 @@
 import { Pagination, Toast } from "{% static 'js/components/index.js' %}";
 
 document.addEventListener('DOMContentLoaded', async function() {
-    const currency = {
-        symbol: '{{ currency_symbol|default:"৳"|escapejs }}',
-        code: '{{ currency_code|default:"BDT"|upper|escapejs }}'
-    };
-    const currencySymbolsMap = {
-        BDT: '৳',
-        USD: '$',
-        EUR: '€',
-        GBP: '£',
-        INR: '₹',
-        CAD: 'C$',
-        AUD: 'A$',
-        SGD: 'S$',
-        MYR: 'RM',
-        JPY: '¥',
-        CNY: '¥',
-        AED: 'د.إ',
-        SAR: '﷼'
-    };
+    // Single-currency mode: frontend uses server-configured currency (no client-side switching).
     
-    // Initialize currency from localStorage if previously selected
-    (function initCurrencyFromStorage() {
-        try {
-            const storedCurrency = localStorage.getItem('selected_currency');
-            if (storedCurrency && storedCurrency !== currency.code) {
-                const normalized = storedCurrency.toUpperCase();
-                currency.code = normalized;
-                currency.symbol = currencySymbolsMap[normalized] || currency.symbol;
-            }
-        } catch (e) {
-            // Ignore localStorage errors
-        }
-    })();
+    // Client-side currency selection disabled (single-currency mode).
     
     const locale = document.documentElement.lang || navigator.language || 'en-US';
     const categoryNameMap = {};
@@ -313,8 +283,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     const categoriesFilterElement = document.getElementById('categories-filter');
     const priceMinInput = document.getElementById('price-min');
     const priceMaxInput = document.getElementById('price-max');
-    const priceSymbolElements = document.querySelectorAll('[data-price-symbol]');
-    const priceChipElements = document.querySelectorAll('[data-price-chip]');
     if (productSearchInput) {
         productSearchInput.value = filters.search || '';
     }
@@ -325,7 +293,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         priceMaxInput.value = filters.price_max || '';
     }
     const quickFilterButtons = document.querySelectorAll('[data-quick-filter]');
-    refreshPriceDecorators();
     
     // Escape HTML helper
     function escapeHtml(str) {
@@ -444,18 +411,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         return numeric.toLocaleString(locale);
     }
 
-    function refreshPriceDecorators() {
-        priceSymbolElements.forEach(el => {
-            el.textContent = currency.symbol;
-        });
-        priceChipElements.forEach(el => {
-            const min = el.dataset.min;
-            const max = el.dataset.max;
-            if (min !== undefined && max !== undefined) {
-                el.textContent = `${currency.symbol}${formatRangeValue(min)} – ${currency.symbol}${formatRangeValue(max)}`;
-            }
-        });
-    }
+    // Price decorators handled server-side; no client-side symbol injection required.
 
     function applyProductSearch() {
         if (!productSearchInput) return;
@@ -501,35 +457,48 @@ document.addEventListener('DOMContentLoaded', async function() {
         }, PRICE_INPUT_DEBOUNCE);
     }
 
-    function applyCurrencyCode(code) {
-        if (!code) return;
-        const normalized = String(code).toUpperCase();
-        currency.code = normalized;
-        currency.symbol = currencySymbolsMap[normalized] || currency.symbol || normalized;
-        refreshPriceDecorators();
-        updateActiveFilters();
-    }
-
-    window.addEventListener('currency:changed', (event) => {
-        const storedValue = typeof Storage !== 'undefined' && Storage?.get ? Storage.get('currency') : null;
-        const storedCode = typeof storedValue === 'string' ? storedValue : storedValue?.code;
-        const nextCode = event?.detail || storedCode || currency.code;
-        applyCurrencyCode(nextCode);
-        // Re-render products with new currency conversion
-        renderProductsFromCache();
-    });
+    // Client-side currency change handlers removed; prices use server formatting.
     
     // Helper to format price using global Templates.formatPrice with currency conversion
     function formatProductPrice(amount) {
+        if (amount === null || amount === undefined) return '';
         if (window.Templates && window.Templates.formatPrice) {
             return window.Templates.formatPrice(amount);
         }
         // Fallback if Templates not available
-        return `${currency.symbol}${parseFloat(amount).toLocaleString(locale)}`;
+        return `${(window.BUNORAA_CURRENCY && window.BUNORAA_CURRENCY.symbol) || '{{ currency_symbol }}'}${parseFloat(amount).toLocaleString(locale)}`;
+    }
+
+    // Helper to pick the appropriate display amount for a product (prefer per-request converted values)
+    function getProductDisplayAmount(product) {
+        // Preferred order: current_price (already effective price converted), sale_price_converted, price_converted, sale_price, price
+        return product.current_price ?? product.sale_price_converted ?? product.price_converted ?? product.sale_price ?? product.price;
+    }
+
+    function getProductOriginalAmount(product) {
+        // Original price (for line-through display when on sale), prefer converted version if available
+        return product.price_converted ?? product.price;
     }
     
     // Store last loaded products for re-rendering on currency change
     let cachedProducts = [];
+
+    // If currency changes via selector, reload products (clear API cache first)
+    document.addEventListener('currency:changed', async (e) => {
+        try {
+            if (window.ApiClient && typeof window.ApiClient.clearCache === 'function') {
+                // Remove cached GETs that include products endpoint
+                window.ApiClient.clearCache('/api/v1/products/');
+            }
+        } catch (err) {
+            console.warn('[products] failed to clear API cache on currency change', err);
+        }
+
+        // Re-load products to fetch converted prices
+        await loadProducts(false);
+        // If we have cached products, re-render to pick up converted fields
+        renderProductsFromCache();
+    });
     
     function renderProductsFromCache() {
         if (cachedProducts.length > 0 && productsGrid) {
@@ -539,7 +508,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Create product card
     function createProductCard(product) {
-        const discount = product.sale_price ? Math.round((1 - product.sale_price / product.price) * 100) : 0;
+        const saleAmount = product.sale_price_converted ?? product.sale_price ?? null;
+        const origAmount = product.price_converted ?? product.price ?? null;
+        const discount = (saleAmount && origAmount && origAmount > 0) ? Math.round((1 - (saleAmount / origAmount)) * 100) : 0;
         
         if (viewMode === 'list') {
             return `
@@ -568,10 +539,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                         <div class="flex items-center justify-between pt-4 border-t border-gray-100">
                             <div class="flex items-center gap-2">
                                 ${product.sale_price ? `
-                                    <span class="text-xl font-bold text-gray-900">${formatProductPrice(product.sale_price)}</span>
-                                    <span class="text-sm text-gray-400 line-through">${formatProductPrice(product.price)}</span>
+                                    <span class="text-xl font-bold text-gray-900">${formatProductPrice(getProductDisplayAmount(product))}</span>
+                                    <span class="text-sm text-gray-400 line-through">${formatProductPrice(getProductOriginalAmount(product))}</span>
                                 ` : `
-                                    <span class="text-xl font-bold text-gray-900">${formatProductPrice(product.price)}</span>
+                                    <span class="text-xl font-bold text-gray-900">${formatProductPrice(getProductDisplayAmount(product))}</span>
                                 `}
                             </div>
                             <div class="flex gap-2">

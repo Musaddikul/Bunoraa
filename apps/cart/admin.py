@@ -2,7 +2,18 @@
 Cart admin configuration
 """
 from django.contrib import admin
-from .models import Cart, CartItem
+from .models import Cart, CartItem, CartSettings
+
+
+@admin.register(CartSettings)
+class CartSettingsAdmin(admin.ModelAdmin):
+    list_display = ('gift_wrap_enabled', 'gift_wrap_amount', 'gift_wrap_label', 'updated_at')
+    fields = ('gift_wrap_enabled', 'gift_wrap_amount', 'gift_wrap_label')
+    readonly_fields = ('updated_at',)
+
+
+# existing registrations (Cart, CartItem) follow
+
 
 
 class CartItemInline(admin.TabularInline):

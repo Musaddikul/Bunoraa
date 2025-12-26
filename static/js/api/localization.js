@@ -37,51 +37,37 @@ const LocalizationApi = (function() {
     }
     
     async function getExchangeRate(from, to) {
-        try {
-            // Use GET endpoint for simpler exchange rate lookup
-            const response = await ApiClient.get('/currencies/exchange-rates/rate/', {
-                from: from,
-                to: to
-            });
-            if (response && response.data && response.data.rate) {
-                return parseFloat(response.data.rate);
-            }
-            // Try alternate response structure
-            if (response && response.rate) {
-                return parseFloat(response.rate);
-            }
-        } catch (error) {
-            console.error('Error fetching exchange rate:', error);
-        }
+        // Client-side exchange rate fetching disabled; always return 1 (no conversion)
         return 1;
     }
 
     async function setCurrency(code) {
-        localStorage.setItem(CURRENCY_KEY, code);
-        
-        // Fetch and store exchange rate
-        if (code !== BASE_CURRENCY) {
-            try {
-                const rate = await getExchangeRate(BASE_CURRENCY, code);
-                localStorage.setItem(CURRENCY_RATE_KEY, rate.toString());
-            } catch (error) {
-                console.error('Error setting exchange rate:', error);
-                localStorage.setItem(CURRENCY_RATE_KEY, '1');
-            }
-        } else {
-            localStorage.setItem(CURRENCY_RATE_KEY, '1');
+        // No-op preference setter for single-currency mode; keep global meta updated for compatibility
+        try {
+            window.BUNORAA_CURRENCY = Object.assign({}, window.BUNORAA_CURRENCY || {}, { code });
+        } catch (e) {
+            // ignore
         }
-        
-        window.dispatchEvent(new CustomEvent('currency:changed', { detail: code }));
+        // Currency change event dispatch removed (single-currency mode).
     }
 
     function getCurrency() {
-        return localStorage.getItem(CURRENCY_KEY) || 'BDT';
+        return (window.BUNORAA_CURRENCY && window.BUNORAA_CURRENCY.code) || 'BDT';
+    }
+
+    async function getCurrentCurrency() {
+        try {
+            const resp = await ApiClient.get('/currencies/current/');
+            if (resp && resp.data && resp.data.code) return resp.data.code;
+        } catch (err) {
+            // ignore
+        }
+        return getCurrency();
     }
     
     function getStoredExchangeRate() {
-        const rate = localStorage.getItem(CURRENCY_RATE_KEY);
-        return rate ? parseFloat(rate) : 1;
+        // Client-side exchange rates disabled - always return 1 (no conversion on client)
+        return 1;
     }
 
     function setLanguage(code) {
@@ -112,6 +98,7 @@ const LocalizationApi = (function() {
         getExchangeRate,
         setCurrency,
         getCurrency,
+        getCurrentCurrency,
         getStoredExchangeRate,
         setLanguage,
         getLanguage,

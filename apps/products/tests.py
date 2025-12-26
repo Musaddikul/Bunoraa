@@ -89,6 +89,18 @@ class ProductModelTest(TestCase):
         product.categories.add(self.category)
         self.assertIn(self.category, product.categories.all())
 
+    def test_product_currency_fk(self):
+        """Ensure product can be linked to a Currency FK and get_currency returns it."""
+        from apps.currencies.models import Currency
+        cur = Currency.objects.create(code='USD', name='US Dollar', symbol='$')
+        product = Product.objects.create(
+            name='Test Product',
+            price=Decimal('50.00'),
+            currency=cur
+        )
+        self.assertIsNotNone(product.currency)
+        self.assertEqual(product.get_currency().code, 'USD')
+
 
 class ProductServiceTest(TestCase):
     """Tests for ProductService."""
@@ -161,17 +173,36 @@ class ProductAPITest(APITestCase):
         response = self.client.get(f'/api/v1/products/{self.product.id}/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['data']['name'], 'Test Product')
+
+    def test_retrieve_product_price_converted(self):
+        """Product detail should return converted prices when currency param is provided."""
+        from apps.currencies.models import Currency, ExchangeRate
+        usd = Currency.objects.create(code='USD', name='US Dollar', symbol='$', is_active=True)
+        bdt = Currency.objects.create(code='BDT', name='Taka', symbol='৳', is_active=True)
+        ExchangeRate.objects.create(from_currency=usd, to_currency=bdt, rate='110.00', source='manual')
+        self.product.currency = usd
+        self.product.price = Decimal('10.00')
+        self.product.save()
+        response = self.client.get(f'/api/v1/products/{self.product.id}/', {'currency': 'BDT'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.data['data']
+        self.assertIn('price_converted', data)
+        self.assertEqual(Decimal(str(data['price_converted'])), Decimal('1100.00'))
     
     def test_create_product_admin(self):
         """Test creating a product as admin."""
         self.client.force_authenticate(user=self.admin)
+        from apps.currencies.models import Currency
+        Currency.objects.get_or_create(code='USD', defaults={'name': 'US Dollar', 'symbol': '$'})
         data = {
             'name': 'New Product',
             'price': '149.99',
-            'stock_quantity': 5
+            'stock_quantity': 5,
+            'currency': 'USD'
         }
         response = self.client.post('/api/v1/products/', data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['data']['currency'], 'USD')
     
     def test_create_product_non_admin(self):
         """Test that non-admin cannot create product."""
@@ -200,3 +231,55 @@ class ProductAPITest(APITestCase):
         """Test filtering products by category."""
         response = self.client.get(f'/api/v1/products/', {'category': str(self.category.id)})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_list_products_includes_currency(self):
+        """List endpoint should include product currency."""
+        from apps.currencies.models import Currency
+        cur = Currency.objects.create(code='USD', name='US Dollar', symbol='$')
+        self.product.currency = cur
+        self.product.save()
+        response = self.client.get('/api/v1/products/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['data'][0]['currency'], 'USD')
+
+    def test_list_products_price_converted(self):
+        """List endpoint should return converted prices when currency param is provided."""
+        from apps.currencies.models import Currency, ExchangeRate
+        usd = Currency.objects.create(code='USD', name='US Dollar', symbol='$', is_active=True)
+        bdt = Currency.objects.create(code='BDT', name='Taka', symbol='৳', is_active=True)
+        ExchangeRate.objects.create(from_currency=usd, to_currency=bdt, rate='110.00', source='manual')
+        # Set product base currency to USD and price 10
+        self.product.currency = usd
+        self.product.price = Decimal('10.00')
+        self.product.save()
+        # Request conversion to BDT
+        response = self.client.get('/api/v1/products/', {'currency': 'BDT'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.data['data'][0]
+        # price_converted should be 1100.00 (10 * 110)
+        self.assertIn('price_converted', data)
+        self.assertEqual(Decimal(str(data['price_converted'])), Decimal('1100.00'))
+
+    def test_product_detail_includes_product_currency(self):
+        """Product detail JS object should include product currency code when product has currency FK."""
+        from apps.currencies.models import Currency
+        cur = Currency.objects.create(code='USD', name='US Dollar', symbol='$', is_active=True)
+        self.product.currency = cur
+        self.product.save()
+        response = self.client.get(f'/products/{self.product.slug}/')
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
+        self.assertIn(f'currencyCode: "{cur.code}"', content)
+
+    def test_product_detail_uses_default_currency_when_product_has_no_currency(self):
+        """Product detail should fall back to site/default currency when product.currency is not set."""
+        # Ensure a default currency exists
+        from apps.currencies.models import Currency
+        Currency.objects.all().delete()
+        default = Currency.objects.create(code='AED', name='Dirham', symbol='د.إ', is_active=True, is_default=True)
+        self.product.currency = None
+        self.product.save()
+        response = self.client.get(f'/products/{self.product.slug}/')
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
+        self.assertIn(f'currencyCode: "{default.code}"', content)

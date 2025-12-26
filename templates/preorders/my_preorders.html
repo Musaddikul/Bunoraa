@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static currency_tags %}
 
-{% block title %}My Pre-Orders | {{ SITE_NAME }}{% endblock %}
+{% block title %}My Pre-Orders | {{ SITE_NAME }}{% endblock %
 
 {% block content %}
 <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
@@ -112,7 +112,7 @@
                                 <div class="text-sm">
                                     <p class="text-gray-500 dark:text-gray-400">Price</p>
                                     <p class="font-medium text-gray-900 dark:text-white">
-                                        ৳{{ preorder.final_price|default:preorder.estimated_total }}
+                                        {% format_price preorder.final_price|default:preorder.estimated_total %}
                                     </p>
                                 </div>
                                 <div class="text-sm">

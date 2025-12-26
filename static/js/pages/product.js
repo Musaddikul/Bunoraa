@@ -10,6 +10,7 @@ const ProductPage = (function() {
     let selectedVariant = null;
     let gallery = null;
     let initialized = false;
+    let serverRendered = false;
 
     async function init() {
         // Prevent multiple initializations
@@ -21,6 +22,7 @@ const ProductPage = (function() {
 
         // Check if content is already server-rendered
         const isServerRendered = container.querySelector('h1') || container.dataset.productId;
+        serverRendered = Boolean(isServerRendered);
         
         if (isServerRendered) {
             // Server-rendered content - just bind event handlers
@@ -273,6 +275,20 @@ const ProductPage = (function() {
         }
     }
 
+    // Refresh product when currency changes (support SPA flows)
+    document.addEventListener('currency:changed', async (e) => {
+        try {
+            if (!serverRendered && currentProduct && currentProduct.slug) {
+                await loadProduct(currentProduct.slug);
+            } else {
+                // For server-rendered pages, perform a full reload to pick up server-side formatting
+                location.reload();
+            }
+        } catch (err) {
+            console.warn('Failed to refresh product on currency change', err);
+        }
+    });
+
     function renderProduct(product) {
         const container = document.getElementById('product-detail');
         if (!container) return;
@@ -352,8 +368,8 @@ const ProductPage = (function() {
                     <!-- Price -->
                     <div class="mt-4">
                         ${Price.render({
-                            price: product.price,
-                            salePrice: product.sale_price,
+                            price: product.current_price ?? product.price_converted ?? product.price,
+                            salePrice: product.sale_price_converted ?? product.sale_price,
                             size: 'large'
                         })}
                     </div>
@@ -549,12 +565,12 @@ const ProductPage = (function() {
                         <button 
                             class="variant-btn px-4 py-2 border rounded-lg text-sm transition-colors ${index === 0 ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-300 hover:border-gray-400'}"
                             data-variant-id="${opt.id}"
-                            data-price="${opt.price || ''}"
+                            data-price="${opt.price_converted ?? opt.price ?? ''}"
                             data-stock="${opt.stock_quantity || 0}"
                         >
                             ${Templates.escapeHtml(opt.value)}
-                            ${opt.price && opt.price !== currentProduct.price ? `
-                                <span class="text-xs text-gray-500">(${Templates.formatPrice(opt.price)})</span>
+                            ${((opt.price_converted ?? opt.price) && (opt.price !== currentProduct.price)) ? `
+                                <span class="text-xs text-gray-500">(${Templates.formatPrice(opt.price_converted ?? opt.price)})</span>
                             ` : ''}
                         </button>
                     `).join('')}

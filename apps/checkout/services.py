@@ -50,8 +50,18 @@ class CheckoutService:
     error handling, and event tracking.
     """
     
-    # Gift wrap cost (can be made configurable)
-    GIFT_WRAP_COST = Decimal('50.00')  # BDT
+    # Gift wrap now configurable via SiteSettings
+    @classmethod
+    def get_gift_wrap_fee(cls) -> Decimal:
+        """Return configured gift wrap fee from CartSettings (fallback 0)."""
+        try:
+            from apps.cart.models import CartSettings
+            s = CartSettings.get_settings()
+            if getattr(s, 'gift_wrap_enabled', False):
+                return Decimal(str(s.gift_wrap_amount or '0'))
+        except Exception:
+            pass
+        return Decimal('0')
     
     # Default shipping costs by method
     DEFAULT_SHIPPING_COSTS = {
@@ -115,6 +125,19 @@ class CheckoutService:
             else:
                 # Extend expiry on activity
                 checkout_session.extend_expiry(hours=48)
+                # Sync checkout currency with user's selected currency (if provided)
+                try:
+                    if request:
+                        from apps.currencies.services import CurrencyService
+                        user_currency = CurrencyService.get_user_currency(user=user if user else None, request=request)
+                        if user_currency and checkout_session.currency != user_currency.code:
+                            checkout_session.currency = user_currency.code
+                            # Optionally update exchange rate if provided on currency object
+                            if getattr(user_currency, 'exchange_rate', None):
+                                checkout_session.exchange_rate = user_currency.exchange_rate
+                            checkout_session.save(update_fields=['currency', 'exchange_rate'])
+                except Exception:
+                    pass
                 return checkout_session
         
         # Create new session
@@ -136,6 +159,19 @@ class CheckoutService:
         if request:
             cls._capture_analytics(checkout_session, request)
         
+        # Sync checkout currency with user's selected currency (if provided) on creation
+        try:
+            if request:
+                from apps.currencies.services import CurrencyService
+                user_currency = CurrencyService.get_user_currency(user=user if user else None, request=request)
+                if user_currency and checkout_session.currency != user_currency.code:
+                    checkout_session.currency = user_currency.code
+                    if getattr(user_currency, 'exchange_rate', None):
+                        checkout_session.exchange_rate = user_currency.exchange_rate
+                    checkout_session.save(update_fields=['currency', 'exchange_rate'])
+        except Exception:
+            pass
+
         # Log event
         cls.log_event(
             checkout_session,
@@ -278,7 +314,7 @@ class CheckoutService:
         if 'gift_wrap' in data:
             checkout_session.gift_wrap = data.get('gift_wrap', False)
             if checkout_session.gift_wrap:
-                checkout_session.gift_wrap_cost = cls.GIFT_WRAP_COST
+                checkout_session.gift_wrap_cost = cls.get_gift_wrap_fee()
             else:
                 checkout_session.gift_wrap_cost = Decimal('0')
         
@@ -419,7 +455,9 @@ class CheckoutService:
                 # Get the method code from the rate's method
                 checkout_session.shipping_method = shipping_rate.method.code
                 
-                cart_summary = CartService.get_cart_summary(checkout_session.cart)
+                from apps.currencies.services import CurrencyService
+                checkout_currency = CurrencyService.get_currency_by_code(checkout_session.currency) if checkout_session.currency else None
+                cart_summary = CartService.get_cart_summary(checkout_session.cart, currency=checkout_currency)
                 subtotal = Decimal(str(cart_summary.get('subtotal', 0)))
                 item_count = cart_summary.get('item_count', 0)
                 weight = Decimal(str(cart_summary.get('total_weight', 0)))
@@ -458,19 +496,71 @@ class CheckoutService:
         saved_payment_method_id: str = None
     ) -> CheckoutSession:
         """
-        Set payment method on checkout session.
+        Set payment method on checkout session with validation against configured gateways.
         
-        Args:
-            checkout_session: CheckoutSession instance
-            payment_method: Payment method code
-            saved_payment_method_id: Optional saved payment method ID
-            
-        Returns:
-            Updated CheckoutSession
+        This validates availability (currency/country/amount) and ensures required
+        credentials are present for production gateways (e.g., Stripe keys).
         """
-        checkout_session.payment_method = payment_method
-        
-        # Handle saved payment method
+        # Normalize
+        pm_code = (payment_method or '').lower()
+
+        # Try to resolve from DB-configured gateways first
+        gateway = None
+        try:
+            from apps.payments.models import PaymentGateway
+            gateway = PaymentGateway.objects.filter(code=pm_code, is_active=True).first()
+        except Exception:
+            gateway = None
+
+        # Ensure checkout totals are up-to-date for amount checks
+        try:
+            checkout_session.calculate_totals()
+        except Exception:
+            pass
+
+        # Validate availability if gateway exists
+        if gateway:
+            currency = checkout_session.currency
+            country = checkout_session.shipping_country
+            amount = float(checkout_session.total) if hasattr(checkout_session, 'total') else None
+
+            if not gateway.is_available_for(currency=currency, country=country, amount=amount):
+                raise CheckoutError('Selected payment method is not available for your order.', code='payment_unavailable')
+
+            # Credential checks for production mode gateways
+            if not gateway.is_sandbox:
+                # Stripe requires secret key in settings or gateway.api_key
+                if gateway.code == PaymentGateway.CODE_STRIPE:
+                    stripe_secret = getattr(settings, 'STRIPE_SECRET_KEY', '') or gateway.api_secret
+                    stripe_pub = getattr(settings, 'STRIPE_PUBLISHABLE_KEY', '') or gateway.api_key
+                    if not stripe_secret or not stripe_pub:
+                        raise CheckoutError('Stripe credentials are not configured for production. Please contact support.', code='gateway_credentials_missing')
+
+                # Generic check for other providers - require api_key or merchant_id
+                elif gateway.code in (PaymentGateway.CODE_BKASH, PaymentGateway.CODE_NAGAD):
+                    if not (gateway.api_key or gateway.merchant_id):
+                        raise CheckoutError('Payment gateway is not configured. Please contact support.', code='gateway_credentials_missing')
+
+        else:
+            # Fallback: only allow known fallback codes and basic availability
+            allowed = {CheckoutSession.PAYMENT_STRIPE, CheckoutSession.PAYMENT_BKASH,
+                       CheckoutSession.PAYMENT_NAGAD, CheckoutSession.PAYMENT_COD, CheckoutSession.PAYMENT_BANK}
+            if pm_code not in allowed:
+                raise CheckoutError('Invalid payment method selected', code='invalid_payment')
+
+            # If stripe selected but no settings, prevent selection in production
+            if pm_code == CheckoutSession.PAYMENT_STRIPE:
+                stripe_secret = getattr(settings, 'STRIPE_SECRET_KEY', '')
+                stripe_pub = getattr(settings, 'STRIPE_PUBLISHABLE_KEY', '')
+                if not stripe_secret or not stripe_pub:
+                    # Allow in DEBUG if developer wants to test without keys
+                    if not getattr(settings, 'DEBUG', False):
+                        raise CheckoutError('Stripe is not configured for production. Please configure STRIPE_SECRET_KEY and STRIPE_PUBLISHABLE_KEY.', code='gateway_credentials_missing')
+
+        # Save selection
+        checkout_session.payment_method = pm_code
+
+        # Handle saved payment method reference
         if saved_payment_method_id and checkout_session.user:
             from apps.payments.models import PaymentMethod
             saved_method = PaymentMethod.objects.filter(
@@ -478,21 +568,21 @@ class CheckoutService:
                 user=checkout_session.user,
                 is_active=True
             ).first()
-            
+
             if saved_method:
                 checkout_session.saved_payment_method = saved_method
-        
+
         checkout_session.payment_setup_completed = True
         checkout_session.current_step = CheckoutSession.STEP_REVIEW
-        
+
         checkout_session.save()
-        
+
         cls.log_event(
             checkout_session,
             CheckoutEvent.EVENT_PAYMENT_SELECTED,
-            data={'method': payment_method}
+            data={'method': pm_code}
         )
-        
+
         return checkout_session
     
     @classmethod
@@ -570,8 +660,14 @@ class CheckoutService:
         """Set gift options on checkout session."""
         checkout_session.is_gift = is_gift
         checkout_session.gift_message = gift_message[:500] if gift_message else ''
-        checkout_session.gift_wrap = gift_wrap
-        checkout_session.gift_wrap_cost = cls.GIFT_WRAP_COST if gift_wrap else Decimal('0')
+        # Only enable gift wrap if the site setting allows it
+        fee = cls.get_gift_wrap_fee()
+        if gift_wrap and fee > 0:
+            checkout_session.gift_wrap = True
+            checkout_session.gift_wrap_cost = fee
+        else:
+            checkout_session.gift_wrap = False
+            checkout_session.gift_wrap_cost = Decimal('0')
         checkout_session.save()
         
         return checkout_session
@@ -690,8 +786,10 @@ class CheckoutService:
             List of shipping options sorted by cost
         """
         from apps.cart.services import CartService
-        
-        cart_summary = CartService.get_cart_summary(checkout_session.cart)
+        from apps.currencies.services import CurrencyService
+
+        checkout_currency = CurrencyService.get_currency_by_code(checkout_session.currency) if checkout_session.currency else None
+        cart_summary = CartService.get_cart_summary(checkout_session.cart, currency=checkout_currency)
         subtotal = Decimal(str(cart_summary.get('subtotal', 0)))
         item_count = cart_summary.get('item_count', 0)
         weight = Decimal(str(cart_summary.get('total_weight', 0)))
@@ -754,6 +852,11 @@ class CheckoutService:
                 except Exception:
                     cost = rate.base_rate
                 
+                try:
+                    formatted_cost = checkout_currency.format_amount(cost) if (checkout_currency and cost > 0) else ('Free' if cost == 0 else f"{checkout_currency.symbol if checkout_currency else '৳'}{cost:,.2f}")
+                except Exception:
+                    formatted_cost = f"{checkout_currency.symbol if checkout_currency else '৳'}{cost:,.2f}" if cost > 0 else 'Free'
+
                 options.append({
                     'id': str(rate.id),
                     'code': rate.method.code,
@@ -761,7 +864,7 @@ class CheckoutService:
                     'description': rate.method.description or f'Delivery to {zone.name}',
                     'carrier': rate.method.carrier.name if rate.method.carrier else '',
                     'cost': float(cost),
-                    'formatted_cost': f"৳{cost:,.0f}" if cost > 0 else 'Free',
+                    'formatted_cost': formatted_cost,
                     'delivery_estimate': rate.method.delivery_estimate,
                     'is_free': cost == 0,
                     'zone': zone.name,
@@ -792,19 +895,29 @@ class CheckoutService:
             is_pickup_location=True
         ).order_by('order')
         
-        return [
-            {
+        from apps.currencies.services import CurrencyService
+        currency = CurrencyService.get_default_currency()
+        result = []
+        for loc in locations:
+            try:
+                if loc.pickup_fee and currency:
+                    formatted_fee = currency.format_amount(loc.pickup_fee)
+                else:
+                    formatted_fee = 'Free' if not loc.pickup_fee else f"{loc.pickup_fee:,.2f}"
+            except Exception:
+                formatted_fee = f"{loc.pickup_fee:,.2f}" if loc.pickup_fee else 'Free'
+
+            result.append({
                 'id': str(loc.id),
                 'name': loc.name,
                 'address': loc.full_address,
                 'phone': loc.phone,
                 'fee': float(loc.pickup_fee),
-                'formatted_fee': f"৳{loc.pickup_fee:,.2f}" if loc.pickup_fee > 0 else 'Free',
+                'formatted_fee': formatted_fee if loc.pickup_fee > 0 else 'Free',
                 'min_pickup_time': f"{loc.min_pickup_time_hours} hours",
                 'opening_hours': loc.get_hours() if hasattr(loc, 'get_hours') else {},
-            }
-            for loc in locations
-        ]
+            })
+        return result
     
     @classmethod
     def get_checkout_summary(cls, checkout_session: CheckoutSession) -> Dict:
@@ -818,40 +931,70 @@ class CheckoutService:
             Dictionary with checkout summary
         """
         from apps.cart.services import CartService
-        
-        cart_summary = CartService.get_cart_summary(checkout_session.cart)
-        
+        from apps.currencies.services import CurrencyService
+
+        checkout_currency = CurrencyService.get_currency_by_code(checkout_session.currency) if checkout_session.currency else None
+        cart_summary = CartService.get_cart_summary(checkout_session.cart, currency=checkout_currency)
+
         # Recalculate totals
         checkout_session.calculate_totals()
-        
+
+        # Resolve currency formatting
+        currency_obj = checkout_currency or CurrencyService.get_default_currency()
+
         # COD fee
         cod_fee = Decimal('0')
         if checkout_session.payment_method == CheckoutSession.PAYMENT_COD:
             cod_fee = cls.COD_FEE
-        
+
         total = checkout_session.total + cod_fee
-        
+
+        try:
+            formatted_subtotal = currency_obj.format_amount(checkout_session.subtotal)
+        except Exception:
+            formatted_subtotal = f"{currency_obj.symbol if currency_obj else '৳'}{checkout_session.subtotal:,.2f}"
+
+        try:
+            formatted_discount = f"-{currency_obj.format_amount(checkout_session.discount_amount)}" if checkout_session.discount_amount else ''
+        except Exception:
+            formatted_discount = f"-{currency_obj.symbol if currency_obj else '৳'}{checkout_session.discount_amount:,.2f}" if checkout_session.discount_amount else ''
+
+        try:
+            formatted_shipping = currency_obj.format_amount(checkout_session.shipping_cost) if checkout_session.shipping_cost > 0 else 'Free'
+        except Exception:
+            formatted_shipping = f"{currency_obj.symbol if currency_obj else '৳'}{checkout_session.shipping_cost:,.2f}" if checkout_session.shipping_cost > 0 else 'Free'
+
+        try:
+            formatted_tax = currency_obj.format_amount(checkout_session.tax_amount) if checkout_session.tax_amount else ''
+        except Exception:
+            formatted_tax = f"{currency_obj.symbol if currency_obj else '৳'}{checkout_session.tax_amount:,.2f}" if checkout_session.tax_amount else ''
+
         return {
             'items': cart_summary.get('items', []),
             'item_count': cart_summary.get('item_count', 0),
             'subtotal': float(checkout_session.subtotal),
-            'formatted_subtotal': f"৳{checkout_session.subtotal:,.2f}",
+            'formatted_subtotal': formatted_subtotal,
             'discount': float(checkout_session.discount_amount),
-            'formatted_discount': f"-৳{checkout_session.discount_amount:,.2f}" if checkout_session.discount_amount else '',
+            'formatted_discount': formatted_discount,
             'coupon_code': checkout_session.coupon_code,
             'shipping_method': checkout_session.get_shipping_method_display(),
             'shipping_cost': float(checkout_session.shipping_cost),
-            'formatted_shipping': f"৳{checkout_session.shipping_cost:,.2f}" if checkout_session.shipping_cost > 0 else 'Free',
+            'formatted_shipping': formatted_shipping,
             'tax': float(checkout_session.tax_amount),
-            'formatted_tax': f"৳{checkout_session.tax_amount:,.2f}" if checkout_session.tax_amount else '',
+            'formatted_tax': formatted_tax,
             'gift_wrap': checkout_session.gift_wrap,
             'gift_wrap_cost': float(checkout_session.gift_wrap_cost),
-            'formatted_gift_wrap': f"৳{checkout_session.gift_wrap_cost:,.2f}" if checkout_session.gift_wrap_cost else '',
+            'formatted_gift_wrap': (currency_obj.format_amount(checkout_session.gift_wrap_cost) if checkout_session.gift_wrap_cost else '') if currency_obj else (f"{checkout_session.gift_wrap_cost:,.2f}" if checkout_session.gift_wrap_cost else ''),
             'cod_fee': float(cod_fee),
-            'formatted_cod_fee': f"৳{cod_fee:,.2f}" if cod_fee > 0 else '',
+            'formatted_cod_fee': (currency_obj.format_amount(cod_fee) if cod_fee > 0 else '') if currency_obj else (f"{cod_fee:,.2f}" if cod_fee > 0 else ''),
             'total': float(total),
-            'formatted_total': f"৳{total:,.2f}",
-            'currency': checkout_session.currency,
+            'formatted_total': (currency_obj.format_amount(total) if currency_obj else f"{total:,.2f}"),
+            'currency': {
+                'code': checkout_currency.code if checkout_currency else (currency_obj.code if currency_obj else 'BDT'),
+                'symbol': checkout_currency.symbol if checkout_currency else (currency_obj.symbol if currency_obj else '৳'),
+                'decimal_places': checkout_currency.decimal_places if checkout_currency else (currency_obj.decimal_places if currency_obj else 2),
+                'locale': 'en-BD' if (checkout_currency and getattr(checkout_currency, 'code', '') == 'BDT') or (not checkout_currency and getattr(currency_obj, 'code', '') == 'BDT') else 'en-US'
+            },
             'shipping_address': checkout_session.get_shipping_address_dict(),
             'billing_address': checkout_session.get_billing_address_dict(),
             'billing_same_as_shipping': checkout_session.billing_same_as_shipping,

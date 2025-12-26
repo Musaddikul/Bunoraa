@@ -266,6 +266,31 @@ class CheckoutServiceTest(TestCase):
         self.assertIn('total', summary)
         self.assertIn('items', summary)
 
+    def test_set_gift_options_uses_cart_setting(self):
+        """Gift wrap cost should come from CartSettings when enabled."""
+        from apps.cart.models import CartSettings
+        s = CartSettings.get_settings()
+        s.gift_wrap_enabled = True
+        s.gift_wrap_amount = 99.00
+        s.save()
+
+        session = CheckoutService.get_or_create_session(
+            cart=self.cart,
+            user=self.user
+        )
+
+        # Enable gift wrap via service
+        updated = CheckoutService.set_gift_options(session, is_gift=True, gift_message='Test', gift_wrap=True)
+        self.assertTrue(updated.gift_wrap)
+        self.assertEqual(updated.gift_wrap_cost, Decimal('99.00'))
+
+        # Disable in settings and ensure fee is zeroed
+        s.gift_wrap_enabled = False
+        s.save()
+        updated2 = CheckoutService.set_gift_options(session, is_gift=True, gift_message='Test 2', gift_wrap=True)
+        self.assertFalse(updated2.gift_wrap)
+        self.assertEqual(updated2.gift_wrap_cost, Decimal('0'))
+
 
 class CheckoutAPITest(APITestCase):
     """Test cases for Checkout API."""

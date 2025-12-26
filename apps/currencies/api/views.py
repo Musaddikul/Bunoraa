@@ -231,8 +231,13 @@ class FormatCurrencyView(APIView):
 
 
 class SetCurrencyPreferenceView(APIView):
-    """API endpoint for setting user currency preference."""
-    permission_classes = [IsAuthenticated]
+    """API endpoint for setting user currency preference.
+
+    Allows both authenticated users (saved to UserCurrencyPreference) and
+    anonymous users (stored in session and cookie) so front-end currency
+    selection persists across server-rendered pages.
+    """
+    permission_classes = [AllowAny]
     
     def post(self, request):
         """Set user's preferred currency."""
@@ -246,28 +251,64 @@ class SetCurrencyPreferenceView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         data = serializer.validated_data
-        
-        pref = CurrencyService.set_user_currency(
-            request.user,
-            data['currency_code'],
-            data['auto_detect']
-        )
-        
-        if not pref:
+        currency_code = data.get('currency_code')
+        auto_detect = data.get('auto_detect', False)
+
+        # Ensure currency exists
+        currency = CurrencyService.get_currency_by_code(currency_code)
+        if not currency:
             return Response({
                 'success': False,
-                'message': f"Currency not found: {data['currency_code']}",
+                'message': f"Currency not found: {currency_code}",
                 'data': None
             }, status=status.HTTP_404_NOT_FOUND)
-        
-        return Response({
-            'success': True,
-            'message': 'Currency preference saved',
-            'data': {
-                'currency': CurrencySerializer(pref.currency).data,
-                'auto_detect': pref.auto_detect
-            }
-        })
+
+        if request.user and request.user.is_authenticated:
+            # Persist to currencies user preference (existing behavior)
+            pref = CurrencyService.set_user_currency(
+                request.user,
+                currency_code,
+                auto_detect
+            )
+            # Also persist to localization.UserLocalePreference.currency to ensure localization app owns user locale choices
+            try:
+                from apps.localization.models import UserLocalePreference
+                ulp, _ = UserLocalePreference.objects.get_or_create(user=request.user)
+                from apps.currencies.services import CurrencyService as CS
+                currency_obj = CS.get_currency_by_code(currency_code)
+                if currency_obj:
+                    ulp.currency = currency_obj
+                    ulp.save()
+            except Exception:
+                # Non-fatal: continue
+                pass
+
+            return Response({
+                'success': True,
+                'message': 'Currency preference saved',
+                'data': {
+                    'currency': CurrencySerializer(pref.currency).data,
+                    'auto_detect': pref.auto_detect
+                }
+            })
+        else:
+            # Anonymous: save to session and set cookie so server-rendered pages pick it up
+            if hasattr(request, 'session'):
+                request.session['currency_code'] = currency.code
+                # Mark session modified so it will be saved
+                request.session.modified = True
+
+            resp = Response({
+                'success': True,
+                'message': 'Currency preference saved (session)',
+                'data': {
+                    'currency': CurrencySerializer(currency).data,
+                    'auto_detect': False
+                }
+            })
+            # Set cookie 'currency' for fallback (1 year)
+            resp.set_cookie('currency', currency.code, max_age=60 * 60 * 24 * 365, path='/', samesite='Lax')
+            return resp
 
 
 class CurrencySettingsView(APIView):

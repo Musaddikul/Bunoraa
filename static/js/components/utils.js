@@ -272,11 +272,41 @@ function escapeHtml(text) {
 /**
  * Format currency
  */
-function formatCurrency(amount, currency = 'USD') {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency
-  }).format(amount);
+function formatCurrency(amount, currency = null, locale = navigator.language) {
+  // If currency string code provided, use Intl
+  if (typeof currency === 'string' && currency.length === 3) {
+    try {
+      return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(Number(amount));
+    } catch (e) {
+      return Number(amount).toFixed(2);
+    }
+  }
+
+  // If no currency provided, use global window configuration
+  if (!currency && typeof window !== 'undefined' && window.BUNORAA_CURRENCY) {
+    currency = window.BUNORAA_CURRENCY;
+  }
+
+  if (!currency) return String(amount);
+
+  const symbol = currency.symbol || '';
+  const decimals = typeof currency.decimal_places === 'number' ? currency.decimal_places : 2;
+  const thousand = currency.thousand_separator || ',';
+  const dec_sep = currency.decimal_separator || '.';
+  const symbol_pos = currency.symbol_position || 'before';
+
+  const num = Number(amount);
+  if (Number.isNaN(num)) return String(amount);
+
+  const fixed = num.toFixed(decimals);
+  const parts = fixed.split('.');
+  let intPart = parts[0];
+  const decPart = parts[1] || '';
+
+  intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, thousand);
+  const formattedNumber = decimals > 0 ? intPart + dec_sep + decPart : intPart;
+
+  return symbol_pos === 'before' ? (symbol + formattedNumber) : (formattedNumber + ' ' + symbol);
 }
 
 /**

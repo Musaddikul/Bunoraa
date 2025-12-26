@@ -110,6 +110,26 @@ class Product(models.Model):
         blank=True,
         validators=[MinValueValidator(Decimal('0.00'))]
     )
+
+    # Currency: FK to Currency model (nullable for migration safety)
+    currency = models.ForeignKey(
+        'currencies.Currency',
+        on_delete=models.PROTECT,
+        related_name='products',
+        null=True,
+        blank=True,
+        verbose_name=_('currency')
+    )
+
+    def get_currency(self):
+        """Return Currency instance for this product, preferring FK, then fallback to default."""
+        if self.currency is not None:
+            return self.currency
+        try:
+            from apps.currencies.services import CurrencyService
+            return CurrencyService.get_default_currency()
+        except Exception:
+            return None
     
     # Inventory
     stock_quantity = models.PositiveIntegerField(_('stock quantity'), default=0)

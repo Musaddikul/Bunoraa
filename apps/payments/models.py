@@ -1,9 +1,12 @@
 """
 Payments models
 """
+import logging
 import uuid
 from django.db import models
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 
 class PaymentGateway(models.Model):
@@ -100,11 +103,22 @@ class PaymentGateway(models.Model):
         if not self.is_active:
             return False
         
-        if currency and self.currencies and currency not in self.currencies:
-            return False
-        
-        if country and self.countries and country not in self.countries:
-            return False
+        if currency and self.currencies:
+            # Normalize codes for comparison
+            try:
+                cur = currency.upper()
+            except Exception:
+                cur = currency
+            if cur not in [c.upper() for c in self.currencies]:
+                return False
+
+        if country and self.countries:
+            try:
+                ct = country.upper()
+            except Exception:
+                ct = country
+            if ct not in [c.upper() for c in self.countries]:
+                return False
         
         if amount:
             if self.min_amount and amount < self.min_amount:
@@ -144,7 +158,16 @@ class PaymentGateway(models.Model):
     def get_active_gateways(cls, currency=None, country=None, amount=None):
         """Get all active gateways filtered by parameters."""
         gateways = cls.objects.filter(is_active=True)
-        return [g for g in gateways if g.is_available_for(currency, country, amount)]
+        try:
+            total = gateways.count()
+        except Exception:
+            total = None
+        filtered = [g for g in gateways if g.is_available_for(currency, country, amount)]
+        try:
+            logger.debug('PaymentGateway.get_active_gateways: total=%s, filtered=%s, currency=%s, country=%s, amount=%s', total, len(filtered), currency, country, amount)
+        except Exception:
+            pass
+        return filtered
 
 
 class PaymentMethod(models.Model):

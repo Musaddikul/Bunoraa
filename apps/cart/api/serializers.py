@@ -101,16 +101,40 @@ class CartItemSerializer(CurrencyContextMixin, serializers.ModelSerializer):
         ]
     
     def get_price_at_add(self, obj):
-        return self._convert_amount(obj.price_at_add)
+        # Convert from product currency to user's target currency
+        helper = self._get_currency_helper()
+        target = helper.get('target') or helper.get('base')
+        from_currency = obj.product.get_currency() if hasattr(obj.product, 'get_currency') else helper.get('base')
+        try:
+            converted = CurrencyConversionService.convert(obj.price_at_add, from_currency, target)
+            return str(converted)
+        except Exception:
+            return str(obj.price_at_add)
 
     def get_line_total(self, obj):
-        return self._convert_amount(obj.total)
+        helper = self._get_currency_helper()
+        target = helper.get('target') or helper.get('base')
+        from_currency = obj.product.get_currency() if hasattr(obj.product, 'get_currency') else helper.get('base')
+        try:
+            converted_unit = CurrencyConversionService.convert(obj.unit_price, from_currency, target)
+            converted_total = (converted_unit * obj.quantity).quantize(Decimal('0.01'))
+            return str(converted_total)
+        except Exception:
+            return str(obj.total)
     
     def get_current_price(self, obj):
         """Get current price of product/variant."""
-        if obj.variant:
-            return self._convert_amount(obj.variant.price)
-        return self._convert_amount(obj.product.sale_price or obj.product.price)
+        helper = self._get_currency_helper()
+        target = helper.get('target') or helper.get('base')
+        from_currency = obj.product.get_currency() if hasattr(obj.product, 'get_currency') else helper.get('base')
+        try:
+            if obj.variant:
+                return str(CurrencyConversionService.convert(obj.variant.price, from_currency, target))
+            return str(CurrencyConversionService.convert(obj.product.sale_price or obj.product.price, from_currency, target))
+        except Exception:
+            if obj.variant:
+                return str(obj.variant.price)
+            return str(obj.product.sale_price or obj.product.price)
 
 
 class CouponSerializer(serializers.ModelSerializer):

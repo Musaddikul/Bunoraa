@@ -171,7 +171,7 @@ class CartServiceTest(TestCase):
         cart = CartService.get_or_create_cart(user=self.user)
         item = CartService.add_item(cart, self.product, quantity=2)
         
-        updated_item = CartService.update_item_quantity(item, 5)
+        updated_item = CartService.update_item_quantity(cart, item.id, 5)
         
         self.assertEqual(updated_item.quantity, 5)
     
@@ -180,7 +180,7 @@ class CartServiceTest(TestCase):
         cart = CartService.get_or_create_cart(user=self.user)
         item = CartService.add_item(cart, self.product, quantity=2)
         
-        CartService.remove_item(item)
+        CartService.remove_item(cart, item.id)
         
         self.assertEqual(cart.items.count(), 0)
     
@@ -200,7 +200,7 @@ class CartServiceTest(TestCase):
         issues = CartService.validate_cart(cart)
         
         self.assertTrue(len(issues) > 0)
-        self.assertTrue(any('out of stock' in issue.lower() for issue in issues))
+        self.assertTrue(any('out of stock' in issue.get('issue', '').lower() for issue in issues))
     
     def test_validate_cart_insufficient_stock(self):
         """Test validation catches insufficient stock."""
@@ -218,18 +218,33 @@ class CartServiceTest(TestCase):
         issues = CartService.validate_cart(cart)
         
         self.assertTrue(len(issues) > 0)
-        self.assertTrue(any('only 5' in issue.lower() for issue in issues))
+        self.assertTrue(any('only 5' in issue.get('issue', '').lower() for issue in issues))
     
     def test_get_cart_summary(self):
         """Test getting cart summary."""
         cart = CartService.get_or_create_cart(user=self.user)
         CartService.add_item(cart, self.product, quantity=2)
         
+        # Use default currency (no user request) - subtotal should still be 59.98
         summary = CartService.get_cart_summary(cart)
         
         self.assertEqual(summary['item_count'], 2)
         self.assertEqual(Decimal(summary['subtotal']), Decimal('59.98'))
         self.assertEqual(len(summary['items']), 1)
+        # Ensure formatted subtotal and per-item formatted amounts are present
+        self.assertIn('formatted_subtotal', summary)
+        self.assertTrue(summary['formatted_subtotal'])
+        self.assertIn('formatted_total', summary)
+        self.assertTrue(summary['formatted_total'])
+        self.assertIn('formatted_unit_price', summary['items'][0])
+        self.assertIn('formatted_total', summary['items'][0])
+
+    def test_get_cart_summary_handles_missing_shipping(self):
+        """Ensure get_cart_summary doesn't raise when cart has no shipping_cost attr."""
+        cart = CartService.get_or_create_cart(user=self.user)
+        CartService.add_item(cart, self.product, quantity=1)
+        summary = CartService.get_cart_summary(cart)
+        self.assertEqual(summary['shipping_cost'], '0.00')
 
 
 class CartAPITest(APITestCase):
