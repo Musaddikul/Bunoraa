@@ -138,7 +138,7 @@ const HomePage = (function() {
             }
 
             container.innerHTML = `
-                <div class="relative overflow-hidden w-full h-[80vh]">
+                <div class="relative overflow-hidden w-full h-[55vh] sm:h-[70vh] md:h-[80vh]">
                     <div class="hero-slides relative w-full h-full">
                         ${banners.map((banner, index) => `
                             <div class="hero-slide ${index === 0 ? '' : 'hidden'} w-full h-full" data-index="${index}">
@@ -148,12 +148,13 @@ const HomePage = (function() {
                                         alt="${Templates.escapeHtml(banner.title || '')}"
                                         class="absolute inset-0 w-full h-full object-cover"
                                         loading="${index === 0 ? 'eager' : 'lazy'}"
+                                        decoding="async"
                                     >
                                     ${banner.title || banner.subtitle ? `
                                         <div class="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent flex items-center">
                                             <div class="px-8 md:px-16 max-w-xl">
-                                                ${banner.title ? `<h2 class="text-3xl md:text-5xl font-bold text-white mb-4">${Templates.escapeHtml(banner.title)}</h2>` : ''}
-                                                ${banner.subtitle ? `<p class="text-lg text-white/90 mb-6">${Templates.escapeHtml(banner.subtitle)}</p>` : ''}
+                                                ${banner.title ? `<h2 class="text-2xl sm:text-3xl md:text-5xl font-bold text-white mb-4">${Templates.escapeHtml(banner.title)}</h2>` : ''}
+                                                ${banner.subtitle ? `<p class="text-sm sm:text-lg text-white/90 mb-6">${Templates.escapeHtml(banner.subtitle)}</p>` : ''}
                                                 ${(banner.link_text || banner.button_text) ? `
                                                     <span class="inline-flex items-center px-6 py-3 bg-white text-gray-900 font-semibold rounded-lg hover:bg-gray-100 transition-colors">
                                                         ${Templates.escapeHtml(banner.link_text || banner.button_text)}
@@ -241,6 +242,29 @@ const HomePage = (function() {
             heroSliderInterval = setInterval(() => goToSlide(currentSlide + 1), 5000);
         }
 
+        // Add simple touch/swipe support for mobile
+        try {
+            const slidesContainer = document.querySelector('.hero-slides');
+            let touchStartX = 0;
+            slidesContainer?.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+            }, { passive: true });
+            slidesContainer?.addEventListener('touchend', (e) => {
+                const touchEndX = e.changedTouches[0].clientX;
+                const dx = touchEndX - touchStartX;
+                if (Math.abs(dx) > 50) {
+                    if (dx < 0) {
+                        goToSlide(currentSlide + 1);
+                    } else {
+                        goToSlide(currentSlide - 1);
+                    }
+                    resetAutoplay();
+                }
+            });
+        } catch (err) {
+            // ignore if touch listeners fail
+        }
+
         resetAutoplay();
     }
 
@@ -325,7 +349,7 @@ const HomePage = (function() {
                 } catch (e) { console.error('[Home] card image check failed', e); }
                 container.appendChild(card);
             });
-            container.classList.add('grid','grid-cols-2','md:grid-cols-3','lg:grid-cols-6','gap-4','lg:gap-6');
+            container.classList.add('grid','grid-cols-1','sm:grid-cols-2','md:grid-cols-3','lg:grid-cols-6','gap-4','lg:gap-6');
         } catch (error) {
             console.error('Failed to load categories:', error);
             container.innerHTML = '';
@@ -486,7 +510,7 @@ const HomePage = (function() {
                             <div class="grid sm:grid-cols-3 gap-4 mb-8">
                                 <div class="flex items-center gap-3 bg-white/5 dark:bg-stone-800/40 backdrop-blur-sm rounded-xl p-4 border border-stone-100 dark:border-stone-700">
                                     <div class="w-10 h-10 bg-purple-500/30 rounded-lg flex items-center justify-center">
-                                        <svg class="w-5 h-5 text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                        <svg class="w-5 h-5 text-purple-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                     </div>
                                     <div>
                                         <p class="text-sm font-semibold text-stone-900 dark:text-white">Custom Design</p>
@@ -526,7 +550,7 @@ const HomePage = (function() {
                                 </div>
                             ` : ''}
                             <div class="flex flex-wrap gap-4">
-                                <a href="${wizardUrl}" class="cta-unlock inline-flex items-center gap-2 px-8 py-4 bg-amber-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:bg-amber-700 transition-colors group dark:bg-amber-600 dark:text-white focus:outline-none focus-visible:text-white dark:focus-visible:text-white">
+                                <a href="${wizardUrl}" class="cta-unlock inline-flex items-center gap-2 px-8 py-4 bg-amber-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:text-black dark:hover:text-black transition-colors group dark:bg-amber-600 dark:text-white">
                                     Start Your Custom Order
                                     <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                                 </a>
@@ -582,7 +606,7 @@ const HomePage = (function() {
                 <div class="container mx-auto px-4 text-center text-stone-900 dark:text-white">
                     <h2 class="text-3xl lg:text-4xl font-display font-bold mb-4 text-stone-900 dark:text-white">Create Your Perfect Custom Order</h2>
                     <p class="text-stone-700 dark:text-white/80 mb-8 max-w-2xl mx-auto">Have a unique vision? Our skilled artisans will bring your ideas to life.</p>
-                    <a href="${wizardUrl}" class="cta-unlock inline-flex items-center gap-2 px-8 py-4 bg-amber-600 text-white font-bold rounded-xl focus:outline-none focus-visible:text-white dark:focus-visible:text-white">
+                    <a href="${wizardUrl}" class="cta-unlock inline-flex items-center gap-2 px-8 py-4 bg-amber-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:text-black dark:hover:text-black transition-colors group dark:bg-amber-600 dark:text-white">
                         Start Your Custom Order
                     </a>
                 </div>

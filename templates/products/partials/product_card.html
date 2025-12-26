@@ -31,10 +31,10 @@
         
         <!-- Quick Actions -->
         <div class="overlay-actions absolute bottom-2 right-2 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button class="wishlist-btn product-action-btn"
+            <button class="wishlist-btn focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-md p-1 text-stone-600 dark:text-stone-300 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                     data-product-id="{{ product.id }}"
                     title="Add to Wishlist" aria-label="Add to wishlist">
-                <svg class="w-5 h-5 text-gray-600 dark:text-stone-300" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-6 h-6" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                 </svg>
             </button>
@@ -52,8 +52,8 @@
     
     <!-- Mobile Quick Actions (visible on small screens) -->
     <div class="mobile-actions mt-2 flex items-center gap-3 md:hidden px-3">
-        <button class="wishlist-btn product-action-btn" data-product-id="{{ product.id }}" title="Add to Wishlist" aria-label="Add to wishlist">
-            <svg class="w-5 h-5 text-gray-600 dark:text-stone-300" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button class="wishlist-btn focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-md p-1 text-stone-600 dark:text-stone-300 hover:text-rose-600 dark:hover:text-rose-400 transition-colors" data-product-id="{{ product.id }}" title="Add to Wishlist" aria-label="Add to wishlist">
+            <svg class="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
             </svg>
         </button>
