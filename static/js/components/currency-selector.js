@@ -6,7 +6,6 @@ function getCookie(name) {
 }
 
 export async function initCurrencySelector(selector) {
-    console.debug('[currency-selector] init called for', selector);
 
     const resolveRoots = () => {
         if (typeof selector === 'string') return Array.from(document.querySelectorAll(selector));
@@ -22,14 +21,12 @@ export async function initCurrencySelector(selector) {
             document.addEventListener('DOMContentLoaded', () => {
                 roots = resolveRoots().filter(Boolean);
                 if (!roots.length) {
-                    console.warn('[currency-selector] no root elements found after DOMContentLoaded:', selector);
                     return;
                 }
                 roots.forEach(r => maybeInitRoot(r));
             }, { once: true });
             return;
         }
-        console.warn('[currency-selector] no root elements found:', selector);
         return;
     }
 
@@ -38,7 +35,6 @@ export async function initCurrencySelector(selector) {
     function maybeInitRoot(root) {
         if (!root) return;
         if (root.dataset && root.dataset.currencySelectorInit === 'true') {
-            console.debug('[currency-selector] root already initialized, skipping', root);
             return;
         }
         initForRoot(root);
@@ -46,7 +42,6 @@ export async function initCurrencySelector(selector) {
     }
 
     function initForRoot(root) {
-        console.debug('[currency-selector] initializing root', root);
 
         const toggle = root.querySelector('#currency-selector-toggle');
         const dropdown = root.querySelector('#currency-dropdown');
@@ -54,7 +49,6 @@ export async function initCurrencySelector(selector) {
         const currentEl = root.querySelector('#currency-current');
 
         if (!toggle || !dropdown || !list) {
-            console.warn('[currency-selector] missing DOM pieces', { toggle: !!toggle, dropdown: !!dropdown, list: !!list });
             return;
         }
 
@@ -66,7 +60,6 @@ export async function initCurrencySelector(selector) {
                 const resp = await fetch('/api/v1/currencies/');
                 if (!resp.ok) throw new Error('Failed to fetch currencies');
                 const body = await resp.json();
-                console.debug('[currency-selector] fetch result shape', body);
 
                 // Support different API shapes: array, { results: [] }, { data: [...] }, or { success: true, data: [...] }
                 if (Array.isArray(body)) {
@@ -87,10 +80,8 @@ export async function initCurrencySelector(selector) {
                     }
                 }
 
-                console.debug('[currency-selector] currencies loaded', currencies.length);
                 renderList();
             } catch (e) {
-                console.warn('[currency-selector] Could not load currencies', e);
                 // Show a friendly message
                 list.innerHTML = '';
                 const el = document.createElement('div');
@@ -123,7 +114,7 @@ export async function initCurrencySelector(selector) {
                 if (c.code === currentCode) {
                     el.classList.add('font-semibold');
                 }
-                el.addEventListener('click', (e) => { console.debug('[currency-selector] list item clicked', c.code, e); setCurrency(c.code); });
+                el.addEventListener('click', (e) => { setCurrency(c.code); });
                 el.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
@@ -131,7 +122,6 @@ export async function initCurrencySelector(selector) {
                     }
                 });
                 list.appendChild(el);
-                console.debug('[currency-selector] appended list item', c.code);
             });
         }
 
@@ -145,7 +135,6 @@ export async function initCurrencySelector(selector) {
         }
 
         async function setCurrency(code) {
-            console.debug('[currency-selector] setCurrency called', code);
             try {
                 const csrftoken = getCookie('csrftoken');
                 const resp = await fetch('/api/v1/currencies/preference/', {
@@ -159,7 +148,6 @@ export async function initCurrencySelector(selector) {
                 if (!resp.ok) {
                     let bodyText = '';
                     try { bodyText = await resp.text(); } catch (_) { bodyText = String(resp.status); }
-                    console.warn('[currency-selector] setCurrency failed', resp.status, bodyText);
                     await showListMessage('Failed to set currency (server error). See console for details.', 'error');
                     return;
                 }
@@ -176,11 +164,9 @@ export async function initCurrencySelector(selector) {
                     // Give short delay then reload so server-rendered templates re-render with new currency (keeps existing behavior)
                     setTimeout(() => location.reload(), 250);
                 } else {
-                    console.warn('[currency-selector] unexpected response', data);
                     await showListMessage('Could not set currency. See console for details.', 'error');
                 }
             } catch (e) {
-                console.warn('[currency-selector] Could not set currency', e);
                 await showListMessage('Network or server error while setting currency.', 'error');
             }
         }
@@ -199,7 +185,6 @@ export async function initCurrencySelector(selector) {
 
         toggle.addEventListener('click', (e) => {
             e.stopPropagation();
-            console.debug('[currency-selector] toggle clicked');
             doToggle();
         });
 

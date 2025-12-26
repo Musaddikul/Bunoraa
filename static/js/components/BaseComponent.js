@@ -32,7 +32,6 @@ export class BaseComponent {
    */
   mount(selector) {
     if (!this.element) {
-      console.warn(`Component ${this.id} has no element. Call create() first.`);
       return false;
     }
 
@@ -41,7 +40,6 @@ export class BaseComponent {
       : selector;
 
     if (!target) {
-      console.warn(`Mount target not found for component ${this.id}`);
       return false;
     }
 

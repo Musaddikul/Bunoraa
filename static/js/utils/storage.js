@@ -25,7 +25,6 @@ const Storage = (function() {
         const storage = persistent ? localStorage : sessionStorage;
         
         if (!isAvailable(persistent ? 'localStorage' : 'sessionStorage')) {
-            console.warn('Storage not available');
             return false;
         }
 

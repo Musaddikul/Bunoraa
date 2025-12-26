@@ -18,17 +18,85 @@
     }
     
     /* Focus styles */
-    *:focus {
-        @apply outline-none;
+    /* Centralised focus ring variables - tuned for light/dark mode */
+    :root {
+        --focus-ring: rgba(245,158,11,0.95); /* amber-500 */
+        --focus-ring-offset: rgba(255,255,255,0.6);
     }
-    
-    *:focus-visible {
-        @apply ring-2 ring-amber-500 ring-offset-2;
+    .dark {
+        --focus-ring: rgba(250,204,21,0.95); /* amber-300-ish for dark */
+        --focus-ring-offset: rgba(0,0,0,0.45);
+    }
+
+    /* Remove default outline and provide consistent, accessible focus-visible styling */
+    *:focus {
+        outline: none;
+    }
+
+    button:focus,
+    a:focus,
+    input:focus,
+    select:focus,
+    textarea:focus,
+    [role="button"]:focus {
+        outline: none;
+    }
+
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    [role="button"]:focus-visible {
+        box-shadow: 0 0 0 3px var(--focus-ring), 0 0 0 6px var(--focus-ring-offset);
+        outline: none;
+        border-radius: inherit; /* preserve control's rounding */
+    }
+
+    /* On touch devices make focus visible immediately after tap as well */
+    @media (pointer: coarse) {
+        button:focus,
+        a:focus,
+        input:focus,
+        select:focus,
+        textarea:focus,
+        [role="button"]:focus {
+            box-shadow: 0 0 0 3px var(--focus-ring), 0 0 0 6px var(--focus-ring-offset);
+            outline: none;
+            border-radius: inherit;
+        }
     }
     
     /* Typography */
     h1, h2, h3, h4, h5, h6 {
         @apply font-display font-bold text-stone-900;
+    }
+
+    /* Mobile typography adjustments: slightly smaller base font and component text for compact phone view */
+    @media (max-width: 640px) {
+        /* Decrease root font so rem-based utilities scale down site-wide */
+        html { font-size: 14px; }
+
+        /* Product cards: smaller overall text for compactness */
+        .product-card { font-size: 0.85rem; }
+        .product-card h3 { font-size: 0.95rem; line-height:1.15; }
+        .product-card p, .product-card .text-sm { font-size: 0.75rem; }
+        .product-card .text-lg { font-size: 1rem; }
+        .product-card .p-4 { padding: 0.75rem; }
+
+        /* List view image: prevent fixed wide columns from overflowing on small screens */
+        .product-card.flex .w-48 { width: 8rem; min-width: 8rem; }
+
+        /* Toasts / notifications: slightly smaller text and less padding so they don't dominate screen */
+        .toast { font-size: 0.875rem; padding: 0.25rem 0.5rem; min-width: 140px; max-width: calc(100% - 2rem); }
+        .toast .text-base { font-size: 0.875rem; line-height: 1.2; }
+
+        /* Buttons & inputs: slightly reduced font-size for compactness */
+        .btn, .input { font-size: 0.875rem; }
+
+        /* Headings tuning */
+        h1 { font-size: 1.5rem; }
+        h2 { font-size: 1.125rem; }
     }
     
     /* Links - theme aware */
@@ -317,6 +385,22 @@
                hover:bg-amber-50 hover:text-amber-600 
                transition-all duration-200 hover:scale-110;
         @apply dark:bg-stone-800 dark:hover:bg-stone-700 dark:text-stone-100;
+    }
+
+    /* Mobile friendly actions: larger touch targets and show mobile actions */
+    @media (max-width: 640px) {
+        .product-action-btn {
+            @apply p-3.5; /* increase hit area */
+            min-width: 44px;
+            min-height: 44px;
+        }
+        .product-card .mobile-actions {
+            display: flex;
+        }
+        /* Hide overlay actions on phone screens to avoid overlap */
+        .product-card .overlay-actions {
+            display: none;
+        }
     }
 
     /* Hero slider controls - ensure dark-mode friendly fallback */

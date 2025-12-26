@@ -356,7 +356,6 @@ const PreordersPage = (function() {
             const status = await PreordersApi.getPreorderStatus(preorderNumber);
             // Update UI with status
         } catch (error) {
-            console.warn('Failed to load status:', error);
         }
     }
 
