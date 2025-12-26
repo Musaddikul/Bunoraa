@@ -226,6 +226,30 @@
         @apply dark:bg-stone-900 dark:border dark:border-stone-700 dark:shadow-none;
     }
 
+    /* CTA (Unlock membership) - guaranteed focus-visible on both themes */
+    .cta-unlock:focus-visible,
+    .btn-primary:focus-visible {
+        /* stronger, theme-aware focus shadow using CSS vars defined in :root/.dark */
+        box-shadow: 0 0 0 4px var(--focus-ring), 0 0 0 8px var(--focus-ring-offset);
+        outline: none;
+    }
+
+    /* Card gradient utilities (ensure gradients available even if utilities are purged) */
+    .card-gradient-emerald {
+        background-image: linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(236,253,245,0.04) 100%);
+    }
+
+    .card-gradient-indigo {
+        background-image: linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(238,242,255,0.04) 100%);
+    }
+
+    /* Lookbook card helpers to ensure good contrast in light and dark modes */
+    .lookbook-card {
+        @apply bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700;
+    }
+    .lookbook-title { @apply text-stone-900 dark:text-white; }
+    .lookbook-meta { @apply text-stone-600 dark:text-white/60; }
+
     /* Product card: force square corners across the site */
     .product-card {
         @apply rounded-none;

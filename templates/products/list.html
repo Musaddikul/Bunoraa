@@ -558,11 +558,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 product-image">
                         ${discount > 0 ? `<span class="absolute top-3 left-3 px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-lg">-${discount}%</span>` : ''}
                     </div>
-                    <div class="flex-1 p-6 flex flex-col">
+                    <div class="flex-1 py-3 md:py-4 px-1 md:px-4 flex flex-col">
                         <div class="flex-1">
                             <a href="${buildRoute('productDetail', product.slug)}">
-                                <p class="text-sm text-gray-500 mb-1">${escapeHtml((product.categories && product.categories.length) ? product.categories[0].name : '')}</p>
-                                <h3 class="font-semibold text-gray-900 text-lg mb-2 hover:text-primary-600 transition-colors">${escapeHtml(product.name)}</h3>
+                                <h3 class="font-bold text-gray-900 mb-2 hover:text-primary-600 transition-colors text-sm md:text-base">${escapeHtml(product.name)}</h3>
                             </a>
                             ${product.short_description ? `<p class="text-gray-600 text-sm mb-3 line-clamp-2">${escapeHtml(product.short_description)}</p>` : ''}
                             ${product.average_rating ? `
@@ -577,17 +576,17 @@ document.addEventListener('DOMContentLoaded', async function() {
                         <div class="flex items-center justify-between pt-4 border-t border-gray-100">
                             <div class="flex items-center gap-2">
                                 ${product.sale_price ? `
-                                    <span class="text-xl font-bold text-gray-900">${formatProductPrice(getProductDisplayAmount(product))}</span>
-                                    <span class="text-sm text-gray-400 line-through">${formatProductPrice(getProductOriginalAmount(product))}</span>
+                                    <span class="text-sm md:text-base font-normal text-gray-900">${formatProductPrice(getProductDisplayAmount(product))}</span>
+                                    <span class="text-xs md:text-sm text-gray-400 line-through">${formatProductPrice(getProductOriginalAmount(product))}</span>
                                 ` : `
-                                    <span class="text-xl font-bold text-gray-900">${formatProductPrice(getProductDisplayAmount(product))}</span>
+                                    <span class="text-sm md:text-base font-normal text-gray-900">${formatProductPrice(getProductDisplayAmount(product))}</span>
                                 `}
                             </div>
                             <div class="flex gap-2">
                                 <button data-add-to-wishlist="${product.id}" title="Add to wishlist" aria-label="Add to wishlist" class="p-2 border border-gray-200 rounded-lg text-gray-400 hover:text-amber-600 transition-colors">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
                                 </button>
-                                <button data-add-to-cart="${product.id}" class="px-4 py-2 bg-primary-700 text-white font-medium rounded-lg hover:bg-primary-800 transition-colors">
+                                <button data-add-to-cart="${product.id}" class="px-3 py-2 text-sm bg-primary-700 text-white font-medium rounded-lg hover:bg-primary-800 transition-colors">
                                     Add to Cart
                                 </button>
                             </div>
@@ -613,10 +612,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
                     </button>
                 </div>
-                <div class="p-4">
+                <div class="py-3 md:py-4 px-1 md:px-4">
                     <a href="${buildRoute('productDetail', product.slug)}" class="block">
-                        <p class="text-xs text-gray-500 mb-1">${escapeHtml((product.categories && product.categories.length) ? product.categories[0].name : '')}</p>
-                        <h3 class="font-medium text-gray-900 line-clamp-2 mb-2 hover:text-primary-600 transition-colors">${escapeHtml(product.name)}</h3>
+                        <h3 class="font-bold text-gray-900 line-clamp-2 mb-2 hover:text-primary-600 transition-colors text-sm md:text-base">${escapeHtml(product.name)}</h3>
                     </a>
                     ${product.average_rating ? `
                     <div class="flex items-center gap-1 mb-2">
@@ -628,10 +626,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                     ` : ''}
                     <div class="flex items-center gap-2">
                         ${product.sale_price ? `
-                            <span class="text-lg font-bold text-gray-900" data-price-id="product-price-${product.id}">${formatProductPrice(product.sale_price_converted ?? product.sale_price)}</span>
+                            <span class="text-sm md:text-base font-normal text-gray-900" data-price-id="product-price-${product.id}">${formatProductPrice(product.sale_price_converted ?? product.sale_price)}</span>
                             <span class="text-sm text-gray-400 line-through" data-price-id="product-price-${product.id}-orig">${formatProductPrice(product.price_converted ?? product.price)}</span>
                         ` : `
-                            <span class="text-lg font-bold text-gray-900" data-price-id="product-price-${product.id}">${formatProductPrice(product.price_converted ?? product.price)}</span>
+                            <span class="text-sm md:text-base font-normal text-gray-900" data-price-id="product-price-${product.id}">${formatProductPrice(product.price_converted ?? product.price)}</span>
                         `}
                     </div>
                 </div>
