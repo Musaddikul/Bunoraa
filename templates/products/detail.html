@@ -34,7 +34,7 @@
                 {% for image in product.images.all %}
                 <button onclick="changeImage('{{ image.image.url }}')" 
                         class="aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 border-transparent hover:border-primary-500 focus:border-primary-500 transition-colors">
-                    <img src="{{ image.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                    <img src="{{ image.image.url }}" alt="{{ product.name }}" loading="lazy" decoding="async" class="w-full h-full object-cover">
                 </button>
                 {% endfor %}
             </div>

@@ -90,7 +90,7 @@
                                         hover:border-primary-300 dark:hover:border-primary-700">
                                 <div class="flex items-start gap-4">
                                     {% if category.image %}
-                                    <img src="{{ category.image.url }}" alt="{{ category.name }}" 
+                                    <img src="{{ category.image.url }}" loading="lazy" decoding="async" alt="{{ category.name }}" 
                                          class="w-20 h-20 object-cover rounded-lg">
                                     {% else %}
                                     <div class="w-20 h-20 bg-gradient-to-br from-primary-400 to-purple-500 rounded-lg flex items-center justify-center">

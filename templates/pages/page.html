@@ -28,7 +28,7 @@
         <!-- Featured Image -->
         {% if page.featured_image %}
         <div class="mb-8">
-            <img src="{{ page.featured_image.url }}" 
+            <img src="{{ page.featured_image.url }}" loading="lazy" decoding="async"
                  alt="{{ page.title }}"
                  class="w-full rounded-lg shadow-sm">
         </div>

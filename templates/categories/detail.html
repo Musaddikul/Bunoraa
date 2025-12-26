@@ -29,7 +29,7 @@
     <div class="mb-8">
         {% if category.image %}
         <div class="relative h-48 md:h-64 rounded-lg overflow-hidden mb-6">
-            <img src="{{ category.image.url }}" alt="{{ category.name }}" class="w-full h-full object-cover">
+            <img src="{{ category.image.url }}" alt="{{ category.name }}" loading="lazy" decoding="async" class="w-full h-full object-cover">
             <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
                 <div class="text-center text-white">
                     <h1 class="text-4xl font-bold">{{ category.name }}</h1>
@@ -56,7 +56,7 @@
             <a href="{% url 'categories:detail' subcat.slug %}" class="group">
                 <div class="bg-white rounded-lg shadow-sm p-4 text-center hover:shadow-md transition-shadow">
                     {% if subcat.image %}
-                    <img src="{{ subcat.image.url }}" alt="{{ subcat.name }}" 
+                    <img src="{{ subcat.image.url }}" alt="{{ subcat.name }}" loading="lazy" decoding="async" 
                          class="w-16 h-16 mx-auto object-cover rounded-full mb-3">
                     {% else %}
                     <div class="w-16 h-16 mx-auto bg-gray-100 rounded-full mb-3 flex items-center justify-center">

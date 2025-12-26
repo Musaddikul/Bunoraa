@@ -185,6 +185,8 @@
                         <span class="load-more-text">Load More Products</span>
                         <svg class="load-more-spinner hidden w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                     </button>
+                    <!-- Sentinel element observed by IntersectionObserver to auto-load next pages -->
+                    <div id="scroll-sentinel" class="w-full h-1"></div>
                 </div>
             </main>
         </div>
@@ -480,8 +482,31 @@ document.addEventListener('DOMContentLoaded', async function() {
         return product.price_converted ?? product.price;
     }
     
+    // Number of products to load per page (reduced to speed initial load)
+    const PRODUCTS_PER_PAGE = 8;
+
     // Store last loaded products for re-rendering on currency change
     let cachedProducts = [];
+
+    // IntersectionObserver for deferring heavy product images
+    let productImageObserver;
+    function initProductImageObserver() {
+        if (productImageObserver) return;
+        productImageObserver = new IntersectionObserver((entries, obs) => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+                const img = entry.target;
+                const src = img.dataset.src;
+                if (src) {
+                    img.src = src;
+                    img.removeAttribute('data-src');
+                }
+                img.setAttribute('loading', 'lazy');
+                img.setAttribute('decoding', 'async');
+                obs.unobserve(img);
+            });
+        }, { rootMargin: '200px 0px' });
+    }
 
     // If currency changes via selector, reload products (clear API cache first)
     document.addEventListener('currency:changed', async (e) => {
@@ -503,21 +528,31 @@ document.addEventListener('DOMContentLoaded', async function() {
     function renderProductsFromCache() {
         if (cachedProducts.length > 0 && productsGrid) {
             productsGrid.innerHTML = cachedProducts.map(p => createProductCard(p)).join('');
+            // Re-init observer for cached content
+            initProductImageObserver();
+            document.querySelectorAll('#products-grid .product-image[data-src]').forEach(img => {
+                try { productImageObserver.observe(img); } catch (e) { /* ignore */ }
+            });
         }
     }
     
-    // Create product card
+    // Create product card (use thumbnails and defer image loading via data-src)
     function createProductCard(product) {
         const saleAmount = product.sale_price_converted ?? product.sale_price ?? null;
         const origAmount = product.price_converted ?? product.price ?? null;
         const discount = (saleAmount && origAmount && origAmount > 0) ? Math.round((1 - (saleAmount / origAmount)) * 100) : 0;
-        
+
+        // Prefer thumbnail if available to reduce payload on list pages
+        const rawPrimary = product.thumbnail || product.primary_image || '/static/images/placeholder.jpg';
+        // Normalise possible object shapes
+        const imgUrl = (typeof rawPrimary === 'object') ? (rawPrimary?.image?.url || rawPrimary?.url || '/static/images/placeholder.jpg') : rawPrimary;
+
         if (viewMode === 'list') {
             return `
                 <div class="product-card bg-white dark:bg-stone-900 rounded-none shadow-sm overflow-hidden flex group col-span-full border border-stone-200 dark:border-stone-800">
                     <div class="relative w-48 flex-shrink-0 overflow-hidden">
-                        <img src="${product.primary_image || '/static/images/placeholder.jpg'}" alt="${escapeHtml(product.name)}" 
-                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                        <img data-src="${imgUrl}" src="/static/images/placeholder.jpg" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" width="320" height="320"
+                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 product-image">
                         ${discount > 0 ? `<span class="absolute top-3 left-3 px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-lg">-${discount}%</span>` : ''}
                     </div>
                     <div class="flex-1 p-6 flex flex-col">
@@ -558,11 +593,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                 </div>
             `;
         }
-        
+
         return `
             <div class="product-card group bg-white dark:bg-stone-900 rounded-none shadow-sm overflow-hidden border border-stone-200 dark:border-stone-800">
                 <div class="relative overflow-hidden" style="aspect-ratio: ${product?.aspect?.css || '1/1'};">
-                    <img src="${product.primary_image || '/static/images/placeholder.jpg'}" alt="${escapeHtml(product.name)}" 
+                    <img data-src="${imgUrl}" src="/static/images/placeholder.jpg" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" width="600" height="600"
                          class="product-image w-full h-full object-cover transition-transform duration-500">
                     ${discount > 0 ? `<span class="absolute top-3 left-3 px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-lg">-${discount}%</span>` : ''}
                     ${product.is_new ? `<span class="absolute top-3 ${discount > 0 ? 'left-16' : 'left-3'} px-2 py-1 bg-green-500 text-white text-xs font-bold rounded-lg">NEW</span>` : ''}
@@ -617,8 +652,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         try {
             const params = {
                 page: currentPage,
-                pageSize: 12,
-                ordering: filters.sort === 'price_low' ? 'price' : filters.sort === 'price_high' ? '-price' : filters.sort === 'newest' ? '-created_at' : filters.sort === 'rating' ? '-average_rating' : '-created_at'
+                pageSize: PRODUCTS_PER_PAGE
             };
             
             if (filters.categories.length) params.category = filters.categories.join(',');
@@ -640,7 +674,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
             
             totalProducts = response.meta?.pagination?.count || response.count || products.length;
-            totalPages = response.meta?.pagination?.total_pages || Math.ceil(totalProducts / 12);
+            totalPages = response.meta?.pagination?.total_pages || Math.ceil(totalProducts / PRODUCTS_PER_PAGE);
             
             productCount.textContent = `Showing ${products.length} of ${totalProducts} products`;
             
@@ -656,11 +690,30 @@ document.addEventListener('DOMContentLoaded', async function() {
                 } else {
                     productsGrid.innerHTML = products.map(p => createProductCard(p)).join('');
                 }
+
+                // Ensure product images are observed and only loaded when near viewport
+                initProductImageObserver();
+                document.querySelectorAll('#products-grid .product-image[data-src]').forEach(img => {
+                    try { productImageObserver.observe(img); } catch (e) { /* ignore */ }
+                });
+
+                // Initialize infinite scroll (auto-load on scroll) and manage its lifecycle
+                initInfiniteScroll();
+                // If we've reached the last page, disconnect infinite scroll
+                if (typeof totalPages === 'number' && currentPage >= totalPages) {
+                    if (infiniteScrollObserver) { infiniteScrollObserver.disconnect(); infiniteScrollObserver = null; }
+                    if (loadMoreBtn) loadMoreBtn.classList.add('hidden');
+                } else {
+                    if (loadMoreBtn) loadMoreBtn.classList.remove('hidden');
+                }
                 
                 if (currentPage < totalPages) {
                     loadMoreBtn.classList.remove('hidden');
+                    // ensure infinite scroll is observing
+                    initInfiniteScroll();
                 } else {
                     loadMoreBtn.classList.add('hidden');
+                    if (infiniteScrollObserver) { infiniteScrollObserver.disconnect(); infiniteScrollObserver = null; }
                 }
             }
 
@@ -966,6 +1019,32 @@ document.addEventListener('DOMContentLoaded', async function() {
         currentPage++;
         loadProducts(true);
     });
+
+    // Infinite scroll: observe sentinel near bottom and load next page when visible
+    let infiniteScrollObserver;
+    const INFINITE_SCROLL_ENABLED = true;
+    function initInfiniteScroll() {
+        if (!INFINITE_SCROLL_ENABLED) return;
+        const sentinel = document.getElementById('scroll-sentinel');
+        if (!sentinel) return;
+        if (infiniteScrollObserver) return;
+        infiniteScrollObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+                if (isLoading) return;
+                if (typeof totalPages !== 'number' || currentPage >= totalPages) {
+                    if (infiniteScrollObserver) {
+                        infiniteScrollObserver.disconnect();
+                        infiniteScrollObserver = null;
+                    }
+                    return;
+                }
+                currentPage++;
+                loadProducts(true);
+            });
+        }, { rootMargin: '600px 0px' });
+        infiniteScrollObserver.observe(sentinel);
+    }
     
     // Category filter
     categoriesFilterElement?.addEventListener('change', (e) => {
@@ -1073,33 +1152,111 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Mobile filters modal
     const filtersModal = document.getElementById('filters-modal');
     const filtersModalContent = document.getElementById('filters-modal-content');
-    
+
+    // Sidebar element move/restore helpers to avoid duplicating inputs
+    const filtersSidebar = document.getElementById('filters-sidebar');
+    const mobileFiltersMount = document.getElementById('mobile-filters-content');
+    let _sidebarOriginalParent = filtersSidebar ? filtersSidebar.parentNode : null;
+    let _sidebarNextSibling = filtersSidebar ? filtersSidebar.nextElementSibling : null;
+    const _sidebarOriginalClasses = filtersSidebar ? filtersSidebar.className : '';
+    let _sidebarMovedToModal = false;
+    let _previousActiveElement = null;
+
+    function moveSidebarToModal() {
+        if (!filtersSidebar || !_sidebarOriginalParent || _sidebarMovedToModal) return;
+        // remove the 'hidden' utility so it is visible in modal and make sure it displays as block
+        filtersSidebar.classList.remove('hidden');
+        filtersSidebar.classList.remove('w-72', 'flex-shrink-0');
+        filtersSidebar.classList.add('block', 'w-full');
+        mobileFiltersMount.appendChild(filtersSidebar);
+        _sidebarMovedToModal = true;
+    }
+
+    function restoreSidebarToOriginal() {
+        if (!filtersSidebar || !_sidebarOriginalParent || !_sidebarMovedToModal) return;
+        // restore original classes
+        filtersSidebar.className = _sidebarOriginalClasses;
+        if (_sidebarNextSibling) {
+            _sidebarOriginalParent.insertBefore(filtersSidebar, _sidebarNextSibling);
+        } else {
+            _sidebarOriginalParent.appendChild(filtersSidebar);
+        }
+        _sidebarMovedToModal = false;
+    }
+
     document.getElementById('open-filters').addEventListener('click', () => {
+        // move sidebar into modal for mobile, keeping the same inputs and listeners
+        if (filtersSidebar && mobileFiltersMount) moveSidebarToModal();
+        _previousActiveElement = document.activeElement;
         filtersModal.classList.remove('hidden');
         setTimeout(() => filtersModalContent.classList.remove('-translate-x-full'), 10);
         document.body.style.overflow = 'hidden';
+        // set aria-expanded
+        try { document.getElementById('open-filters').setAttribute('aria-expanded', 'true'); } catch (e) {}
+        // focus first focusable element inside modal
+        setTimeout(() => {
+            const focusable = filtersModal.querySelector('input, select, button, [tabindex]');
+            if (focusable) focusable.focus();
+        }, 150);
     });
-    
+
     filtersModal.querySelectorAll('[data-close-modal]').forEach(el => {
         el.addEventListener('click', () => {
             filtersModalContent.classList.add('-translate-x-full');
-            setTimeout(() => filtersModal.classList.add('hidden'), 300);
+            setTimeout(() => {
+                filtersModal.classList.add('hidden');
+                // restore sidebar back to desktop location
+                restoreSidebarToOriginal();
+            }, 300);
             document.body.style.overflow = '';
+            try { document.getElementById('open-filters').setAttribute('aria-expanded', 'false'); } catch (e) {}
+            if (_previousActiveElement) _previousActiveElement.focus();
         });
+
+    // Ensure that sidebar is restored on desktop/resizes in case modal was left open
+    window.addEventListener('resize', () => {
+        try {
+            if (window.innerWidth >= 1024 && _sidebarMovedToModal) {
+                restoreSidebarToOriginal();
+            }
+        } catch (e) { /* ignore */ }
+    });
+
+    // Close modal on Escape key when open
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && filtersModal && !filtersModal.classList.contains('hidden')) {
+            filtersModalContent.classList.add('-translate-x-full');
+            setTimeout(() => {
+                filtersModal.classList.add('hidden');
+                restoreSidebarToOriginal();
+            }, 300);
+            document.body.style.overflow = '';
+            if (_previousActiveElement) _previousActiveElement.focus();
+        }
+    });
     });
 
     document.getElementById('mobile-clear-filters')?.addEventListener('click', () => {
         resetFilters();
         filtersModalContent.classList.add('-translate-x-full');
-        setTimeout(() => filtersModal.classList.add('hidden'), 300);
+        setTimeout(() => {
+            filtersModal.classList.add('hidden');
+            restoreSidebarToOriginal();
+        }, 300);
         document.body.style.overflow = '';
+        try { document.getElementById('open-filters').setAttribute('aria-expanded', 'false'); } catch (e) {}
+        if (_previousActiveElement) _previousActiveElement.focus();
     });
 
     document.getElementById('mobile-apply-filters')?.addEventListener('click', () => {
         filtersModalContent.classList.add('-translate-x-full');
-        setTimeout(() => filtersModal.classList.add('hidden'), 300);
+        setTimeout(() => {
+            filtersModal.classList.add('hidden');
+            restoreSidebarToOriginal();
+        }, 300);
         document.body.style.overflow = '';
         loadProducts();
+        if (_previousActiveElement) _previousActiveElement.focus();
     });
     
     // Update title if category
