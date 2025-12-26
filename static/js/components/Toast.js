@@ -11,7 +11,12 @@ export class Toast extends BaseComponent {
     
     this.message = options.message || '';
     this.type = options.type || 'default'; // default, success, error, warning, info
-    this.duration = options.duration || 3000;
+    // On mobile, shorten toast duration slightly for faster UX
+    if (typeof options.duration !== 'undefined') {
+      this.duration = options.duration;
+    } else {
+      this.duration = (typeof window !== 'undefined' && window.innerWidth < 640) ? 2500 : 3000;
+    }
     this.position = options.position || 'top-right'; // top-left, top-right, bottom-left, bottom-right, top-center
     this.className = options.className || '';
     this.onClose = options.onClose || null;
@@ -79,7 +84,8 @@ export class Toast extends BaseComponent {
 
     const toastElement = createElement('div', {
       className: clsx(
-        'rounded-lg shadow-lg p-2.5 flex items-center gap-2 min-w-max max-w-sm bg-opacity-95',
+        // Allow wrapping on small screens, limit max width for mobile, keep compact padding
+        'rounded-lg shadow-lg p-2.5 flex items-center gap-2 min-w-0 max-w-[90vw] sm:max-w-sm bg-opacity-95',
         this.getEnterAnimationClass(),
         this.getTypeClasses(),
         this.className
@@ -96,7 +102,8 @@ export class Toast extends BaseComponent {
     // Message
     const messageElement = createElement('span', {
       text: this.message,
-      className: 'flex-1'
+      // Slightly smaller text on mobile, readable on larger screens
+      className: 'flex-1 text-sm sm:text-base'
     });
     toastElement.appendChild(messageElement);
 

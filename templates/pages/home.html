@@ -7,7 +7,7 @@
 
 {% block content %}
 <!-- Hero Section - Full Screen -->
-<section id="hero-section" class="relative w-full h-[80vh] bg-gradient-to-br from-primary-900 via-primary-800 to-primary-700 overflow-hidden dark:from-stone-900 dark:via-stone-800 dark:to-stone-900">
+<section id="hero-section" class="relative w-full h-[55vh] sm:h-[70vh] md:h-[80vh] bg-gradient-to-br from-primary-900 via-primary-800 to-primary-700 overflow-hidden dark:from-stone-900 dark:via-stone-800 dark:to-stone-900">
     <div class="absolute inset-0 opacity-10 dark:opacity-20">
         <div class="absolute inset-0 bg-[url('/static/images/pattern.svg')] bg-repeat"></div>
     </div>
@@ -28,7 +28,7 @@
                 <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
             </a>
         </div>
-        <div id="new-arrivals" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
+        <div id="new-arrivals" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
             <!-- Loaded via JS -->
             {% for i in "12345" %}
             <div class="skeleton h-80 rounded-2xl"></div>
@@ -57,7 +57,7 @@
                 <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
             </a>
         </div>
-        <div id="featured-products" class="products-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
+        <div id="featured-products" class="products-grid grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
             <!-- Loaded via JS -->
             {% for i in "12345" %}
             <div class="skeleton h-80 rounded-2xl"></div>
@@ -76,7 +76,7 @@
             <h2 class="text-3xl lg:text-4xl font-display font-bold text-gray-900 mb-4 dark:text-white">Shop by Category</h2>
             <p class="text-gray-600 max-w-2xl mx-auto dark:text-stone-400">Explore our curated collection of categories tailored just for you</p>
         </div>
-        <div id="categories-showcase" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 lg:gap-6">
+        <div id="categories-showcase" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 lg:gap-6">
             <!-- Loaded via JS -->
             {% for i in "123456" %}
             <div class="skeleton h-40 rounded-2xl"></div>
@@ -98,7 +98,7 @@
                 <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
             </a>
         </div>
-        <div id="best-sellers" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
+        <div id="best-sellers" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
             <!-- Loaded via JS -->
             {% for i in "12345" %}
             <div class="skeleton h-80 rounded-2xl bg-stone-50 dark:bg-stone-900"></div>
@@ -153,7 +153,7 @@
                                 48h early access
                             </span>
                         </div>
-                        <a href="{% url 'accounts:register' %}" class="cta-unlock inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-700 dark:text-white font-semibold shadow-lg transition focus:outline-none focus-visible:ring-3 focus-visible:ring-amber-500 dark:focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-100 dark:focus-visible:ring-offset-stone-900 focus-visible:shadow-lg focus-visible:text-white dark:focus-visible:text-white" aria-label="Unlock Bunoraa membership">
+                        <a href="{% url 'accounts:register' %}" class="cta-unlock inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-600 text-white hover:text-black dark:hover:text-black dark:bg-amber-600 dark:text-white font-semibold shadow-lg transition-opacity" aria-label="Unlock Bunoraa membership">
                             Unlock membership
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                         </a>
@@ -284,77 +284,91 @@
         const target = document.getElementById('signature-tabs');
         if (!target) return;
 
+        // Define tab data once so we can render either a Tabs component or a mobile accordion
+        const tabDefs = [
+            {
+                label: 'Curated drops',
+                content: `
+                    <div class="grid sm:grid-cols-2 gap-3">
+                        <div class="p-4 rounded-2xl bg-gradient-to-br from-emerald-100 via-emerald-50 to-transparent dark:from-emerald-900/10 dark:via-emerald-800/10 dark:to-transparent border border-emerald-100 dark:border-emerald-700">
+                            <p class="text-sm text-emerald-700 dark:text-emerald-100 mb-2">Tailored edits</p>
+                            <h3 class="text-lg font-semibold mb-2 text-stone-900 dark:text-white">One-of-one capsules</h3>
+                            <p class="text-sm text-stone-600 dark:text-white/70">Pieces matched to your style DNA with guaranteed exclusivity windows.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700">
+                            <p class="text-sm text-stone-600 dark:text-white/60 mb-2">Signature lines</p>
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between text-sm"><span class="text-stone-900 dark:text-white">Maison Solstice</span><span class="text-stone-600 dark:text-white/60">12 hrs early</span></div>
+                                <div class="flex items-center justify-between text-sm"><span class="text-stone-900 dark:text-white">Kyoto Atelier</span><span class="text-stone-600 dark:text-white/60">Concierge hold</span></div>
+                                <div class="flex items-center justify-between text-sm"><span class="text-stone-900 dark:text-white">Nord Studio</span><span class="text-stone-600 dark:text-white/60">Limited run</span></div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+
+            {
+                label: 'Elevated services',
+                content: `
+                    <div class="grid sm:grid-cols-2 gap-3">
+                        <div class="p-4 rounded-2xl bg-gradient-to-br from-indigo-100 via-indigo-50 to-transparent dark:from-indigo-900/10 dark:via-indigo-800/10 dark:to-transparent border border-indigo-100 dark:border-indigo-700">
+                            <h3 class="text-lg font-semibold mb-2 text-stone-900 dark:text-white">Concierge delivery</h3>
+                            <p class="text-sm text-stone-600 dark:text-white/70">White-glove handling, discrete packaging, and timed arrivals that fit your calendar.</p>
+                            <ul class="mt-3 space-y-2 text-sm text-stone-700 dark:text-white/80 list-disc list-inside">
+                                <li>Private fitting windows</li>
+                                <li>Return-on-pickup</li>
+                                <li>Same-day metro lanes</li>
+                            </ul>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700">
+                            <h3 class="text-lg font-semibold mb-2 text-stone-900 dark:text-white">Member protections</h3>
+                            <p class="text-sm text-stone-600 dark:text-white/70 mb-3">Upgraded guarantees that keep your cart risk-free.</p>
+                            <div class="grid grid-cols-2 gap-2 text-sm text-stone-700 dark:text-white/80">
+                                <div class="p-3 rounded-xl bg-stone-50 dark:bg-stone-800">Instant replacements</div>
+                                <div class="p-3 rounded-xl bg-stone-50 dark:bg-stone-800">48h price locking</div>
+                                <div class="p-3 rounded-xl bg-stone-50 dark:bg-stone-800">Priority support</div>
+                                <div class="p-3 rounded-xl bg-stone-50 dark:bg-stone-800">Seamless exchanges</div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                label: 'Lookbook',
+                content: `
+                    <div class="grid sm:grid-cols-3 gap-3">
+                        ${['Studio Noir', 'Glasshouse', 'Lumen'].map(name => `
+                            <div class="group relative overflow-hidden rounded-2xl border border-stone-200 bg-stone-50 dark:border-stone-700 dark:bg-stone-800">
+                                <div class="aspect-[4/5] bg-gradient-to-br from-stone-100 dark:from-white/5 to-transparent group-hover:from-stone-200 dark:group-hover:from-white/10 transition"></div>
+                                <div class="absolute inset-0 p-4 flex flex-col justify-between">
+                                    <div class="text-xs uppercase tracking-[0.2em] text-stone-600 dark:text-white/60">Edit</div>
+                                    <div class="space-y-1">
+                                        <h4 class="text-lg font-semibold text-stone-900 dark:text-white">${name}</h4>
+                                        <p class="text-sm text-stone-600 dark:text-white/70">Layered textures, sculpted silhouettes, and luminous metals.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `
+            }
+        ];
+
+        // If mobile width, render accordion-style details for easier tapping
+        if (window.innerWidth < 640) {
+            target.innerHTML = tabDefs.map((t) => `
+                <details class="mb-3 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl overflow-hidden">
+                    <summary class="p-4 cursor-pointer font-semibold text-stone-900 dark:text-white">${t.label}</summary>
+                    <div class="p-4 text-stone-700 dark:text-white/80">${t.content}</div>
+                </details>
+            `).join('');
+            return;
+        }
+
         const tabs = new Tabs({
             variant: 'pills',
             className: 'p-3',
-            tabs: [
-                {
-                    label: 'Curated drops',
-                    content: `
-                        <div class="grid sm:grid-cols-2 gap-3">
-                            <div class="p-4 rounded-2xl bg-gradient-to-br from-emerald-100 via-emerald-50 to-transparent dark:from-emerald-900/10 dark:via-emerald-800/10 dark:to-transparent border border-emerald-100 dark:border-emerald-700">
-                                <p class="text-sm text-emerald-700 dark:text-emerald-100 mb-2">Tailored edits</p>
-                                <h3 class="text-lg font-semibold mb-2 text-stone-900 dark:text-white">One-of-one capsules</h3>
-                                <p class="text-sm text-stone-600 dark:text-white/70">Pieces matched to your style DNA with guaranteed exclusivity windows.</p>
-                            </div>
-                            <div class="p-4 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700">
-                                <p class="text-sm text-stone-600 dark:text-white/60 mb-2">Signature lines</p>
-                                <div class="space-y-2">
-                                    <div class="flex items-center justify-between text-sm"><span class="text-stone-900 dark:text-white">Maison Solstice</span><span class="text-stone-600 dark:text-white/60">12 hrs early</span></div>
-                                    <div class="flex items-center justify-between text-sm"><span class="text-stone-900 dark:text-white">Kyoto Atelier</span><span class="text-stone-600 dark:text-white/60">Concierge hold</span></div>
-                                    <div class="flex items-center justify-between text-sm"><span class="text-stone-900 dark:text-white">Nord Studio</span><span class="text-stone-600 dark:text-white/60">Limited run</span></div>
-                                </div>
-                            </div>
-                        </div>
-                    `
-                },
-
-                {
-                    label: 'Elevated services',
-                    content: `
-                        <div class="grid sm:grid-cols-2 gap-3">
-                            <div class="p-4 rounded-2xl bg-gradient-to-br from-indigo-100 via-indigo-50 to-transparent dark:from-indigo-900/10 dark:via-indigo-800/10 dark:to-transparent border border-indigo-100 dark:border-indigo-700">
-                                <h3 class="text-lg font-semibold mb-2 text-stone-900 dark:text-white">Concierge delivery</h3>
-                                <p class="text-sm text-stone-600 dark:text-white/70">White-glove handling, discrete packaging, and timed arrivals that fit your calendar.</p>
-                                <ul class="mt-3 space-y-2 text-sm text-stone-700 dark:text-white/80 list-disc list-inside">
-                                    <li>Private fitting windows</li>
-                                    <li>Return-on-pickup</li>
-                                    <li>Same-day metro lanes</li>
-                                </ul>
-                            </div>
-                            <div class="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700">
-                                <h3 class="text-lg font-semibold mb-2 text-stone-900 dark:text-white">Member protections</h3>
-                                <p class="text-sm text-stone-600 dark:text-white/70 mb-3">Upgraded guarantees that keep your cart risk-free.</p>
-                                <div class="grid grid-cols-2 gap-2 text-sm text-stone-700 dark:text-white/80">
-                                    <div class="p-3 rounded-xl bg-stone-50 dark:bg-stone-800">Instant replacements</div>
-                                    <div class="p-3 rounded-xl bg-stone-50 dark:bg-stone-800">48h price locking</div>
-                                    <div class="p-3 rounded-xl bg-stone-50 dark:bg-stone-800">Priority support</div>
-                                    <div class="p-3 rounded-xl bg-stone-50 dark:bg-stone-800">Seamless exchanges</div>
-                                </div>
-                            </div>
-                        </div>
-                    `
-                },
-                {
-                    label: 'Lookbook',
-                    content: `
-                        <div class="grid sm:grid-cols-3 gap-3">
-                            ${['Studio Noir', 'Glasshouse', 'Lumen'].map(name => `
-                                <div class="group relative overflow-hidden rounded-2xl border border-stone-200 bg-stone-50 dark:border-stone-700 dark:bg-stone-800">
-                                    <div class="aspect-[4/5] bg-gradient-to-br from-stone-100 dark:from-white/5 to-transparent group-hover:from-stone-200 dark:group-hover:from-white/10 transition"></div>
-                                    <div class="absolute inset-0 p-4 flex flex-col justify-between">
-                                        <div class="text-xs uppercase tracking-[0.2em] text-stone-600 dark:text-white/60">Edit</div>
-                                        <div class="space-y-1">
-                                            <h4 class="text-lg font-semibold text-stone-900 dark:text-white">${name}</h4>
-                                            <p class="text-sm text-stone-600 dark:text-white/70">Layered textures, sculpted silhouettes, and luminous metals.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    `
-                }
-            ]
+            tabs: tabDefs
         });
 
         target.innerHTML = '';
@@ -363,6 +377,16 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         renderSignatureTabs();
+
+        // Re-render tabs on resize (debounced) so small/large layouts switch cleanly
+        let _renderTimeout = null;
+        window.addEventListener('resize', () => {
+            clearTimeout(_renderTimeout);
+            _renderTimeout = setTimeout(() => {
+                renderSignatureTabs();
+            }, 200);
+        });
+
         setTimeout(() => {
             try {
                 Toast.show('Welcome to Bunoraa -- Where Comfort Meets Creativity.', {

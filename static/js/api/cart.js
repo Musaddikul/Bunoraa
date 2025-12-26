@@ -103,7 +103,8 @@ const CartApi = (function() {
         const badges = document.querySelectorAll('[data-cart-count]');
         
         badges.forEach(badge => {
-            badge.textContent = count > 99 ? '99+' : count;
+            // Cap visible badge to a single digit display to reduce layout width on small viewports
+            badge.textContent = count > 9 ? '9+' : count;
             badge.classList.toggle('hidden', count === 0);
         });
     }
