@@ -250,7 +250,7 @@ const SearchPage = (function() {
                                         <img src="${product.image || '/static/images/placeholder.png'}" alt="" class="w-10 h-10 object-cover rounded">
                                         <div>
                                             <p class="text-sm font-medium text-gray-900">${Templates.escapeHtml(product.name)}</p>
-                                            <p class="text-sm text-primary-600">${Templates.formatPrice(product.price)}</p>
+                                            <p class="text-sm text-primary-600">${Templates.formatPrice(product.current_price ?? product.price_converted ?? product.price)}</p>
                                         </div>
                                     </a>
                                 `).join('')}

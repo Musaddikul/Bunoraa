@@ -78,45 +78,11 @@ class PaymentGatewayViewSet(viewsets.ReadOnlyModelViewSet):
         })
     
     def _get_default_gateways(self, currency=None):
-        """Return default gateways if none configured."""
-        defaults = [
-            {
-                'code': 'stripe',
-                'name': 'Credit/Debit Card',
-                'description': 'Visa, Mastercard, American Express',
-                'icon_class': 'card',
-                'color': 'blue',
-                'fee_text': 'No extra fee',
-            },
-            {
-                'code': 'cod',
-                'name': 'Cash on Delivery',
-                'description': 'Pay when you receive your order',
-                'icon_class': 'cash',
-                'color': 'green',
-                'fee_text': '৳20 fee' if currency == 'BDT' else None,
-            },
-        ]
-        
-        if currency == 'BDT':
-            defaults.insert(1, {
-                'code': 'bkash',
-                'name': 'bKash',
-                'description': 'Pay with your bKash wallet',
-                'icon_class': 'bkash',
-                'color': 'pink',
-                'fee_text': 'No extra fee',
-            })
-            defaults.insert(2, {
-                'code': 'nagad',
-                'name': 'Nagad',
-                'description': 'Pay with your Nagad wallet',
-                'icon_class': 'nagad',
-                'color': 'orange',
-                'fee_text': 'No extra fee',
-            })
-        
-        return defaults
+        """Return an empty list when no gateways are configured.
+
+        We intentionally remove placeholder defaults to ensure admin config is required.
+        """
+        return []
 
 
 class PaymentViewSet(viewsets.ReadOnlyModelViewSet):

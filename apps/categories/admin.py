@@ -60,3 +60,7 @@ class CategoryAdmin(admin.ModelAdmin):
     def remove_featured(self, request, queryset):
         queryset.update(is_featured=False)
     remove_featured.short_description = 'Remove featured status'
+
+
+# Register Category admin
+admin.site.register(Category, CategoryAdmin)

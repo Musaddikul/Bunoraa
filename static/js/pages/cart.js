@@ -7,20 +7,9 @@ const CartPage = (function() {
     'use strict';
 
     let cart = null;
-    const DEFAULT_CURRENCY = {
-        code: window.BUNORAA_CART?.currencyCode || 'BDT',
-        symbol: window.BUNORAA_CART?.currencySymbol || '$'
-    };
-    let activeCurrency = { ...DEFAULT_CURRENCY };
-
-    function setActiveCurrency(currency) {
-        if (!currency) return;
-        const nextCode = currency.code || activeCurrency.code;
-        const nextSymbol = currency.symbol || activeCurrency.symbol;
-        activeCurrency = {
-            code: nextCode,
-            symbol: nextSymbol
-        };
+    // Single-currency mode: use server-provided currency via Templates and `window.BUNORAA_CURRENCY`.
+    function setActiveCurrency(/* currency */) {
+        // No-op in single-currency mode - retained for backward compatibility
     }
 
     function parseAmount(value) {
@@ -32,7 +21,7 @@ const CartPage = (function() {
 
     function formatCartPrice(value) {
         const amount = parseAmount(value);
-        return Templates.formatPrice(amount, activeCurrency.code);
+        return Templates.formatPrice(amount);
     }
 
     async function init() {
@@ -62,7 +51,6 @@ const CartPage = (function() {
         if (!container) return;
 
         const items = cartData?.items || [];
-        setActiveCurrency(cartData?.currency || cartData?.summary?.currency);
         const summary = cartData?.summary || {};
         const subtotalValue = summary.subtotal ?? cartData?.subtotal ?? 0;
         const discountValue = parseAmount(summary.discount_amount ?? cartData?.discount_amount);

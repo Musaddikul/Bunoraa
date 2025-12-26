@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static currency_tags %}
 
-{% block page_id %}orders{% endblock %}
+{% block page_id %}orders{% endblock %
 {% block title %}Order #{{ order.order_number }} - {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
@@ -156,8 +156,8 @@
                             <p class="text-sm text-gray-500">Qty: {{ item.quantity }}</p>
                         </div>
                         <div class="text-right">
-                            <p class="font-medium text-gray-900">{{ currency_symbol }}{{ item.total_price }}</p>
-                            <p class="text-sm text-gray-500">{{ currency_symbol }}{{ item.unit_price }} each</p>
+                            <p class="font-medium text-gray-900">{% format_price item.total_price %}</p>
+                            <p class="text-sm text-gray-500">{% format_price item.unit_price %} each</p>
                         </div>
                     </div>
                     {% endfor %}
@@ -197,27 +197,27 @@
                     <div class="border-t border-gray-200 pt-4 space-y-2">
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">Subtotal</span>
-                            <span class="text-gray-900">{{ currency_symbol }}{{ order.subtotal }}</span>
+                            <span class="text-gray-900">{% format_price order.subtotal %}</span>
                         </div>
                         {% if order.discount > 0 %}
                         <div class="flex justify-between text-sm text-green-600">
                             <span>Discount</span>
-                            <span>-{{ currency_symbol }}{{ order.discount }}</span>
+                            <span>-{% format_price order.discount %}</span>
                         </div>
                         {% endif %}
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">Shipping</span>
                             <span class="text-gray-900">
-                                {% if order.shipping_cost == 0 %}Free{% else %}{{ currency_symbol }}{{ order.shipping_cost }}{% endif %}
+                                {% if order.shipping_cost == 0 %}Free{% else %}{% format_price order.shipping_cost %}{% endif %}
                             </span>
                         </div>
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">Tax</span>
-                            <span class="text-gray-900">{{ currency_symbol }}{{ order.tax }}</span>
+                            <span class="text-gray-900">{% format_price order.tax %}</span>
                         </div>
                         <div class="flex justify-between font-semibold border-t border-gray-200 pt-2">
                             <span>Total</span>
-                            <span>{{ currency_symbol }}{{ order.total }}</span>
+                            <span>{% format_price order.total %}</span>
                         </div>
                     </div>
                 </div>

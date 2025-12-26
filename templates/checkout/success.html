@@ -101,7 +101,7 @@
                                 <p class="text-xs text-gray-500 dark:text-gray-400">Qty: {{ item.quantity }}</p>
                             </div>
                         </div>
-                        <p class="text-sm font-medium text-gray-900 dark:text-white">{{ currency_symbol }}{{ item.total_price }}</p>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">{{ cart_summary.currency.symbol|default:currency_symbol }}{{ item.total_price }}</p>
                     </div>
                     {% endfor %}
                 </div>
@@ -130,7 +130,7 @@
             <div class="border-t border-gray-200 dark:border-gray-700 mt-4 pt-4 space-y-2">
                 <div class="flex justify-between text-sm">
                     <span class="text-gray-600 dark:text-gray-400">Subtotal</span>
-                    <span class="text-gray-900 dark:text-white">{{ currency_symbol }}{{ order.subtotal }}</span>
+                    <span class="text-gray-900 dark:text-white">{{ order.currency|default:cart_summary.currency.code|default:currency_code }} {{ order.subtotal }}</span>
                 </div>
                 {% if order.discount > 0 %}
                 <div class="flex justify-between text-sm text-green-600 dark:text-green-400">

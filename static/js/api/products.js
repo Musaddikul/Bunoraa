@@ -7,6 +7,7 @@ const ProductsApi = (function() {
     'use strict';
 
     async function getProducts(params = {}) {
+        const currencyCode = (typeof window !== 'undefined' && window.BUNORAA_CURRENCY && window.BUNORAA_CURRENCY.code) ? window.BUNORAA_CURRENCY.code : undefined;
         const queryParams = {
             page: params.page || 1,
             page_size: params.pageSize || 20,
@@ -19,14 +20,16 @@ const ProductsApi = (function() {
             in_stock: params.inStock ? 'true' : undefined,
             is_featured: params.featured ? 'true' : undefined,
             is_on_sale: params.onSale ? 'true' : undefined,
-            bestseller: params.bestseller ? 'true' : undefined
+            bestseller: params.bestseller ? 'true' : undefined,
+            currency: params.currency || currencyCode
         };
 
         return ApiClient.get('/products/', queryParams, { useCache: true, cacheTTL: 60000 });
     }
 
     async function getProduct(idOrSlug) {
-        return ApiClient.get(`/products/${idOrSlug}/`, {}, { useCache: true, cacheTTL: 120000 });
+        const currencyCode = (typeof window !== 'undefined' && window.BUNORAA_CURRENCY && window.BUNORAA_CURRENCY.code) ? window.BUNORAA_CURRENCY.code : undefined;
+        return ApiClient.get(`/products/${idOrSlug}/`, { currency: currencyCode }, { useCache: true, cacheTTL: 120000 });
     }
 
     async function getFeatured(limit = 8) {

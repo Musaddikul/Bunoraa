@@ -7,16 +7,6 @@
 {% block content %}
 <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <div class="container mx-auto px-4 py-8">
-        <!-- Breadcrumb -->
-        <nav class="mb-6 text-sm">
-            <ol class="flex items-center space-x-2">
-                <li><a href="{% url 'cart:cart' %}" class="text-gray-500 hover:text-primary-600 dark:text-gray-400">Cart</a></li>
-                <li><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></li>
-                <li><a href="{% url 'checkout:information' %}" class="text-gray-500 hover:text-primary-600 dark:text-gray-400">Information</a></li>
-                <li><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></li>
-                <li class="font-medium text-gray-900 dark:text-white">Shipping</li>
-            </ol>
-        </nav>
         
         <!-- Progress Steps -->
         <div class="mb-8">
@@ -119,8 +109,9 @@
                                 <input type="radio" name="shipping_rate_id" value="{{ method.id }}" id="shipping-{{ method.id }}"
                                        class="peer sr-only" {% if checkout.shipping_rate and method.id|stringformat:"s" == checkout.shipping_rate.id|stringformat:"s" %}checked{% elif forloop.first and not checkout.shipping_rate %}checked{% endif %}
                                        data-price="{{ method.cost }}"
-                                       data-code="{{ method.code }}"
-                                       data-estimate="{{ method.delivery_estimate }}">
+                                       data-estimate="{{ method.delivery_estimate }}"
+                                       data-currency="{{ checkout_summary.currency.code|default:cart_summary.currency.code|default:currency_code }}">
+
                                 <label for="shipping-{{ method.id }}" 
                                        class="flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all peer-checked:border-primary-600 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 hover:border-gray-400 dark:hover:border-gray-500 border-gray-200 dark:border-gray-700">
                                     <div class="flex items-center">
@@ -157,7 +148,7 @@
                                         {% if method.is_free %}
                                         <span class="text-green-600">Free</span>
                                         {% else %}
-                                        {{ method.formatted_cost }}
+                                        <span>{{ method.formatted_cost }}</span>
                                         {% endif %}
                                     </span>
                                 </label>
@@ -268,25 +259,25 @@
                         <span class="text-sm font-normal text-gray-500 dark:text-gray-400">{{ cart_items|length }} items</span>
                     </h2>
                     
-                    <!-- Cart Items -->
+                    <!-- Cart Items (use converted summary items for consistent currency) -->
                     <div class="space-y-4 max-h-64 overflow-y-auto scrollbar-thin pr-2">
-                        {% for item in cart_items %}
+                        {% for it in cart_summary.items %}
                         <div class="flex items-center space-x-4">
                             <div class="relative flex-shrink-0">
-                                <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.jpg' }}" 
-                                     alt="{{ item.product.name }}"
+                                <img src="{{ it.image|default:'/static/images/placeholder.jpg' }}" 
+                                     alt="{{ it.product_name }}"
                                      class="w-16 h-16 object-cover rounded-lg">
                                 <span class="absolute -top-2 -right-2 w-5 h-5 bg-gray-600 text-white text-xs rounded-full flex items-center justify-center font-medium">
-                                    {{ item.quantity }}
+                                    {{ it.quantity }}
                                 </span>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ item.product.name }}</p>
-                                {% if item.variant %}
-                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ item.variant.name }}</p>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ it.product_name }}</p>
+                                {% if it.variant_name %}
+                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ it.variant_name }}</p>
                                 {% endif %}
                             </div>
-                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ currency_symbol }}{{ item.total_price }}</p>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ it.formatted_total }}</p>
                         </div>
                         {% endfor %}
                     </div>
@@ -295,19 +286,19 @@
                     <div class="space-y-3 border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
                         <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                             <span>Subtotal</span>
-                            <span>{{ currency_symbol }}{{ cart_summary.subtotal }}</span>
+                            <span id="subtotal">{{ cart_summary.formatted_subtotal }}</span>
                         </div>
                         {% if cart_summary.discount_amount and cart_summary.discount_amount != '0' %}
                         <div class="flex justify-between text-sm text-green-600">
                             <span>Discount</span>
-                            <span>-{{ currency_symbol }}{{ cart_summary.discount_amount }}</span>
+                            <span id="discount">-{{ cart_summary.formatted_discount }}</span>
                         </div>
                         {% endif %}
                         <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                             <span>Shipping</span>
                             <span id="shipping-cost" class="font-medium text-gray-900 dark:text-white">
-                                {% if checkout.shipping_cost %}
-                                    {% if checkout.shipping_cost == 0 %}Free{% else %}{{ currency_symbol }}{{ checkout.shipping_cost }}{% endif %}
+                                {% if checkout and checkout.shipping_cost is not None %}
+                                    {{ checkout_summary.formatted_shipping|default:cart_summary.formatted_shipping }}
                                 {% else %}
                                     --
                                 {% endif %}
@@ -316,12 +307,12 @@
                         {% if tax_rate > 0 %}
                         <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                             <span>Tax ({{ tax_rate }}%)</span>
-                            <span id="tax-amount">{{ currency_symbol }}{{ checkout.tax_amount|default:'0.00' }}</span>
+                            <span id="tax-amount">{{ checkout_summary.formatted_tax|default:cart_summary.formatted_tax }}</span>
                         </div>
                         {% endif %}
                         <div class="flex justify-between text-lg font-bold text-gray-900 dark:text-white border-t border-gray-200 dark:border-gray-700 pt-3">
                             <span>Total</span>
-                            <span id="order-total">{{ currency_symbol }}{{ checkout.total|default:cart_summary.total }}</span>
+                            <span id="order-total">{{ checkout_summary.formatted_total|default:cart_summary.formatted_total }}</span>
                         </div>
                     </div>
                     
@@ -389,28 +380,31 @@ document.addEventListener('DOMContentLoaded', function() {
             const price = parseFloat(this.dataset.price);
             const rateId = this.value;
             const estimate = this.dataset.estimate;
-            
-            document.getElementById('shipping-cost').textContent = 
-                price === 0 ? 'Free' : '{{ currency_symbol }}' + price.toFixed(2);
-            
+            const shippingEl = document.getElementById('shipping-cost');
+            const sourceCurrency = shippingEl?.dataset?.currency || null;
+
+            // Format using the currency the server provided (avoid double conversion)
+            shippingEl.textContent = price === 0 ? 'Free' : Templates.formatPrice(price, sourceCurrency);
+
             // Update delivery estimate
             if (estimate) {
                 document.getElementById('estimated-delivery').textContent = estimate;
             }
-            
+
             updateOrderTotal();
         });
-        
+
         // Initialize with selected option
         if (input.checked) {
             const price = parseFloat(input.dataset.price);
             const estimate = input.dataset.estimate;
-            
+            const shippingEl = document.getElementById('shipping-cost');
+            const sourceCurrency = shippingEl?.dataset?.currency || null;
+
             if (!isNaN(price)) {
-                document.getElementById('shipping-cost').textContent = 
-                    price === 0 ? 'Free' : '{{ currency_symbol }}' + price.toFixed(2);
+                shippingEl.textContent = price === 0 ? 'Free' : Templates.formatPrice(price, sourceCurrency);
             }
-            
+
             if (estimate) {
                 document.getElementById('estimated-delivery').textContent = estimate;
             }
@@ -418,29 +412,44 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     function updateOrderTotal() {
-        // This would ideally call an API to get the updated total
-        // For now, we'll do a simple calculation
-        const subtotal = parseFloat('{{ cart_summary.subtotal|default:0 }}');
-        const discount = parseFloat('{{ cart_summary.discount_amount|default:0 }}');
+        // Read numeric values from DOM to avoid mixing server/rendered formats with client conversions
+        const subtotalEl = document.getElementById('subtotal');
+        const discountEl = document.getElementById('discount');
+        const taxEl = document.getElementById('tax-amount');
+        const shippingEl = document.getElementById('shipping-cost');
+
+        const subtotal = parseFloat(subtotalEl?.dataset?.price) || parseFloat('{{ cart_summary.subtotal|default:0 }}');
+        const discount = parseFloat(discountEl?.dataset?.price) || parseFloat('{{ cart_summary.discount_amount|default:0 }}');
         const taxRate = parseFloat('{{ tax_rate|default:0 }}');
-        
+
         let shipping = 0;
+        let shippingCurrency = shippingEl?.dataset?.currency || (subtotalEl?.dataset?.currency) || null;
         const shippingType = document.getElementById('shipping-type').value;
-        
+
         if (shippingType === 'delivery') {
             const selectedShipping = document.querySelector('input[name="shipping_rate_id"]:checked');
             if (selectedShipping) {
                 shipping = parseFloat(selectedShipping.dataset.price) || 0;
+                // Prefer the selected shipping option's currency if available
+                shippingCurrency = selectedShipping.dataset.currency || shippingCurrency;
             }
         }
-        
+
         const taxableAmount = subtotal - discount;
         const tax = taxRate > 0 ? (taxableAmount * taxRate / 100) : 0;
         const total = taxableAmount + shipping + tax;
-        
-        document.getElementById('order-total').textContent = '{{ currency_symbol }}' + total.toFixed(2);
-        if (document.getElementById('tax-amount')) {
-            document.getElementById('tax-amount').textContent = '{{ currency_symbol }}' + tax.toFixed(2);
+
+        // Use the currency that server provided for subtotal (so we avoid double conversion)
+        const sourceCurrency = subtotalEl?.dataset?.currency || null;
+        document.getElementById('order-total').textContent = Templates.formatPrice(total, sourceCurrency);
+
+        if (taxEl) {
+            taxEl.textContent = Templates.formatPrice(tax, sourceCurrency);
+        }
+
+        // Ensure shipping display remains consistent (e.g., 'Free' or formatted)
+        if (shippingEl) {
+            shippingEl.textContent = shipping === 0 ? 'Free' : Templates.formatPrice(shipping, shippingCurrency || sourceCurrency);
         }
     }
     
@@ -451,7 +460,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnSpinner = document.getElementById('btn-spinner');
     const arrowIcon = document.getElementById('arrow-icon');
     
-    form.addEventListener('submit', function() {
+    form.addEventListener('submit', function(e) {
+        const shippingType = document.getElementById('shipping-type').value;
+        if (shippingType === 'delivery') {
+            const checked = document.querySelector('input[name="shipping_rate_id"]:checked');
+            if (!checked) {
+                e.preventDefault();
+                continueBtn.disabled = false;
+                btnText.textContent = 'Continue to Payment';
+                btnSpinner.classList.add('hidden');
+                arrowIcon.classList.remove('hidden');
+                alert('Please select a shipping method before continuing.');
+                return;
+            }
+        }
+
         continueBtn.disabled = true;
         btnText.textContent = 'Processing...';
         btnSpinner.classList.remove('hidden');

@@ -1,9 +1,10 @@
 (function() {
   'use strict';
 
-  function fmt(val) {
+  function fmt(val, alreadyConverted = false) {
     try {
-      return window.Templates?.formatPrice ? window.Templates.formatPrice(val) : `৳${Number(val || 0).toFixed(2)}`;
+      if (window.Templates?.formatPrice) return window.Templates.formatPrice(val, null, alreadyConverted);
+      return `৳${Number(val || 0).toFixed(2)}`;
     } catch { return `৳${Number(val || 0).toFixed(2)}`; }
   }
   function esc(s) {
@@ -47,8 +48,10 @@
     const items = cart.items || [];
     cartDrawer?.classList.toggle('cart-empty', items.length === 0);
 
+    // Prefer server-formatted subtotal when available (already converted & formatted)
+    const subtotalFormatted = cart.summary?.formatted_subtotal;
     const subtotalVal = cart.summary?.subtotal ?? items.reduce((sum, it) => sum + Number(it.line_total || it.current_price || 0) * Number(it.quantity || 1), 0);
-    if (cartSubtotal) cartSubtotal.textContent = fmt(subtotalVal);
+    if (cartSubtotal) cartSubtotal.textContent = subtotalFormatted ? subtotalFormatted : fmt(subtotalVal, true);
 
     if (items.length === 0) {
       cartContent.innerHTML = `
@@ -62,6 +65,9 @@
       return;
     }
 
+    // Map summary items (if present) for pre-formatted values
+    const summaryItemsMap = (cart.summary && Array.isArray(cart.summary.items)) ? (cart.summary.items.reduce((m, it) => { m[it.id] = it; return m; }, {})) : {};
+
     const itemHtml = items.map(item => {
       const product = item.product || {};
       const variant = item.variant;
@@ -70,6 +76,11 @@
       const unit = Number(item.current_price ?? product.price ?? 0);
       const qty = Number(item.quantity || 1);
       const line = Number(item.line_total ?? unit * qty);
+
+      const summaryItem = summaryItemsMap[item.id];
+      const formattedUnit = summaryItem && summaryItem.formatted_unit_price ? summaryItem.formatted_unit_price : fmt(unit, true);
+      const formattedLine = summaryItem && summaryItem.formatted_total ? summaryItem.formatted_total : fmt(line, true);
+
       return `
         <div class="group relative p-4 border-b border-stone-100 dark:border-stone-800" data-cart-item-id="${item.id}">
           <div class="flex gap-4">
@@ -93,8 +104,8 @@
                   <button class="w-8 h-8 rounded-lg border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800" data-qty-plus="${item.id}">+</button>
                 </div>
                 <div class="text-right">
-                  <div class="text-sm text-stone-600 dark:text-stone-300">${fmt(unit)} each</div>
-                  <div class="font-semibold text-stone-900 dark:text-white" data-line-total="${item.id}">${fmt(line)}</div>
+                  <div class="text-sm text-stone-600 dark:text-stone-300">${formattedUnit} each</div>
+                  <div class="font-semibold text-stone-900 dark:text-white" data-line-total="${item.id}">${formattedLine}</div>
                 </div>
               </div>
             </div>

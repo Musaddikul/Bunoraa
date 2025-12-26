@@ -188,6 +188,8 @@ class ShippingMethod(models.Model):
     name = models.CharField(max_length=100)
     code = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True)
+
+
     
     # Carrier association
     carrier = models.ForeignKey(
@@ -353,7 +355,17 @@ class ShippingRate(models.Model):
     
     def calculate_rate(self, subtotal=Decimal('0'), weight=Decimal('0'), item_count=1):
         """Calculate shipping rate based on type."""
-        # Check free shipping threshold
+        # Check global free shipping settings first
+        try:
+            from .models import ShippingSettings as _SS
+            s = _SS.get_settings()
+            if getattr(s, 'enable_free_shipping', False) and getattr(s, 'free_shipping_threshold', None) is not None:
+                if s.free_shipping_threshold and subtotal >= s.free_shipping_threshold:
+                    return Decimal('0.00')
+        except Exception:
+            pass
+
+        # Check rate-specific free shipping threshold
         if self.free_shipping_threshold and subtotal >= self.free_shipping_threshold:
             return Decimal('0.00')
         

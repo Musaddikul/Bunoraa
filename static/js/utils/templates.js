@@ -7,50 +7,37 @@ const Templates = (function() {
     'use strict';
 
     const cache = new Map();
-    const BASE_CURRENCY = 'BDT'; // Base currency all prices are stored in
-    
-    function getSelectedCurrency() {
-        // Try to get from LocalizationApi first, then Storage, then fallback
-        if (typeof LocalizationApi !== 'undefined' && LocalizationApi.getCurrency) {
-            return LocalizationApi.getCurrency();
-        }
-        if (typeof Storage !== 'undefined' && Storage.get) {
-            const stored = Storage.get('currency');
-            if (stored) {
-                return typeof stored === 'string' ? stored : stored.code;
-            }
-        }
-        return localStorage.getItem('selected_currency') || 'BDT';
-    }
-    
-    function getExchangeRate() {
-        // Get stored exchange rate for the selected currency
-        const stored = localStorage.getItem('currency_rate');
-        if (stored) {
-            try {
-                return parseFloat(stored) || 1;
-            } catch {
-                return 1;
-            }
-        }
-        return 1;
-    }
-    
-    const locale = 'en-BD';
+    // Price formatting now uses server-provided currency metadata (no client-side exchange conversions)
 
-    function formatPrice(amount, currencyCode = null) {
+    /**
+     * Format a price. If sourceCurrency is provided, the function assumes
+     * `amount` is expressed in that currency and will avoid double-converting.
+     * If no sourceCurrency is provided, the amount is treated as server/base currency
+     * and will be converted to the user-selected currency when a stored rate exists.
+     */
+    function formatPrice(amount, sourceCurrency = null) {
         if (amount === null || amount === undefined) return '';
-        
-        const currency = currencyCode || getSelectedCurrency();
-        const rate = currency === BASE_CURRENCY ? 1 : getExchangeRate();
-        const convertedAmount = parseFloat(amount) * rate;
-        
-        return new Intl.NumberFormat(locale, {
-            style: 'currency',
-            currency: currency,
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2
-        }).format(convertedAmount);
+
+        // Use server-provided currency metadata only
+        const baseMeta = (window.BUNORAA_CURRENCY && typeof window.BUNORAA_CURRENCY === 'object') ? window.BUNORAA_CURRENCY : { code: 'BDT', symbol: '৳', locale: 'en-BD', decimal_places: 2 };
+        const targetCode = baseMeta.code || 'BDT';
+        const targetLocale = baseMeta.locale || 'en-US';
+        const targetDecimals = (typeof baseMeta.decimal_places === 'number') ? baseMeta.decimal_places : 2;
+
+        let value = Number(amount);
+        if (Number.isNaN(value)) return '';
+
+        try {
+            return new Intl.NumberFormat(targetLocale, {
+                style: 'currency',
+                currency: targetCode,
+                minimumFractionDigits: targetDecimals,
+                maximumFractionDigits: targetDecimals
+            }).format(value);
+        } catch (e) {
+            const symbol = baseMeta.symbol || '৳';
+            return symbol + Number(value).toFixed(targetDecimals);
+        }
     }
 
     function formatDate(date, options = {}) {

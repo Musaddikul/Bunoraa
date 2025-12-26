@@ -135,6 +135,7 @@ class CheckoutMixin:
             db_gateways = PaymentGateway.get_active_gateways(currency=currency_code)
             
             if db_gateways:
+                logger.debug('Found %d payment gateways in DB for currency %s', len(db_gateways), currency_code)
                 gateways = []
                 for g in db_gateways:
                     gateways.append({
@@ -149,81 +150,19 @@ class CheckoutMixin:
                         'enabled': True,
                         'color': g.color,
                         'instructions': g.instructions,
+                        # Expose publishable key for client-side integrations (Stripe)
+                        'public_key': (g.api_key if g.code == g.CODE_STRIPE else None),
+                        'requires_client': g.code == g.CODE_STRIPE,
                     })
                 return gateways
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.exception('Error while loading payment gateways from DB: %s', exc)
         
-        # Fallback to hardcoded defaults
-        gateways = [
-            {
-                'code': CheckoutSession.PAYMENT_STRIPE,
-                'name': 'Credit/Debit Card',
-                'description': 'Visa, Mastercard, American Express',
-                'icon': 'card',
-                'icon_url': '/static/images/payments/card.svg',
-                'brand_icons': [
-                    '/static/images/payments/visa.svg',
-                    '/static/images/payments/mastercard.svg',
-                    '/static/images/payments/amex.svg',
-                ],
-                'fee': None,
-                'fee_text': 'No extra fee',
-                'enabled': True,
-                'color': 'blue',
-            },
-            {
-                'code': CheckoutSession.PAYMENT_BKASH,
-                'name': 'bKash',
-                'description': 'Pay with your bKash wallet',
-                'icon': 'bkash',
-                'icon_url': '/static/images/payments/bkash.svg',
-                'brand_icons': [],
-                'fee': None,
-                'fee_text': 'No extra fee',
-                'enabled': currency == 'BDT',
-                'color': 'pink',
-            },
-            {
-                'code': CheckoutSession.PAYMENT_NAGAD,
-                'name': 'Nagad',
-                'description': 'Pay with your Nagad wallet',
-                'icon': 'nagad',
-                'icon_url': '/static/images/payments/nagad.svg',
-                'brand_icons': [],
-                'fee': None,
-                'fee_text': 'No extra fee',
-                'enabled': currency == 'BDT',
-                'color': 'orange',
-            },
-            {
-                'code': CheckoutSession.PAYMENT_COD,
-                'name': 'Cash on Delivery',
-                'description': 'Pay when you receive your order',
-                'icon': 'cash',
-                'icon_url': '/static/images/payments/cod.svg',
-                'brand_icons': [],
-                'fee': 20 if currency == 'BDT' else 0,
-                'fee_text': '৳20 fee' if currency == 'BDT' else None,
-                'enabled': True,
-                'color': 'green',
-            },
-            {
-                'code': CheckoutSession.PAYMENT_BANK,
-                'name': 'Bank Transfer',
-                'description': 'Direct bank transfer',
-                'icon': 'bank',
-                'icon_url': '/static/images/payments/bank.svg',
-                'brand_icons': [],
-                'fee': None,
-                'fee_text': 'No extra fee',
-                'enabled': True,
-                'color': 'gray',
-            },
-        ]
-        
-        # Return only enabled gateways
-        return [g for g in gateways if g['enabled']]
+        # If no gateways are configured in the DB, return an empty list.
+        # We intentionally avoid placeholder/hardcoded gateways so production
+        # uses only admin-configured payment providers.
+        logger.warning('No payment gateways configured in DB for currency %s; not using placeholder defaults', currency_code)
+        return []
     
     def get_common_context(self, checkout_session):
         """Get common context for all checkout steps."""
@@ -234,6 +173,12 @@ class CheckoutMixin:
         )
         currency_symbol = currency.symbol if currency else '৳'
         currency_code = currency.code if currency else 'BDT'
+        currency_decimal_places = currency.decimal_places if currency else 2
+        currency_thousand_separator = currency.thousand_separator if currency else ','
+        currency_decimal_separator = currency.decimal_separator if currency else '.'
+        currency_symbol_position = currency.symbol_position if currency else 'before'
+        # Heuristic locale mapping (keeps simple defaults; can be extended later)
+        currency_locale = 'en-BD' if currency and getattr(currency, 'code', '') == 'BDT' else 'en-US'
         
         # Get site settings for tax
         site_settings = self.get_site_settings()
@@ -242,16 +187,31 @@ class CheckoutMixin:
         # Get payment gateways
         payment_gateways = self.get_payment_gateways()
         
+        # Prefer gateway-provided stripe publishable key if available
+        stripe_pub = getattr(settings, 'STRIPE_PUBLISHABLE_KEY', '')
+        try:
+            for g in payment_gateways:
+                if g.get('code') == 'stripe' and g.get('public_key'):
+                    stripe_pub = g.get('public_key')
+                    break
+        except Exception:
+            pass
+
         # Build context with country names
         context = {
             'SITE_NAME': getattr(settings, 'SITE_NAME', 'Bunoraa'),
             'checkout_session': checkout_session,
             'checkout': checkout_session,  # Alias for templates
             'cart': checkout_session.cart if checkout_session else None,
-            'stripe_publishable_key': getattr(settings, 'STRIPE_PUBLISHABLE_KEY', ''),
+            'stripe_publishable_key': stripe_pub,
             'currency': currency,
             'currency_symbol': currency_symbol,
             'currency_code': currency_code,
+            'currency_locale': currency_locale,
+            'currency_decimal_places': currency_decimal_places,
+            'currency_thousand_separator': currency_thousand_separator,
+            'currency_decimal_separator': currency_decimal_separator,
+            'currency_symbol_position': currency_symbol_position,
             'tax_rate': tax_rate,
             'payment_gateways': payment_gateways,
             'countries': self._get_countries(),
@@ -266,8 +226,33 @@ class CheckoutMixin:
         # Add country name for shipping if available
         if checkout_session and checkout_session.shipping_country:
             context['shipping_country_name'] = self.get_country_name(checkout_session.shipping_country)
+            # Resolve a 2-letter ISO country code if possible for client-side filtering
+            try:
+                sc = checkout_session.shipping_country
+                if isinstance(sc, str) and len(sc) == 2 and sc.isalpha():
+                    context['shipping_country_code'] = sc.upper()
+                else:
+                    # Try to match against available countries by name
+                    for c in context.get('countries', []):
+                        if c.get('name') and c.get('name').lower() == str(sc).lower():
+                            context['shipping_country_code'] = c.get('code')
+                            break
+            except Exception:
+                context['shipping_country_code'] = None
+
         if checkout_session and checkout_session.billing_country:
             context['billing_country_name'] = self.get_country_name(checkout_session.billing_country)
+            try:
+                bc = checkout_session.billing_country
+                if isinstance(bc, str) and len(bc) == 2 and bc.isalpha():
+                    context['billing_country_code'] = bc.upper()
+                else:
+                    for c in context.get('countries', []):
+                        if c.get('name') and c.get('name').lower() == str(bc).lower():
+                            context['billing_country_code'] = c.get('code')
+                            break
+            except Exception:
+                context['billing_country_code'] = None
             
         return context
     
@@ -331,13 +316,32 @@ class InformationView(CheckoutMixin, View):
         
         checkout_session = self.get_checkout_session(cart)
         
+        from apps.currencies.services import CurrencyService
+        target_currency = CurrencyService.get_user_currency(user=request.user if request.user.is_authenticated else None, request=request)
+
         context = self.get_common_context(checkout_session)
         context.update({
             'page_title': 'Contact Information',
             'current_step': 'information',
-            'cart_summary': CartService.get_cart_summary(cart),
+            'cart_summary': CartService.get_cart_summary(cart, currency=target_currency),
             'cart_items': cart.items.select_related('product', 'variant').all() if cart else [],
         })
+
+        # Precompute formatted gift wrap amount for templates (read from CartSettings)
+        try:
+            from apps.cart.models import CartSettings
+            s = CartSettings.get_settings()
+            if getattr(s, 'gift_wrap_enabled', False) and getattr(s, 'gift_wrap_amount', None) is not None:
+                fee = s.gift_wrap_amount
+            else:
+                fee = None
+            if fee is not None and fee > 0:
+                context['formatted_gift_wrap'] = target_currency.format_amount(fee) if target_currency else f"{context.get('currency_symbol','৳')}{fee:,.2f}"
+            else:
+                context['formatted_gift_wrap'] = ''
+        except Exception:
+            context['formatted_gift_wrap'] = ''
+
         
         # Get saved addresses for authenticated users
         if request.user.is_authenticated:
@@ -439,14 +443,68 @@ class InformationView(CheckoutMixin, View):
         missing = [f for f in required if not data.get(f)]
         
         if missing:
+            logger.warning('Missing required fields in InformationView POST: %s, checkout_session=%s', missing, getattr(checkout_session, 'id', None))
             for field in missing:
                 messages.error(request, f'{field.replace("_", " ").title()} is required.')
+
+            # Persist user-entered values so the form is not cleared on redirect
+            try:
+                checkout_session.email = data.get('email', checkout_session.email)
+                checkout_session.shipping_email = data.get('email', checkout_session.shipping_email)
+                checkout_session.shipping_first_name = data.get('first_name', checkout_session.shipping_first_name)
+                checkout_session.shipping_last_name = data.get('last_name', checkout_session.shipping_last_name)
+                checkout_session.shipping_phone = data.get('phone', checkout_session.shipping_phone)
+                checkout_session.shipping_address_line_1 = data.get('address_line_1', checkout_session.shipping_address_line_1)
+                checkout_session.shipping_address_line_2 = data.get('address_line_2', checkout_session.shipping_address_line_2)
+                checkout_session.shipping_city = data.get('city', checkout_session.shipping_city)
+                checkout_session.shipping_state = data.get('state', checkout_session.shipping_state)
+                checkout_session.shipping_postal_code = data.get('postal_code', checkout_session.shipping_postal_code)
+                checkout_session.shipping_country = data.get('country', checkout_session.shipping_country)
+                # Gift options / order notes if present
+                if 'is_gift' in data:
+                    checkout_session.is_gift = data.get('is_gift')
+                if 'gift_message' in data:
+                    checkout_session.gift_message = data.get('gift_message')
+                if 'gift_wrap' in data:
+                    checkout_session.gift_wrap = data.get('gift_wrap')
+                if 'order_notes' in data:
+                    checkout_session.order_notes = data.get('order_notes')
+                checkout_session.save()
+            except Exception:
+                logger.exception('Failed to persist form values for checkout %s', getattr(checkout_session, 'id', None))
+
             return redirect('checkout:information')
         
         try:
             CheckoutService.update_contact_information(checkout_session, data)
             return redirect('checkout:shipping')
         except CheckoutError as e:
+            # Persist values when update fails and show message
+            try:
+                checkout_session.email = data.get('email', checkout_session.email)
+                checkout_session.shipping_email = data.get('email', checkout_session.shipping_email)
+                checkout_session.shipping_first_name = data.get('first_name', checkout_session.shipping_first_name)
+                checkout_session.shipping_last_name = data.get('last_name', checkout_session.shipping_last_name)
+                checkout_session.shipping_phone = data.get('phone', checkout_session.shipping_phone)
+                checkout_session.shipping_address_line_1 = data.get('address_line_1', checkout_session.shipping_address_line_1)
+                checkout_session.shipping_address_line_2 = data.get('address_line_2', checkout_session.shipping_address_line_2)
+                checkout_session.shipping_city = data.get('city', checkout_session.shipping_city)
+                checkout_session.shipping_state = data.get('state', checkout_session.shipping_state)
+                checkout_session.shipping_postal_code = data.get('postal_code', checkout_session.shipping_postal_code)
+                checkout_session.shipping_country = data.get('country', checkout_session.shipping_country)
+                if 'is_gift' in data:
+                    checkout_session.is_gift = data.get('is_gift')
+                if 'gift_message' in data:
+                    checkout_session.gift_message = data.get('gift_message')
+                if 'gift_wrap' in data:
+                    checkout_session.gift_wrap = data.get('gift_wrap')
+                if 'order_notes' in data:
+                    checkout_session.order_notes = data.get('order_notes')
+                checkout_session.save()
+            except Exception:
+                logger.exception('Failed to persist form values after update_contact_information error for checkout %s', getattr(checkout_session, 'id', None))
+
+            logger.exception('Failed to update contact information for checkout %s: %s', getattr(checkout_session, 'id', None), e)
             messages.error(request, str(e))
             return redirect('checkout:information')
 
@@ -463,11 +521,15 @@ class ShippingView(CheckoutMixin, View):
             messages.warning(request, 'Please complete your information first.')
             return redirect('checkout:information')
         
+        from apps.currencies.services import CurrencyService
+        target_currency = CurrencyService.get_user_currency(user=request.user if request.user.is_authenticated else None, request=request)
+
         context = self.get_common_context(checkout_session)
         context.update({
             'page_title': 'Shipping Method',
             'current_step': 'shipping',
-            'cart_summary': CartService.get_cart_summary(cart),
+            'cart_summary': CartService.get_cart_summary(cart, currency=target_currency),
+            'checkout_summary': CheckoutService.get_checkout_summary(checkout_session),
             'cart_items': cart.items.select_related('product', 'variant').all() if cart else [],
             'shipping_options': CheckoutService.get_shipping_options(checkout_session),
             'pickup_locations': CheckoutService.get_pickup_locations(),
@@ -485,7 +547,8 @@ class ShippingView(CheckoutMixin, View):
         shipping_method = request.POST.get('shipping_method', CheckoutSession.SHIPPING_STANDARD)
         shipping_rate_id = request.POST.get('shipping_rate_id')
         pickup_location_id = request.POST.get('pickup_location_id')
-        
+
+        logger.info('ShippingView POST - Inputs: shipping_method=%s, shipping_rate_id=%s, pickup_location_id=%s, checkout=%s', shipping_method, shipping_rate_id, pickup_location_id, getattr(checkout_session, 'id', None))
         try:
             CheckoutService.set_shipping_method(
                 checkout_session,
@@ -503,6 +566,28 @@ class ShippingView(CheckoutMixin, View):
             return redirect('checkout:payment')
         
         except CheckoutError as e:
+            # Persist user inputs so form is not reset
+            try:
+                checkout_session.shipping_method = shipping_method or checkout_session.shipping_method
+                # Save selected rate if valid
+                if shipping_rate_id:
+                    from apps.shipping.models import ShippingRate
+                    rate = ShippingRate.objects.filter(id=shipping_rate_id).first()
+                    if rate:
+                        checkout_session.shipping_rate = rate
+                # Save pickup location selection if provided
+                if pickup_location_id:
+                    from apps.contacts.models import StoreLocation
+                    loc = StoreLocation.objects.filter(id=pickup_location_id, is_active=True).first()
+                    if loc:
+                        checkout_session.pickup_location = loc
+                checkout_session.order_notes = request.POST.get('order_notes', checkout_session.order_notes)
+                checkout_session.delivery_instructions = request.POST.get('delivery_instructions', checkout_session.delivery_instructions)
+                checkout_session.save()
+            except Exception:
+                logger.exception('Failed to persist shipping form values for checkout %s', getattr(checkout_session, 'id', None))
+
+            logger.exception('Failed to set shipping method for checkout %s: %s', getattr(checkout_session, 'id', None), e)
             messages.error(request, str(e))
             return redirect('checkout:shipping')
 
@@ -630,6 +715,24 @@ class PaymentView(CheckoutMixin, View):
             return redirect('checkout:review')
         
         except CheckoutError as e:
+            # Persist billing and selection so user doesn't lose data
+            try:
+                checkout_session.billing_same_as_shipping = billing_same
+                if not billing_same:
+                    checkout_session.billing_first_name = billing_data.get('first_name', checkout_session.billing_first_name)
+                    checkout_session.billing_last_name = billing_data.get('last_name', checkout_session.billing_last_name)
+                    checkout_session.billing_address_line_1 = billing_data.get('address_line_1', checkout_session.billing_address_line_1)
+                    checkout_session.billing_address_line_2 = billing_data.get('address_line_2', checkout_session.billing_address_line_2)
+                    checkout_session.billing_city = billing_data.get('city', checkout_session.billing_city)
+                    checkout_session.billing_state = billing_data.get('state', checkout_session.billing_state)
+                    checkout_session.billing_postal_code = billing_data.get('postal_code', checkout_session.billing_postal_code)
+                    checkout_session.billing_country = billing_data.get('country', checkout_session.billing_country)
+                # Save selected payment choice so form remains filled
+                checkout_session.payment_method = payment_method or checkout_session.payment_method
+                checkout_session.save()
+            except Exception:
+                logger.exception('Failed to persist payment form values for checkout %s', getattr(checkout_session, 'id', None))
+
             logger.error(f"PaymentView POST - Error: {e}")
             messages.error(request, str(e))
             return redirect('checkout:payment')
@@ -672,12 +775,16 @@ class ReviewView(CheckoutMixin, View):
         # Mark review step
         CheckoutService.proceed_to_review(checkout_session)
         
+        from apps.currencies.services import CurrencyService
+        target_currency = CurrencyService.get_user_currency(user=request.user if request.user.is_authenticated else None, request=request)
+
         context = self.get_common_context(checkout_session)
         context.update({
             'page_title': 'Review Order',
             'current_step': 'review',
             'checkout_summary': CheckoutService.get_checkout_summary(checkout_session),
             'cart_items': cart.items.select_related('product', 'variant').all(),
+            'cart_summary': CartService.get_cart_summary(cart, currency=target_currency),
         })
         
         return render(request, self.template_name, context)

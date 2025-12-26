@@ -158,10 +158,14 @@ const ApiClient = (function() {
             return pendingRequests.get(cacheKey);
         }
 
+        // Use server-configured currency code for requests (remove localStorage-based client preference)
+        const selectedCurrencyHeader = (window.BUNORAA_CURRENCY && window.BUNORAA_CURRENCY.code) || null;
+
         const requestHeaders = {
             'Content-Type': 'application/json',
             'X-CSRFToken': getCsrfToken(),
             'X-Requested-With': 'XMLHttpRequest',
+            ...(selectedCurrencyHeader ? { 'X-User-Currency': selectedCurrencyHeader } : {}),
             ...headers
         };
 

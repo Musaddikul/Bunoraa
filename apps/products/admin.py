@@ -4,10 +4,32 @@ Product admin configuration
 from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
+from django import forms
 from .models import (
     Product, ProductImage, ProductVariant, ProductAttribute,
     Tag, Attribute, AttributeValue
 )
+
+
+class CategoryTreeSelectMultiple(forms.SelectMultiple):
+    """SelectMultiple widget that adds data attributes to options for building a tree in JS."""
+    def __init__(self, category_lookup=None, *args, **kwargs):
+        self.category_lookup = category_lookup or {}
+        super().__init__(*args, **kwargs)
+
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(name, value, label, selected, index, subindex=subindex, attrs=attrs)
+        try:
+            key = str(value)
+            cat = self.category_lookup.get(key)
+            if cat:
+                option_attrs = option.setdefault('attrs', {})
+                option_attrs['data-level'] = str(getattr(cat, 'level', 0))
+                option_attrs['data-id'] = str(cat.id)
+                option_attrs['data-parent'] = str(cat.parent_id) if getattr(cat, 'parent_id', None) else ''
+        except Exception:
+            pass
+        return option
 
 
 class ProductImageInline(admin.TabularInline):
@@ -59,13 +81,17 @@ class ProductAdmin(admin.ModelAdmin):
     """Product admin."""
 
     class Media:
+        css = {
+            'all': ('css/admin/category_tree.css',)
+        }
         js = (
             'js/admin/image_preview.js',
             'js/admin/attribute_inline.js',
+            'js/admin/category_tree.js',
         )
     
     list_display = [
-        'name', 'sku', 'price', 'sale_price', 'stock_quantity',
+        'name', 'sku', 'price', 'sale_price', 'currency', 'stock_quantity',
         'is_active', 'is_featured', 'sold_count', 'created_at'
     ]
     list_filter = [
@@ -77,18 +103,59 @@ class ProductAdmin(admin.ModelAdmin):
     filter_horizontal = ['tags', 'related_products']
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
-        """Use a simple dropdown (SelectMultiple) for categories and add related links.
+        """Render categories as a collapsible checkbox tree.
 
-        This replaces the search/raw id behavior with a selectable multi-option box
-        while preserving add/change/view links via RelatedFieldWidgetWrapper.
+        We create a ModelMultipleChoiceField and attach a widget that adds data attributes
+        so the frontend JS can build a collapsible directory-like tree. The widget is
+        wrapped with RelatedFieldWidgetWrapper to keep add/change/view links.
         """
-        from django import forms
         formfield = super().formfield_for_manytomany(db_field, request, **kwargs)
         try:
             from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
-            if db_field.name == 'categories' and formfield is not None:
-                # Use a simple SelectMultiple for dropdown-like behavior
-                formfield.widget = forms.SelectMultiple(attrs={'size': 8})
+            if db_field.name == 'categories':
+                try:
+                    from apps.categories.models import Category
+
+                    queryset = Category.objects.filter(is_active=True, is_deleted=False).order_by('path', 'order', 'name')
+                    cats = {str(c.id): c for c in queryset}
+
+                    class CategoryModelMultipleChoiceField(forms.ModelMultipleChoiceField):
+                        def label_from_instance(self, obj):
+                            # Keep plain name; tree UI will handle indentation
+                            return obj.name
+
+                    formfield = CategoryModelMultipleChoiceField(queryset=queryset, required=not db_field.blank)
+                    formfield.widget = CategoryTreeSelectMultiple(category_lookup=cats, attrs={'size': 12, 'style': 'font-family: monospace;'})
+                except Exception:
+                    # Fallback to default on error
+                    pass
+
+                # Wrap widget to preserve related-object add/change/view links
+                rel = db_field.remote_field
+                can_add = self.has_add_permission(request)
+                can_change = self.has_change_permission(request)
+                can_view = getattr(self, 'has_view_permission', lambda req, obj=None: True)(request, None)
+
+                formfield.widget = RelatedFieldWidgetWrapper(
+                    formfield.widget, rel, self.admin_site,
+                    can_add_related=can_add,
+                    can_change_related=can_change,
+                    can_view_related=can_view
+                )
+        except Exception:
+            pass
+        return formfield
+    readonly_fields = ['view_count', 'sold_count', 'created_at', 'updated_at']
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """Use a simple dropdown Select widget for currency instead of raw id lookup."""
+        from django import forms
+        formfield = super().formfield_for_foreignkey(db_field, request, **kwargs)
+        try:
+            from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
+            if db_field.name == 'currency' and formfield is not None:
+                # Use a plain Select widget and wrap it to preserve add/change/view links
+                formfield.widget = forms.Select()
 
                 rel = db_field.remote_field
                 can_add = self.has_add_permission(request)
@@ -102,15 +169,15 @@ class ProductAdmin(admin.ModelAdmin):
                     can_view_related=can_view
                 )
         except Exception:
-            # If anything goes wrong, fallback to default widget
+            # Fallback to default widget on error
             pass
         return formfield
-    readonly_fields = ['view_count', 'sold_count', 'created_at', 'updated_at']
+
     inlines = [ProductImageInline, ProductVariantInline, ProductAttributeInline]
     
     fieldsets = (
         (None, {'fields': ('name', 'slug', 'sku', 'description', 'short_description')}),
-        ('Pricing', {'fields': ('price', 'sale_price', 'cost_price')}),
+        ('Pricing', {'fields': ('price', 'sale_price', 'cost_price', 'currency')}),
         ('Inventory', {
             'fields': ('stock_quantity', 'low_stock_threshold', 'track_inventory', 'allow_backorder')
         }),

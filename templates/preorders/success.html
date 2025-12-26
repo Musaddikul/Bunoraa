@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static currency_tags %}
 
 {% block title %}Order Submitted Successfully | {{ SITE_NAME }}{% endblock %}
 
@@ -48,7 +48,7 @@
                     </div>
                     <div>
                         <p class="text-sm text-gray-500 dark:text-gray-400">Estimated Price</p>
-                        <p class="text-lg font-semibold text-gray-900 dark:text-white">৳{{ preorder.estimated_total }}</p>
+                        <p class="text-lg font-semibold text-gray-900 dark:text-white">{% format_price preorder.estimated_total %}</p>
                     </div>
                 </div>
             </div>

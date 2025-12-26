@@ -33,7 +33,7 @@ const App = (function() {
         initGlobalEventListeners();
         initMobileMenu();
         initLanguageSelector();
-        initCurrencySelector();
+        // Currency selector disabled in single-currency mode
     }
     async function initWishlistBadge() {
         // Update wishlist badge on page load
@@ -358,27 +358,7 @@ const App = (function() {
     }
 
     function initCurrencySelector() {
-        const currencyBtn = document.querySelector('[data-currency-selector]');
-        const currencyDropdown = document.getElementById('currency-dropdown');
-
-        if (currencyBtn && currencyDropdown) {
-            Dropdown.create(currencyBtn, currencyDropdown);
-
-            currencyDropdown.querySelectorAll('[data-currency]').forEach(item => {
-                item.addEventListener('click', async () => {
-                    const currency = item.dataset.currency;
-                    const symbol = item.dataset.symbol;
-                    
-                    try {
-                        await LocalizationApi.setCurrency(currency);
-                        Storage.set('currency', { code: currency, symbol });
-                        window.location.reload();
-                    } catch (error) {
-                        Toast.error('Failed to change currency.');
-                    }
-                });
-            });
-        }
+        // Currency selector disabled in single-currency mode.
     }
 
     function destroy() {

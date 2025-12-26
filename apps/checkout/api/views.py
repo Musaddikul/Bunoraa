@@ -149,14 +149,19 @@ class CheckoutViewSet(viewsets.ViewSet):
         except Exception:
             gateways = []
         
-        # Get site settings
+        # Get site and shipping settings
         try:
             from apps.pages.models import SiteSettings
             site_settings = SiteSettings.get_settings()
             tax_rate = float(site_settings.tax_rate) if site_settings else 0
-            free_shipping_threshold = float(site_settings.free_shipping_threshold) if site_settings and site_settings.free_shipping_threshold else None
         except Exception:
             tax_rate = 0
+
+        try:
+            from apps.shipping.models import ShippingSettings
+            shipping_settings = ShippingSettings.get_settings()
+            free_shipping_threshold = float(shipping_settings.free_shipping_threshold) if shipping_settings and shipping_settings.free_shipping_threshold else None
+        except Exception:
             free_shipping_threshold = None
         
         # Get divisions for Bangladesh (cascading dropdowns)

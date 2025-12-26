@@ -5,24 +5,16 @@
 {% block title %}Payment - Checkout - {{ SITE_NAME }}{% endblock %}
 
 {% block extra_head %}
-<script src="https://js.stripe.com/v3/"></script>
+{% for g in payment_gateways %}
+    {% if g.code == 'stripe' %}
+        <script src="https://js.stripe.com/v3/"></script>
+    {% endif %}
+{% endfor %}
 {% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <div class="container mx-auto px-4 py-8">
-        <!-- Breadcrumb -->
-        <nav class="mb-6 text-sm">
-            <ol class="flex items-center space-x-2">
-                <li><a href="{% url 'cart:cart' %}" class="text-gray-500 hover:text-primary-600 dark:text-gray-400">Cart</a></li>
-                <li><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></li>
-                <li><a href="{% url 'checkout:information' %}" class="text-gray-500 hover:text-primary-600 dark:text-gray-400">Information</a></li>
-                <li><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></li>
-                <li><a href="{% url 'checkout:shipping' %}" class="text-gray-500 hover:text-primary-600 dark:text-gray-400">Shipping</a></li>
-                <li><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></li>
-                <li class="font-medium text-gray-900 dark:text-white">Payment</li>
-            </ol>
-        </nav>
         
         <!-- Progress Steps -->
         <div class="mb-8">
@@ -89,8 +81,7 @@
                             <div class="flex items-center">
                                 <span class="text-sm text-gray-500 dark:text-gray-400 w-20">Method</span>
                                 <span class="text-sm text-gray-900 dark:text-white">
-                                    {{ checkout.get_shipping_method_display }} · 
-                                    {% if checkout.shipping_cost == 0 %}Free{% else %}{{ currency_symbol }}{{ checkout.shipping_cost }}{% endif %}
+                                    {{ checkout.get_shipping_method_display }} · {{ checkout_summary.formatted_shipping }}
                                 </span>
                             </div>
                             <a href="{% url 'checkout:shipping' %}" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Change</a>
@@ -112,64 +103,78 @@
                         
                         <!-- Payment Method Tabs - Dynamic from Backend -->
                         <div id="payment-methods-container" class="space-y-3 mb-6">
-                            {% for gateway in payment_gateways %}
-                            <div class="relative payment-option transform transition-all duration-300 hover:scale-[1.01]" 
-                                 data-gateway="{{ gateway.code }}" style="animation: slideIn 0.3s ease-out {{ forloop.counter0 }}00ms both;">
-                                <input type="radio" name="payment_method" value="{{ gateway.code }}" 
-                                       id="payment-{{ gateway.code }}"
-                                       class="peer sr-only" 
-                                       {% if checkout.payment_method == gateway.code %}checked{% elif forloop.first and not checkout.payment_method %}checked{% endif %}>
-                                <label for="payment-{{ gateway.code }}" 
-                                       class="flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all duration-300 
-                                              peer-checked:border-primary-600 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 
-                                              peer-checked:shadow-lg peer-checked:shadow-primary-500/20
-                                              hover:border-gray-400 dark:hover:border-gray-500 border-gray-200 dark:border-gray-700
-                                              hover:shadow-md">
-                                    <div class="flex items-center">
-                                        <div class="w-12 h-12 rounded-full bg-{{ gateway.color }}-100 dark:bg-{{ gateway.color }}-900/30 flex items-center justify-center mr-4 transition-transform duration-300 peer-checked:scale-110">
-                                            {% if gateway.code == 'stripe' %}
-                                            <svg class="w-6 h-6 text-{{ gateway.color }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-                                            </svg>
-                                            {% elif gateway.code == 'bkash' %}
-                                            <span class="text-{{ gateway.color }}-600 font-bold text-sm">bK</span>
-                                            {% elif gateway.code == 'nagad' %}
-                                            <span class="text-{{ gateway.color }}-600 font-bold text-sm">N</span>
-                                            {% elif gateway.code == 'cod' %}
-                                            <svg class="w-6 h-6 text-{{ gateway.color }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                            </svg>
-                                            {% elif gateway.code == 'bank_transfer' %}
-                                            <svg class="w-6 h-6 text-{{ gateway.color }}-600 dark:text-{{ gateway.color }}-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                                            </svg>
+                            {% if payment_gateways %}
+                                {% for gateway in payment_gateways %}
+                                <div class="relative payment-option transform transition-all duration-300 hover:scale-[1.01]" 
+                                     data-gateway="{{ gateway.code }}" style="animation: slideIn 0.3s ease-out both; animation-delay: {{ forloop.counter0 }}00ms;">
+                                    <input type="radio" name="payment_method" value="{{ gateway.code }}" 
+                                           id="payment-{{ gateway.code }}"
+                                           class="peer sr-only" 
+                                           {% if checkout.payment_method == gateway.code %}checked{% elif forloop.first and not checkout.payment_method %}checked{% endif %}>
+                                    <label for="payment-{{ gateway.code }}" 
+                                           class="flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all duration-300 
+                                                  peer-checked:border-primary-600 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 
+                                                  peer-checked:shadow-lg peer-checked:shadow-primary-500/20
+                                                  hover:border-gray-400 dark:hover:border-gray-500 border-gray-200 dark:border-gray-700
+                                                  hover:shadow-md">
+                                        <div class="flex items-center">
+                                            <div class="w-12 h-12 rounded-full bg-{{ gateway.color }}-100 dark:bg-{{ gateway.color }}-900/30 flex items-center justify-center mr-4 transition-transform duration-300 peer-checked:scale-110">
+                                                {% if gateway.code == 'stripe' %}
+                                                <svg class="w-6 h-6 text-{{ gateway.color }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                                </svg>
+                                                {% elif gateway.code == 'bkash' %}
+                                                <span class="text-{{ gateway.color }}-600 font-bold text-sm">bK</span>
+                                                {% elif gateway.code == 'nagad' %}
+                                                <span class="text-{{ gateway.color }}-600 font-bold text-sm">N</span>
+                                                {% elif gateway.code == 'cod' %}
+                                                <svg class="w-6 h-6 text-{{ gateway.color }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                                </svg>
+                                                {% elif gateway.code == 'bank_transfer' %}
+                                                <svg class="w-6 h-6 text-{{ gateway.color }}-600 dark:text-{{ gateway.color }}-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                                </svg>
+                                                {% endif %}
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-gray-900 dark:text-white">{{ gateway.name }}</p>
+                                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ gateway.description }}</p>
+                                                {% if gateway.fee_text %}
+                                                <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">{{ gateway.fee_text }}</p>
+                                                {% endif %}
+                                                {% if gateway.instructions %}
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">{{ gateway.instructions|safe }}</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            {% for icon in gateway.brand_icons %}
+                                            <img src="{{ icon }}" alt="" class="h-6 transition-opacity duration-300" onerror="this.style.display='none'">
+                                            {% endfor %}
+                                            {% if gateway.icon_url %}
+                                            <img src="{{ gateway.icon_url }}" alt="{{ gateway.name }}" class="h-8 transition-opacity duration-300" onerror="this.style.display='none'">
                                             {% endif %}
                                         </div>
-                                        <div>
-                                            <p class="font-medium text-gray-900 dark:text-white">{{ gateway.name }}</p>
-                                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ gateway.description }}</p>
-                                            {% if gateway.fee_text %}
-                                            <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">{{ gateway.fee_text }}</p>
-                                            {% endif %}
-                                        </div>
+                                    </label>
+                                    <!-- Selection indicator -->
+                                    <div class="absolute top-4 right-4 opacity-0 peer-checked:opacity-100 transition-opacity duration-300">
+                                        <svg class="w-6 h-6 text-primary-600" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                        </svg>
                                     </div>
-                                    <div class="flex items-center space-x-2">
-                                        {% for icon in gateway.brand_icons %}
-                                        <img src="{{ icon }}" alt="" class="h-6 transition-opacity duration-300" onerror="this.style.display='none'">
-                                        {% endfor %}
-                                        {% if gateway.icon_url %}
-                                        <img src="{{ gateway.icon_url }}" alt="{{ gateway.name }}" class="h-8 transition-opacity duration-300" onerror="this.style.display='none'">
-                                        {% endif %}
-                                    </div>
-                                </label>
-                                <!-- Selection indicator -->
-                                <div class="absolute top-4 right-4 opacity-0 peer-checked:opacity-100 transition-opacity duration-300">
-                                    <svg class="w-6 h-6 text-primary-600" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                                    </svg>
                                 </div>
-                            </div>
-                            {% endfor %}
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl">
+                                    <svg class="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                                    </svg>
+                                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No payment methods are configured</h3>
+                                    <p class="text-gray-500 dark:text-gray-400 mb-2">We don't have any payment providers configured for your currency or location. Please contact support to enable online payments.</p>
+                                    <p class="text-sm text-gray-400">You can still place an order if Cash on Delivery or Bank Transfer is available from admin.</p>
+                                </div>
+                            {% endif %}
                         </div>
                         
                         <!-- Credit Card Form (Stripe) -->
@@ -334,8 +339,9 @@
                                 Return to Shipping
                             </a>
                             <button type="submit" id="submit-button" 
-                                    class="inline-flex items-center bg-primary-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-lg shadow-primary-600/25 disabled:opacity-50 disabled:cursor-not-allowed">
-                                <span id="button-text">Continue to Review</span>
+                                    class="inline-flex items-center bg-primary-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-lg shadow-primary-600/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    {% if not payment_gateways %}disabled{% endif %}>
+                                <span id="button-text">{% if not payment_gateways %}No payment methods available{% else %}Continue to Review{% endif %}</span>
                                 <span id="spinner" class="hidden ml-2">
                                     <svg class="animate-spin w-5 h-5" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
@@ -367,25 +373,25 @@
                         <span class="text-sm font-normal text-gray-500 dark:text-gray-400">{{ cart_items|length }} items</span>
                     </h2>
                     
-                    <!-- Cart Items -->
+                    <!-- Cart Items (use converted checkout summary items) -->
                     <div class="space-y-4 max-h-64 overflow-y-auto scrollbar-thin pr-2">
-                        {% for item in cart_items %}
+                        {% for it in checkout_summary.items %}
                         <div class="flex items-center space-x-4">
                             <div class="relative flex-shrink-0">
-                                <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.jpg' }}" 
-                                     alt="{{ item.product.name }}"
+                                <img src="{{ it.image|default:'/static/images/placeholder.jpg' }}" 
+                                     alt="{{ it.product_name }}"
                                      class="w-16 h-16 object-cover rounded-lg">
                                 <span class="absolute -top-2 -right-2 w-5 h-5 bg-gray-600 text-white text-xs rounded-full flex items-center justify-center font-medium">
-                                    {{ item.quantity }}
+                                    {{ it.quantity }}
                                 </span>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ item.product.name }}</p>
-                                {% if item.variant %}
-                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ item.variant.name }}</p>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ it.product_name }}</p>
+                                {% if it.variant_name %}
+                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ it.variant_name }}</p>
                                 {% endif %}
                             </div>
-                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ currency_symbol }}{{ item.total_price }}</p>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ it.formatted_total }}</p>
                         </div>
                         {% endfor %}
                     </div>
@@ -394,25 +400,25 @@
                     <div class="space-y-3 border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
                         <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                             <span>Subtotal</span>
-                            <span>{{ currency_symbol }}{{ cart.subtotal }}</span>
+                            <span>{{ checkout_summary.formatted_subtotal }}</span>
                         </div>
-                        {% if cart.discount > 0 %}
+                        {% if checkout_summary.discount and checkout_summary.discount != 0 %}
                         <div class="flex justify-between text-sm text-green-600">
                             <span>Discount</span>
-                            <span>-{{ currency_symbol }}{{ cart.discount }}</span>
+                            <span>-{{ checkout_summary.formatted_discount }}</span>
                         </div>
                         {% endif %}
                         <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                             <span>Shipping ({{ checkout.get_shipping_method_display }})</span>
-                            <span>{% if checkout.shipping_cost == 0 %}Free{% else %}{{ currency_symbol }}{{ checkout.shipping_cost }}{% endif %}</span>
+                            <span>{{ checkout_summary.formatted_shipping }}</span>
                         </div>
                         <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                             <span>Tax</span>
-                            <span>{{ currency_symbol }}{{ cart.tax|default:'0.00' }}</span>
+                            <span>{{ checkout_summary.formatted_tax }}</span>
                         </div>
                         <div class="flex justify-between text-lg font-bold text-gray-900 dark:text-white border-t border-gray-200 dark:border-gray-700 pt-3">
                             <span>Total</span>
-                            <span>{{ currency_symbol }}{{ checkout.total }}</span>
+                            <span>{{ checkout_summary.formatted_total }}</span>
                         </div>
                     </div>
                     
@@ -481,31 +487,44 @@
 {% endblock %}
 
 {% block extra_js %}
+{{ country_names|json_script:"country-names-data" }}
+<div id="shipping-data" style="display:none"
+     data-first-name="{{ checkout.shipping_first_name|default:''|escapejs }}"
+     data-last-name="{{ checkout.shipping_last_name|default:''|escapejs }}"
+     data-address-line-1="{{ checkout.shipping_address_line_1|default:''|escapejs }}"
+     data-address-line-2="{{ checkout.shipping_address_line_2|default:''|escapejs }}"
+     data-city="{{ checkout.shipping_city|default:''|escapejs }}"
+     data-state="{{ checkout.shipping_state|default:''|escapejs }}"
+     data-postal-code="{{ checkout.shipping_postal_code|default:''|escapejs }}"
+     data-country-code="{{ shipping_country_code|default:checkout.shipping_country|default:''|escapejs }}"></div>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Configuration from backend
     const CONFIG = {
-        currencySymbol: '{{ currency_symbol|escapejs }}',
-        taxRate: {{ tax_rate|default:0 }},
-        countryNames: {{ country_names|safe }},
-        shippingData: {
-            firstName: '{{ checkout.shipping_first_name|escapejs }}',
-            lastName: '{{ checkout.shipping_last_name|escapejs }}',
-            addressLine1: '{{ checkout.shipping_address_line_1|escapejs }}',
-            addressLine2: '{{ checkout.shipping_address_line_2|escapejs }}',
-            city: '{{ checkout.shipping_city|escapejs }}',
-            state: '{{ checkout.shipping_state|escapejs }}',
-            postalCode: '{{ checkout.shipping_postal_code|escapejs }}',
-            country: '{{ checkout.shipping_country|escapejs }}'
-        }
+        currencyCode: window.BUNORAA_CURRENCY?.code || '{{ currency_code|escapejs }}',
+        taxRate: Number(document.getElementById('tax-rate-data')?.textContent || '0'),
+        countryNames: (function(){ try { return JSON.parse(document.getElementById('country-names-data').textContent); } catch(e) { return {}; } })(),
+        shippingData: (function(){ const el = document.getElementById('shipping-data'); if (!el) return {}; return {
+            firstName: el.dataset.firstName || '',
+            lastName: el.dataset.lastName || '',
+            addressLine1: el.dataset.addressLine1 || '',
+            addressLine2: el.dataset.addressLine2 || '',
+            city: el.dataset.city || '',
+            state: el.dataset.state || '',
+            postalCode: el.dataset.postalCode || '',
+            countryCode: el.dataset.countryCode || ''
+        }; })()
     };
+
+    // If server provided a stripe publishable key, expose it as a global for JS
+    window.STRIPE_PUBLISHABLE_KEY = '{{ stripe_publishable_key|default:""|escapejs }}';
 
     // ========================================
     // Utility Functions
     // ========================================
     const Utils = {
         formatCurrency(amount) {
-            return `${CONFIG.currencySymbol}${parseFloat(amount).toFixed(2)}`;
+            return Templates.formatPrice(amount);
         },
         
         showToast(message, type = 'info') {

@@ -22,11 +22,13 @@ class CartView(TemplateView):
             cart = CartService.get_cart(session_key=self.request.session.session_key)
         
         if cart:
+            from apps.currencies.services import CurrencyService
+            target_currency = CurrencyService.get_user_currency(user=self.request.user if self.request.user.is_authenticated else None, request=self.request)
             context['cart'] = cart
-            context['cart_summary'] = CartService.get_cart_summary(cart)
+            context['cart_summary'] = CartService.get_cart_summary(cart, currency=target_currency)
             context['cart_issues'] = CartService.validate_cart(cart)
         else:
             context['cart'] = None
-            context['cart_summary'] = {'items': [], 'item_count': 0, 'subtotal': '0.00', 'total': '0.00'}
+            context['cart_summary'] = {'items': [], 'item_count': 0, 'subtotal': '0.00', 'total': '0.00', 'currency': {'code': 'BDT', 'symbol': '৳'}}
         
         return context

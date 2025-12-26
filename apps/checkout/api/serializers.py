@@ -133,10 +133,19 @@ class ShippingRateSerializer(serializers.ModelSerializer):
         return float(obj.calculate_rate(subtotal=subtotal, weight=weight, item_count=item_count))
     
     def get_formatted_cost(self, obj):
-        cost = self.get_calculated_cost(obj)
+        from apps.currencies.services import CurrencyService
+        request = self.context.get('request')
+        try:
+            currency = self.context.get('currency') or CurrencyService.get_user_currency(user=request.user if request and hasattr(request, 'user') else None, request=request)
+        except Exception:
+            currency = CurrencyService.get_default_currency()
+        cost = Decimal(str(self.get_calculated_cost(obj)))
         if cost == 0:
             return 'Free'
-        return f"৳{cost:,.2f}"
+        try:
+            return currency.format_amount(cost)
+        except Exception:
+            return f"{currency.symbol if currency else '৳'}{cost:,.2f}"
 
 
 class ShippingOptionSerializer(serializers.Serializer):
@@ -171,9 +180,18 @@ class StoreLocationSerializer(serializers.ModelSerializer):
         ]
     
     def get_formatted_fee(self, obj):
+        from apps.currencies.services import CurrencyService
+        request = self.context.get('request')
+        try:
+            currency = self.context.get('currency') or CurrencyService.get_user_currency(user=request.user if request and hasattr(request, 'user') else None, request=request)
+        except Exception:
+            currency = CurrencyService.get_default_currency()
         if obj.pickup_fee == 0:
             return 'Free'
-        return f"৳{obj.pickup_fee:,.2f}"
+        try:
+            return currency.format_amount(obj.pickup_fee)
+        except Exception:
+            return f"{currency.symbol if currency else '৳'}{obj.pickup_fee:,.2f}"
     
     def get_opening_hours(self, obj):
         return obj.get_hours() if hasattr(obj, 'get_hours') else {}
@@ -216,7 +234,7 @@ class CheckoutSummarySerializer(serializers.Serializer):
     formatted_cod_fee = serializers.CharField(allow_blank=True)
     total = serializers.FloatField()
     formatted_total = serializers.CharField()
-    currency = serializers.CharField()
+    currency = serializers.DictField()
     shipping_address = AddressDisplaySerializer()
     billing_address = AddressDisplaySerializer()
     billing_same_as_shipping = serializers.BooleanField()

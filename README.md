@@ -18,6 +18,8 @@ A premium, robust, production-ready single-store e-commerce platform built with 
 - **Modular Architecture** with clean separation of concerns
 - **Authentication** with JWT (SimpleJWT), social auth (Google, Facebook)
 - **Multi-currency** support with real-time exchange rates
+
+See `docs/CURRENCY.md` for details on currency switching, admin setup and front-end behavior.
 - **Comprehensive Admin** with Django admin customizations
 - **Celery** for async tasks and scheduled jobs
 - **Redis** for caching and Celery broker

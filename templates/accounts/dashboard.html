@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static currency_tags %}
 
 {% block title %}My Account - {{ SITE_NAME }}{% endblock %}
 
@@ -127,7 +127,7 @@
                                 
                                 <div class="flex items-center gap-6">
                                     <div class="text-right">
-                                        <p class="font-medium text-gray-900">{{ currency_symbol }}{{ order.total }}</p>
+                                        <p class="font-medium text-gray-900">{% format_price order.total %}</p>
                                         <p class="text-sm text-gray-500">{{ order.items.count }} item{{ order.items.count|pluralize }}</p>
                                     </div>
                                     
@@ -185,8 +185,7 @@
                                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                             </div>
                             <h3 class="text-sm font-medium text-gray-900 truncate">{{ item.product.name }}</h3>
-                            <p class="text-sm text-primary-600">{{ currency_symbol }}{{ item.product.display_price }}</p>
-                        </a>
+                            <p class="text-sm text-primary-600">{% format_price item.product.display_price %}</p>                        </a>
                         {% endfor %}
                     </div>
                 </div>

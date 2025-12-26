@@ -13,7 +13,7 @@ class Cart(models.Model):
     """Shopping cart - persistent for both guests and users."""
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    
+
     # Can be linked to user or session
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -24,7 +24,7 @@ class Cart(models.Model):
         verbose_name=_('user')
     )
     session_key = models.CharField(_('session key'), max_length=40, blank=True, null=True)
-    
+
     # Coupon
     coupon = models.ForeignKey(
         'promotions.Coupon',
@@ -34,11 +34,11 @@ class Cart(models.Model):
         related_name='carts',
         verbose_name=_('coupon')
     )
-    
+
     # Timestamps
     created_at = models.DateTimeField(_('created at'), auto_now_add=True)
     updated_at = models.DateTimeField(_('updated at'), auto_now=True)
-    
+
     class Meta:
         verbose_name = _('cart')
         verbose_name_plural = _('carts')
@@ -46,42 +46,42 @@ class Cart(models.Model):
             models.Index(fields=['user']),
             models.Index(fields=['session_key']),
         ]
-    
+
     def __str__(self):
         if self.user:
             return f"Cart for {self.user.email}"
         return f"Guest Cart {self.session_key}"
-    
+
     @property
     def item_count(self):
         """Get total number of items in cart."""
         return sum(item.quantity for item in self.items.all())
-    
+
     @property
     def subtotal(self):
         """Calculate cart subtotal (before discounts)."""
         return sum(item.total for item in self.items.all())
-    
+
     @property
     def discount_amount(self):
         """Calculate discount from coupon."""
         if not self.coupon:
             return Decimal('0.00')
-        
+
         from apps.promotions.models import Coupon
         return self.coupon.calculate_discount(self.subtotal)
-    
+
     @property
     def total(self):
         """Calculate cart total (after discounts)."""
         return max(Decimal('0.00'), self.subtotal - self.discount_amount)
-    
+
     def clear(self):
         """Remove all items from cart."""
         self.items.all().delete()
         self.coupon = None
         self.save()
-    
+
     def merge_from_session(self, session_cart):
         """Merge items from a session cart into this cart."""
         for item in session_cart.items.all():
@@ -89,15 +89,50 @@ class Cart(models.Model):
                 product=item.product,
                 variant=item.variant
             ).first()
-            
+
             if existing_item:
                 existing_item.quantity += item.quantity
                 existing_item.save()
             else:
                 item.cart = self
                 item.save()
-        
+
         session_cart.delete()
+
+
+class CartSettings(models.Model):
+    """Global cart settings (singleton) - manage gift wrap and cart-level config."""
+    gift_wrap_enabled = models.BooleanField(default=False, help_text='Enable gift wrap option at checkout')
+    gift_wrap_amount = models.DecimalField(max_digits=10, decimal_places=2, default=50.00, help_text='Fee charged for gift wrapping (store currency)')
+    gift_wrap_label = models.CharField(max_length=100, blank=True, default='Gift Wrap', help_text='Label to show for gift wrap option')
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Cart Settings'
+        verbose_name_plural = 'Cart Settings'
+
+    def __str__(self):
+        return 'Cart Settings'
+
+    def save(self, *args, **kwargs):
+        # Always keep a single instance
+        self.pk = 1
+        super().save(*args, **kwargs)
+        # Clear cache if needed
+        try:
+            from django.core.cache import cache
+            cache.delete('cart_settings')
+        except Exception:
+            pass
+
+    def delete(self, *args, **kwargs):
+        pass
+
+    @classmethod
+    def get_settings(cls):
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj
 
 
 class CartItem(models.Model):

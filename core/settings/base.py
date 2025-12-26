@@ -160,6 +160,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Site ID
 SITE_ID = 1
 
+# Force site to always use default currency when True. This disables per-user
+# currency detection and forces server-side formatted amounts to use the
+# configured default currency. Useful for single-currency deployments.
+FORCE_DEFAULT_CURRENCY = True
+
 # Authentication redirects
 LOGIN_URL = '/account/login/'
 LOGIN_REDIRECT_URL = '/account/dashboard/'

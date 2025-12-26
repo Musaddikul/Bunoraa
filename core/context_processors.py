@@ -88,8 +88,38 @@ def site_settings(request):
                 'SOCIAL_LINKS': [],
             }
     
+    # Determine per-request currency (do not cache - user/session based)
+    try:
+        from apps.currencies.services import CurrencyService
+        currency = CurrencyService.get_user_currency(
+            user=request.user if request.user.is_authenticated else None,
+            request=request
+        )
+        currency_code = currency.code if currency else 'BDT'
+        currency_symbol = currency.symbol if currency else '৳'
+        currency_decimal_places = currency.decimal_places if currency else 2
+        currency_thousand_separator = currency.thousand_separator if currency else ','
+        currency_decimal_separator = currency.decimal_separator if currency else '.'
+        currency_symbol_position = currency.symbol_position if currency else 'before'
+        currency_locale = 'en-BD' if currency and getattr(currency, 'code', '') == 'BDT' else 'en-US'
+    except Exception:
+        currency_code = 'BDT'
+        currency_symbol = '৳'
+        currency_decimal_places = 2
+        currency_thousand_separator = ','
+        currency_decimal_separator = '.'
+        currency_symbol_position = 'before'
+        currency_locale = 'en-US'
+
     return {
         **cached_settings,
         'IS_DEBUG': settings.DEBUG,
         'STRIPE_PUBLIC_KEY': getattr(settings, 'STRIPE_PUBLIC_KEY', ''),
+        'currency_code': currency_code,
+        'currency_symbol': currency_symbol,
+        'currency_locale': currency_locale,
+        'currency_decimal_places': currency_decimal_places,
+        'currency_thousand_separator': currency_thousand_separator,
+        'currency_decimal_separator': currency_decimal_separator,
+        'currency_symbol_position': currency_symbol_position,
     }

@@ -312,20 +312,23 @@ class CheckoutSession(models.Model):
         
         if self.cart:
             try:
-                cart_summary = CartService.get_cart_summary(self.cart)
+                from apps.currencies.services import CurrencyService
+                checkout_currency = CurrencyService.get_currency_by_code(self.currency) if self.currency else None
+                cart_summary = CartService.get_cart_summary(self.cart, currency=checkout_currency)
                 self.subtotal = Decimal(str(cart_summary.get('subtotal', 0)))
-                
+
                 # Apply discount
                 discount = Decimal(str(cart_summary.get('discount', 0)))
                 if self.coupon and not cart_summary.get('coupon'):
+                    # Calculate discount on subtotal using coupon's logic (assumes coupon uses store currency)
                     discount = self.coupon.calculate_discount(self.subtotal)
                 self.discount_amount = discount
-                
+
                 # Calculate tax
                 taxable_amount = self.subtotal - self.discount_amount
                 if self.tax_rate > 0 and not self.tax_included:
-                    self.tax_amount = taxable_amount * (self.tax_rate / 100)
-                
+                    self.tax_amount = (taxable_amount * (self.tax_rate / 100)).quantize(Decimal('0.01'))
+
                 # Calculate total
                 self.total = (
                     self.subtotal 

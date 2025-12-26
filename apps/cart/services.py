@@ -221,19 +221,21 @@ class CartService:
         base_currency = CurrencyService.get_default_currency()
         target_currency = currency or base_currency
 
-        def convert(amount):
+        def convert_from(amount, from_currency):
+            """Convert a given amount expressed in from_currency into target_currency and return string."""
             if amount is None:
                 return '0'
             value = Decimal(str(amount))
-            if not base_currency or not target_currency or base_currency.id == target_currency.id:
+            if not from_currency or not target_currency or from_currency.id == target_currency.id:
                 return str(value)
             try:
-                converted = CurrencyConversionService.convert(value, base_currency, target_currency)
+                converted = CurrencyConversionService.convert(value, from_currency, target_currency)
                 return str(converted)
             except Exception:  # pragma: no cover - fallback when rate missing
                 return str(value)
 
         items = []
+        subtotal_acc = Decimal('0')
         for item in cart.items.select_related('product', 'variant').all():
             primary_image = None
             if item.product.primary_image and getattr(item.product.primary_image, 'image', None):
@@ -241,6 +243,14 @@ class CartService:
             elif item.product.images.exists():
                 first_image = item.product.images.first()
                 primary_image = first_image.image.url if first_image else None
+
+            # Determine item's currency (product-level)
+            item_from_currency = item.product.get_currency() if hasattr(item.product, 'get_currency') else base_currency
+
+            # Convert unit price and total per item
+            unit_price_converted = Decimal(str(convert_from(item.unit_price, item_from_currency)))
+            total_converted = (unit_price_converted * Decimal(item.quantity)).quantize(Decimal('0.01'))
+            subtotal_acc += total_converted
 
             items.append({
                 'id': str(item.id),
@@ -250,22 +260,47 @@ class CartService:
                 'variant_id': str(item.variant.id) if item.variant else None,
                 'variant_name': item.variant.name if item.variant else None,
                 'quantity': item.quantity,
-                'unit_price': convert(item.unit_price),
-                'total': convert(item.total),
+                'unit_price': str(unit_price_converted),
+                'total': str(total_converted),
                 'image': primary_image,
                 'is_available': item.is_available,
                 'available_quantity': item.available_quantity,
             })
         
+        # Convert coupon/discount and totals
+        try:
+            discount_conv = Decimal(str(convert_from(cart.discount_amount, base_currency)))
+        except Exception:
+            discount_conv = Decimal(str(cart.discount_amount or 0))
+
+        # subtotal_acc is computed from converted item totals
+        total_calc = subtotal_acc - discount_conv
+        if getattr(cart, 'shipping_cost', None):
+            # assume shipping_cost is in base_currency; convert
+            try:
+                shipping_conv = Decimal(str(convert_from(cart.shipping_cost, base_currency)))
+            except Exception:
+                shipping_conv = Decimal(str(cart.shipping_cost or 0))
+            total_calc += shipping_conv
+        
+        # tax if any
+        try:
+            tax_conv = Decimal(str(convert_from(cart.tax if hasattr(cart, 'tax') else Decimal('0'), base_currency)))
+        except Exception:
+            tax_conv = Decimal('0')
+        total_calc += tax_conv
+
         summary = {
             'items': items,
             'item_count': cart.item_count,
-            'subtotal': convert(cart.subtotal),
-            'discount_amount': convert(cart.discount_amount),
-            'total': convert(cart.total),
+            'subtotal': str(subtotal_acc.quantize(Decimal('0.01'))),
+            'discount_amount': str(discount_conv.quantize(Decimal('0.01'))),
+            'shipping_cost': str(shipping_conv.quantize(Decimal('0.01'))) if 'shipping_conv' in locals() else '0.00',
+            'tax': str(tax_conv.quantize(Decimal('0.01'))),
+            'total': str(total_calc.quantize(Decimal('0.01'))),
             'coupon': {
                 'code': cart.coupon.code,
-                'discount': convert(cart.discount_amount)
+                'discount': str(discount_conv.quantize(Decimal('0.01')))
             } if cart.coupon else None,
             'currency': None
         }
@@ -274,7 +309,45 @@ class CartService:
         if currency_obj:
             summary['currency'] = {
                 'code': currency_obj.code,
-                'symbol': currency_obj.symbol
+                'symbol': currency_obj.symbol,
+                'decimal_places': currency_obj.decimal_places,
+                'symbol_position': currency_obj.symbol_position,
+                'thousand_separator': currency_obj.thousand_separator,
+                'decimal_separator': currency_obj.decimal_separator,
             }
+
+            # Formatted amounts for templates
+            try:
+                summary['formatted_subtotal'] = currency_obj.format_amount(Decimal(summary['subtotal']))
+            except Exception:
+                summary['formatted_subtotal'] = f"{currency_obj.symbol if currency_obj else '৳'}{Decimal(summary['subtotal']):,.2f}"
+
+            summary['formatted_discount'] = f"-{currency_obj.format_amount(Decimal(summary['discount_amount']))}" if Decimal(summary['discount_amount']) != Decimal('0') else ''
+
+            try:
+                summary['formatted_shipping'] = currency_obj.format_amount(Decimal(summary['shipping_cost'])) if Decimal(summary['shipping_cost']) > 0 else 'Free'
+            except Exception:
+                summary['formatted_shipping'] = 'Free' if Decimal(summary['shipping_cost']) == Decimal('0') else f"{currency_obj.symbol if currency_obj else '৳'}{Decimal(summary['shipping_cost']):,.2f}"
+
+            try:
+                summary['formatted_tax'] = currency_obj.format_amount(Decimal(summary['tax'])) if Decimal(summary['tax']) != Decimal('0') else ''
+            except Exception:
+                summary['formatted_tax'] = f"{currency_obj.symbol if currency_obj else '৳'}{Decimal(summary['tax']):,.2f}" if Decimal(summary['tax']) != Decimal('0') else ''
+
+            try:
+                summary['formatted_total'] = currency_obj.format_amount(Decimal(summary['total']))
+            except Exception:
+                summary['formatted_total'] = f"{currency_obj.symbol if currency_obj else '৳'}{Decimal(summary['total']):,.2f}"
+
+            # Add per-item formatted values
+            for it in summary['items']:
+                try:
+                    it['formatted_unit_price'] = currency_obj.format_amount(Decimal(it['unit_price']))
+                except Exception:
+                    it['formatted_unit_price'] = f"{currency_obj.symbol if currency_obj else '৳'}{Decimal(it['unit_price']):,.2f}"
+                try:
+                    it['formatted_total'] = currency_obj.format_amount(Decimal(it['total']))
+                except Exception:
+                    it['formatted_total'] = f"{currency_obj.symbol if currency_obj else '৳'}{Decimal(it['total']):,.2f}"
         
         return summary
