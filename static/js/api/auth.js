@@ -30,7 +30,6 @@ const AuthApi = (function() {
                     setUser(profile.data);
                 }
             } catch (e) {
-                console.warn('Failed to fetch profile after login');
             }
             
             ApiClient.clearCache();

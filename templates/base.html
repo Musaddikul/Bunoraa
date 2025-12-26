@@ -137,7 +137,7 @@
     </style>
     
     <!-- Skip to content -->
-    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-amber-700 text-white px-4 py-2 rounded-lg z-50">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-amber-700 text-white px-4 py-2 rounded-lg z-50 dark:bg-amber-500 dark:text-stone-900">
         Skip to content
     </a>
 
@@ -159,18 +159,15 @@
 
     <header id="main-header" class="sticky top-0 inset-x-0 z-40 border-transparent bg-transparent backdrop-blur-none shadow-none transition-colors transition-shadow">
         <div class="bg-transparent">
-            <div class="container mx-auto px-4">
-                <div class="main-header-row flex flex-wrap items-center gap-3 py-2 relative">
-                    <div class="flex items-center gap-2 z-10">
-                        <button type="button" data-mobile-menu-toggle class="lg:hidden p-2.5 rounded-xl text-stone-700 hover:text-amber-700 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:text-stone-300 dark:hover:text-amber-400 dark:hover:bg-amber-950" aria-label="Open menu">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                        </button>
+            <div class="container mx-auto px-2 md:px-4">
+                <div class="main-header-row flex flex-wrap items-center gap-2 py-2 relative">
+                    <div class="flex items-center gap-1 z-10">
                         <a href="{% url 'home' %}" class="inline-flex items-center gap-2" aria-label="Go to homepage">
                             {% if SITE_LOGO %}
-                            <img src="{{ SITE_LOGO }}" alt="{{ SITE_NAME }}" class="h-10 w-auto dark:hidden">
-                            <img src="{{ SITE_LOGO_DARK|default:SITE_LOGO }}" alt="{{ SITE_NAME }}" class="h-10 w-auto hidden dark:block">
+                            <img src="{{ SITE_LOGO }}" alt="{{ SITE_NAME }}" class="h-5 md:h-9 lg:h-10 w-auto dark:hidden">
+                            <img src="{{ SITE_LOGO_DARK|default:SITE_LOGO }}" alt="{{ SITE_NAME }}" class="h-5 md:h-9 lg:h-10 w-auto hidden dark:block">
                             {% else %}
-                            <span class="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-white font-semibold flex items-center justify-center shadow-inner shadow-amber-900/30">{{ SITE_NAME|slice:":1" }}</span>
+                            <span class="w-7 h-7 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-white font-semibold flex items-center justify-center shadow-inner shadow-amber-900/30">{{ SITE_NAME|slice:":1" }}</span>
                             {% endif %}
                             <span class="sr-only">{{ SITE_NAME }}</span>
                         </a>
@@ -197,16 +194,25 @@
                         </form>
                     </div>
                     <!-- Actions -->
-                    <div class="flex items-center gap-1 lg:gap-2 ml-auto">
+                    <div class="flex items-center gap-0 lg:gap-2 ml-auto">
                     <!-- Mobile Search Toggle -->
-                    <button class="lg:hidden p-2.5 text-stone-700 hover:text-amber-700 hover:bg-amber-50 rounded-xl transition-all dark:text-stone-300 dark:hover:text-amber-300 dark:hover:bg-stone-700" id="mobile-search-toggle" aria-label="Search">
+                    <button class="lg:hidden p-1 lg:p-2.5 text-stone-700 hover:text-amber-700 rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-stone-300 dark:hover:text-amber-300 dark:focus-visible:ring-amber-400 dark:focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-900" id="mobile-search-toggle" aria-label="Search">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </button>
 
-                    {% include 'includes/currency_selector.html' %}
+
+                    <!-- Currency Selector (inlined) -->
+                    <div id="currency-selector" class="relative currency-selector">
+                        <button id="currency-selector-toggle" aria-haspopup="listbox" aria-expanded="false" class="p-2 lg:p-2.5 rounded-xl text-stone-700 hover:text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:text-stone-300 dark:hover:text-amber-300">
+                            <span id="currency-current">{{ currency_code }}</span>
+                        </button>
+                        <div id="currency-dropdown" role="listbox" aria-label="Choose currency" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-stone-200 py-2 z-50 dark:bg-stone-800 dark:border-stone-700">
+                            <div id="currency-list" class="max-h-56 overflow-auto scrollbar-thin"></div>
+                        </div>
+                    </div>
 
                     <!-- Theme toggle -->
-                    <button id="theme-toggle" class="p-2.5 rounded-xl text-stone-700 hover:text-amber-700 hover:bg-amber-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:text-stone-300 dark:hover:text-amber-400 dark:hover:bg-stone-800" aria-label="Toggle theme">
+                    <button id="theme-toggle" class="p-1 lg:p-2.5 rounded-xl text-stone-700 hover:text-amber-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:text-stone-300 dark:hover:text-amber-400" aria-label="Toggle theme">
                         <!-- Light icon (sun) with filled center -->
                         <svg id="theme-toggle-light-icon" class="w-5 h-5 block text-amber-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-label="Light theme" aria-hidden="false" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <!-- Filled sun core for better visibility -->
@@ -250,15 +256,19 @@
                     </div>
                     
                     <!-- Wishlist -->
-                    <a href="{% url 'wishlist:list' %}" class="relative p-2.5 text-stone-700 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-stone-300 dark:hover:text-rose-400 dark:hover:bg-rose-950 dark:focus-visible:ring-rose-400" aria-label="Wishlist">
+                    <a href="{% url 'wishlist:list' %}" class="relative p-1 lg:p-2.5 text-stone-700 hover:text-rose-600 rounded-xl transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-stone-300 dark:hover:text-rose-400 dark:focus-visible:ring-rose-400" aria-label="Wishlist">
                         <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
                         <span data-wishlist-count class="hidden absolute -top-0.5 -right-0.5 bg-rose-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center shadow-sm">0</span>
                     </a>
                     
                     <!-- Cart -->
-                    <button type="button" data-cart-open class="relative p-2.5 text-stone-700 hover:text-amber-700 hover:bg-amber-50 rounded-xl transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:text-stone-300 dark:hover:text-amber-400 dark:hover:bg-amber-950 dark:focus-visible:ring-amber-400" aria-label="Cart">
+                    <button type="button" data-cart-open class="relative p-1 lg:p-2.5 text-stone-700 hover:text-amber-700 rounded-xl transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:text-stone-300 dark:hover:text-amber-400 dark:focus-visible:ring-amber-400" aria-label="Cart">
                         <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                         <span data-cart-count class="hidden absolute -top-0.5 -right-0.5 bg-amber-600 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center shadow-sm">0</span>
+                    </button>
+                    <!-- Mobile Menu (moved after cart) -->
+                    <button type="button" data-mobile-menu-toggle class="lg:hidden p-1 lg:p-2.5 rounded-xl text-stone-700 hover:text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-stone-300 dark:hover:text-amber-400 dark:focus-visible:ring-amber-400 dark:focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-900" aria-label="Open menu">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                     </button>
                 </div>
             </div>
@@ -350,7 +360,15 @@
             </div>
             
             <!-- Mobile Account -->
-            {% include 'includes/currency_selector.html' %}
+            <!-- Mobile Currency Selector (inlined) -->
+            <div id="currency-selector" class="relative currency-selector">
+                <button id="currency-selector-toggle" aria-haspopup="listbox" aria-expanded="false" class="p-2 lg:p-2.5 rounded-xl text-stone-700 hover:text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:text-stone-300 dark:hover:text-amber-300">
+                    <span id="currency-current">{{ currency_code }}</span>
+                </button>
+                <div id="currency-dropdown" role="listbox" aria-label="Choose currency" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-stone-200 py-2 z-50 dark:bg-stone-800 dark:border-stone-700">
+                    <div id="currency-list" class="max-h-56 overflow-auto scrollbar-thin"></div>
+                </div>
+            </div>
             <div id="mobile-account" class="p-4 border-t border-stone-200 bg-stone-50">
                 <!-- Account links loaded via JS -->
             </div>
@@ -723,6 +741,10 @@
             window.Pagination = window.Pagination || Pagination;
             window.Modal = window.Modal || Dialog;
             window.Dropdown = window.Dropdown || DropdownMenu;
+
+            // Initialize currency selector for any inlined instances
+            import { initCurrencySelector } from "{% static 'js/components/currency-selector.js' %}";
+            try { initCurrencySelector('#currency-selector'); } catch (e) { /* ignore */ }
 
             // Minimal Loader shim using Spinner
             window.Loader = window.Loader || {

@@ -135,7 +135,6 @@ const App = (function() {
             const match = items.find(item => String(item.product) === String(productId));
             return match?.id || null;
         } catch (error) {
-            console.warn('Failed to resolve wishlist item id', error);
             return null;
         }
     }

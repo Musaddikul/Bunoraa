@@ -285,7 +285,6 @@ const ProductPage = (function() {
                 location.reload();
             }
         } catch (err) {
-            console.warn('Failed to refresh product on currency change', err);
         }
     });
 

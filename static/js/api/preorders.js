@@ -133,7 +133,6 @@ const PreordersApi = (function() {
                 }
             };
         } catch (error) {
-            console.warn('Failed to load preorder landing data:', error);
             return {
                 categories: [],
                 stats: {

@@ -599,7 +599,6 @@ document.addEventListener('DOMContentLoaded', function() {
             displayError.classList.toggle('animate-shake', !!event.error);
         });
     } catch (e) {
-        console.warn('Stripe not initialized:', e);
     }
 
     // ========================================
@@ -798,7 +797,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    console.log('Payment page initialized successfully');
+
 });
 </script>
 {% endblock %}

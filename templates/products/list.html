@@ -464,8 +464,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Helper to format price using global Templates.formatPrice with currency conversion
     function formatProductPrice(amount) {
         if (amount === null || amount === undefined) return '';
-        if (window.Templates && window.Templates.formatPrice) {
-            return window.Templates.formatPrice(amount);
+        try {
+            if (window.Templates && window.Templates.formatPrice) {
+                return window.Templates.formatPrice(amount);
+            }
+        } catch (e) {
+            // ignore
         }
         // Fallback if Templates not available
         return `${(window.BUNORAA_CURRENCY && window.BUNORAA_CURRENCY.symbol) || '{{ currency_symbol }}'}${parseFloat(amount).toLocaleString(locale)}`;
@@ -516,7 +520,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 window.ApiClient.clearCache('/api/v1/products/');
             }
         } catch (err) {
-            console.warn('[products] failed to clear API cache on currency change', err);
         }
 
         // Re-load products to fetch converted prices
@@ -625,10 +628,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                     ` : ''}
                     <div class="flex items-center gap-2">
                         ${product.sale_price ? `
-                            <span class="text-lg font-bold text-gray-900">${formatProductPrice(product.sale_price)}</span>
-                            <span class="text-sm text-gray-400 line-through">${formatProductPrice(product.price)}</span>
+                            <span class="text-lg font-bold text-gray-900" data-price-id="product-price-${product.id}">${formatProductPrice(product.sale_price_converted ?? product.sale_price)}</span>
+                            <span class="text-sm text-gray-400 line-through" data-price-id="product-price-${product.id}-orig">${formatProductPrice(product.price_converted ?? product.price)}</span>
                         ` : `
-                            <span class="text-lg font-bold text-gray-900">${formatProductPrice(product.price)}</span>
+                            <span class="text-lg font-bold text-gray-900" data-price-id="product-price-${product.id}">${formatProductPrice(product.price_converted ?? product.price)}</span>
                         `}
                     </div>
                 </div>
@@ -796,7 +799,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const treeResponse = await CategoriesApi.getTree();
                 treeData = treeResponse?.data || treeResponse?.results || treeResponse || [];
             } catch (treeError) {
-                console.warn('Failed to fetch category tree, falling back to flat list.', treeError);
             }
 
             if (!Array.isArray(treeData) || !treeData.length) {

@@ -16,7 +16,6 @@ export async function convertCurrency(amount, from, to) {
         const data = await resp.json();
         if (data && data.success) return data.data;
     } catch (e) {
-        console.warn('Currency conversion error', e);
     }
     return null;
 }
