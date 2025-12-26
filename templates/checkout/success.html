@@ -93,7 +93,7 @@
                     {% for item in order.items.all %}
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
-                            <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.jpg' }}" 
+                            <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.jpg' }}" loading="lazy" decoding="async" 
                                  alt="{{ item.product_name }}"
                                  class="w-12 h-12 object-cover rounded bg-gray-100 dark:bg-gray-700">
                             <div class="ml-3">

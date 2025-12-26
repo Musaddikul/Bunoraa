@@ -110,7 +110,7 @@
                                     <div class="flex -space-x-2">
                                         {% for item in order.items.all|slice:":3" %}
                                         <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.jpg' }}"
-                                             alt="{{ item.product_name }}"
+                                             alt="{{ item.product_name }}" loading="lazy" decoding="async"
                                              class="w-10 h-10 rounded-lg object-cover border-2 border-white">
                                         {% endfor %}
                                         {% if order.items.count > 3 %}
@@ -181,7 +181,7 @@
                         <a href="{{ item.product.get_absolute_url }}" class="group">
                             <div class="aspect-square rounded-lg overflow-hidden bg-gray-100 mb-2">
                                 <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.jpg' }}"
-                                     alt="{{ item.product.name }}"
+                                     alt="{{ item.product.name }}" loading="lazy" decoding="async"
                                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                             </div>
                             <h3 class="text-sm font-medium text-gray-900 truncate">{{ item.product.name }}</h3>

@@ -142,7 +142,7 @@
                     {% for item in order.items.all %}
                     <div class="p-6 flex items-center space-x-4">
                         <a href="{% url 'products:detail' item.product.slug %}">
-                            <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.jpg' }}" 
+                            <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.jpg' }}" loading="lazy" decoding="async" 
                                  alt="{{ item.product_name }}"
                                  class="w-20 h-20 object-cover rounded-lg">
                         </a>

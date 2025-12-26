@@ -80,7 +80,7 @@
                         <div class="flex items-center space-x-4 overflow-x-auto pb-2">
                             {% for item in order.items.all|slice:":4" %}
                             <div class="flex-shrink-0">
-                                <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.jpg' }}" 
+                                <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.jpg' }}" loading="lazy" decoding="async" 
                                      alt="{{ item.product_name }}"
                                      class="w-16 h-16 object-cover rounded-lg">
                             </div>

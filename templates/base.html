@@ -204,7 +204,29 @@
                     </button>
 
                     {% include 'includes/currency_selector.html' %}
-                    
+
+                    <!-- Theme toggle -->
+                    <button id="theme-toggle" class="p-2.5 rounded-xl text-stone-700 hover:text-amber-700 hover:bg-amber-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:text-stone-300 dark:hover:text-amber-400 dark:hover:bg-stone-800" aria-label="Toggle theme">
+                        <!-- Light icon (sun) with filled center -->
+                        <svg id="theme-toggle-light-icon" class="w-5 h-5 block text-amber-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-label="Light theme" aria-hidden="false" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <!-- Filled sun core for better visibility -->
+                            <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none" />
+                            <!-- Rays -->
+                            <g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+                              <line x1="12" y1="1.5" x2="12" y2="4" />
+                              <line x1="12" y1="20" x2="12" y2="22.5" />
+                              <line x1="1.5" y1="12" x2="4" y2="12" />
+                              <line x1="20" y1="12" x2="22.5" y2="12" />
+                              <line x1="4.2" y1="4.2" x2="6.3" y2="6.3" />
+                              <line x1="17.7" y1="17.7" x2="19.8" y2="19.8" />
+                              <line x1="4.2" y1="19.8" x2="6.3" y2="17.7" />
+                              <line x1="17.7" y1="6.3" x2="19.8" y2="4.2" />
+                            </g>
+                        </svg>
+                        <!-- Dark icon (moon) -->
+                        <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+                    </button>
+
                     <!-- Account -->
                     <div class="relative hidden lg:block dropdown-container">
                         <button class="dropdown-toggle p-1 text-stone-700 hover:opacity-80 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:text-stone-300 dark:focus-visible:ring-amber-400">
@@ -1185,7 +1207,7 @@
                                 html += `<div class="p-4"><p class="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3">Products</p>`;
                                 html += products.map(prod => `
                                     <a href="${buildRoute('productDetail', prod.slug)}" class="flex items-center gap-4 py-2.5 px-3 rounded-xl hover:bg-amber-50 transition-colors group">
-                                        <img src="${prod.thumbnail || '/static/images/placeholder.jpg'}" alt="" class="w-12 h-12 object-cover rounded-xl border border-stone-200">
+                                        <img src="${prod.thumbnail || '/static/images/placeholder.jpg'}" alt="" loading="lazy" decoding="async" class="w-12 h-12 object-cover rounded-xl border border-stone-200">
                                         <div class="flex-1 min-w-0">
                                             <p class="text-sm font-medium text-stone-800 truncate group-hover:text-amber-700">${escapeHtml ? escapeHtml(prod.name) : prod.name}</p>
                                             <p class="text-sm text-amber-600 font-semibold">${window.Templates?.formatPrice ? window.Templates.formatPrice(prod.price) : prod.price}</p>
@@ -1437,6 +1459,37 @@
         });
     </script>
     
+    <script>
+    (function(){
+      function shouldSkip(img){
+        if (!img) return true;
+        if (img.closest('#main-header')) return true;
+        const cls = img.className || '';
+        if (/(^|\s)(h-6|h-8|h-10|w-5|w-6|w-8|logo|avatar|favicon)/.test(cls)) return true;
+        if (img.id === 'avatar-preview') return true;
+        return false;
+      }
+      function setLazy(img){
+        if (!img || img.hasAttribute('loading')) return;
+        if (shouldSkip(img)) return;
+        img.setAttribute('loading','lazy');
+        img.setAttribute('decoding','async');
+      }
+      document.addEventListener('DOMContentLoaded', function(){
+        document.querySelectorAll('img').forEach(setLazy);
+        const mo = new MutationObserver(muts=>{
+          muts.forEach(m=>{
+            m.addedNodes && m.addedNodes.forEach(node=>{
+              if (node.nodeType !== 1) return;
+              if (node.tagName === 'IMG') setLazy(node);
+              node.querySelectorAll && node.querySelectorAll('img').forEach(setLazy);
+            });
+          });
+        });
+        mo.observe(document.body, {childList:true, subtree:true});
+      });
+    })();
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

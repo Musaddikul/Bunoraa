@@ -378,7 +378,7 @@
                         {% for it in checkout_summary.items %}
                         <div class="flex items-center space-x-4">
                             <div class="relative flex-shrink-0">
-                                <img src="{{ it.image|default:'/static/images/placeholder.jpg' }}" 
+                                <img src="{{ it.image|default:'/static/images/placeholder.jpg' }}" loading="lazy" decoding="async"
                                      alt="{{ it.product_name }}"
                                      class="w-16 h-16 object-cover rounded-lg">
                                 <span class="absolute -top-2 -right-2 w-5 h-5 bg-gray-600 text-white text-xs rounded-full flex items-center justify-center font-medium">

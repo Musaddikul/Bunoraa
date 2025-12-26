@@ -48,7 +48,7 @@
                     {% for item in cart_items %}
                     <div class="py-4 flex flex-col md:flex-row md:items-center md:space-x-4">
                         <div class="flex items-center space-x-4 flex-1">
-                            <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.jpg' }}" alt="{{ item.product.name }}" class="w-20 h-20 rounded-lg object-cover">
+                            <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.jpg' }}" loading="lazy" decoding="async" alt="{{ item.product.name }}" class="w-20 h-20 rounded-lg object-cover">
                             <div>
                                 <p class="font-medium text-gray-900">{{ item.product.name }}</p>
                                 {% if item.variant %}
