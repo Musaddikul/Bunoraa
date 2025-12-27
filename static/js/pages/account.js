@@ -35,7 +35,7 @@ const AccountPage = (function() {
             currentUser = response.data;
             renderProfile();
         } catch (error) {
-            console.error('Failed to load profile:', error);
+            // error logging removed
             Toast.error('Failed to load profile.');
         }
     }

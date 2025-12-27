@@ -357,7 +357,7 @@ const SearchPage = (function() {
 
             bindCategoryFilter();
         } catch (error) {
-            console.error('Failed to load categories:', error);
+            // error logging removed
         }
     }
 

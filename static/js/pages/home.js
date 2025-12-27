@@ -321,7 +321,7 @@ const HomePage = (function() {
             // Clear any client cache for categories and fetch fresh data
             try { window.ApiClient?.clearCache('/api/v1/categories/'); } catch (e) {}
             const response = await window.ApiClient.get('/categories/', { page_size: 6, is_featured: true }, { useCache: false });
-            console.info('[Home] raw categories response', response);
+            // info removed
             const categories = response.data?.results || response.data || response.results || [];
 
             if (categories.length === 0) {
@@ -339,14 +339,14 @@ const HomePage = (function() {
             }
 
             container.innerHTML = '';
-            console.info('[Home] fetched categories', categories.map(c => ({ name: c.name, image_url: c.image_url || c.image || c.thumbnail || null })) );
+            // info removed
             categories.forEach(category => {
                 const card = CategoryCard(category);
                 // Log whether the created card contains an <img> and its src (if present)
                 try {
                     const imgEl = card.querySelector('img');
                     console.info('[Home] card image for', category.name, imgEl ? imgEl.src : 'NO_IMAGE');
-                } catch (e) { console.error('[Home] card image check failed', e); }
+                } catch (e) { /* error logging removed */ }
                 container.appendChild(card);
             });
             container.classList.add('grid','grid-cols-2','sm:grid-cols-2','md:grid-cols-3','lg:grid-cols-6','gap-4','lg:gap-6');
