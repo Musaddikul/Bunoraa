@@ -1,0 +1,6 @@
+User-agent: *
+Disallow:
+
+# Sitemap location (served by Django at /sitemap.xml)
+Sitemap: https://bunoraa.com/sitemap.xml
+Host: bunoraa.com
