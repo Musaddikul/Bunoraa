@@ -9,7 +9,8 @@ const AccountPage = (function() {
     let currentUser = null;
 
     async function init() {
-        if (!AuthGuard.requireAuth()) return;
+        // Ensure this page is protected and redirect to login if the user is not authenticated
+        if (!AuthGuard.protectPage()) return;
 
         await loadUserProfile();
         // Ensure avatar handlers are bound even when renderProfile cannot inject the header (e.g., server-rendered sidebar present)
@@ -25,6 +26,10 @@ const AccountPage = (function() {
     }
 
     async function loadUserProfile() {
+        if (!AuthApi.isAuthenticated()) {
+            // Avoid calling profile API when user is not authenticated
+            return;
+        }
         try {
             const response = await AuthApi.getProfile();
             currentUser = response.data;

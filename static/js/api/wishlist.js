@@ -86,8 +86,8 @@ const WishlistApi = (function() {
         const badges = document.querySelectorAll('[data-wishlist-count]');
         
         badges.forEach(badge => {
-            // Cap visible badge to a single digit display to reduce layout width on small viewports
-            badge.textContent = count > 9 ? '9+' : count;
+            // Cap visible badge to 99+ and show smaller, compact badges
+            badge.textContent = count > 99 ? '99+' : count;
             badge.classList.toggle('hidden', count === 0);
         });
     }
