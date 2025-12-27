@@ -5,7 +5,7 @@
 {% block title %}{{ category.name }} - {{ SITE_NAME }}{% endblock %}
 
 {% block meta %}
-<meta name="description" content="{{ category.meta_description|default:category.description }}">
+<meta name="description" content="{{ category.meta_description|default:category.description|seo_desc }}">
 {% endblock %}
 
 {% block content %}

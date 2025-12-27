@@ -1,5 +1,10 @@
 User-agent: *
 Disallow:
+Disallow: /account/
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /search/
+Disallow: /admin/
 
 # Sitemap location (served by Django at /sitemap.xml)
 Sitemap: https://bunoraa.com/sitemap.xml

@@ -4,6 +4,19 @@
 {% block page_id %}search{% endblock %}
 {% block title %}Search Results for "{{ query }}" - {{ SITE_NAME }}{% endblock %}
 
+{% block extra_head %}
+<meta name="robots" content="noindex, follow">
+<link rel="canonical" href="{{ canonical_url }}">
+{% if products.has_other_pages %}
+    {% if products.has_previous %}
+    <link rel="prev" href="{{ canonical_url }}?q={{ query }}&page={{ products.previous_page_number }}">
+    {% endif %}
+    {% if products.has_next %}
+    <link rel="next" href="{{ canonical_url }}?q={{ query }}&page={{ products.next_page_number }}">
+    {% endif %}
+{% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <!-- Search Header -->
