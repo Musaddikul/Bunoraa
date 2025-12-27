@@ -294,9 +294,13 @@ class SetCurrencyPreferenceView(APIView):
         else:
             # Anonymous: save to session and set cookie so server-rendered pages pick it up
             if hasattr(request, 'session'):
-                request.session['currency_code'] = currency.code
-                # Mark session modified so it will be saved
-                request.session.modified = True
+                try:
+                    request.session['currency_code'] = currency.code
+                    # Mark session modified so it will be saved
+                    request.session.modified = True
+                except Exception:
+                    # Fail softly if sessions are not available
+                    pass
 
             resp = Response({
                 'success': True,
@@ -306,8 +310,12 @@ class SetCurrencyPreferenceView(APIView):
                     'auto_detect': False
                 }
             })
-            # Set cookie 'currency' for fallback (1 year)
-            resp.set_cookie('currency', currency.code, max_age=60 * 60 * 24 * 365, path='/', samesite='Lax')
+            # Set cookie 'currency' for fallback (1 year) and use session cookie security settings
+            from django.conf import settings as _settings
+            secure_flag = bool(getattr(_settings, 'SESSION_COOKIE_SECURE', False))
+            resp.set_cookie('currency', currency.code, max_age=60 * 60 * 24 * 365, path='/', samesite='Lax', secure=secure_flag, httponly=False)
+            # Inform caches that response varies by cookies
+            resp['Vary'] = 'Cookie'
             return resp
 
 

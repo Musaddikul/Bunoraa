@@ -349,7 +349,7 @@ const HomePage = (function() {
                 } catch (e) { console.error('[Home] card image check failed', e); }
                 container.appendChild(card);
             });
-            container.classList.add('grid','grid-cols-1','sm:grid-cols-2','md:grid-cols-3','lg:grid-cols-6','gap-4','lg:gap-6');
+            container.classList.add('grid','grid-cols-2','sm:grid-cols-2','md:grid-cols-3','lg:grid-cols-6','gap-4','lg:gap-6');
         } catch (error) {
             console.error('Failed to load categories:', error);
             container.innerHTML = '';
