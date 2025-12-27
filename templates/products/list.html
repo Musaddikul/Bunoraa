@@ -2,8 +2,20 @@
 {% load static %}
 
 {% block page_id %}category{% endblock %}
-{% block title %}{% if category %}{{ category.name }}{% else %}All Products{% endif %} - {{ SITE_NAME }}{% endblock %}
-{% block meta_description %}{% if category %}{{ category.meta_description|default:category.description }}{% else %}Browse our premium collection of products. Find the best deals on fashion, electronics, home & living and more.{% endif %}{% endblock %}
+{% load seo_tags %}
+{% block title %}{% if category %}{{ category.name|seo_title }}{% else %}All Products{% endif %} - {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}{% if category %}{{ category.meta_description|default:category.description|seo_desc }}{% else %}{{ "Browse our premium collection of products. Find the best deals on fashion, electronics, home & living and more."|seo_desc }}{% endif %}{% endblock %}
+
+{% block extra_head %}
+{% if products and products.has_other_pages %}
+    {% if products.has_previous %}
+    <link rel="prev" href="{{ canonical_url }}?page={{ products.previous_page_number }}">
+    {% endif %}
+    {% if products.has_next %}
+    <link rel="next" href="{{ canonical_url }}?page={{ products.next_page_number }}">
+    {% endif %}
+{% endif %}
+{% endblock %}
 
 {% block content %}
 <!-- Page Header -->

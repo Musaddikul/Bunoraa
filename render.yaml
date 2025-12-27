@@ -3,7 +3,8 @@ services:
     name: Bunoraa
     runtime: python
     buildCommand: "./build.sh"
-    startCommand: "gunicorn core.wsgi:application --bind 0.0.0.0:$PORT"
+    startCommand: "gunicorn core.wsgi:application --config gunicorn_conf.py"
+    postDeployCommand: "python manage.py prerender_top --categories=10 --products=20 --include-static || true && python manage.py setup_seo_schedules || true"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -82,6 +83,13 @@ services:
           property: connectionString
     plan: free
     healthCheckPath: /health/
+
+cron:
+  - name: warmup
+    type: pull_request
+    schedule: "*/5 * * * *"
+    command: "curl -fsS --retry 3 https://bunoraa.com/health || true"
+    timezone: UTC
 
 databases:
   - name: bunoraa

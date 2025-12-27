@@ -43,6 +43,7 @@ THIRD_PARTY_APPS = [
     'django_filters',
     'storages',
     'django_hugeicons_stroke',
+    'django_celery_beat'
 ]
 
 LOCAL_APPS = [
@@ -68,21 +69,28 @@ LOCAL_APPS = [
     'apps.localization',
     'apps.faq',
     'apps.contacts',
+    'apps.seo',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'core.middleware.early_hints.EarlyHintsMiddleware',
+    'core.middleware.host_canonical.HostCanonicalMiddleware',
+    'django.middleware.gzip.GZipMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'core.middleware.bot_prerender.BotPreRenderMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'core.middleware.seo_headers.SEOHeadersMiddleware',
     'core.middleware.request_logging.RequestLoggingMiddleware',
+    'core.middleware.cache_control_html.CacheControlHTMLMiddleware',
     'core.middleware.api_response.APIResponseMiddleware',
 ]
 
@@ -159,6 +167,18 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Performance defaults
+CONN_MAX_AGE = int(os.environ.get('CONN_MAX_AGE', 600))
+ATOMIC_REQUESTS = False
+
+# Pre-render / warm-up settings
+PRERENDER_PATHS = ['/', '/products/', '/categories/']
+PRERENDER_CACHE_DIR = os.environ.get('PRERENDER_CACHE_DIR', 'prerender_cache')
+SITE_URL = os.environ.get('SITE_URL', 'https://bunoraa.com')
+MAIN_CSS = os.environ.get('MAIN_CSS', '/static/css/styles.css')
+MAIN_JS = os.environ.get('MAIN_JS', '/static/js/main.js')
+ASSET_HOST = os.environ.get('ASSET_HOST', '')
 
 # Site ID
 SITE_ID = 1

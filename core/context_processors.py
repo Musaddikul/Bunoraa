@@ -3,6 +3,7 @@ Context processors for templates
 """
 from django.conf import settings
 from django.core.cache import cache
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
 
 def site_settings(request):
@@ -111,6 +112,35 @@ def site_settings(request):
         currency_symbol_position = 'before'
         currency_locale = 'en-US'
 
+    # Build a canonical URL (strip common tracking params, keep search/page where relevant)
+    def build_canonical(req):
+        full = req.build_absolute_uri()
+        parsed = urlparse(full)
+        qs = parse_qs(parsed.query)
+        allowed = {'q', 'page', 'category', 'brand', 'sort'}
+        filtered = {k: v for k, v in qs.items() if k in allowed}
+        # remove page=1
+        if 'page' in filtered and filtered['page'] == ['1']:
+            filtered.pop('page')
+        new_q = urlencode([(k, item) for k, vals in filtered.items() for item in vals], doseq=True)
+        return urlunparse((parsed.scheme, parsed.netloc, parsed.path, '', new_q, ''))
+
+    # Default robots meta; mark non-content pages as noindex
+    def compute_meta_robots(req):
+        path = req.path or ''
+        noindex_paths = ['/search', '/account', '/cart', '/checkout', '/wishlist', '/preorders/wizard']
+        for p in noindex_paths:
+            if path.startswith(p):
+                return 'noindex, follow'
+        return 'index, follow'
+
+    ua = (request.META.get('HTTP_USER_AGENT') or '').lower()
+    is_crawler = False
+    for bot in ['googlebot', 'bingbot', 'yandex', 'baiduspider', 'duckduckbot']:
+        if bot in ua:
+            is_crawler = True
+            break
+
     return {
         **cached_settings,
         'IS_DEBUG': settings.DEBUG,
@@ -122,4 +152,7 @@ def site_settings(request):
         'currency_thousand_separator': currency_thousand_separator,
         'currency_decimal_separator': currency_decimal_separator,
         'currency_symbol_position': currency_symbol_position,
+        'canonical_url': build_canonical(request),
+        'meta_robots': compute_meta_robots(request),
+        'IS_CRAWLER': is_crawler,
     }

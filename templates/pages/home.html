@@ -2,8 +2,9 @@
 {% load static %}
 
 {% block page_id %}home{% endblock %}
-{% block title %}{{ SITE_NAME }} - Signature Shopping Experience{% endblock %}
-{% block meta_description %}Discover curated products at {{ SITE_NAME }}. Shop the latest trends in fashion, electronics, home & living with exclusive offers and free shipping.{% endblock %}
+{% load seo_tags %}
+{% block title %}{{ SITE_NAME|seo_title }} - Signature Shopping Experience{% endblock %}
+{% block meta_description %}{% with desc="Discover curated products at "|add:SITE_NAME|add:". Shop the latest trends in fashion, electronics, home & living with exclusive offers and free shipping." %}{{ desc|seo_desc }}{% endwith %}{% endblock %}
 
 {% block content %}
 <!-- Hero Section - Full Screen -->

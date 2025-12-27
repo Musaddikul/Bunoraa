@@ -34,9 +34,15 @@ CORS_ALLOW_ALL_ORIGINS = True
 try:
     import debug_toolbar
     INSTALLED_APPS += ['debug_toolbar']
-    MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
-    INTERNAL_IPS = ['127.0.0.1']
+    # Insert DebugToolbarMiddleware right after GZipMiddleware to avoid debug_toolbar.W003 warning
+    try:
+        gzip_index = MIDDLEWARE.index('django.middleware.gzip.GZipMiddleware')
+        MIDDLEWARE.insert(gzip_index + 1, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+    except ValueError:
+        # Fallback to front if gzip middleware isn't present for some reason
+        MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
 except ImportError:
+    # Debug toolbar is optional in local development
     pass
 
 # Cache - use local memory for development

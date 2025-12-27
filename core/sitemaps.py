@@ -18,7 +18,7 @@ class StaticViewSitemap(Sitemap):
 
 
 class ProductSitemap(Sitemap):
-    """Sitemap for products."""
+    """Sitemap for products, including images for image sitemap support."""
     changefreq = 'daily'
     priority = 0.8
     
@@ -31,6 +31,17 @@ class ProductSitemap(Sitemap):
     
     def location(self, obj):
         return reverse('products:product_detail', kwargs={'slug': obj.slug})
+
+    def images(self, obj):
+        imgs = []
+        for img in obj.images.all()[:5]:
+            if img.image:
+                imgs.append({
+                    'location': img.image.url,
+                    'title': obj.name,
+                    'caption': (obj.short_description[:250] if obj.short_description else ''),
+                })
+        return imgs
 
 
 class CategorySitemap(Sitemap):

@@ -2,23 +2,62 @@
 {% load static %}
 {% load currency_tags %}
 
+{% load seo_tags %}
 {% block page_id %}product{% endblock %}
-{% block title %}{{ product.meta_title|default:product.name }} - {{ SITE_NAME }}{% endblock %}
-{% block meta_description %}{{ product.meta_description|default:product.short_description }}{% endblock %}
+{% block title %}{{ product.meta_title|default:product.name|seo_title }} - {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}{{ product.meta_description|default:product.short_description|seo_desc }}{% endblock %}
+{% block og_title %}{{ product.meta_title|default:product.name|seo_title }}{% endblock %}
+{% block og_description %}{{ product.meta_description|default:product.short_description|seo_desc }}{% endblock %}
+{% block og_image %}{% if product.images.first %}{{ product.images.first.image.url }}{% else %}{% static 'images/og-image.jpg' %}{% endif %}{% endblock %}
 
 {% block content %}
 <div id="product-detail" class="container mx-auto px-4 py-8" data-product-slug="{{ product.slug }}" data-product-id="{{ product.id }}">
     <!-- Breadcrumb -->
     <nav id="breadcrumbs" class="mb-8"></nav>
-    
+
+    <!-- Structured Data: Product + Breadcrumb -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": "{{ product.name|escapejs }}",
+      "image": [{% for img in product.images.all %}"{{ request.scheme }}://{{ request.get_host }}{{ img.image.url }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+      "description": "{{ product.short_description|default:''|truncatechars:300|escapejs }}",
+      "sku": "{{ product.sku|default:'' }}",
+      {% if product.brand %}
+      "brand": { "@type": "Brand", "name": "{{ product.brand.name|escapejs }}" },
+      {% endif %}
+      "offers": {
+        "@type": "Offer",
+        "url": "{{ request.build_absolute_uri }}",
+        "priceCurrency": "{{ product.currency|default:'BDT' }}",
+        "price": "{{ product.current_price }}",
+        "availability": "https://schema.org/{% if product.stock_quantity > 0 %}InStock{% else %}OutOfStock{% endif %}"
+      }{% if product.average_rating %},
+      "aggregateRating": { "@type": "AggregateRating", "ratingValue": "{{ product.average_rating }}", "reviewCount": "{{ product.review_count }}" }
+      {% endif %}
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ request.scheme }}://{{ request.get_host }}" }{% if product.category %},
+        { "@type": "ListItem", "position": 2, "name": "{{ product.category.name|escapejs }}", "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'categories:detail' product.category.slug %}" }{% endif %},
+        { "@type": "ListItem", "position": 3, "name": "{{ product.name|escapejs }}", "item": "{{ request.build_absolute_uri }}" }
+      ]
+    }
+    </script>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
         <!-- Product Images -->
         <div>
             <!-- Main Image -->
             <div class="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
                 {% if product.images.all %}
-                <img id="main-image" src="{{ product.images.first.image.url }}" alt="{{ product.name }}" 
-                     class="w-full h-full object-cover">
+                <img id="main-image" src="{{ product.images.first.image.url }}" alt="{{ product.name }}" loading="eager" fetchpriority="high" decoding="async" class="w-full h-full object-cover">
                 {% else %}
                 <div class="w-full h-full flex items-center justify-center">
                     <svg class="w-24 h-24 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
