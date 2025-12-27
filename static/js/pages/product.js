@@ -948,7 +948,7 @@ const ProductPage = (function() {
         try {
             await ProductsAPI.trackView(product.id);
         } catch (error) {
-            console.error('Failed to track view:', error);
+            // error logging removed
         }
     }
 

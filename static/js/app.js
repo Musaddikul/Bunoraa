@@ -59,7 +59,6 @@ const App = (function() {
             WishlistApi.updateBadge(payload);
             syncWishlistButtons(items);
         } catch (error) {
-            console.debug('initWishlistBadge error', error);
             try {
                 const raw = localStorage.getItem('wishlist');
                 if (raw) {
@@ -94,10 +93,7 @@ const App = (function() {
                 if (pslug) mapBySlug[String(pslug)] = id || true;
             });
 
-            // Debug
-            try { console.debug('syncWishlistButtons mapping', { byId: mapById, bySlug: mapBySlug, itemsCount: items?.length || 0 }); } catch(e){}
-
-            document.querySelectorAll('.wishlist-btn').forEach(btn => {
+            document.querySelectorAll('.wishlist-btn').forEach(btn => { 
                 try {
                     const svg = btn.querySelector('svg');
                     const fillPath = svg?.querySelector('.heart-fill');
@@ -126,7 +122,7 @@ const App = (function() {
                 }
             });
         } catch (e) {
-            console.error('syncWishlistButtons error', e);
+            // error logging removed
         }
     }
 
@@ -173,7 +169,7 @@ const App = (function() {
                     updateCartBadge(count);
                 }
             } catch (e) {
-                console.error('Failed to get cart count:', error);
+                // error logging removed
             }
         }
     }
@@ -224,8 +220,6 @@ const App = (function() {
         } else if (path.includes('privacy') || path.includes('terms') || path.includes('legal') || path.includes('policy')) {
             currentPage = 'legal';
         }
-        // Debug: show detected page for easier troubleshooting
-        try { console.debug('detectCurrentPage', { page: currentPage, path }); } catch (e) {}
     }
 
     function initGlobalComponents() {
@@ -280,7 +274,7 @@ const App = (function() {
             } catch (e) {
                 console.error('Failed to get cart count fallback:', e);
             }
-            console.error('Failed to get cart count (network):', error);
+            // error logging removed
         }
     }
 
@@ -371,9 +365,6 @@ const App = (function() {
             if (wishlistBtn) {
                 e.preventDefault();
 
-                // DEBUG: trace clicks on wishlist buttons
-                try { console.debug('wishlist:click', { productIdAttr: wishlistBtn.dataset.productId, wishlistItemIdAttr: wishlistBtn.dataset.wishlistItemId, classList: wishlistBtn.className }); } catch (err) {}
-                
                 if (!AuthApi.isAuthenticated()) {
                     Toast.warning('Please login to add items to your wishlist.');
                     window.location.href = '/account/login/?next=' + encodeURIComponent(window.location.pathname);
@@ -382,8 +373,7 @@ const App = (function() {
 
                 const productId = wishlistBtn.dataset.wishlistToggle || wishlistBtn.dataset.productId || wishlistBtn.closest('[data-product-id]')?.dataset.productId;
                 if (!productId) {
-                    console.warn('wishlist:click missing productId for button', wishlistBtn);
-                    return;
+                        // missing productId
                 }
 
                 wishlistBtn.disabled = true;
@@ -399,7 +389,6 @@ const App = (function() {
                 try {
                     if (shouldRemove) {
                         const res = await WishlistApi.removeItem(wishlistItemId);
-                        console.debug('wishlist:remove:response', res);
                         wishlistBtn.classList.remove('text-red-500');
                         wishlistBtn.setAttribute('aria-pressed', 'false');
                         wishlistBtn.querySelector('svg')?.classList.remove('fill-current');
@@ -409,7 +398,6 @@ const App = (function() {
                         Toast.success('Removed from wishlist.');
                     } else {
                         const response = await WishlistApi.addItem(productId);
-                        console.debug('wishlist:add:response', response);
                         const createdId = response.data?.id || response.data?.item?.id || await findWishlistItemId(productId);
                         if (createdId) {
                             wishlistBtn.dataset.wishlistItemId = createdId;
@@ -521,6 +509,8 @@ const App = (function() {
         overlay?.addEventListener('click', closeMenu);
     }
 
+
+
     function initLanguageSelector() {
         const languageBtn = document.querySelector('[data-language-selector]');
         const languageDropdown = document.getElementById('language-dropdown');
@@ -542,10 +532,6 @@ const App = (function() {
                 });
             });
         }
-    }
-
-    function initCurrencySelector() {
-        // Currency selector disabled in single-currency mode.
     }
 
     function destroy() {

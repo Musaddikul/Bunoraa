@@ -27,7 +27,7 @@ function getCsrfToken() {
     // 4. Basic sanity check
     if (token) {
         if (token.length < 8 || token.length > 1024) {
-            console.warn('CSRF token length seems abnormal:', token.length);
+            // warning removed
             return null;
         }
         return token;
@@ -81,12 +81,45 @@ export async function initCurrencySelector(selector) {
 
         // Guard to prevent concurrent setCurrency calls and double-click issues
         let isSetting = false;
+        function setLoadingState(state) {
+            isSetting = !!state;
+            if (state) {
+                toggle.setAttribute('disabled', 'true');
+                toggle.classList.add('opacity-60', 'cursor-not-allowed');
+                toggle.setAttribute('aria-busy', 'true');
+                // add spinner if not present
+                if (!toggle.querySelector('.currency-spinner')) {
+                    const spinner = document.createElement('span');
+                    spinner.className = 'currency-spinner inline-block ml-2 h-4 w-4 animate-spin border-2 border-current rounded-full border-t-transparent';
+                    spinner.setAttribute('aria-hidden', 'true');
+                    toggle.appendChild(spinner);
+                }
+            } else {
+                toggle.removeAttribute('disabled');
+                toggle.classList.remove('opacity-60', 'cursor-not-allowed');
+                toggle.removeAttribute('aria-busy');
+                const spinner = toggle.querySelector('.currency-spinner');
+                if (spinner) spinner.remove();
+            }
+        }
         let currentCode = window.BUNORAA_CURRENCY && window.BUNORAA_CURRENCY.code ? window.BUNORAA_CURRENCY.code : (currentEl ? currentEl.textContent.trim() : null);
+        // currencies cache for this root
+        let currencies = [];
 
-        async function fetchCurrencies() {
+        async function fetchCurrencies(retries = 2, attempt = 0) {
+            // show inline loading indicator
+            list.innerHTML = '';
+            const spinnerDiv = document.createElement('div');
+            spinnerDiv.className = 'px-3 py-2 text-sm text-stone-500 flex items-center';
+            spinnerDiv.innerHTML = '<span class="inline-block h-4 w-4 animate-spin border-2 border-current rounded-full border-t-transparent mr-2" aria-hidden="true"></span><span>Loading currencies…</span>';
+            list.appendChild(spinnerDiv);
+
             try {
-                const resp = await fetch('/api/v1/currencies/');
-                if (!resp.ok) throw new Error('Failed to fetch currencies');
+                const resp = await fetch('/api/v1/currencies/', { credentials: 'same-origin' });
+                if (!resp.ok) {
+                    const txt = await resp.text().catch(() => String(resp.status));
+                    throw new Error('HTTP ' + resp.status + ': ' + txt);
+                }
                 const body = await resp.json();
 
                 // Support different API shapes: array, { results: [] }, { data: [...] }, or { success: true, data: [...] }
@@ -108,14 +141,56 @@ export async function initCurrencySelector(selector) {
                     }
                 }
 
+                if (!currencies || currencies.length === 0) throw new Error('No currencies in response');
+
+                // cache the result for offline/failure fallback
+                try { localStorage.setItem('currencies_cache', JSON.stringify({ data: currencies, ts: Date.now() })); } catch (e) {}
+
                 renderList();
-            } catch (e) {
-                // Show a friendly message
+                return;
+            } catch (err) {
+                // retry with backoff
+                if (attempt < retries) {
+                    const delay = (attempt + 1) * 1000;
+                    setTimeout(() => fetchCurrencies(retries, attempt + 1), delay);
+                    return;
+                }
+
+                // final failure: try cached list
+                let cachedLoaded = false;
+                try {
+                    const raw = localStorage.getItem('currencies_cache');
+                    if (raw) {
+                        const parsed = JSON.parse(raw);
+                        if (parsed && Array.isArray(parsed.data) && parsed.data.length) {
+                            currencies = parsed.data;
+                            cachedLoaded = true;
+                        }
+                    }
+                } catch (e) {}
+
                 list.innerHTML = '';
                 const el = document.createElement('div');
                 el.className = 'px-3 py-2 text-sm text-stone-500';
-                el.textContent = 'Failed to load currencies';
-                list.appendChild(el);
+
+                if (cachedLoaded) {
+                    el.textContent = 'Couldn\'t fetch latest currencies — loaded cached list.';
+                    list.appendChild(el);
+                    const note = document.createElement('div');
+                    note.className = 'px-3 py-1 text-xs text-stone-400';
+                    note.textContent = 'Prices may be outdated; refresh the page to retry.';
+                    list.appendChild(note);
+                    renderList();
+                } else {
+                    el.textContent = 'Failed to load currencies';
+                    const retryBtn = document.createElement('button');
+                    retryBtn.type = 'button';
+                    retryBtn.className = 'ml-3 text-sm text-blue-600 hover:underline';
+                    retryBtn.textContent = 'Retry';
+                    retryBtn.addEventListener('click', () => { fetchCurrencies(retries, 0); });
+                    el.appendChild(retryBtn);
+                    list.appendChild(el);
+                }
             }
         }
 
@@ -149,9 +224,10 @@ export async function initCurrencySelector(selector) {
                         return;
                     }
 
+                    // Enter loading state (disables toggle and shows spinner)
+                    setLoadingState(true);
                     el.disabled = true;
                     try {
-                        isSetting = true;
                         const result = await setCurrency(c.code);
                         // Close the dropdown (doToggle is defined below in scope)
                         try { doToggle(false); } catch (err) { /* ignore if not available */ }
@@ -167,7 +243,7 @@ export async function initCurrencySelector(selector) {
                         window.Toast?.error('Failed to update currency');
                     } finally {
                         el.disabled = false;
-                        isSetting = false;
+                        setLoadingState(false);
                     }
                 });
                 el.addEventListener('keydown', (e) => {
@@ -194,7 +270,7 @@ export async function initCurrencySelector(selector) {
                 let csrftoken = getCsrfToken();
                 if (!csrftoken) {
                     await showListMessage('Unable to find a valid CSRF token. Please reload the page or sign out and sign back in to refresh your session.', 'error');
-                    console.warn('CSRF token missing when attempting to set currency.');
+                    // warning removed
                     return { success: false, message: 'Missing CSRF token' };
                 }
 
@@ -215,7 +291,7 @@ export async function initCurrencySelector(selector) {
 
                 // If server denies the request with a 403, attempt to recover gracefully (CSRF refresh or server-provided token)
                 if (resp.status === 403) {
-                    console.warn('Currency preference API returned 403. Attempting recovery.');
+                    // warning removed
                     try {
                         // Prefer JSON body (our custom csrf_failure handler returns JSON with meta.new_csrf_token)
                         const jsonBody = await resp.json().catch(() => null);
@@ -260,8 +336,6 @@ export async function initCurrencySelector(selector) {
                         }
 
                         // Recovery failed, fall back to local preference
-                        console.warn('Currency preference recovery failed. Falling back to local preference.');
-                        try { const t = await resp.text(); console.debug('Currency preference response:', t); } catch(e) {}
                         localStorage.setItem('currency_preference', JSON.stringify({ code, savedAt: Date.now() }));
                         currentCode = code;
                         if (currentEl) currentEl.textContent = code;
@@ -272,7 +346,7 @@ export async function initCurrencySelector(selector) {
                         setTimeout(() => location.reload(), 350);
                         return { success: true, message: 'Currency saved locally', source: 'local' };
                     } catch (e) {
-                        console.error('Error recovering from 403:', e);
+                        // error logging removed
                         localStorage.setItem('currency_preference', JSON.stringify({ code, savedAt: Date.now() }));
                         currentCode = code;
                         if (currentEl) currentEl.textContent = code;
@@ -331,6 +405,10 @@ export async function initCurrencySelector(selector) {
 
         toggle.addEventListener('click', (e) => {
             e.stopPropagation();
+            if (isSetting) {
+                window.Toast?.info('Currency change in progress, please wait...');
+                return;
+            }
             doToggle();
         });
 
@@ -338,6 +416,10 @@ export async function initCurrencySelector(selector) {
         toggle.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
+                if (isSetting) {
+                    window.Toast?.info('Currency change in progress, please wait...');
+                    return;
+                }
                 toggle.click();
             }
             if (e.key === 'Escape') {

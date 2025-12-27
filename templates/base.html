@@ -14,6 +14,15 @@
             root.style.colorScheme = useDark ? 'dark' : 'light';
         })();
     </script>
+    <!-- Disable console output on the website -->
+    <script>
+        (function(){
+            try {
+                const noop = function(){};
+                ['log','debug','info','warn','error','assert'].forEach(m => { if (console && console[m]) console[m] = noop; });
+            } catch(e) {}
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="{% block meta_description %}{{ SITE_NAME }} - {{ SITE_TAGLINE }}{% endblock %}">
@@ -257,14 +266,14 @@
                     
                     <!-- Wishlist -->
                     <a href="{% url 'wishlist:list' %}" class="relative p-1 lg:p-2.5 text-stone-700 hover:text-rose-600 rounded-xl transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-stone-300 dark:hover:text-rose-400 dark:focus-visible:ring-rose-400" aria-label="Wishlist">
-                        <svg class="w-7 h-7 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                        <span data-wishlist-count class="hidden absolute -top-1 -right-1 sm:top-1/2 sm:right-0 transform -translate-y-1/2 translate-x-1/2 sm:translate-x-0 bg-transparent text-rose-600 dark:text-rose-400 text-[8px] sm:text-[10px] font-medium min-w-[16px] h-[16px] rounded-full flex items-center justify-center px-1">0</span>
-                    </a>
+                        <svg class="w-6 h-6 sm:w-7 sm:h-7 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                        <span data-wishlist-count class="hidden absolute -top-1 -right-1 sm:-top-1 sm:-right-1 bg-transparent text-rose-600 dark:text-rose-400 text-[8px] sm:text-[10px] font-bold min-w-[16px] h-[16px] rounded-full flex items-center justify-center px-1">0</span>
+                    </a> 
                     
                     <!-- Cart -->
                     <button type="button" data-cart-open class="relative p-1 lg:p-2.5 text-stone-700 hover:text-amber-700 rounded-xl transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:text-stone-300 dark:hover:text-amber-400 dark:focus-visible:ring-amber-400" aria-label="Cart">
-                        <svg class="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-                        <span data-cart-count class="hidden absolute -top-1 -right-1 sm:top-1/2 sm:right-0 transform -translate-y-1/2 translate-x-1/2 sm:translate-x-0 bg-transparent text-amber-600 dark:text-amber-400 text-[8px] sm:text-[10px] font-medium min-w-[16px] h-[16px] rounded-full flex items-center justify-center px-1">0</span>
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                        <span data-cart-count class="hidden absolute -top-1 -right-1 sm:-top-1 sm:-right-1 bg-transparent text-amber-600 dark:text-amber-400 text-[8px] sm:text-[10px] font-bold min-w-[16px] h-[16px] rounded-full flex items-center justify-center px-1">0</span>
                     </button>
                     <!-- Mobile Menu (moved after cart) -->
                     <button type="button" data-mobile-menu-toggle class="lg:hidden p-1 lg:p-2.5 rounded-xl text-stone-700 hover:text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-stone-300 dark:hover:text-amber-400 dark:focus-visible:ring-amber-400 dark:focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-900" aria-label="Open menu">
@@ -403,13 +412,13 @@
     <!-- Footer -->
     <footer class="bg-stone-900 text-stone-300 mt-auto">
         <!-- Main Footer -->
-        <div class="container mx-auto px-4 py-16">
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 lg:gap-12">
+        <div class="container mx-auto px-4 py-8 sm:py-10 md:py-12">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 md:gap-8 lg:gap-12">
                 <!-- Brand -->
                 <div class="col-span-2 md:col-span-3 lg:col-span-2">
-                    <a href="{% url 'home' %}" class="inline-flex items-center gap-2 mb-6 group">
+                    <a href="{% url 'home' %}" class="inline-flex items-center gap-2 mb-4 group">
                         {% if SITE_LOGO_DARK or SITE_LOGO %}
-                        <img src="{{ SITE_LOGO_DARK|default:SITE_LOGO }}" alt="{{ SITE_NAME }}" class="h-10 w-auto">
+                        <img src="{{ SITE_LOGO_DARK|default:SITE_LOGO }}" alt="{{ SITE_NAME }}" class="h-8 md:h-10 w-auto">
                         {% else %}
                         <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
@@ -417,22 +426,12 @@
                         <span class="text-2xl font-display font-bold text-white">{{ SITE_NAME }}</span>
                         {% endif %}
                     </a>
-                    <p class="text-stone-400 mb-6 leading-relaxed">A curated marketplace celebrating the beauty of handmade. Every purchase supports independent artisans and their craft.</p>
+                    <p class="text-stone-400 mb-4 leading-relaxed text-sm md:text-base">A curated marketplace celebrating the beauty of handmade. Every purchase supports independent artisans and their craft.</p>
                     
-                    <!-- Trust Badges -->
-                    <div class="flex flex-wrap items-center gap-4 mb-6">
-                        <div class="flex items-center gap-2 text-sm text-stone-400">
-                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                            Secure Checkout
-                        </div>
-                        <div class="flex items-center gap-2 text-sm text-stone-400">
-                            <svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                            Trusted Sellers
-                        </div>
-                    </div>
+
 
                     <!-- Contact Info (from Site Settings) -->
-                    <div class="mb-6 text-sm text-stone-400">
+                    <div class="mb-4 text-sm text-stone-400">
                         {% if CONTACT_EMAIL or CONTACT_PHONE or CONTACT_ADDRESS %}
                         <ul class="space-y-1">
                             {% if CONTACT_EMAIL %}
@@ -451,7 +450,7 @@
                     <!-- Social Links -->
                     <div class="flex items-center gap-3">
                         {% for s in SOCIAL_LINKS %}
-                        <a href="{{ s.url }}" target="_blank" rel="noopener noreferrer" class="w-10 h-10 bg-stone-800 hover:bg-amber-600 rounded-xl flex items-center justify-center text-stone-400 hover:text-white transition-all duration-200" aria-label="{{ s.name }}">
+                        <a href="{{ s.url }}" target="_blank" rel="noopener noreferrer" class="w-8 h-8 sm:w-10 sm:h-10 bg-stone-800 hover:bg-amber-600 rounded-xl flex items-center justify-center text-stone-400 hover:text-white transition-all duration-200" aria-label="{{ s.name }}">
                             {% if s.icon %}
                             <img src="{{ s.icon }}" alt="{{ s.name }}" class="w-5 h-5 object-contain">
                             {% else %}
@@ -464,16 +463,16 @@
                 
                 <!-- Shop Categories -->
                 <div>
-                    <h4 class="text-white font-semibold mb-5 text-lg">Shop</h4>
-                    <ul id="footer-categories" class="space-y-3">
+                    <h4 class="text-white font-semibold mb-4 text-lg">Shop</h4>
+                    <ul id="footer-categories" class="space-y-2">
                         <!-- Loaded via JS -->
                     </ul>
                 </div>
                 
                 <!-- Customer Service -->
                 <div>
-                    <h4 class="text-white font-semibold mb-5 text-lg">Help</h4>
-                    <ul class="space-y-3">
+                    <h4 class="text-white font-semibold mb-4 text-lg">Help</h4>
+                    <ul class="space-y-2">
                         <li><a href="{% url 'pages:faq' %}" class="text-stone-400 hover:text-amber-400 transition-colors flex items-center gap-2"><span>FAQ</span></a></li>
                         <li><a href="{% url 'orders:track' %}" class="text-stone-400 hover:text-amber-400 transition-colors flex items-center gap-2"><span>Track Order</span></a></li>
                         <li><a href="{% url 'pages:detail' slug='shipping' %}" class="text-stone-400 hover:text-amber-400 transition-colors flex items-center gap-2"><span>Shipping Info</span></a></li>
@@ -484,8 +483,8 @@
                 
                 <!-- Company -->
                 <div>
-                    <h4 class="text-white font-semibold mb-5 text-lg">About</h4>
-                    <ul class="space-y-3">
+                    <h4 class="text-white font-semibold mb-4 text-lg">About</h4>
+                    <ul class="space-y-2">
                         <li><a href="{% url 'pages:about' %}" class="text-stone-400 hover:text-amber-400 transition-colors">Our Story</a></li>
                         <li><a href="{% url 'pages:detail' slug='artisans' %}" class="text-stone-400 hover:text-amber-400 transition-colors">Meet Artisans</a></li>
                         <li><a href="{% url 'pages:detail' slug='sustainability' %}" class="text-stone-400 hover:text-amber-400 transition-colors">Sustainability</a></li>
@@ -496,7 +495,7 @@
                 
                 <!-- Legal -->
                 <div>
-                    <h4 class="text-white font-semibold mb-5 text-lg">Legal</h4>
+                    <h4 class="text-white font-semibold mb-4 text-lg">Legal</h4>
                     <ul class="space-y-3">
                         <li><a href="{% url 'pages:detail' slug='privacy-policy' %}" class="text-stone-400 hover:text-amber-400 transition-colors">Privacy Policy</a></li>
                         <li><a href="{% url 'pages:detail' slug='terms-of-service' %}" class="text-stone-400 hover:text-amber-400 transition-colors">Terms of Service</a></li>
@@ -509,34 +508,9 @@
         
         <!-- Bottom Bar -->
         <div class="border-t border-stone-800">
-            <div class="container mx-auto px-4 py-6">
-                <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
-                    <div class="flex flex-col sm:flex-row items-center gap-4 text-sm text-stone-500">
-                        <p>&copy; {% now "Y" %} {{ SITE_NAME }}. {% if COPYRIGHT_TEXT %}{{ COPYRIGHT_TEXT }}{% else %}All rights reserved.{% endif %}</p>
-                        <span class="hidden sm:inline text-stone-700">•</span>
-                        <p class="flex items-center gap-1">
-                            Made with <svg class="w-4 h-4 text-rose-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/></svg> for artisans worldwide
-                        </p>
-                    </div>
-                    
-                    <!-- Payment Methods -->
-                    <div class="flex items-center gap-3">
-                        <span class="text-xs text-stone-500 mr-2">We accept:</span>
-                        <div class="flex items-center gap-2">
-                            <div class="w-10 h-6 bg-stone-800 rounded flex items-center justify-center" title="Visa">
-                                <svg class="h-4" viewBox="0 0 50 16" fill="none"><path d="M19.5 15.5h-3.3l2.1-12.6h3.3l-2.1 12.6zm13.7-12.3c-.7-.3-1.7-.5-3-.5-3.3 0-5.6 1.7-5.6 4.2 0 1.8 1.7 2.8 3 3.4 1.3.6 1.8 1 1.8 1.6 0 .8-1.1 1.2-2.1 1.2-1.4 0-2.1-.2-3.3-.7l-.5-.2-.5 3c.8.4 2.3.7 3.8.7 3.5 0 5.8-1.7 5.8-4.4 0-1.5-1-2.6-3-3.5-1.2-.6-2-1-2-1.6 0-.5.6-1.1 2-1.1 1.2 0 2 .2 2.7.5l.3.1.6-2.7zm8.6-.3h-2.6c-.8 0-1.4.2-1.7 1l-4.9 11.6h3.5l.7-1.9h4.3l.4 1.9h3.1l-2.8-12.6zm-4.2 8.2l1.4-3.6.8-1.4.5 2.2.8 2.8h-3.5zM17.9 2.9l-3.3 8.6-.4-1.8c-.6-2.1-2.6-4.4-4.8-5.5l3 11.3h3.5l5.3-12.6h-3.3z" fill="#1A1F71"/><path d="M11.5 2.9H6.1l-.1.3c4.2 1 6.9 3.5 8.1 6.4l-1.2-5.9c-.2-.8-.8-1-1.4-1v.2z" fill="#F9A533"/></svg>
-                            </div>
-                            <div class="w-10 h-6 bg-stone-800 rounded flex items-center justify-center" title="Mastercard">
-                                <svg class="h-4" viewBox="0 0 32 20" fill="none"><circle cx="11" cy="10" r="8" fill="#EB001B"/><circle cx="21" cy="10" r="8" fill="#F79E1B"/><path d="M16 4.5c1.8 1.4 3 3.4 3 5.5s-1.2 4.1-3 5.5c-1.8-1.4-3-3.4-3-5.5s1.2-4.1 3-5.5z" fill="#FF5F00"/></svg>
-                            </div>
-                            <div class="w-10 h-6 bg-stone-800 rounded flex items-center justify-center" title="American Express">
-                                <svg class="h-3" viewBox="0 0 40 12" fill="none"><path d="M4.5 0L0 11.5h5l.7-1.7h1.6l.7 1.7h5.5V10l.5 1.5h2.8l.5-1.5v1.5h11.3l1.4-1.4 1.3 1.4h5.8l-4-5.7L35.5 0h-5.7l-1.3 1.4L27.2 0H14.6l-1.1 2.4L12.4 0H7.3l-.7 1.7h-1L5.1.5H0l4.5 11h5l.7-1.7h1.6l.7 1.7h11.1V10l.9 1.5h5.1l.9-1.5v1.5h2.7l2.7-2.8 2.5 2.8h5.7l-5.7-5.7L40 0h-5.7l-2.6 2.7L29.2 0h-11l-.9 2-.9-2H7.3z" fill="#2E77BC"/></svg>
-                            </div>
-                            <div class="w-10 h-6 bg-stone-800 rounded flex items-center justify-center" title="PayPal">
-                                <svg class="h-3" viewBox="0 0 40 11" fill="none"><path d="M15.3 1.2h-4.9c-.3 0-.6.3-.7.6L8 10.6c0 .2.2.4.4.4h2.3c.3 0 .6-.3.7-.6l.5-3c0-.3.3-.6.7-.6h1.5c3.2 0 5-1.5 5.5-4.6.2-1.3 0-2.4-.6-3.1-.7-.8-2-1.2-3.7-1.2v.3z" fill="#253B80"/><path d="M31.7 1.2h-4.9c-.3 0-.6.3-.7.6l-1.7 8.8c0 .2.2.4.4.4h2.5c.2 0 .4-.2.5-.4l.5-2.8c0-.3.3-.6.7-.6h1.5c3.2 0 5-1.5 5.5-4.6.2-1.3 0-2.4-.6-3.1-.7-.8-2-1.2-3.7-1.2v-.1z" fill="#179BD7"/><path d="M4.7 4.5c.2-1.4 1.3-2.3 2.7-2.3.7 0 1.3.2 1.7.5.4.4.5.9.4 1.5-.2 1.4-1.3 2.4-2.7 2.4-.7 0-1.3-.2-1.7-.6-.4-.3-.5-.9-.4-1.5z" fill="#253B80"/><path d="M21.1 4.5c.2-1.4 1.3-2.3 2.7-2.3.7 0 1.3.2 1.7.5.4.4.5.9.4 1.5-.2 1.4-1.3 2.4-2.7 2.4-.7 0-1.3-.2-1.7-.6-.4-.3-.5-.9-.4-1.5z" fill="#179BD7"/></svg>
-                            </div>
-                        </div>
-                    </div>
+            <div class="container mx-auto px-4 py-4 sm:py-6">
+                <div class="flex items-center justify-center">
+                    <p class="text-sm text-stone-500">&copy; {% now "Y" %} {{ SITE_NAME }}. {% if COPYRIGHT_TEXT %}{{ COPYRIGHT_TEXT }}{% else %}All rights reserved.{% endif %}</p>
                 </div>
             </div>
         </div>
@@ -995,12 +969,31 @@
             // Load navigation categories
             try {
                 if (CategoriesApi) {
-                    const response = await CategoriesApi.getCategories({ parent: 'null', limit: 8 });
-                    const categories = Array.isArray(response) ? response : (response.data || response.results || []);
+                    // Fetch headers (full categories) and roots (footer) in parallel
+                    const [headersResp, rootsResp] = await Promise.all([
+                        CategoriesApi.getCategories({ pageSize: 12 }),
+                        CategoriesApi.getRootCategories()
+                    ]);
+
+                    const headers = Array.isArray(headersResp) ? headersResp : (headersResp?.data || headersResp?.results || []);
+                    const rootSource = Array.isArray(rootsResp) ? rootsResp : (rootsResp?.data || rootsResp?.results || rootsResp || []);
+
+                    // Ensure arrays
+                    const categories = Array.isArray(headers) ? headers : [];
+                    const rootCategories = Array.isArray(rootSource) ? rootSource : [];
+                    const finalCategories = (Array.isArray(rootCategories) && rootCategories.length) ? rootCategories : categories;
+
+                    // Debugging info
+                    try {
+                        console.debug('Categories fetched', { total: categories.length, rootCount: rootCategories.length });
+                        console.debug('Headers sample', categories.slice(0, 20).map(cat => ({ id: cat?.id, name: cat?.name, parent: cat?.parent })));
+                        console.debug('Root sample', rootCategories.slice(0, 20).map(cat => ({ id: cat?.id, name: cat?.name, parent: cat?.parent })));
+                    } catch (e) {}
+
                     const mainNav = document.getElementById('main-nav');
                     const mobileNav = document.getElementById('mobile-nav');
                     const footerCats = document.getElementById('footer-categories');
-                    
+
                     if (Array.isArray(categories) && categories.length > 0 && mainNav) {
                         const navHtml = categories.map(cat => `
                             <li>
@@ -1009,12 +1002,12 @@
                                 </a>
                             </li>
                         `).join('');
-                        
+
                         mainNav.innerHTML = navHtml + `
 
                         `;
                     }
-                
+
                     // Mobile nav
                     if (Array.isArray(categories) && categories.length > 0 && mobileNav) {
                         mobileNav.innerHTML = `
@@ -1033,10 +1026,10 @@
                             </a>
                         `;
                     }
-                    
+
                     // Footer categories
-                    if (Array.isArray(categories) && categories.length > 0 && footerCats) {
-                        footerCats.innerHTML = categories.slice(0, 6).map(cat => `
+                    if (Array.isArray(finalCategories) && finalCategories.length > 0 && footerCats) {
+                        footerCats.innerHTML = finalCategories.slice(0, 5).map(cat => `
                             <li><a href="${buildRoute('categoryDetail', cat.slug)}" class="text-stone-400 hover:text-amber-400 transition-colors">${escapeHtml ? escapeHtml(cat.name) : cat.name}</a></li>
                         `).join('') + `<li><a href="${buildRoute('productsList')}" class="text-amber-400 hover:text-amber-300 font-medium transition-colors">View All →</a></li>`;
                     }
@@ -1098,7 +1091,7 @@
                         </a>
                         <a href="${buildRoute('wishlistList')}" class="flex items-center gap-3 px-4 py-2.5 text-stone-700 hover:bg-amber-50 hover:text-amber-700 transition-colors dark:text-stone-300 dark:hover:bg-stone-700 dark:hover:text-amber-300">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                            Wishlist <span data-wishlist-count class="hidden ml-2 inline-flex items-center justify-center text-rose-600 dark:text-rose-400 text-[8px] sm:text-[10px] font-medium min-w-[16px] h-[16px] rounded-full px-1">0</span>
+                            Wishlist <span data-wishlist-count class="hidden ml-2 inline-flex items-center justify-center text-rose-600 dark:text-rose-400 text-[8px] sm:text-[10px] font-bold min-w-[16px] h-[16px] rounded-full px-1">0</span>
                         </a>
                         <div class="border-t border-stone-100 dark:border-stone-700 mt-2 pt-2">
                             <a href="${buildRoute('accountsLogout')}" class="flex items-center gap-3 px-4 py-2.5 text-rose-600 hover:bg-rose-50 transition-colors dark:text-rose-400 dark:hover:bg-stone-700 dark:hover:text-rose-300">
