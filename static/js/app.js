@@ -36,21 +36,125 @@ const App = (function() {
         // Currency selector disabled in single-currency mode
     }
     async function initWishlistBadge() {
-        // Update wishlist badge on page load; fallback to cached value if API fails
+        // Update wishlist badge on page load; sync wishlist button states. Fallback to cached value if API fails
         try {
-            await WishlistApi.getWishlist({ pageSize: 1 });
+            // If user is not authenticated, rely on cached/local storage value and clear active states
+            if (!AuthApi.isAuthenticated()) {
+                const raw = localStorage.getItem('wishlist');
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    WishlistApi.updateBadge(parsed);
+                    const items = parsed.items || (parsed.data && parsed.data.items) || [];
+                    syncWishlistButtons(items);
+                } else {
+                    // Clear any filled buttons for anonymous users
+                    syncWishlistButtons([]);
+                }
+                return;
+            }
+
+            const response = await WishlistApi.getWishlist({ pageSize: 200 });
+            const payload = response.data || {};
+            const items = payload.items || payload.data || [];
+            WishlistApi.updateBadge(payload);
+            syncWishlistButtons(items);
         } catch (error) {
+            console.debug('initWishlistBadge error', error);
             try {
                 const raw = localStorage.getItem('wishlist');
                 if (raw) {
                     const parsed = JSON.parse(raw);
                     WishlistApi.updateBadge(parsed);
+                    const items = parsed.items || (parsed.data && parsed.data.items) || [];
+                    syncWishlistButtons(items);
                 }
             } catch (e) {
                 // ignore
             }
         }
     }
+
+    // Keep last loaded wishlist items for re-sync (used by mutation observer)
+    let _lastWishlistItems = [];
+
+    // Set wishlist button states (filled/outlined) based on wishlist items array
+    function syncWishlistButtons(items) {
+        try {
+            _lastWishlistItems = items || [];
+
+            const mapById = {};
+            const mapBySlug = {};
+
+            (items || []).forEach(it => {
+                // Support multiple shapes: item.product (uuid/string), item.product_id, item.product.slug or item.product_slug
+                const pid = (it.product || it.product_id || (it.product && it.product.id) || null);
+                const pslug = it.product_slug || (it.product && it.product.slug) || null;
+                const id = it.id || it.pk || it.uuid || it.item || null;
+                if (pid) mapById[String(pid)] = id || true;
+                if (pslug) mapBySlug[String(pslug)] = id || true;
+            });
+
+            // Debug
+            try { console.debug('syncWishlistButtons mapping', { byId: mapById, bySlug: mapBySlug, itemsCount: items?.length || 0 }); } catch(e){}
+
+            document.querySelectorAll('.wishlist-btn').forEach(btn => {
+                try {
+                    const svg = btn.querySelector('svg');
+                    const fillPath = svg?.querySelector('.heart-fill');
+                    const productId = btn.dataset.productId || btn.closest('[data-product-id]')?.dataset.productId;
+                    const productSlug = btn.dataset.productSlug || btn.closest('[data-product-slug]')?.dataset.productSlug;
+
+                    let itemId = null;
+                    if (productId && mapById.hasOwnProperty(String(productId))) itemId = mapById[String(productId)];
+                    else if (productSlug && mapBySlug.hasOwnProperty(String(productSlug))) itemId = mapBySlug[String(productSlug)];
+
+                    if (itemId) {
+                        btn.dataset.wishlistItemId = itemId;
+                        btn.classList.add('text-red-500');
+                        btn.setAttribute('aria-pressed', 'true');
+                        svg?.classList.add('fill-current');
+                        if (fillPath) fillPath.style.opacity = '1';
+                    } else {
+                        btn.removeAttribute('data-wishlist-item-id');
+                        btn.classList.remove('text-red-500');
+                        btn.setAttribute('aria-pressed', 'false');
+                        svg?.classList.remove('fill-current');
+                        if (fillPath) fillPath.style.opacity = '0';
+                    }
+                } catch (e) {
+                    // ignore per-button errors
+                }
+            });
+        } catch (e) {
+            console.error('syncWishlistButtons error', e);
+        }
+    }
+
+    // Observe DOM additions and re-sync wishlist buttons when new product cards appear
+    (function() {
+        if (typeof MutationObserver === 'undefined') return;
+        let debounceTimer = null;
+        const observer = new MutationObserver(function(mutations) {
+            let found = false;
+            for (const m of mutations) {
+                if (m.addedNodes && m.addedNodes.length) {
+                    for (const n of m.addedNodes) {
+                        if (n.nodeType === 1 && (n.matches?.('.product-card') || n.querySelector?.('.product-card') || n.querySelector?.('.wishlist-btn'))) {
+                            found = true; break;
+                        }
+                    }
+                }
+                if (found) break;
+            }
+            if (found) {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    try { syncWishlistButtons(_lastWishlistItems); } catch (e) {}
+                }, 150);
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    })();
 
     async function initCartBadge() {
         const cartBadges = document.querySelectorAll('[data-cart-count]');
@@ -84,6 +188,13 @@ const App = (function() {
             return;
         }
 
+        // Avoid initializing account controller for general /account(s)/* routes (login, register, etc.)
+        // Only profile pages (e.g. /account/profile or /accounts/profile) should be considered account pages
+        if ((path.startsWith('/accounts/') || path.startsWith('/account/')) && !(path.startsWith('/accounts/profile') || path.startsWith('/account/profile'))) {
+            currentPage = null;
+            return;
+        }
+
         // Detect from URL
         if (path === '/' || path === '/home/') {
             currentPage = 'home';
@@ -100,7 +211,7 @@ const App = (function() {
             currentPage = 'cart';
         } else if (path.startsWith('/checkout')) {
             currentPage = 'checkout';
-        } else if (path.startsWith('/account') || path.startsWith('/accounts/profile')) {
+        } else if (path === '/account' || path.startsWith('/account/') || path.startsWith('/accounts/profile')) {
             currentPage = 'account';
         } else if (path.startsWith('/orders')) {
             currentPage = 'orders';
@@ -113,6 +224,8 @@ const App = (function() {
         } else if (path.includes('privacy') || path.includes('terms') || path.includes('legal') || path.includes('policy')) {
             currentPage = 'legal';
         }
+        // Debug: show detected page for easier troubleshooting
+        try { console.debug('detectCurrentPage', { page: currentPage, path }); } catch (e) {}
     }
 
     function initGlobalComponents() {
@@ -151,9 +264,23 @@ const App = (function() {
         try {
             const response = await CartApi.getCart();
             const count = response.data?.item_count || 0;
+            // Persist latest cart count for offline/failure fallback
+            try { localStorage.setItem('cart', JSON.stringify({ item_count: count, savedAt: Date.now() })); } catch(e) {}
             updateCartBadge(count);
         } catch (error) {
-            console.error('Failed to get cart count:', error);
+            // Fallback to cached cart in localStorage to show counts immediately
+            try {
+                const raw = localStorage.getItem('cart');
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    const count = parsed?.item_count || 0;
+                    updateCartBadge(count);
+                    return;
+                }
+            } catch (e) {
+                console.error('Failed to get cart count fallback:', e);
+            }
+            console.error('Failed to get cart count (network):', error);
         }
     }
 
@@ -243,6 +370,9 @@ const App = (function() {
             const wishlistBtn = e.target.closest('[data-wishlist-toggle], .wishlist-btn');
             if (wishlistBtn) {
                 e.preventDefault();
+
+                // DEBUG: trace clicks on wishlist buttons
+                try { console.debug('wishlist:click', { productIdAttr: wishlistBtn.dataset.productId, wishlistItemIdAttr: wishlistBtn.dataset.wishlistItemId, classList: wishlistBtn.className }); } catch (err) {}
                 
                 if (!AuthApi.isAuthenticated()) {
                     Toast.warning('Please login to add items to your wishlist.');
@@ -250,8 +380,11 @@ const App = (function() {
                     return;
                 }
 
-                const productId = wishlistBtn.dataset.wishlistToggle || wishlistBtn.dataset.productId;
-                if (!productId) return;
+                const productId = wishlistBtn.dataset.wishlistToggle || wishlistBtn.dataset.productId || wishlistBtn.closest('[data-product-id]')?.dataset.productId;
+                if (!productId) {
+                    console.warn('wishlist:click missing productId for button', wishlistBtn);
+                    return;
+                }
 
                 wishlistBtn.disabled = true;
                 let wishlistItemId = wishlistBtn.dataset.wishlistItemId || '';
@@ -265,7 +398,8 @@ const App = (function() {
 
                 try {
                     if (shouldRemove) {
-                        await WishlistApi.removeItem(wishlistItemId);
+                        const res = await WishlistApi.removeItem(wishlistItemId);
+                        console.debug('wishlist:remove:response', res);
                         wishlistBtn.classList.remove('text-red-500');
                         wishlistBtn.setAttribute('aria-pressed', 'false');
                         wishlistBtn.querySelector('svg')?.classList.remove('fill-current');
@@ -275,6 +409,7 @@ const App = (function() {
                         Toast.success('Removed from wishlist.');
                     } else {
                         const response = await WishlistApi.addItem(productId);
+                        console.debug('wishlist:add:response', response);
                         const createdId = response.data?.id || response.data?.item?.id || await findWishlistItemId(productId);
                         if (createdId) {
                             wishlistBtn.dataset.wishlistItemId = createdId;
@@ -287,6 +422,7 @@ const App = (function() {
                         Toast.success(response.message || 'Added to wishlist!');
                     }
                 } catch (error) {
+                    console.error('wishlist:error', error);
                     Toast.error(error.message || 'Failed to update wishlist.');
                 } finally {
                     wishlistBtn.disabled = false;

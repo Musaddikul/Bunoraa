@@ -31,12 +31,12 @@
         
         <!-- Quick Actions -->
         <div class="overlay-actions absolute top-1 right-1 z-20 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button class="wishlist-btn focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-md p-1 !text-black hover:text-red-500 dark:hover:text-red-400 transition-colors"
+            <button type="button" class="wishlist-btn group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-md p-1 text-black dark:text-stone-300 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                     data-product-id="{{ product.id }}"
-                    title="Add to Wishlist" aria-label="Add to wishlist">
-                <svg class="w-8 h-8 transition-colors" aria-hidden="true" stroke="currentColor" viewBox="0 0 24 24">
+                    title="Add to Wishlist" aria-label="Add to wishlist" aria-pressed="false">
+                <svg class="w-8 h-8 transition-colors" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <!-- stroke path (outline) -->
-                    <path class="heart-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                    <path class="heart-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                     <!-- filled path (hidden by default) - fills on hover of the icon itself -->
                     <path class="heart-fill opacity-0 hover:opacity-100 transition-opacity duration-150" fill="currentColor" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                 </svg>
@@ -55,9 +55,9 @@
     
     <!-- Mobile Quick Actions (visible on small screens) -->
     <div class="mobile-actions mt-2 flex items-center gap-3 md:hidden px-3">
-        <button class="wishlist-btn group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-md p-1 !text-black hover:text-red-500 dark:text-stone-300 dark:hover:text-red-400 transition-colors" data-product-id="{{ product.id }}" title="Add to Wishlist" aria-label="Add to wishlist">
-            <svg class="w-7 h-7" aria-hidden="true" stroke="currentColor" viewBox="0 0 24 24">
-                <path class="heart-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+        <button type="button" class="wishlist-btn group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-md p-1 text-black dark:text-stone-300 hover:text-red-500 dark:hover:text-red-400 transition-colors" data-product-id="{{ product.id }}" title="Add to Wishlist" aria-label="Add to wishlist" aria-pressed="false">
+            <svg class="w-7 h-7" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path class="heart-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                 <path class="heart-fill opacity-0 hover:opacity-100 transition-opacity duration-150" fill="currentColor" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
             </svg>
         </button>
