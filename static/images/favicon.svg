@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <rect width="64" height="64" rx="14" fill="#111827"/>
-  <path d="M18 38c4 6 10 9 14 9s10-3 14-9" stroke="#F59E0B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M24 27c0-5 3-9 8-9s8 4 8 9c0 5-3 9-8 9s-8-4-8-9z" stroke="#FDE68A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="#F59E0B"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Bunoraa favicon">
+  <rect width="64" height="64" rx="14" fill="#0f172a"/>
+  <text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial" font-weight="700" font-size="34" fill="#ffffff">B</text>
 </svg>

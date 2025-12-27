@@ -50,6 +50,34 @@ def custom_exception_handler(exc, context):
     return response
 
 
+# CSRF failure handler: return structured JSON and set a fresh CSRF cookie so clients can retry
+from django.middleware.csrf import get_token
+from django.http import JsonResponse
+
+
+def csrf_failure(request, reason=""):
+    try:
+        user = getattr(request, 'user', None)
+        user_info = f'user_id={user.id}' if getattr(user, 'is_authenticated', False) else 'anonymous'
+    except Exception:
+        user_info = 'unknown'
+    logger.warning('CSRF failure: %s (%s) for path %s', reason, user_info, getattr(request, 'path', ''))
+
+    token = get_token(request)
+    resp = JsonResponse({
+        'success': False,
+        'message': 'CSRF validation failed',
+        'data': None,
+        'meta': {
+            'reason': str(reason),
+            'new_csrf_token': token
+        }
+    }, status=403)
+    # ensure cookie is set so client can pick it up
+    resp.set_cookie('csrftoken', token, samesite='Lax', httponly=False)
+    return resp
+
+
 def get_error_message(exc):
     """Get a user-friendly error message based on exception type."""
     if isinstance(exc, ValidationError):

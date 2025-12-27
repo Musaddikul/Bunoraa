@@ -86,6 +86,9 @@ MIDDLEWARE = [
     'core.middleware.api_response.APIResponseMiddleware',
 ]
 
+# Return JSON on CSRF failures and set a fresh cookie for SPA-friendly recovery
+CSRF_FAILURE_VIEW = 'core.exceptions.csrf_failure'
+
 ROOT_URLCONF = 'core.urls'
 
 TEMPLATES = [

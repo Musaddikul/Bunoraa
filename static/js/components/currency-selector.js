@@ -1,8 +1,39 @@
 import { formatCurrency } from '/static/js/utils/currency.js';
 
 function getCookie(name) {
-    const v = document.cookie.match('(^|;)\s*' + name + '\s*=\s*([^;]+)');
-    return v ? v.pop() : '';
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return '';
+}
+
+function getCsrfToken() {
+    // 1. Try cookie
+    let token = getCookie('csrftoken') || getCookie('csrf_token') || getCookie('csrf');
+    if (token) token = String(token).trim().replace(/^"|"$/g, '');
+
+    // 2. Try meta tags used by some apps
+    if (!token) {
+        const meta = document.querySelector('meta[name="csrf-token"]') || document.querySelector('meta[name="csrfmiddlewaretoken"]');
+        if (meta && meta.content) token = String(meta.content).trim().replace(/^"|"$/g, '');
+    }
+
+    // 3. Try hidden input (forms that render csrf tokens)
+    if (!token) {
+        const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+        if (input && input.value) token = String(input.value).trim().replace(/^"|"$/g, '');
+    }
+
+    // 4. Basic sanity check
+    if (token) {
+        if (token.length < 8 || token.length > 1024) {
+            console.warn('CSRF token length seems abnormal:', token.length);
+            return null;
+        }
+        return token;
+    }
+
+    return null;
 }
 
 export async function initCurrencySelector(selector) {
@@ -48,11 +79,8 @@ export async function initCurrencySelector(selector) {
         const list = root.querySelector('#currency-list');
         const currentEl = root.querySelector('#currency-current');
 
-        if (!toggle || !dropdown || !list) {
-            return;
-        }
-
-        let currencies = [];
+        // Guard to prevent concurrent setCurrency calls and double-click issues
+        let isSetting = false;
         let currentCode = window.BUNORAA_CURRENCY && window.BUNORAA_CURRENCY.code ? window.BUNORAA_CURRENCY.code : (currentEl ? currentEl.textContent.trim() : null);
 
         async function fetchCurrencies() {
@@ -114,7 +142,34 @@ export async function initCurrencySelector(selector) {
                 if (c.code === currentCode) {
                     el.classList.add('font-semibold');
                 }
-                el.addEventListener('click', (e) => { setCurrency(c.code); });
+                el.addEventListener('click', async (e) => {
+                    // Prevent double clicks while a change is in progress
+                    if (isSetting) {
+                        window.Toast?.info('Currency change in progress, please wait...');
+                        return;
+                    }
+
+                    el.disabled = true;
+                    try {
+                        isSetting = true;
+                        const result = await setCurrency(c.code);
+                        // Close the dropdown (doToggle is defined below in scope)
+                        try { doToggle(false); } catch (err) { /* ignore if not available */ }
+
+                        // Show a toast to the user with the outcome
+                        if (result && result.success) {
+                            window.Toast?.success(result.message || 'Currency updated');
+                        } else {
+                            window.Toast?.error((result && result.message) || 'Failed to update currency');
+                        }
+                    } catch (err) {
+                        try { doToggle(false); } catch (e) {}
+                        window.Toast?.error('Failed to update currency');
+                    } finally {
+                        el.disabled = false;
+                        isSetting = false;
+                    }
+                });
                 el.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
@@ -136,21 +191,108 @@ export async function initCurrencySelector(selector) {
 
         async function setCurrency(code) {
             try {
-                const csrftoken = getCookie('csrftoken');
-                const resp = await fetch('/api/v1/currencies/preference/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrftoken
-                    },
-                    body: JSON.stringify({ currency_code: code, auto_detect: false })
-                });
+                let csrftoken = getCsrfToken();
+                if (!csrftoken) {
+                    await showListMessage('Unable to find a valid CSRF token. Please reload the page or sign out and sign back in to refresh your session.', 'error');
+                    console.warn('CSRF token missing when attempting to set currency.');
+                    return { success: false, message: 'Missing CSRF token' };
+                }
+
+                async function doPost(token) {
+                    return fetch('/api/v1/currencies/preference/', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': token
+                        },
+                        body: JSON.stringify({ currency_code: code, auto_detect: false })
+                    });
+                }
+
+                // First attempt
+                let resp = await doPost(csrftoken);
+
+                // If server denies the request with a 403, attempt to recover gracefully (CSRF refresh or server-provided token)
+                if (resp.status === 403) {
+                    console.warn('Currency preference API returned 403. Attempting recovery.');
+                    try {
+                        // Prefer JSON body (our custom csrf_failure handler returns JSON with meta.new_csrf_token)
+                        const jsonBody = await resp.json().catch(() => null);
+                        const newTokenFromBody = jsonBody && jsonBody.meta && jsonBody.meta.new_csrf_token ? jsonBody.meta.new_csrf_token : null;
+
+                        if (newTokenFromBody) {
+                            // Write cookie and retry once
+                            const secure = location.protocol === 'https:' ? '; Secure' : '';
+                            document.cookie = `csrftoken=${newTokenFromBody}; path=/; samesite=Lax${secure}`;
+                            const retryResp = await doPost(newTokenFromBody);
+                            if (retryResp.ok) {
+                                const data = await retryResp.json().catch(() => null);
+                                if (data && data.success) {
+                                    currentCode = code;
+                                    if (currentEl) currentEl.textContent = code;
+                                    window.BUNORAA_CURRENCY = window.BUNORAA_CURRENCY || {};
+                                    window.BUNORAA_CURRENCY.code = code;
+                                    document.dispatchEvent(new CustomEvent('currency:changed', { detail: { code } }));
+                                    setTimeout(() => location.reload(), 250);
+                                    return { success: true, message: 'Currency updated', source: 'server' };
+                                }
+                            }
+                        }
+
+                        // Otherwise, try refreshing cookies by fetching the currencies endpoint, then retry once
+                        try { await fetch('/api/v1/currencies/', { credentials: 'same-origin' }); } catch (e) { /* ignore */ }
+                        const refreshedToken = getCsrfToken();
+                        if (refreshedToken && refreshedToken !== csrftoken) {
+                            const retryResp2 = await doPost(refreshedToken);
+                            if (retryResp2.ok) {
+                                const data = await retryResp2.json().catch(() => null);
+                                if (data && data.success) {
+                                    currentCode = code;
+                                    if (currentEl) currentEl.textContent = code;
+                                    window.BUNORAA_CURRENCY = window.BUNORAA_CURRENCY || {};
+                                    window.BUNORAA_CURRENCY.code = code;
+                                    document.dispatchEvent(new CustomEvent('currency:changed', { detail: { code } }));
+                                    setTimeout(() => location.reload(), 250);
+                                    return { success: true, message: 'Currency updated', source: 'server' };
+                                }
+                            }
+                        }
+
+                        // Recovery failed, fall back to local preference
+                        console.warn('Currency preference recovery failed. Falling back to local preference.');
+                        try { const t = await resp.text(); console.debug('Currency preference response:', t); } catch(e) {}
+                        localStorage.setItem('currency_preference', JSON.stringify({ code, savedAt: Date.now() }));
+                        currentCode = code;
+                        if (currentEl) currentEl.textContent = code;
+                        window.BUNORAA_CURRENCY = window.BUNORAA_CURRENCY || {};
+                        window.BUNORAA_CURRENCY.code = code;
+                        document.dispatchEvent(new CustomEvent('currency:changed', { detail: { code } }));
+                        await showListMessage('Currency set locally for this session. If you are logged in and this persists, please try logging out and in again.', 'error');
+                        setTimeout(() => location.reload(), 350);
+                        return { success: true, message: 'Currency saved locally', source: 'local' };
+                    } catch (e) {
+                        console.error('Error recovering from 403:', e);
+                        localStorage.setItem('currency_preference', JSON.stringify({ code, savedAt: Date.now() }));
+                        currentCode = code;
+                        if (currentEl) currentEl.textContent = code;
+                        window.BUNORAA_CURRENCY = window.BUNORAA_CURRENCY || {};
+                        window.BUNORAA_CURRENCY.code = code;
+                        document.dispatchEvent(new CustomEvent('currency:changed', { detail: { code } }));
+                        await showListMessage('Currency set locally for this session. If you are logged in and this persists, please try logging out and in again.', 'error');
+                        setTimeout(() => location.reload(), 350);
+                        return { success: true, message: 'Currency saved locally', source: 'local' };
+                    }
+                }
+
                 if (!resp.ok) {
                     let bodyText = '';
                     try { bodyText = await resp.text(); } catch (_) { bodyText = String(resp.status); }
                     await showListMessage('Failed to set currency (server error). See console for details.', 'error');
-                    return;
+                    console.debug('Currency preference response:', resp.status, bodyText);
+                    return { success: false, message: 'Server error while setting currency' };
                 }
+
                 const data = await resp.json();
                 // Update UI and reload to get server-rendered prices
                 if (data && data.success) {
@@ -163,11 +305,15 @@ export async function initCurrencySelector(selector) {
                     document.dispatchEvent(new CustomEvent('currency:changed', { detail: { code } }));
                     // Give short delay then reload so server-rendered templates re-render with new currency (keeps existing behavior)
                     setTimeout(() => location.reload(), 250);
+                    return { success: true, message: 'Currency updated', source: 'server' };
                 } else {
                     await showListMessage('Could not set currency. See console for details.', 'error');
+                    return { success: false, message: 'Could not set currency' };
                 }
             } catch (e) {
+                console.error('Error setting currency preference', e);
                 await showListMessage('Network or server error while setting currency.', 'error');
+                return { success: false, message: 'Network or server error while setting currency' };
             }
         }
 

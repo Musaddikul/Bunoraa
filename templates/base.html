@@ -257,14 +257,14 @@
                     
                     <!-- Wishlist -->
                     <a href="{% url 'wishlist:list' %}" class="relative p-1 lg:p-2.5 text-stone-700 hover:text-rose-600 rounded-xl transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-stone-300 dark:hover:text-rose-400 dark:focus-visible:ring-rose-400" aria-label="Wishlist">
-                        <svg class="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                        <span data-wishlist-count class="hidden absolute -top-0.5 -right-0.5 bg-rose-500 dark:bg-rose-400 text-white text-[9px] font-bold min-w-[16px] h-[16px] rounded-full flex items-center justify-center shadow-sm">0</span>
+                        <svg class="w-7 h-7 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                        <span data-wishlist-count class="hidden absolute top-0 right-0 transform translate-x-0 -translate-y-1/2 bg-transparent text-rose-600 dark:text-rose-400 text-[9px] font-semibold min-w-[12px] h-[12px] rounded-full flex items-center justify-center">0</span>
                     </a>
                     
                     <!-- Cart -->
                     <button type="button" data-cart-open class="relative p-1 lg:p-2.5 text-stone-700 hover:text-amber-700 rounded-xl transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:text-stone-300 dark:hover:text-amber-400 dark:focus-visible:ring-amber-400" aria-label="Cart">
-                        <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-                        <span data-cart-count class="hidden absolute -top-0.5 -right-0.5 bg-amber-600 dark:bg-amber-500 text-white text-[9px] font-bold min-w-[16px] h-[16px] rounded-full flex items-center justify-center shadow-sm">0</span>
+                        <svg class="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                        <span data-cart-count class="hidden absolute top-0 right-0 transform translate-x-0 -translate-y-1/2 bg-transparent text-amber-600 dark:text-amber-400 text-[9px] font-semibold min-w-[12px] h-[12px] rounded-full flex items-center justify-center">0</span>
                     </button>
                     <!-- Mobile Menu (moved after cart) -->
                     <button type="button" data-mobile-menu-toggle class="lg:hidden p-1 lg:p-2.5 rounded-xl text-stone-700 hover:text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-stone-300 dark:hover:text-amber-400 dark:focus-visible:ring-amber-400 dark:focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-900" aria-label="Open menu">
@@ -341,6 +341,7 @@
                 <p class="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3">Quick Links</p>
                 <div class="space-y-1">
                     <a href="{% url 'preorders:landing' %}" class="flex items-center gap-3 py-2.5 px-3 text-purple-600 dark:text-purple-300 hover:bg-purple-50 active:bg-purple-50 dark:hover:bg-purple-900/60 dark:active:bg-purple-900/60 hover:text-purple-700 active:text-purple-700 dark:hover:text-white dark:active:text-white rounded-xl transition-colors font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                         Custom Orders
                     </a>
@@ -723,17 +724,17 @@
                 formatCurrency
             } from "{% static 'js/components/index.js' %}";
 
-            // Expose modern components under a namespaced global
-            window.Components = {
-                Dialog,
-                DropdownMenu,
-                Breadcrumb,
-                Tabs,
-                Pagination,
-                Spinner,
-                Skeleton,
-                Form
-            };
+            // Expose modern components under a namespaced global (deprecated)
+            Object.defineProperty(window, 'Components', {
+                configurable: true,
+                get() {
+                    if (!window.__componentsDeprecatedWarned) {
+                        console.warn('Deprecation: window.Components is deprecated and will be removed. Please import components from "/static/js/components/index.js" directly.');
+                        window.__componentsDeprecatedWarned = true;
+                    }
+                    return { Dialog, DropdownMenu, Breadcrumb, Tabs, Pagination, Spinner, Skeleton, Form };
+                }
+            });
 
             // Back-compat shims for legacy global usage
             window.Breadcrumb = window.Breadcrumb || Breadcrumb;
@@ -847,9 +848,12 @@
                                     ${showBadge ? `<span class="bg-blue-500 text-white text-xs px-2 py-1 rounded">${options.badge}</span>` : ''}
                                     ${onSale ? `<span class="bg-red-500 text-white text-xs px-2 py-1 rounded">Sale</span>` : ''}
                                 </div>
-                                <div class="absolute bottom-2 right-2 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button class="wishlist-btn focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-md p-1 text-stone-600 dark:text-stone-300 hover:text-rose-600 dark:hover:text-rose-400 transition-colors" title="Add to Wishlist">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                                <div class="absolute top-1 right-1 z-20 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button class="wishlist-btn focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-md p-1 !text-black hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Add to Wishlist">
+                                        <svg class="w-8 h-8" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path class="heart-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                            <path class="heart-fill opacity-0 hover:opacity-100 transition-opacity duration-150" fill="currentColor" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                        </svg>
                                     </button>
                                 </div>
                             </a>
@@ -894,15 +898,7 @@
                                 btn.textContent = original;
                             }
                         });
-                        card.querySelector('.wishlist-btn')?.addEventListener('click', async () => {
-                            if (!productId) return;
-                            try {
-                                await WishlistApi.addItem(productId);
-                                window.Toast?.success('Added to wishlist!');
-                            } catch (err) {
-                                window.Toast?.error(err.message || 'Failed to add to wishlist.');
-                            }
-                        });
+
                     });
                 }
             };
@@ -1101,8 +1097,8 @@
                             Orders
                         </a>
                         <a href="${buildRoute('wishlistList')}" class="flex items-center gap-3 px-4 py-2.5 text-stone-700 hover:bg-amber-50 hover:text-amber-700 transition-colors dark:text-stone-300 dark:hover:bg-stone-700 dark:hover:text-amber-300">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                            Wishlist
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                            Wishlist <span data-wishlist-count class="hidden ml-auto absolute top-0 right-0 transform translate-x-0 -translate-y-1/2 bg-transparent text-rose-600 dark:text-rose-400 text-[9px] font-semibold min-w-[12px] h-[12px] rounded-full flex items-center justify-center">0</span>
                         </a>
                         <div class="border-t border-stone-100 dark:border-stone-700 mt-2 pt-2">
                             <a href="${buildRoute('accountsLogout')}" class="flex items-center gap-3 px-4 py-2.5 text-rose-600 hover:bg-rose-50 transition-colors dark:text-rose-400 dark:hover:bg-stone-700 dark:hover:text-rose-300">

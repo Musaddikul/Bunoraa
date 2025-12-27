@@ -36,11 +36,41 @@ const App = (function() {
         // Currency selector disabled in single-currency mode
     }
     async function initWishlistBadge() {
-        // Update wishlist badge on page load
+        // Update wishlist badge on page load; fallback to cached value if API fails
         try {
             await WishlistApi.getWishlist({ pageSize: 1 });
         } catch (error) {
-            // Ignore errors (e.g., not logged in)
+            try {
+                const raw = localStorage.getItem('wishlist');
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    WishlistApi.updateBadge(parsed);
+                }
+            } catch (e) {
+                // ignore
+            }
+        }
+    }
+
+    async function initCartBadge() {
+        const cartBadges = document.querySelectorAll('[data-cart-count]');
+        if (!cartBadges.length) return;
+        try {
+            const response = await CartApi.getCart();
+            const count = response.data?.item_count || 0;
+            updateCartBadge(count);
+        } catch (error) {
+            // Fallback to cached cart in localStorage to show counts immediately
+            try {
+                const raw = localStorage.getItem('cart');
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    const count = parsed?.item_count || parsed?.items?.length || 0;
+                    updateCartBadge(count);
+                }
+            } catch (e) {
+                console.error('Failed to get cart count:', error);
+            }
         }
     }
 
@@ -167,6 +197,22 @@ const App = (function() {
             updateAuthUI(false);
         });
 
+        // Initialize wishlist icon fill state for existing buttons
+        document.querySelectorAll('.wishlist-btn').forEach(btn => {
+            try {
+                const svg = btn.querySelector('svg');
+                const fillPath = svg?.querySelector('.heart-fill');
+                if (btn.classList.contains('text-red-500')) {
+                    svg?.classList.add('fill-current');
+                    if (fillPath) fillPath.style.opacity = '1';
+                } else {
+                    if (fillPath) fillPath.style.opacity = '0';
+                }
+            } catch (e) {
+                // ignore
+            }
+        });
+
         // Global quick add to cart (data-attribute and class-based)
         document.addEventListener('click', async (e) => {
             const quickAddBtn = e.target.closest('[data-quick-add], [data-add-to-cart], .add-to-cart-btn');
@@ -221,7 +267,10 @@ const App = (function() {
                     if (shouldRemove) {
                         await WishlistApi.removeItem(wishlistItemId);
                         wishlistBtn.classList.remove('text-red-500');
+                        wishlistBtn.setAttribute('aria-pressed', 'false');
                         wishlistBtn.querySelector('svg')?.classList.remove('fill-current');
+                        const fillPath = wishlistBtn.querySelector('svg')?.querySelector('.heart-fill');
+                        if (fillPath) fillPath.style.opacity = '0';
                         wishlistBtn.removeAttribute('data-wishlist-item-id');
                         Toast.success('Removed from wishlist.');
                     } else {
@@ -231,7 +280,10 @@ const App = (function() {
                             wishlistBtn.dataset.wishlistItemId = createdId;
                         }
                         wishlistBtn.classList.add('text-red-500');
+                        wishlistBtn.setAttribute('aria-pressed', 'true');
                         wishlistBtn.querySelector('svg')?.classList.add('fill-current');
+                        const fillPath = wishlistBtn.querySelector('svg')?.querySelector('.heart-fill');
+                        if (fillPath) fillPath.style.opacity = '1';
                         Toast.success(response.message || 'Added to wishlist!');
                     }
                 } catch (error) {
