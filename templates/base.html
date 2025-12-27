@@ -25,8 +25,10 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{% block meta_description %}{{ SITE_NAME }} - {{ SITE_TAGLINE }}{% endblock %}">
+    <meta name="description" content="{% block meta_description %}Discover curated products at {{ SITE_NAME }}. Shop the latest trends with exclusive offers and free shipping.{% endblock %}">
     <meta name="keywords" content="{% block meta_keywords %}ecommerce, shop, store, premium, fashion, electronics{% endblock %}">
+    <link rel="canonical" href="https://bunoraa.com/">
+    <meta property="og:site_name" content="{{ SITE_NAME }}">
     <meta name="theme-color" content="#7c3aed">
     <meta name="robots" content="index, follow">
     {% if SITE_FAVICON %}
@@ -41,8 +43,46 @@
     <meta property="og:description" content="{% block og_description %}{{ SITE_TAGLINE }}{% endblock %}">
     <meta property="og:image" content="{% block og_image %}{% static 'images/og-image.jpg' %}{% endblock %}">
     <meta property="og:type" content="website">
+    <meta property="og:url" content="https://bunoraa.com/">
+    <meta property="og:site_name" content="{{ SITE_NAME }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@bunoraa">
+    <meta name="twitter:creator" content="@bunoraa">
     
     <title>{% block title %}{{ SITE_NAME }}{% endblock %}</title>
+
+    <!-- JSON-LD: Organization + WebSite -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://bunoraa.com/#organization",
+          "name": "{{ SITE_NAME }}",
+          "url": "https://bunoraa.com/",
+          "logo": "https://bunoraa.com{% static 'images/logo.png' %}",
+          "sameAs": [
+            {% for s in SOCIAL_LINKS %}
+              "{{ s.url }}"{% if not forloop.last %},{% endif %}
+            {% endfor %}
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://bunoraa.com/#website",
+          "url": "https://bunoraa.com/",
+          "name": "{{ SITE_NAME }}",
+          "publisher": { "@id": "https://bunoraa.com/#organization" },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://bunoraa.com/products/?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        }
+      ]
+    }
+    </script>
     
     <!-- Core Styles -->
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
