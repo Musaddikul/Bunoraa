@@ -6,8 +6,8 @@
     options.forEach(opt => {
       const id = opt.value;
       const parent = opt.getAttribute('data-parent') || '';
-      const level = parseInt(opt.getAttribute('data-level') || '0', 10);
-      nodes[id] = { id, parent, label: opt.textContent.trim(), option: opt, children: [], level, selected: opt.selected };
+      const depth = parseInt(opt.getAttribute('data-depth') || '0', 10);
+      nodes[id] = { id, parent, label: opt.textContent.trim(), option: opt, children: [], depth, selected: opt.selected };
     });
 
     const root = [];
@@ -26,7 +26,7 @@
         const li = document.createElement('li');
         li.className = 'category-item';
         li.dataset.id = item.id;
-        li.dataset.level = item.level;
+        li.dataset.depth = item.depth;
         li.classList.add('pl-1');
 
         const row = document.createElement('div');

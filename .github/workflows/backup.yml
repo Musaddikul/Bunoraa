@@ -1,0 +1,36 @@
+name: Scheduled Backup
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # every day at 02:00 UTC
+  workflow_dispatch: {}
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-ml.txt || true
+
+      - name: Run backup and upload to S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+          AWS_BACKUP_S3_BUCKET: ${{ secrets.AWS_BACKUP_S3_BUCKET }}
+        run: |
+          python manage.py backup_site --upload-s3 --remove-local --no-compress
+
+# Note: Add AWS credentials and AWS_BACKUP_S3_BUCKET to repository secrets to enable uploads.
+# This workflow runs daily and uploads the generated backup to S3, then deletes the local copy (--remove-local).

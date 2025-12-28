@@ -256,7 +256,7 @@ class Product(models.Model):
         # Try categories (prefer the most specific/deepest category that has an aspect)
         categories = list(self.categories.all())
         if categories:
-            categories.sort(key=lambda c: getattr(c, 'level', 0), reverse=True)
+            categories.sort(key=lambda c: getattr(c, 'depth', 0), reverse=True)
             for category in categories:
                 eff = category.get_effective_aspect()
                 if eff and eff.get('ratio'):

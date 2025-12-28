@@ -24,7 +24,7 @@ class CategoryTreeSelectMultiple(forms.SelectMultiple):
             cat = self.category_lookup.get(key)
             if cat:
                 option_attrs = option.setdefault('attrs', {})
-                option_attrs['data-level'] = str(getattr(cat, 'level', 0))
+                option_attrs['data-depth'] = str(getattr(cat, 'depth', 0))
                 option_attrs['data-id'] = str(cat.id)
                 option_attrs['data-parent'] = str(cat.parent_id) if getattr(cat, 'parent_id', None) else ''
         except Exception:
@@ -88,6 +88,7 @@ class ProductAdmin(admin.ModelAdmin):
             'js/admin/image_preview.js',
             'js/admin/attribute_inline.js',
             'js/admin/category_tree.js',
+            'js/admin/product_classifier.js',
         )
     
     list_display = [

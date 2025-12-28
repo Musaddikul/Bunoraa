@@ -2,7 +2,7 @@
 Category API serializers
 """
 from rest_framework import serializers
-from ..models import Category
+from ..models import Category, Facet, ExternalCategoryMapping
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -16,8 +16,8 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = [
-            'id', 'name', 'slug', 'description', 'image_url', 'icon',
-            'level', 'is_featured', 'product_count', 'meta_title',
+            'id', 'code', 'name', 'slug', 'description', 'image_url', 'icon',
+            'depth', 'path', 'is_featured', 'product_count', 'meta_title',
             'meta_description', 'created_at', 'aspect'
         ]
 
@@ -66,7 +66,7 @@ class CategoryTreeSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Category
-        fields = ['id', 'name', 'slug', 'image_url', 'icon', 'level', 'product_count', 'children']
+        fields = ['id', 'name', 'slug', 'image_url', 'icon', 'depth', 'product_count', 'children']
     
     def get_children(self, obj):
         children = obj.children.filter(is_active=True, is_deleted=False).order_by('order', 'name')
@@ -83,7 +83,10 @@ class CategoryTreeSerializer(serializers.ModelSerializer):
 
 class CategoryCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating categories."""
-    
+
+    # Make slug optional and allow blank values to let model save() generate one when omitted
+    slug = serializers.CharField(required=False, allow_blank=True)
+
     class Meta:
         model = Category
         fields = [
@@ -115,3 +118,19 @@ class CategoryReorderSerializer(serializers.Serializer):
     
     id = serializers.UUIDField()
     order = serializers.IntegerField(min_value=0)
+
+
+class FacetSerializer(serializers.ModelSerializer):
+    """Serializer for facet definitions."""
+
+    class Meta:
+        model = Facet
+        fields = ['facet_code', 'label', 'data_type', 'allowed_values']
+
+
+class ExternalCategoryMappingSerializer(serializers.ModelSerializer):
+    """Serializer for external marketplace mappings."""
+
+    class Meta:
+        model = ExternalCategoryMapping
+        fields = ['provider', 'external_code', 'extra']

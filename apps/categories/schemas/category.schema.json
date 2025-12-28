@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Category",
+  "type": "object",
+  "required": ["node_id", "code", "display_name", "url_slug", "visibility"],
+  "properties": {
+    "node_id": {"type":"string","format":"uuid"},
+    "code": {"type":"string"},
+    "parent_id": {"anyOf":[{"type":"string"},{"type":"null"}]},
+    "display_name": {"type":"string"},
+    "url_slug": {"type":"string"},
+    "path": {"type":"string"},
+    "depth": {"type":"integer","minimum":0},
+    "seo_meta_title": {"type":"string","maxLength":70},
+    "seo_meta_description": {"type":"string","maxLength":160},
+    "description": {"type":"string"},
+    "allowed_facets": {"type":"array","items":{"type":"string"}},
+    "visibility": {"type":"string","enum":["draft","published","archived"]},
+    "is_active": {"type":"boolean"},
+    "owner": {"type":"string"},
+    "last_reviewed": {"anyOf":[{"type":"string","format":"date"},{"type":"null"}]},
+    "review_interval_days": {"type":"integer"},
+    "external_mappings": {"type":"array","items":{"type":"object","properties":{"provider":{"type":"string"},"code":{"type":"string"}}}},
+    "created_at":{"type":"string","format":"date-time"},
+    "updated_at":{"type":"string","format":"date-time"}
+  },
+  "additionalProperties": false
+}
