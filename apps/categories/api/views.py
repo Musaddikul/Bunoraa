@@ -2,12 +2,13 @@
 Category API views
 """
 from rest_framework import viewsets, status
+from django.db import models
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
-from ..models import Category
+from ..models import Category, Facet, ExternalCategoryMapping, ProductCategorySuggestion
 from ..services import CategoryService
 from .serializers import (
     CategorySerializer,
@@ -17,6 +18,16 @@ from .serializers import (
     CategoryUpdateSerializer,
     CategoryReorderSerializer,
 )
+from .serializers import FacetSerializer, ExternalCategoryMappingSerializer
+from rest_framework import serializers
+
+
+class FacetViewSet(viewsets.ReadOnlyModelViewSet):
+    """Read-only viewset for facets."""
+    queryset = Facet.objects.all().order_by('label')
+    serializer_class = FacetSerializer
+    lookup_field = 'facet_code'
+    permission_classes = [AllowAny]
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -31,7 +42,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     tree: GET /api/v1/categories/tree/
     products: GET /api/v1/categories/{id}/products/
     """
-    
+
     queryset = Category.objects.filter(is_deleted=False)
     serializer_class = CategorySerializer
     lookup_field = 'pk'
@@ -40,7 +51,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'description']
     ordering_fields = ['name', 'order', 'created_at']
     ordering = ['order', 'name']
-    filterset_fields = ['parent', 'is_active', 'is_featured', 'level']
+    filterset_fields = ['parent', 'is_active', 'is_featured', 'depth']
     
     def get_object(self):
         """
@@ -81,6 +92,18 @@ class CategoryViewSet(viewsets.ModelViewSet):
         elif self.action == 'tree':
             return CategoryTreeSerializer
         return CategorySerializer
+
+    def create(self, request, *args, **kwargs):
+        """Ensure slug is generated when not provided to make API create ergonomic."""
+        from django.utils.text import slugify
+        data = request.data.copy()
+        if not data.get('slug') and data.get('name'):
+            data['slug'] = slugify(data.get('name'))
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response({'success': True, 'message': 'Category created.', 'data': serializer.data}, status=201, headers=headers)
     
     def get_queryset(self):
         queryset = Category.objects.filter(is_deleted=False)
@@ -114,80 +137,69 @@ class CategoryViewSet(viewsets.ModelViewSet):
             'data': serializer.data,
             'meta': {'count': queryset.count()}
         })
-    
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance)
-        return Response({
-            'success': True,
-            'message': 'Category retrieved successfully.',
-            'data': serializer.data,
-            'meta': None
-        })
-    
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            category = serializer.save()
-            return Response({
-                'success': True,
-                'message': 'Category created successfully.',
-                'data': CategorySerializer(category, context={'request': request}).data,
-                'meta': None
-            }, status=status.HTTP_201_CREATED)
-        return Response({
-            'success': False,
-            'message': 'Failed to create category.',
-            'data': None,
-            'meta': {'errors': serializer.errors}
-        }, status=status.HTTP_400_BAD_REQUEST)
-    
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                'success': True,
-                'message': 'Category updated successfully.',
-                'data': CategorySerializer(instance, context={'request': request}).data,
-                'meta': None
-            })
-        return Response({
-            'success': False,
-            'message': 'Failed to update category.',
-            'data': None,
-            'meta': {'errors': serializer.errors}
-        }, status=status.HTTP_400_BAD_REQUEST)
-    
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        instance.soft_delete()
-        return Response({
-            'success': True,
-            'message': 'Category deleted successfully.',
-            'data': None,
-            'meta': None
-        })
-    
+
     @action(detail=False, methods=['get'])
-    def tree(self, request):
-        """Get category tree structure."""
-        parent_id = request.query_params.get('parent_id')
-        max_depth = request.query_params.get('max_depth')
-        
-        if max_depth:
-            max_depth = int(max_depth)
-        
-        tree = CategoryService.get_category_tree(parent_id=parent_id, max_depth=max_depth)
-        
-        return Response({
-            'success': True,
-            'message': 'Category tree retrieved successfully.',
-            'data': tree,
-            'meta': None
-        })
+    def search(self, request):
+        """Search categories by name or description and return allowed facets."""
+        q = request.query_params.get('q', '').strip()
+        if not q:
+            return Response({'success': False, 'message': 'Query parameter `q` required', 'data': [], 'meta': None}, status=400)
+        qs = self.get_queryset().filter(models.Q(name__icontains=q) | models.Q(description__icontains=q))[:50]
+        serializer = CategorySerializer(qs, many=True, context={'request': request})
+        # include allowed facets for top-level matches
+        results = serializer.data
+        for i, cat in enumerate(qs):
+            facets = cat.categoryallowedfacet_set.select_related('facet').all()
+            results[i]['allowed_facets'] = [f.facet.facet_code for f in facets]
+        return Response({'success': True, 'message': 'Search complete', 'data': results, 'meta': {'count': qs.count()}})
+
+    @action(detail=False, methods=['get'])
+    def export_mappings(self, request):
+        """Export category external mappings for marketplace purposes.
+
+        Optional query param: provider (e.g., 'google_shopping')
+        """
+        provider = request.query_params.get('provider')
+        mappings_qs = ExternalCategoryMapping.objects.all()
+        if provider:
+            mappings_qs = mappings_qs.filter(provider=provider)
+        serializer = ExternalCategoryMappingSerializer(mappings_qs, many=True)
+        return Response({'success': True, 'message': 'External mappings', 'data': serializer.data, 'meta': {'count': mappings_qs.count()}})
+
+    @action(detail=False, methods=['get'])
+    def classify(self, request):
+        """Return category suggestions for a product text (name and optional description).
+
+        Params: name=<name>&description=<desc>
+        """
+        name = request.query_params.get('name', '')
+        desc = request.query_params.get('description', '')
+        if not name and not desc:
+            return Response({'success': False, 'message': 'Provide name or description', 'data': None}, status=400)
+        from ..classifier import classify_text
+        text = f"{name} {desc}"
+        recs = classify_text(text, top_k=5)
+        results = []
+        for code, conf in recs:
+            cat = Category.objects.filter(code=code).first() or Category.objects.filter(slug=code).first()
+            if cat:
+                results.append({'code': cat.code or str(cat.id), 'name': cat.name, 'slug': cat.slug, 'confidence': conf})
+        return Response({'success': True, 'message': 'Classification results', 'data': results})
+
+    @action(detail=False, methods=['get'])
+    def suggestions(self, request):
+        """List stored product category suggestions.
+
+        Query params: product_id (optional)
+        """
+        product_id = request.query_params.get('product_id')
+        qs = ProductCategorySuggestion.objects.all()
+        if product_id:
+            qs = qs.filter(product_id=product_id)
+        data = []
+        for s in qs.select_related('suggested_category'):
+            data.append({'product_id': str(s.product_id), 'category_code': s.suggested_category.code, 'category_name': s.suggested_category.name, 'confidence': s.confidence, 'method': s.method, 'created_at': s.created_at})
+        return Response({'success': True, 'data': data, 'meta': {'count': qs.count()}})
     
     @action(detail=False, methods=['get'])
     def root(self, request):

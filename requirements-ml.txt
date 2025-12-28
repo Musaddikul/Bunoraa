@@ -1,0 +1,9 @@
+# Optional ML/training dependencies for classifier training and export
+transformers
+datasets
+scikit-learn
+tokenizers
+sentencepiece
+huggingface-hub
+# Optional: accelerate, peft, datasets[torch], wandb
+# To install: pip install -r requirements-ml.txt

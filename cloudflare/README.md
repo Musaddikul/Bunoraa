@@ -45,6 +45,8 @@ Workflow verification
 Local publish (optional)
 - Install wrangler: `npm i -g wrangler`
 - Build (optional): `npm run build`
-- Deploy locally:
-  - `npx wrangler deploy`
+- Pages deploy command (if Cloudflare Pages requires a Deploy command):
+  - Set Deploy command to `npm run pages:deploy` (this runs the static build and is a safe no-op for Worker deploy).
+- Worker deploy (via GitHub Action or local):
+  - `npx wrangler deploy`  # only run this from CI or your local environment, not in Pages build
 

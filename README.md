@@ -104,6 +104,8 @@ venv\Scripts\activate     # Windows
 3. **Install Python dependencies**
 ```bash
 pip install -r requirements.txt
+# Optional: install ML/training deps if you plan to train or export classifiers
+pip install -r requirements-ml.txt
 ```
 
 4. **Install Node dependencies** (for TailwindCSS)
