@@ -278,6 +278,11 @@ class ProductService:
         )
         return result
 
+    @staticmethod
+    def generate_product_suggestions(payload: dict, top_k: int = 3):
+        """Proxy to module-level suggestion generator for easier mocking."""
+        return generate_product_suggestions(payload, top_k=top_k)
+
 
 class TagService:
     """Service class for tag operations."""
@@ -317,3 +322,142 @@ class AttributeService:
             products__is_active=True,
             products__is_deleted=False
         ).distinct().select_related('attribute')
+
+
+# ----------------------------
+# Product suggestion helpers
+# ----------------------------
+
+import os
+import re
+from typing import Dict, Any, List, Tuple
+
+# Optional OpenAI client guard
+try:
+    import openai
+except Exception:
+    openai = None
+
+
+def _simple_heuristic_from_image_filename(filename: str) -> Dict[str, Any]:
+    """Generate a naive suggestion from an image filename.
+    - strips extension, replaces separators with spaces, capitalizes.
+    - extracts simple tags (words > 3 letters)
+    """
+    name = re.sub(r"[_\-]+", ' ', os.path.splitext(os.path.basename(filename))[0]).strip()
+    if not name:
+        name = 'Product'
+    # Title case the name
+    title = ' '.join([w.capitalize() for w in name.split()])
+    words = [w.lower() for w in re.split(r"\W+", name) if len(w) > 3]
+    tags = list({w for w in words})[:5]
+    short_desc = f'{title} — handcrafted, thoughtfully made.'
+    return {'name': title, 'short_description': short_desc, 'tags': tags}
+
+
+def _build_prompt_from_payload(payload: Dict[str, Any]) -> str:
+    """Create a concise prompt for AI model from given payload."""
+    lines = []
+    if payload.get('name'):
+        lines.append(f"Name: {payload.get('name')}")
+    if payload.get('description'):
+        lines.append(f"Description: {payload.get('description')}")
+    if payload.get('price'):
+        lines.append(f"Price: {payload.get('price')}")
+    imgs = payload.get('image_filenames') or []
+    if imgs:
+        lines.append(f"Image filenames: {', '.join(imgs[:3])}")
+
+    lines.append("\nGenerate a JSON object with keys: name, short_description, tags (array of short tags), and optional category_suggestions (array of {code, confidence}). Keep descriptions short and SEO-friendly.")
+    return '\n'.join(lines)
+
+
+def _normalize_ai_parsed(parsed: Dict[str, Any]) -> Dict[str, Any]:
+    out = {}
+    out['name'] = parsed.get('name') or parsed.get('title') or 'Product'
+    out['short_description'] = parsed.get('short_description') or parsed.get('description') or ''
+    tags = parsed.get('tags') or parsed.get('keywords') or []
+    out['tags'] = list(tags) if isinstance(tags, (list, tuple)) else [str(tags)]
+    if 'category_suggestions' in parsed:
+        out['category_suggestions'] = parsed['category_suggestions']
+    return out
+
+
+def generate_product_suggestions(payload: Dict[str, Any], top_k: int = 3) -> List[Dict[str, Any]]:
+    """Generate suggestions for a product. payload may include: name, description, image_filenames (list), price, etc.
+
+    Returns a list of suggestion dicts with keys: name, short_description, tags, category_suggestions (list of codes/names with confidence)
+    """
+    name = (payload.get('name') or '').strip()
+    description = (payload.get('description') or '').strip()
+    images = payload.get('image_filenames') or []
+
+    suggestions: List[Dict[str, Any]] = []
+
+    # If OpenAI enabled, call it to get structured suggestions
+    if openai and os.environ.get('OPENAI_API_KEY'):
+        try:
+            prompt = _build_prompt_from_payload(payload)
+            resp = openai.ChatCompletion.create(
+                model=os.environ.get('OPENAI_MODEL', 'gpt-4o-mini'),
+                messages=[{'role': 'system', 'content': 'You are a helpful product metadata assistant.'},
+                          {'role': 'user', 'content': prompt}],
+                max_tokens=350,
+                n=1,
+            )
+            text = resp.choices[0].message.content
+            # Expect JSON-like response; try to parse
+            import json
+            parsed = None
+            try:
+                parsed = json.loads(text)
+            except Exception:
+                # Attempt to extract JSON substring
+                m = re.search(r"\{.*\}", text, re.DOTALL)
+                if m:
+                    try:
+                        parsed = json.loads(m.group(0))
+                    except Exception:
+                        parsed = None
+            if parsed and isinstance(parsed, dict):
+                suggestions.append(_normalize_ai_parsed(parsed))
+                return suggestions
+        except Exception:
+            # Fall back to heuristics
+            pass
+
+    # Heuristic path: derive from name/description and images
+    if not name and images:
+        # Use first image filename for heuristic
+        suggestions.append(_simple_heuristic_from_image_filename(images[0]))
+    else:
+        base = {
+            'name': name or (images and _simple_heuristic_from_image_filename(images[0])['name']) or 'Product',
+            'short_description': description or 'Handcrafted product.',
+            'tags': []
+        }
+        # derive tags from description
+        words = re.findall(r"\w{4,}", f"{name} {description}")
+        tags = sorted(set([w.lower() for w in words if not w.isdigit()]))[:6]
+        base['tags'] = tags
+        suggestions.append(base)
+
+    # Add lightweight category suggestions by keyword matching against category slugs (if categories app available)
+    try:
+        from apps.categories.models import Category
+        cat_suggestions: List[Tuple[str, float]] = []
+        text = f"{name} {description}".lower()
+        cats = Category.objects.filter(is_active=True, is_deleted=False).all()[:200]
+        for c in cats:
+            score = sum(1 for kw in (c.slug or '').split('-') if kw and kw in text)
+            if score > 0:
+                cat_suggestions.append((c.code or c.slug, float(min(1.0, score / 3))))
+        # attach top_k
+        if cat_suggestions:
+            cat_suggestions = sorted(cat_suggestions, key=lambda x: x[1], reverse=True)[:top_k]
+            suggestions[0]['category_suggestions'] = [{'code': code, 'confidence': conf} for code, conf in cat_suggestions]
+    except Exception:
+        # categories not available or DB error -- skip
+        pass
+
+    return suggestions

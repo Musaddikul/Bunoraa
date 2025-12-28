@@ -73,7 +73,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         return obj
     
     def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy', 'bulk_upload', 'bulk_stock_update']:
+        if self.action in ['create', 'update', 'partial_update', 'destroy', 'bulk_upload', 'bulk_stock_update', 'suggest']:
             return [IsAdminUser()]
         return [AllowAny()]
     
@@ -389,21 +389,46 @@ class ProductViewSet(viewsets.ModelViewSet):
             'meta': {'errors': serializer.errors}
         }, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=['post'], permission_classes=[IsAdminUser])
+    def suggest(self, request):
+        """Return auto-fill suggestions for product metadata based on provided fields and uploaded image filenames.
+
+        Payload: {name, description, price, image_filenames: ["file1.jpg", ...]}
+        """
+        data = request.data.copy()
+        # Collect uploaded file names if provided
+        image_files = []
+        for f in request.FILES.values():
+            try:
+                image_files.append(f.name)
+            except Exception:
+                pass
+        if 'image_filenames' in data and isinstance(data.get('image_filenames'), list):
+            image_files.extend(data.get('image_filenames'))
+        data['image_filenames'] = image_files
+
+        try:
+            suggestions = ProductService.generate_product_suggestions(data)
+            return Response({'success': True, 'message': 'Suggestions generated', 'data': suggestions})
+        except Exception as exc:
+            logger.exception('Failed to generate suggestions: %s', exc)
+            return Response({'success': False, 'message': 'Failed to generate suggestions', 'data': None}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class TagViewSet(viewsets.ModelViewSet):
     """Tag API endpoints."""
-    
+
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     lookup_field = 'id'
     search_fields = ['name']
     ordering = ['name']
-    
+
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
             return [IsAdminUser()]
         return [AllowAny()]
-    
+
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(queryset, many=True)
@@ -412,19 +437,6 @@ class TagViewSet(viewsets.ModelViewSet):
             'message': 'Tags retrieved successfully.',
             'data': serializer.data,
             'meta': {'count': queryset.count()}
-        })
-    
-    @action(detail=False, methods=['get'])
-    def popular(self, request):
-        """Get popular tags."""
-        limit = int(request.query_params.get('limit', 10))
-        tags = TagService.get_popular_tags(limit=limit)
-        serializer = self.get_serializer(tags, many=True)
-        return Response({
-            'success': True,
-            'message': 'Popular tags retrieved.',
-            'data': serializer.data,
-            'meta': None
         })
 
 

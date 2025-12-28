@@ -89,6 +89,7 @@ class ProductAdmin(admin.ModelAdmin):
             'js/admin/attribute_inline.js',
             'js/admin/category_tree.js',
             'js/admin/product_classifier.js',
+            'js/admin/product_autofill.js',
         )
     
     list_display = [
