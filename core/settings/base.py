@@ -178,7 +178,7 @@ PRERENDER_PATHS = ['/', '/products/', '/categories/']
 PRERENDER_CACHE_DIR = os.environ.get('PRERENDER_CACHE_DIR', 'prerender_cache')
 SITE_URL = os.environ.get('SITE_URL', 'https://bunoraa.com')
 MAIN_CSS = os.environ.get('MAIN_CSS', '/static/css/styles.css')
-MAIN_JS = os.environ.get('MAIN_JS', '/static/js/app.js')
+MAIN_JS = os.environ.get('MAIN_JS', '/static/js/app.bundle.js')
 ASSET_HOST = os.environ.get('ASSET_HOST', '')
 
 # Site ID

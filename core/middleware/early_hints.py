@@ -24,9 +24,9 @@ class EarlyHintsMiddleware(MiddlewareMixin):
                     links.append(f'<{asset_host}>; rel=preconnect; crossorigin')
                 # Resolve JS bundle URL
                 try:
-                    default_js = staticfiles_storage.url('js/app.js')
+                    default_js = staticfiles_storage.url('js/app.bundle.js')
                 except Exception:
-                    default_js = '/static/js/app.js'
+                    default_js = '/static/js/app.bundle.js'
                 main_js = getattr(settings, 'MAIN_JS', default_js)
                 links.append(f'<{main_js}>; rel=preload; as=script')
                 existing = response.get('Link')
