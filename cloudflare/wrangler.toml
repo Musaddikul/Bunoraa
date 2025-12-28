@@ -9,8 +9,8 @@ type = "javascript"
 account_id = "558bc0d014e2ae8268244260bf05b597"
 
 [build]
-# No build step required for this simple worker
-command = ""
+# Optional build step executed before deploy (set to your project build if needed)
+command = "npm run build"
 
 [env.production]
 # Optionally set a route to bind the worker to a hostname

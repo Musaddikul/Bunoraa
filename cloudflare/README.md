@@ -39,8 +39,12 @@ CI / GitHub Actions (recommended)
   - `CF_ACCOUNT_ID` — your Cloudflare account ID.
 - After adding secrets: push the `cloudflare/` folder and trigger the workflow (Actions → Deploy Warmup Worker → Run workflow).
 
+Workflow verification
+- The workflow includes a post-deploy verification step which reads `WARMUP_URLS` from repository secrets (or defaults to `https://bunoraa.com/healthz`) and retries checks up to 5 times. If any URL does not return HTTP 200, the workflow fails to alert you.
+
 Local publish (optional)
 - Install wrangler: `npm i -g wrangler`
-- Publish locally (if you set `account_id` in `cloudflare/wrangler.toml`):
-  - `wrangler publish cloudflare/warmup-worker.js --name bunoraa-warmup --compatibility-date 2025-12-28`
+- Build (optional): `npm run build`
+- Deploy locally:
+  - `npx wrangler deploy`
 

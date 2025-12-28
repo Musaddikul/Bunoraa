@@ -13,7 +13,9 @@
     "build:js:analyze": "esbuild static/js/app.js --bundle --outfile=static/js/app.bundle.js --minify --sourcemap --metafile=static/js/esbuild-meta.json",
     "build:tailwind": "cross-env NODE_ENV=production postcss ./static/css/input.css -o ./static/css/styles.css --minify",
     "build": "npm run build:clean && npm run build:js && npm run build:tailwind",
-    "dev:css": "cross-env NODE_ENV=development postcss ./static/css/input.css -o ./static/css/styles.css --watch"
+    "dev:css": "cross-env NODE_ENV=development postcss ./static/css/input.css -o ./static/css/styles.css --watch",
+    "deploy:worker": "npx wrangler deploy",
+    "pages:deploy": "npm run build && echo 'Pages deploy: static build only; worker deploy is handled by GitHub Actions.'"
   },
   "dependencies": {
     "autoprefixer": "10.4.21",

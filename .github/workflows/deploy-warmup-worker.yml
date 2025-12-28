@@ -27,5 +27,32 @@ jobs:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
         run: |
-          # uses the file path and name consistent with wrangler.toml
-          wrangler publish cloudflare/warmup-worker.js --name bunoraa-warmup --compatibility-date 2025-12-28
+          # Use wrangler deploy which reads project name and build command from wrangler.toml
+          npx wrangler deploy --env production
+
+      - name: Verify warmup endpoints
+        env:
+          WARMUP_URLS: ${{ secrets.WARMUP_URLS }}
+        run: |
+          set -e
+          URLS="${WARMUP_URLS:-https://bunoraa.com/healthz}"
+          echo "Will verify: $URLS"
+          for url in $(echo "$URLS" | tr ',' ' '); do
+            echo "Checking $url"
+            attempt=1
+            max_attempts=5
+            while [ $attempt -le $max_attempts ]; do
+              status=$(curl -s -o /dev/null -w "%{http_code}" "$url" || echo "000")
+              echo "Attempt $attempt: $url -> $status"
+              if [ "$status" = "200" ]; then
+                echo "$url is healthy"
+                break
+              fi
+              attempt=$((attempt+1))
+              sleep 2
+            done
+            if [ "$status" != "200" ]; then
+              echo "Warmup check failed for $url after $max_attempts attempts"
+              exit 1
+            fi
+          done
