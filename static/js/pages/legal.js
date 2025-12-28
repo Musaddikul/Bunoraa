@@ -157,3 +157,4 @@ const LegalPage = (function() {
 })();
 
 window.LegalPage = LegalPage;
+export default LegalPage;

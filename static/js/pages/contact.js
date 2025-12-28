@@ -217,3 +217,4 @@ const ContactPage = (function() {
 })();
 
 window.ContactPage = ContactPage;
+export default ContactPage;

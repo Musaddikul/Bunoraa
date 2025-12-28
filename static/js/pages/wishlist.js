@@ -524,3 +524,4 @@ const WishlistPage = (function() {
 })();
 
 window.WishlistPage = WishlistPage;
+export default WishlistPage;

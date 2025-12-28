@@ -1,0 +1,17 @@
+# Wrangler configuration for Bunoraa warmup worker
+name = "bunoraa-warmup"
+main = "cloudflare/warmup-worker.js"
+compatibility_date = "2025-12-28"
+type = "javascript"
+
+# Set your Cloudflare Account ID here or provide it as an environment variable in CI
+# Replace the placeholder below before publishing via CLI if you prefer local deploys
+account_id = "558bc0d014e2ae8268244260bf05b597"
+
+[build]
+# No build step required for this simple worker
+command = ""
+
+[env.production]
+# Optionally set a route to bind the worker to a hostname
+# route = "bunoraa.com/*"

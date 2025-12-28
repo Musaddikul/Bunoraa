@@ -336,3 +336,4 @@ const FAQPage = (function() {
 })();
 
 window.FAQPage = FAQPage;
+export default FAQPage;

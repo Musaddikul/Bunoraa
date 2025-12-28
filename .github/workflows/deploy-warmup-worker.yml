@@ -1,0 +1,31 @@
+name: Deploy Warmup Worker
+
+on:
+  push:
+    paths:
+      - 'cloudflare/**'
+      - '.github/workflows/deploy-warmup-worker.yml'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install wrangler
+        run: npm install -g wrangler
+
+      - name: Publish Warmup Worker
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          # uses the file path and name consistent with wrangler.toml
+          wrangler publish cloudflare/warmup-worker.js --name bunoraa-warmup --compatibility-date 2025-12-28

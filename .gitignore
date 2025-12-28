@@ -11,13 +11,13 @@ __pycache__/
 *$py.class
 *.so
 .Python
-migrations/0*.py
 build/
 develop-eggs/
 dist/
 downloads/
 scripts/
-media/
+# cloudflare/
+docs/
 eggs/
 .eggs/
 lib/

@@ -661,3 +661,4 @@ const HomePage = (function() {
 })();
 
 window.HomePage = HomePage;
+export default HomePage;

@@ -854,3 +854,4 @@ const CheckoutPage = (async function() {
 }());
 
 window.CheckoutPage = CheckoutPage;
+export default CheckoutPage;

@@ -150,10 +150,10 @@
                                         </div>
                                         <div class="flex items-center space-x-2">
                                             {% for icon in gateway.brand_icons %}
-                                            <img src="{{ icon }}" alt="" class="h-6 transition-opacity duration-300" onerror="this.style.display='none'">
+                                            <img src="{{ icon }}" alt="" class="h-6 transition-opacity duration-300" loading="lazy" decoding="async" onerror="this.style.display='none'">
                                             {% endfor %}
                                             {% if gateway.icon_url %}
-                                            <img src="{{ gateway.icon_url }}" alt="{{ gateway.name }}" class="h-8 transition-opacity duration-300" onerror="this.style.display='none'">
+                                            <img src="{{ gateway.icon_url }}" alt="{{ gateway.name }}" class="h-8 transition-opacity duration-300" loading="lazy" decoding="async" onerror="this.style.display='none'">
                                             {% endif %}
                                         </div>
                                     </label>

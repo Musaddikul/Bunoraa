@@ -424,3 +424,4 @@ const CartPage = (function() {
 })();
 
 window.CartPage = CartPage;
+export default CartPage;

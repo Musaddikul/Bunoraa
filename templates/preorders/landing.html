@@ -211,13 +211,12 @@
     </section>
 </div>
 
-<script src="{% static 'js/pages/preorders.js' %}"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    if (typeof PreordersPage !== 'undefined') {
-        PreordersPage.initLanding();
-    }
-});
+<script type="module">
+import('/static/js/pages/preorders.js').then(mod => {
+    const page = mod.default || mod;
+    if (page && typeof page.initLanding === 'function') page.initLanding();
+}).catch(() => {});
+</script>
 
 function useTemplate(templateId) {
     if (typeof PreordersApi !== 'undefined' && PreordersApi.useTemplate) {

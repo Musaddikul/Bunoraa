@@ -486,3 +486,4 @@ const SearchPage = (function() {
 })();
 
 window.SearchPage = SearchPage;
+export default SearchPage;

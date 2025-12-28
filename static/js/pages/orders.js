@@ -434,3 +434,4 @@ const OrdersPage = (function() {
 })();
 
 window.OrdersPage = OrdersPage;
+export default OrdersPage;

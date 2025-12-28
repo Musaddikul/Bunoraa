@@ -470,3 +470,4 @@ const AccountPage = (function() {
 })();
 
 window.AccountPage = AccountPage;
+export default AccountPage;

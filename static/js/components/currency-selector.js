@@ -1,4 +1,4 @@
-import { formatCurrency } from '/static/js/utils/currency.js';
+import { formatCurrency } from '../utils/currency.js';
 
 function getCookie(name) {
     const value = `; ${document.cookie}`;

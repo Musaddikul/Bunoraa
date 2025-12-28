@@ -966,3 +966,4 @@ const ProductPage = (function() {
 })();
 
 window.ProductPage = ProductPage;
+export default ProductPage;

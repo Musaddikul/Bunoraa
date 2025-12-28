@@ -3,26 +3,26 @@
  * @module app
  */
 
+import { initLazyHydration } from './utils/lazyHydrate.js';
+
 const App = (function() {
     'use strict';
 
-    const pageControllers = {
-        'home': HomePage,
-        'category': CategoryPage,
-        'product': ProductPage,
-        'cart': CartPage,
-        'checkout': CheckoutPage,
-        'account': AccountPage,
-        'orders': OrdersPage,
-        'search': SearchPage,
-        'contact': ContactPage,
-        'wishlist': WishlistPage,
-        'faq': FAQPage,
-        'legal': LegalPage
-    };
+    // Page controllers will be loaded on-demand via dynamic import for smaller initial bundle
+    const pageControllers = {};
 
     let currentPage = null;
     let currentController = null;
+
+    async function loadPageController(page) {
+        try {
+            const mod = await import(`./pages/${page}.js`);
+            return mod.default || mod;
+        } catch (e) {
+            // no controller for this page
+            return null;
+        }
+    }
 
     function init() {
         detectCurrentPage();
@@ -195,7 +195,6 @@ const App = (function() {
         if (path === '/' || path === '/home/') {
             currentPage = 'home';
         } else if (path === '/categories/' || path === '/products/') {
-            // Category list or products list page - use search module for browsing
             currentPage = 'search';
         } else if (path.startsWith('/categories/') && path !== '/categories/') {
             currentPage = 'category';
@@ -241,16 +240,33 @@ const App = (function() {
                 }
             });
         }
+
+        // Initialize lazy hydration for components marked with `data-hydrate`
+        try { initLazyHydration(); } catch (e) { /* ignore */ }
     }
 
-    function initCurrentPage() {
-        if (currentPage && pageControllers[currentPage]) {
-            currentController = pageControllers[currentPage];
-            if (typeof currentController.init === 'function') {
-                currentController.init();
+    async function initCurrentPage() {
+        if (!currentPage) return;
+        // Destroy previous controller if it exposes destroy()
+        try {
+            if (currentController && typeof currentController.destroy === 'function') {
+                currentController.destroy();
             }
+        } catch (e) { /* ignore */ }
+
+        const controller = await loadPageController(currentPage);
+        if (controller && typeof controller.init === 'function') {
+            currentController = controller;
+            try { await currentController.init(); } catch (e) { console.error('failed to init page controller', e); }
         }
     }
+
+    // Register service worker (if supported)
+    try {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/js/sw.js').catch(() => {});
+        }
+    } catch (e) { /* ignore */ }
 
     async function initCartBadge() {
         const cartBadges = document.querySelectorAll('[data-cart-count]');

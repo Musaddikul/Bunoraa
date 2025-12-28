@@ -536,3 +536,4 @@ const CategoryPage = (function() {
 })();
 
 window.CategoryPage = CategoryPage;
+export default CategoryPage;
