@@ -178,7 +178,7 @@
                         </div>
                         
                         <!-- Credit Card Form (Stripe) -->
-                        <div id="stripe-form" class="space-y-4">
+                        <div id="stripe-form" class="space-y-4" data-payment-form="stripe">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cardholder Name *</label>
                                 <input type="text" id="cardholder-name" name="cardholder_name"
@@ -194,7 +194,7 @@
                         </div>
                         
                         <!-- bKash Form -->
-                        <div id="bkash-form" class="hidden space-y-4">
+                        <div id="bkash-form" class="hidden space-y-4" data-payment-form="bkash">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">bKash Mobile Number *</label>
                                 <input type="tel" id="bkash-number" name="bkash_number"
@@ -207,7 +207,7 @@
                         </div>
                         
                         <!-- Nagad Form -->
-                        <div id="nagad-form" class="hidden space-y-4">
+                        <div id="nagad-form" class="hidden space-y-4" data-payment-form="nagad">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nagad Mobile Number *</label>
                                 <input type="tel" id="nagad-number" name="nagad_number"
@@ -220,7 +220,7 @@
                         </div>
                         
                         <!-- COD Info -->
-                        <div id="cod-form" class="hidden">
+                        <div id="cod-form" class="hidden" data-payment-form="cod">
                             <div class="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
                                 <div class="flex items-start">
                                     <svg class="w-5 h-5 text-yellow-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -237,7 +237,7 @@
                         </div>
                         
                         <!-- Bank Transfer Info -->
-                        <div id="bank-form" class="hidden">
+                        <div id="bank-form" class="hidden" data-payment-form="bank_transfer">
                             <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                                 <p class="text-sm text-blue-800 dark:text-blue-200 font-medium mb-2">Bank Transfer Details</p>
                                 <div class="text-sm text-blue-700 dark:text-blue-300 space-y-1">
@@ -331,15 +331,15 @@
                         <input type="hidden" name="payment_intent_id" id="payment-intent-id">
                         
                         <!-- Navigation -->
-                        <div class="mt-8 flex justify-between items-center">
-                            <a href="{% url 'checkout:shipping' %}" class="flex items-center text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition">
+                        <div class="mt-8 flex flex-col md:flex-row justify-between items-center gap-3">
+                            <a href="{% url 'checkout:shipping' %}" class="w-full md:w-auto text-center md:text-left flex items-center text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                                 </svg>
-                                Return to Shipping
+                                <span class="ml-2">Return to Shipping</span>
                             </a>
                             <button type="submit" id="submit-button" 
-                                    class="inline-flex items-center bg-primary-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-lg shadow-primary-600/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    class="w-full md:w-auto block md:inline-flex items-center justify-center bg-primary-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-lg shadow-primary-600/25 disabled:opacity-50 disabled:cursor-not-allowed"
                                     {% if not payment_gateways %}disabled{% endif %}>
                                 <span id="button-text">{% if not payment_gateways %}No payment methods available{% else %}Continue to Review{% endif %}</span>
                                 <span id="spinner" class="hidden ml-2">
@@ -352,7 +352,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                                 </svg>
                             </button>
-                        </div>
+                        </div> 
                     </form>
                     
                     <!-- Security Notice -->
@@ -367,7 +367,12 @@
             
             <!-- Order Summary Sidebar -->
             <div class="lg:w-96">
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sticky top-24">
+                <button id="order-summary-toggle" aria-expanded="false" class="w-full md:hidden mb-4 inline-flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200">
+                    <span class="font-medium">Order Summary</span>
+                    <span class="text-sm text-gray-500 dark:text-gray-400">{{ cart_items|length }} items</span>
+                    <svg class="w-5 h-5 text-gray-500 transform transition-transform" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg>
+                </button>
+                <div id="order-summary-block" class="hidden md:block bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 lg:sticky lg:top-24">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center justify-between">
                         <span>Order Summary</span>
                         <span class="text-sm font-normal text-gray-500 dark:text-gray-400">{{ cart_items|length }} items</span>

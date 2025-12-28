@@ -9,7 +9,7 @@ const WishlistPage = (function() {
     let currentPage = 1;
 
     async function init() {
-        if (!AuthGuard.requireAuth()) return;
+        if (!AuthGuard.protectPage()) return;
 
         await loadWishlist();
     }
@@ -129,7 +129,17 @@ const WishlistPage = (function() {
             renderWishlist(items, meta);
         } catch (error) {
             console.error('Failed to load wishlist:', error);
-            container.innerHTML = '<p class="text-red-500 text-center py-8">Failed to load wishlist.</p>';
+
+            const msg = (error && (error.message || error.detail)) || 'Failed to load wishlist.';
+
+            // If authentication is required, redirect to login (AuthGuard will handle)
+            if (error && error.status === 401) {
+                // Trigger login redirect
+                AuthGuard.redirectToLogin();
+                return;
+            }
+
+            container.innerHTML = `<p class="text-red-500 text-center py-8">${Templates.escapeHtml(msg)}</p>`;
         }
     }
 

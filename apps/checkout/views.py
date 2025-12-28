@@ -349,6 +349,18 @@ class InformationView(CheckoutMixin, View):
             context['saved_addresses'] = request.user.addresses.filter(
                 is_deleted=False
             ).order_by('-is_default', '-created_at')
+
+            # Precompute a human-readable country name for each saved address to avoid
+            # complex template lookups and template parsing issues.
+            try:
+                for addr in context['saved_addresses']:
+                    try:
+                        addr.country_name = self.get_country_name(addr.country)
+                    except Exception:
+                        addr.country_name = addr.country or ''
+            except Exception:
+                # If anything goes wrong, we silently continue; templates will fallback to stored value
+                logger.exception('Failed to precompute country_name for saved addresses')
         
         # Get countries list
         countries = self._get_countries()
@@ -822,6 +834,18 @@ class CompleteView(CheckoutMixin, View):
                           f"user={checkout_session.user_id}, session_key={checkout_session.session_key}")
             for issue in validation_issues:
                 messages.error(request, issue.get('message', 'Please complete all required information.'))
+
+            # Redirect user to the first appropriate step to fix issues instead of bouncing back to review.
+            if any(i.get('code') == 'empty_cart' for i in validation_issues):
+                return redirect('cart:cart')
+            if not checkout_session.information_completed:
+                return redirect('checkout:information')
+            if not checkout_session.shipping_completed:
+                return redirect('checkout:shipping')
+            if any(i.get('field') == 'payment_method' or i.get('code') == 'required' and i.get('field') == 'payment_method' for i in validation_issues):
+                return redirect('checkout:payment')
+
+            # Fallback
             return redirect('checkout:review')
         
         # Get payment intent if Stripe

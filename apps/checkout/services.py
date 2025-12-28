@@ -325,6 +325,48 @@ class CheckoutService:
         # Marketing preferences
         checkout_session.subscribe_newsletter = data.get('subscribe_newsletter', False)
         checkout_session.accept_marketing = data.get('accept_marketing', False)
+
+        # Persist newsletter subscription: create/reactivate Subscriber and update user preference when applicable.
+        try:
+            from apps.pages.services import SubscriberService
+
+            # When customer opts in, subscribe them (guest or user)
+            if data.get('subscribe_newsletter'):
+                try:
+                    SubscriberService.subscribe(
+                        email=checkout_session.email or data.get('email', ''),
+                        name=f"{checkout_session.shipping_first_name or data.get('first_name','')} {checkout_session.shipping_last_name or data.get('last_name','')}".strip(),
+                        source='checkout'
+                    )
+                except Exception:
+                    # Don't let subscription failures block checkout
+                    logger.exception('SubscriberService.subscribe failed for checkout %s', getattr(checkout_session, 'id', None))
+
+                # Update user preference if this is an authenticated user
+                if checkout_session.user:
+                    try:
+                        user = checkout_session.user
+                        user.newsletter_subscribed = True
+                        user.save(update_fields=['newsletter_subscribed'])
+                    except Exception:
+                        logger.exception('Failed to update user.newsletter_subscribed for user %s', getattr(checkout_session.user, 'id', None))
+
+            else:
+                # If user explicitly unchecks newsletter during checkout, update their preference and unsubscribe
+                if checkout_session.user:
+                    try:
+                        user = checkout_session.user
+                        if user.newsletter_subscribed:
+                            user.newsletter_subscribed = False
+                            user.save(update_fields=['newsletter_subscribed'])
+                            try:
+                                SubscriberService.unsubscribe(user.email)
+                            except Exception:
+                                logger.exception('SubscriberService.unsubscribe failed for user %s', getattr(user, 'id', None))
+                    except Exception:
+                        logger.exception('Failed to handle unsubscribe for checkout %s', getattr(checkout_session, 'id', None))
+        except Exception:
+            logger.exception('Failed to process newsletter subscription for checkout %s', getattr(checkout_session, 'id', None))
         
         # Save address if requested
         if data.get('save_address') and checkout_session.user:

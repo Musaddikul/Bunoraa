@@ -266,6 +266,65 @@ class CheckoutServiceTest(TestCase):
         self.assertIn('total', summary)
         self.assertIn('items', summary)
 
+    def test_subscribe_guest_creates_subscriber(self):
+        """Subscribing during checkout as a guest should create a Subscriber."""
+        from apps.pages.models import Subscriber
+
+        session = CheckoutService.get_or_create_session(
+            cart=self.cart,
+            session_key='guest-sub-1'
+        )
+
+        data = {
+            'email': 'guest@example.com',
+            'first_name': 'Guest',
+            'last_name': 'User',
+            'address_line_1': '123 Guest St',
+            'city': 'Dhaka',
+            'postal_code': '1000',
+            'country': 'Bangladesh',
+            'subscribe_newsletter': True
+        }
+
+        updated = CheckoutService.update_contact_information(session, data)
+        self.assertTrue(updated.subscribe_newsletter)
+        self.assertTrue(Subscriber.objects.filter(email='guest@example.com', is_active=True).exists())
+
+    def test_subscribe_and_unsubscribe_updates_user_and_subscriber(self):
+        """Toggling the newsletter checkbox for authenticated users updates user preference and subscriber record."""
+        from apps.pages.models import Subscriber
+
+        # Ensure there is a Subscriber (inactive) initially
+        Subscriber.objects.filter(email=self.user.email).delete()
+
+        session = CheckoutService.get_or_create_session(
+            cart=self.cart,
+            user=self.user
+        )
+
+        data = {
+            'email': self.user.email,
+            'first_name': 'Test',
+            'last_name': 'User',
+            'address_line_1': '123 Main St',
+            'city': 'Dhaka',
+            'postal_code': '1000',
+            'country': 'Bangladesh',
+            'subscribe_newsletter': True
+        }
+
+        CheckoutService.update_contact_information(session, data)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.newsletter_subscribed)
+        self.assertTrue(Subscriber.objects.filter(email=self.user.email, is_active=True).exists())
+
+        # Now unsubscribe via the checkout form
+        data['subscribe_newsletter'] = False
+        CheckoutService.update_contact_information(session, data)
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.newsletter_subscribed)
+        self.assertFalse(Subscriber.objects.filter(email=self.user.email, is_active=True).exists())
+
     def test_set_gift_options_uses_cart_setting(self):
         """Gift wrap cost should come from CartSettings when enabled."""
         from apps.cart.models import CartSettings

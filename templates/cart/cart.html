@@ -166,10 +166,17 @@
                     </div>
                     
                     <!-- Checkout Button -->
-                    <a href="{% url 'checkout:shipping' %}" 
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'checkout:checkout' %}" 
                        class="block w-full mt-6 bg-primary-600 text-white text-center py-3 rounded-lg font-medium hover:bg-primary-700 transition-colors">
                         Proceed to Checkout
                     </a>
+                    {% else %}
+                    <a href="{% url 'accounts:login' %}?next={% url 'checkout:checkout' %}" 
+                       class="block w-full mt-6 bg-primary-600 text-white text-center py-3 rounded-lg font-medium hover:bg-primary-700 transition-colors">
+                        Proceed to Checkout
+                    </a>
+                    {% endif %}
                     
                     <!-- Security Info -->
                     <div class="mt-6 flex items-center justify-center text-sm text-gray-500">
@@ -229,7 +236,7 @@
     window.BUNORAA_CART = {
         // Currency parameters removed; frontend uses server-provided formatting via Templates.formatPrice()
         hasItems: {% if cart_items %}true{% else %}false{% endif %},
-        checkoutUrl: '{% url "checkout:shipping" %}',
+        checkoutUrl: '{% if user.is_authenticated %}{% url "checkout:checkout" %}{% else %}{% url "accounts:login" %}?next={% url "checkout:checkout" %}{% endif %}',
         productsUrl: '{% url "products:list" %}'
     };
 </script>

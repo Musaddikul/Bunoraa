@@ -120,7 +120,7 @@
                                                 <p class="text-sm text-gray-600 dark:text-gray-400">{{ address.address_line_2 }}</p>
                                                 {% endif %}
                                                 <p class="text-sm text-gray-600 dark:text-gray-400">{{ address.city }}, {{ address.state }} {{ address.postal_code }}</p>
-                                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ country_map[address.country]|default:address.country }}</p>
+                                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ address.country_name|default:address.country }}</p>
                                                 <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">{{ address.phone }}</p>
                                             </div>
                                             {% if address.is_default %}
@@ -272,15 +272,15 @@
                     </div>
                     
                     <!-- Navigation -->
-                    <div class="flex justify-between items-center">
-                        <a href="{% url 'cart:cart' %}" class="flex items-center text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition">
+                    <div class="mt-8 flex flex-col md:flex-row justify-between items-center gap-3">
+                        <a href="{% url 'cart:cart' %}" class="w-full md:w-auto text-center md:text-left flex items-center text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                             </svg>
-                            Back to Cart
+                            <span class="ml-2">Back to Cart</span>
                         </a>
                         <button type="submit" id="continue-btn" 
-                                class="inline-flex items-center bg-primary-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-lg shadow-primary-600/25 disabled:opacity-50 disabled:cursor-not-allowed">
+                                class="w-full md:w-auto block md:inline-flex items-center justify-center bg-primary-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-lg shadow-primary-600/25 disabled:opacity-50 disabled:cursor-not-allowed">
                             <span id="btn-text">Continue to Shipping</span>
                             <span id="btn-spinner" class="hidden ml-2">
                                 <svg class="animate-spin w-5 h-5" viewBox="0 0 24 24">
@@ -298,7 +298,12 @@
             
             <!-- Order Summary Sidebar -->
             <div class="lg:w-96">
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sticky top-24">
+                <button id="order-summary-toggle" aria-expanded="false" class="w-full md:hidden mb-4 inline-flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200">
+                    <span class="font-medium">Order Summary</span>
+                    <span class="text-sm text-gray-500 dark:text-gray-400">{{ cart_items|length }} items</span>
+                    <svg class="w-5 h-5 text-gray-500 transform transition-transform" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg>
+                </button>
+                <div id="order-summary-block" class="hidden md:block bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 lg:sticky lg:top-24">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center justify-between">
                         <span>Order Summary</span>
                         <span class="text-sm font-normal text-gray-500 dark:text-gray-400">{{ cart_items|length }} items</span>

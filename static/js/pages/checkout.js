@@ -38,6 +38,7 @@ const CheckoutPage = (async function() {
         await loadUserAddresses();
         initStepNavigation();
         initFormValidation();
+        initOrderSummaryToggle();
     }
 
     async function loadCart() {
@@ -223,36 +224,98 @@ const CheckoutPage = (async function() {
         }
     }
 
+    // Inline error helpers
+    function clearStepErrors(container) {
+        if (!container) return;
+        container.querySelectorAll('[data-error-for]').forEach(el => el.remove());
+        container.querySelectorAll('.!border-red-500').forEach(el => el.classList.remove('!border-red-500'));
+    }
+
+    function showInlineError(fieldEl, message) {
+        if (!fieldEl) return;
+        // Remove existing error for this field
+        const name = fieldEl.getAttribute('name') || fieldEl.id || Math.random().toString(36).slice(2, 8);
+        const existing = fieldEl.closest('form')?.querySelector(`[data-error-for="${name}"]`);
+        if (existing) existing.remove();
+
+        const msg = document.createElement('p');
+        msg.className = 'text-sm text-red-600 mt-1';
+        msg.setAttribute('data-error-for', name);
+        msg.textContent = message;
+
+        // Add visual state to the field
+        fieldEl.classList.add('!border-red-500');
+
+        // Insert after field or its parent wrapper
+        if (fieldEl.nextSibling) {
+            fieldEl.parentNode.insertBefore(msg, fieldEl.nextSibling);
+        } else {
+            fieldEl.parentNode.appendChild(msg);
+        }
+    }
+
+    function focusFirstInvalid(container) {
+        if (!container) return;
+        const first = container.querySelector('[data-error-for]');
+        if (!first) return;
+        // Try to focus associated input
+        const name = first.getAttribute('data-error-for');
+        const input = container.querySelector(`[name="${name}"]`) || container.querySelector(`#${name}`) || first.previousElementSibling;
+        if (input && typeof input.focus === 'function') input.focus();
+    }
+
     function validateShippingAddress() {
+        // Support both 'information-form' (wizard first step) and dedicated 'shipping-address-form'
         const savedAddressRadio = document.querySelector('input[name="saved_address"]:checked');
         
         if (savedAddressRadio && savedAddressRadio.value !== 'new') {
+            clearStepErrors(document.getElementById('new-address-form') || document.getElementById('information-form'));
             checkoutData.shipping_address = savedAddressRadio.value;
             return true;
         }
 
-        const form = document.getElementById('shipping-address-form');
+        const form = document.getElementById('shipping-address-form') || document.getElementById('information-form') || document.getElementById('new-address-form');
         if (!form) return false;
+
+        clearStepErrors(form);
 
         const formData = new FormData(form);
         const address = {
-            first_name: formData.get('first_name'),
-            last_name: formData.get('last_name'),
+            first_name: formData.get('first_name') || formData.get('full_name')?.split(' ')?.[0],
+            last_name: formData.get('last_name') || (formData.get('full_name') ? formData.get('full_name').split(' ').slice(1).join(' ') : ''),
             email: formData.get('email'),
             phone: formData.get('phone'),
-            address_line_1: formData.get('address_line_1'),
-            address_line_2: formData.get('address_line_2'),
+            address_line_1: formData.get('address_line1') || formData.get('address_line_1'),
+            address_line_2: formData.get('address_line2') || formData.get('address_line_2'),
             city: formData.get('city'),
             state: formData.get('state'),
             postal_code: formData.get('postal_code'),
             country: formData.get('country')
         };
 
-        const required = ['first_name', 'last_name', 'address_line_1', 'city', 'postal_code', 'country'];
+        // Required fields depending on context
+        const required = ['email', 'first_name', 'address_line_1', 'city', 'postal_code'];
         const missing = required.filter(field => !address[field]);
 
         if (missing.length > 0) {
-            Toast.error('Please fill in all required fields.');
+            // Show inline errors and focus first
+            missing.forEach(field => {
+                // Map back to input names in form
+                let selector = `[name="${field}"]`;
+                if (field === 'address_line_1') selector = `[name="address_line1"],[name="address_line_1"]`;
+                const fieldEl = form.querySelector(selector);
+                showInlineError(fieldEl || form, field.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) + ' is required.');
+            });
+
+            focusFirstInvalid(form);
+            return false;
+        }
+
+        // Basic email format check
+        if (address.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(address.email)) {
+            const emailEl = form.querySelector('[name="email"]');
+            showInlineError(emailEl || form, 'Please enter a valid email address.');
+            focusFirstInvalid(form);
             return false;
         }
 
@@ -354,11 +417,26 @@ const CheckoutPage = (async function() {
 
             const gateways = (data && data.data) || [];
 
-            // If server already rendered gateways (non-empty) we won't re-render unless none exist
+            // If server already rendered gateways (non-empty) try to avoid re-render to prevent UI flicker.
             const existing = container.querySelectorAll('.payment-option');
-            if (existing && existing.length > 0 && gateways.length === 0) {
-                // nothing to do
-                return;
+            if (existing && existing.length > 0) {
+                try {
+                    const existingCodes = Array.from(existing).map(el => el.dataset.gateway).filter(Boolean);
+                    const remoteCodes = (gateways || []).map(g => g.code);
+
+                    // If codes match exactly in order and length, keep server markup and just re-bind handlers.
+                    const same = existingCodes.length === remoteCodes.length && existingCodes.every((c, i) => c === remoteCodes[i]);
+                    if (same) {
+                        initFormValidation(); // ensure event handlers and initial visibility are in place
+                        return;
+                    }
+                } catch (err) {
+                    // Fall back to previous behavior if anything goes wrong
+                    console.warn('Failed to compare existing payment gateways:', err);
+                }
+
+                // If remote returned nothing but server has content, keep server content (avoid replacing with empty state)
+                if (gateways.length === 0) return;
             }
 
             // If no gateways, show informative block (template also handles this case)
@@ -374,12 +452,16 @@ const CheckoutPage = (async function() {
                 return;
             }
 
-            // Build radio options
-            container.innerHTML = '';
+            // Build radio options into a fragment, add animations and staggered delays to improve perceived performance
+            const frag = document.createDocumentFragment();
             gateways.forEach((g, idx) => {
                 const wrapper = document.createElement('div');
                 wrapper.className = 'relative payment-option transform transition-all duration-300 hover:scale-[1.01]';
                 wrapper.dataset.gateway = g.code;
+
+                // Apply slideIn animation with staggered delay so new DOM shows with animation
+                wrapper.style.animation = 'slideIn 0.3s ease-out both';
+                wrapper.style.animationDelay = `${idx * 80}ms`;
 
                 const input = document.createElement('input');
                 input.type = 'radio';
@@ -412,17 +494,20 @@ const CheckoutPage = (async function() {
 
                 // Append selection indicator
                 const indicator = document.createElement('div');
-                indicator.className = 'absolute top-4 right-4 opacity-0';
+                indicator.className = 'absolute top-4 right-4 opacity-0 peer-checked:opacity-100 transition-opacity duration-300';
                 indicator.innerHTML = `<svg class="w-6 h-6 text-primary-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>`;
                 wrapper.appendChild(indicator);
 
-                container.appendChild(wrapper);
+                frag.appendChild(wrapper);
 
-                // If gateway requires client side (Stripe), load JS and init
+                // If gateway requires client side (Stripe), load JS and init (do this early so elements can initialize)
                 if (g.public_key && g.requires_client) {
                     loadStripeJsIfNeeded(g.public_key).catch(err => console.error('Failed to load Stripe:', err));
                 }
             });
+
+            // Atomically replace existing nodes to reduce flicker
+            container.replaceChildren(frag);
 
             // Re-bind form handlers
             initFormValidation();
@@ -531,13 +616,73 @@ const CheckoutPage = (async function() {
         return true;
     }
 
+    function initOrderSummaryToggle() {
+        const toggle = document.getElementById('order-summary-toggle');
+        const block = document.getElementById('order-summary-block');
+        if (!toggle || !block) return;
+
+        toggle.addEventListener('click', () => {
+            const hidden = block.classList.toggle('hidden');
+            toggle.setAttribute('aria-expanded', (!hidden).toString());
+            const chevron = toggle.querySelector('svg');
+            if (chevron) chevron.classList.toggle('rotate-180', !hidden);
+        });
+
+        // If the block is hidden on mobile by responsive classes, ensure aria is accurate
+        const isHidden = window.getComputedStyle(block).display === 'none' || block.classList.contains('hidden');
+        toggle.setAttribute('aria-expanded', (!isHidden).toString());
+    }
+
     function validatePaymentMethod() {
         const selected = document.querySelector('input[name="payment_method"]:checked');
+        const form = document.getElementById('payment-form');
+        clearStepErrors(form);
+
         if (!selected) {
-            Toast.error('Please select a payment method.');
+            // Show inline message in payment block
+            const container = document.getElementById('payment-methods-container') || form;
+            showInlineError(container, 'Please select a payment method.');
+            focusFirstInvalid(container);
             return false;
         }
-        checkoutData.payment_method = selected.value;
+
+        const code = selected.value;
+
+        // Payment-specific checks
+        if (code === 'stripe') {
+            const nameEl = document.getElementById('cardholder-name');
+            if (!nameEl || !nameEl.value.trim()) {
+                showInlineError(nameEl || form, 'Cardholder name is required.');
+                focusFirstInvalid(form);
+                return false;
+            }
+            // Ensure Stripe element exists (mounting handled elsewhere)
+            if (!window.stripeCard) {
+                showInlineError(document.getElementById('card-element') || form, 'Card input not ready. Please wait and try again.');
+                return false;
+            }
+        }
+
+        if (code === 'bkash') {
+            const el = document.getElementById('bkash-number');
+            if (!el || !el.value.trim()) {
+                showInlineError(el || form, 'bKash mobile number is required.');
+                focusFirstInvalid(form);
+                return false;
+            }
+        }
+
+        if (code === 'nagad') {
+            const el = document.getElementById('nagad-number');
+            if (!el || !el.value.trim()) {
+                showInlineError(el || form, 'Nagad mobile number is required.');
+                focusFirstInvalid(form);
+                return false;
+            }
+        }
+
+        // Clear any errors and proceed
+        checkoutData.payment_method = code;
         return true;
     }
 
@@ -552,14 +697,30 @@ const CheckoutPage = (async function() {
 
         const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
         paymentMethods.forEach(method => {
-            method.addEventListener('change', (e) => {
+            const handler = (e) => {
+                // Hide all payment form blocks marked with data-payment-form
                 document.querySelectorAll('[data-payment-form]').forEach(form => {
                     form.classList.add('hidden');
                 });
 
-                const targetForm = document.querySelector(`[data-payment-form="${e.target.value}"]`);
+                // Show the matching form using data attribute; fallback to id `${code}-form`
+                const code = e.target ? e.target.value : (method.value || null);
+                if (!code) return;
+
+                let targetForm = document.querySelector(`[data-payment-form="${code}"]`);
+                if (!targetForm) {
+                    targetForm = document.getElementById(`${code}-form`);
+                }
+
                 targetForm?.classList.remove('hidden');
-            });
+            };
+
+            method.addEventListener('change', handler);
+
+            // If this method is pre-selected on page load, trigger handler to set initial visibility
+            if (method.checked) {
+                handler({ target: method });
+            }
         });
 
         // Only attach the SPA place order handler if NOT on the traditional form-based review page

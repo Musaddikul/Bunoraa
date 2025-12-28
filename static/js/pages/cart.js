@@ -166,7 +166,7 @@ const CartPage = (function() {
                         </div>
 
                         <!-- Checkout Button -->
-                        <a href="/checkout/" class="mt-6 w-full px-6 py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors flex items-center justify-center gap-2">
+                        <a href="${window.BUNORAA_CART && window.BUNORAA_CART.checkoutUrl ? window.BUNORAA_CART.checkoutUrl : '/checkout/'}" class="mt-6 w-full px-6 py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors flex items-center justify-center gap-2">
                             Proceed to Checkout
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
