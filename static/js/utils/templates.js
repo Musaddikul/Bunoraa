@@ -7,6 +7,8 @@ const Templates = (function() {
     'use strict';
 
     const cache = new Map();
+    // Use a stable locale for date/time formatting (fallbacks to user agent)
+    const locale = (window.BUNORAA_CURRENCY && window.BUNORAA_CURRENCY.locale) || navigator.language || 'en-US';
     // Price formatting now uses server-provided currency metadata (no client-side exchange conversions)
 
     /**

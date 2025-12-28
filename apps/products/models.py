@@ -355,9 +355,27 @@ class Product(models.Model):
         self.save(update_fields=['is_deleted', 'is_active', 'updated_at'])
     
     def increment_view_count(self):
-        """Increment view count."""
-        self.view_count = models.F('view_count') + 1
-        self.save(update_fields=['view_count'])
+        """Increment view count safely using DB-side update and refresh the instance.
+
+        Using F-expression and saving can leave the in-memory field as a CombinedExpression
+        which breaks serializers that attempt to convert it to an int. Perform an update
+        via the queryset and then refresh the instance from the DB to get a concrete value.
+        """
+        try:
+            Product.objects.filter(pk=self.pk).update(view_count=models.F('view_count') + 1)
+            # refresh the current instance so view_count is a concrete integer
+            try:
+                self.refresh_from_db(fields=['view_count'])
+            except Exception:
+                self.refresh_from_db()
+        except Exception:
+            # Fallback to safe in-memory increment
+            try:
+                self.view_count = (self.view_count or 0) + 1
+                self.save(update_fields=['view_count'])
+            except Exception:
+                # Give up silently; we must not raise in view counting
+                pass
     
     def update_stock(self, quantity, operation='subtract'):
         """Update stock quantity."""

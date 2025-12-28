@@ -128,8 +128,6 @@ const WishlistPage = (function() {
 
             renderWishlist(items, meta);
         } catch (error) {
-            console.error('Failed to load wishlist:', error);
-
             const msg = (error && (error.message || error.detail)) || 'Failed to load wishlist.';
 
             // If authentication is required, redirect to login (AuthGuard will handle)
@@ -172,7 +170,7 @@ const WishlistPage = (function() {
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 ${items.map(item => renderWishlistItem(item)).join('')}
-            </div>
+            </div> 
             ${meta.total_pages > 1 ? `
                 <div id="wishlist-pagination" class="mt-8"></div>
             ` : ''}
@@ -201,80 +199,91 @@ const WishlistPage = (function() {
     }
 
     function renderWishlistItem(item) {
-        const product = item.product || item;
-        // Use product_name and product_slug from wishlist item if available
-        const productName = item.product_name || product.name || '';
-        const productSlug = item.product_slug || product.slug || '';
-        // Check is_in_stock from the item itself (wishlist API returns it at top level)
-        const inStock = item.is_in_stock !== undefined ? item.is_in_stock : (product.is_in_stock !== undefined ? product.is_in_stock : (product.stock_quantity > 0));
-        const imageUrl = resolveProductImage(item);
-        
-        // Use resolvePrices to get the best available price data
-        const { price, salePrice } = resolvePrices(item);
+        try {
+            const product = item.product || item || {};
+            const productName = item.product_name || product.name || '';
+            const productSlug = item.product_slug || product.slug || '';
+            const inStock = item.is_in_stock !== undefined ? item.is_in_stock : (product.is_in_stock !== undefined ? product.is_in_stock : (product.stock_quantity > 0));
+            const imageUrl = resolveProductImage(item || {});
+            const requiresVariants = !!item.product_has_variants;
 
-        return `
-            <div class="wishlist-item relative bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" data-item-id="${item.id}" data-product-id="${product.id || item.product}">
-                <div class="relative" style="aspect-ratio: ${product?.aspect?.css || '1/1'};">
-                    ${item.discount_percentage ? `
-                        <div class="absolute top-2 left-2 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-                            -${item.discount_percentage}%
+            let priceObj = { price: 0, salePrice: null };
+            try { priceObj = resolvePrices(item || {}); } catch { priceObj = { price: 0, salePrice: null }; }
+            const { price, salePrice } = priceObj;
+
+            const safeEscape = (s) => {
+                try { return Templates.escapeHtml(s || ''); } catch { return String(s || ''); }
+            };
+
+            const safePriceRender = (p) => {
+                try { return Price.render({ price: p.price, salePrice: p.salePrice }); } catch { return `<span class="font-bold">${p.price || ''}</span>`; }
+            };
+
+            const aspectCss = (product && product.aspect && (product.aspect.css || (product.aspect.width && product.aspect.height ? `${product.aspect.width}/${product.aspect.height}` : null))) || '1/1';
+
+            return `
+                <div class="wishlist-item relative bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" data-item-id="${item && item.id ? item.id : ''}" data-product-id="${(product && product.id) ? product.id : (item && item.product) ? item.product : ''}" data-product-slug="${safeEscape(productSlug)}" data-product-has-variants="${requiresVariants}">
+                    <div class="relative" style="aspect-ratio: ${aspectCss};">
+                        ${item && item.discount_percentage ? `
+                            <div class="absolute top-2 left-2 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                                -${item.discount_percentage}%
+                            </div>
+                        ` : ''}
+                        <button class="remove-btn absolute top-2 right-2 z-20 w-10 h-10 bg-gray-900 text-white rounded-full shadow-lg ring-2 ring-white/25 border border-white/30 flex items-center justify-center hover:bg-gray-800 transition-colors" aria-label="Remove from wishlist" style="pointer-events:auto;">
+                            <svg class="w-5 h-5" fill="none" stroke="white" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                        <a href="/products/${safeEscape(productSlug)}/">
+                            ${imageUrl ? `
+                                <img 
+                                    src="${imageUrl}" 
+                                    alt="${safeEscape(productName)}"
+                                    class="w-full h-full object-cover"
+                                    loading="lazy"
+                                >
+                            ` : `
+                                <div class="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs uppercase tracking-wide">No Image</div>
+                            `}
+                        </a>
+                    </div>
+                    <div class="p-4">
+                        ${product && product.category ? `
+                            <a href="/categories/${safeEscape(product.category.slug)}/" class="text-xs text-gray-500 hover:text-primary-600">
+                                ${safeEscape(product.category.name)}
+                            </a>
+                        ` : ''}
+                        <h3 class="font-medium text-gray-900 mt-1 line-clamp-2">
+                            <a href="/products/${safeEscape(productSlug)}/" class="hover:text-primary-600">
+                                ${safeEscape(productName)}
+                            </a>
+                        </h3>
+                        <div class="mt-2">
+                            ${safePriceRender({ price, salePrice })}
+                        </div>
+                        ${product && product.average_rating ? `
+                            <div class="flex items-center gap-1 mt-2">
+                                ${Templates.renderStars(product.average_rating)}
+                                <span class="text-xs text-gray-500">(${product.review_count || 0})</span>
+                            </div>
+                        ` : ''}
+                        <button 
+                            class="add-to-cart-btn mt-4 w-full px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm"
+                            ${!inStock ? 'disabled' : ''}
+                        >
+                            ${requiresVariants ? 'Select variant' : (inStock ? 'Add to Cart' : 'Out of Stock')}
+                        </button>
+                    </div>
+                    ${item && item.added_at ? `
+                        <div class="px-4 pb-4">
+                            <p class="text-xs text-gray-400">Added ${Templates.formatDate(item.added_at)}</p>
                         </div>
                     ` : ''}
-                    <button class="remove-btn absolute top-2 right-2 z-20 w-10 h-10 bg-gray-900 text-white rounded-full shadow-lg ring-2 ring-white/25 border border-white/30 flex items-center justify-center hover:bg-gray-800 transition-colors" aria-label="Remove from wishlist" style="pointer-events:auto;">
-                        <svg class="w-5 h-5" fill="none" stroke="white" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                    <a href="/products/${productSlug}/">
-                        ${imageUrl ? `
-                            <img 
-                                src="${imageUrl}" 
-                                alt="${Templates.escapeHtml(productName)}"
-                                class="w-full h-full object-cover"
-                                loading="lazy"
-                            >
-                        ` : `
-                            <div class="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs uppercase tracking-wide">No Image</div>
-                        `}
-                    </a>
                 </div>
-                <div class="p-4">
-                    ${product.category ? `
-                        <a href="/categories/${product.category.slug}/" class="text-xs text-gray-500 hover:text-primary-600">
-                            ${Templates.escapeHtml(product.category.name)}
-                        </a>
-                    ` : ''}
-                    <h3 class="font-medium text-gray-900 mt-1 line-clamp-2">
-                        <a href="/products/${productSlug}/" class="hover:text-primary-600">
-                            ${Templates.escapeHtml(productName)}
-                        </a>
-                    </h3>
-                    <div class="mt-2">
-                        ${Price.render({
-                            price: price,
-                            salePrice: salePrice
-                        })}
-                    </div>
-                    ${product.average_rating ? `
-                        <div class="flex items-center gap-1 mt-2">
-                            ${Templates.renderStars(product.average_rating)}
-                            <span class="text-xs text-gray-500">(${product.review_count || 0})</span>
-                        </div>
-                    ` : ''}
-                    <button 
-                        class="add-to-cart-btn mt-4 w-full px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm"
-                        ${!inStock ? 'disabled' : ''}
-                    >
-                        ${inStock ? 'Add to Cart' : 'Out of Stock'}
-                    </button>
-                </div>
-                ${item.added_at ? `
-                    <div class="px-4 pb-4">
-                        <p class="text-xs text-gray-400">Added ${Templates.formatDate(item.added_at)}</p>
-                    </div>
-                ` : ''}
-            </div>
-        `;
+            `;
+        } catch (err) {
+            return '<div class="p-4 bg-white rounded shadow text-gray-500">Failed to render item</div>';
+        }
     }
 
     function bindEvents() {
@@ -327,11 +336,46 @@ const WishlistPage = (function() {
                 btn.disabled = true;
                 btn.textContent = 'Adding...';
 
+                const productSlug = item.dataset.productSlug || ''; // fallback if not present
+                const requiresVariants = item.dataset.productHasVariants === 'true' || item.dataset.productHasVariants === 'True' || item.dataset.productHasVariants === '1';
+
+                // If product requires variants, redirect user to product page to choose
+                if (requiresVariants) {
+                    // Open inline variant picker modal
+                    showVariantPicker(item);
+                    return;
+                }
+
                 try {
                     await CartApi.addItem(productId, 1);
                     Toast.success('Added to cart!');
                     document.dispatchEvent(new CustomEvent('cart:updated'));
                 } catch (error) {
+                    // If the product requires a variant, redirect user to product page to choose variant
+                    const hasVariantError = Boolean(
+                        error && (
+                            (error.errors && error.errors.variant_id) ||
+                            (error.message && typeof error.message === 'string' && error.message.toLowerCase().includes('variant'))
+                        )
+                    );
+
+                    if (hasVariantError) {
+                        Toast.info('This product requires selecting a variant. Redirecting to the product page...');
+                        // If we don't have a slug, fall back to using the product anchor
+                        let slug = productSlug;
+                        if (!slug) {
+                            const href = item.querySelector('a')?.getAttribute('href');
+                            if (href) {
+                                const m = href.match(/\/products\/(.*)\/?$/);
+                                if (m) slug = m[1];
+                            }
+                        }
+                        if (slug) {
+                            window.location.href = `/products/${slug}/`;
+                            return;
+                        }
+                    }
+
                     Toast.error(error.message || 'Failed to add to cart.');
                 } finally {
                     btn.disabled = false;
@@ -341,6 +385,132 @@ const WishlistPage = (function() {
         });
 
         // Pagination handled by component onChange
+    }
+
+    function renderModalVariants(variants) {
+        const grouped = {};
+        variants.forEach(variant => {
+            if (!grouped[variant.attribute_name]) grouped[variant.attribute_name] = [];
+            grouped[variant.attribute_name].push(variant);
+        });
+
+        return Object.entries(grouped).map(([attrName, options]) => `
+            <div class="mt-4">
+                <label class="text-sm font-medium text-gray-700">${Templates.escapeHtml(attrName)}:</label>
+                <div class="flex flex-wrap gap-2 mt-2" id="wishlist-variant-group-${Templates.slugify(attrName)}">
+                    ${options.map((opt, index) => `
+                        <button type="button" class="wishlist-modal-variant-btn px-3 py-2 border rounded-lg text-sm transition-colors ${index === 0 ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-300 hover:border-gray-400'}" data-variant-id="${opt.id}" data-price="${opt.price_converted ?? opt.price ?? ''}" data-stock="${opt.stock_quantity || 0}">
+                            ${Templates.escapeHtml(opt.value)}
+                            ${(opt.price_converted ?? opt.price) ? `<span class="text-xs text-gray-500"> (${Templates.formatPrice(opt.price_converted ?? opt.price)})</span>` : ''}
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function showVariantPicker(item) {
+        // item: wishlist item object or DOM element dataset; prefer slug
+        const slug = item.product_slug || item.dataset?.productSlug || '';
+        const id = item.product || item.dataset?.productId || '';
+
+        try {
+            // Support environments where ProductsApi may not be available (fallback to ApiClient)
+            let res;
+            if (typeof ProductsApi !== 'undefined' && ProductsApi.getProduct) {
+                res = await ProductsApi.getProduct(slug || id);
+            } else {
+                const currency = (window.BUNORAA_CURRENCY && window.BUNORAA_CURRENCY.code) || undefined;
+                res = await ApiClient.get(`/products/${slug || id}/`, { currency });
+            }
+
+            if (!res || !res.success || !res.data) {
+                const msg = res && res.message ? res.message : 'Failed to load product variants.';
+                Toast.error(msg);
+                return;
+            }
+
+            const product = res.data;
+            const variants = product.variants || [];
+            if (!variants.length) {
+                // fallback to product page
+                window.location.href = `/products/${product.slug || slug || id}/`;
+                return;
+            }
+
+            const firstImage = product.images?.[0]?.image || product.primary_image || product.image || '';
+
+            const content = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="col-span-1">
+                        ${firstImage ? `<img src="${firstImage}" class="w-full h-48 object-cover rounded" alt="${Templates.escapeHtml(product.name)}">` : `<div class="w-full h-48 bg-gray-100 rounded"></div>`}
+                    </div>
+                    <div class="col-span-2">
+                        <h3 class="text-lg font-semibold">${Templates.escapeHtml(product.name)}</h3>
+                        <div id="wishlist-variant-price" class="mt-2 text-lg font-bold">${Templates.formatPrice(variants?.[0]?.price_converted ?? variants?.[0]?.price ?? product.price)}</div>
+                        <div id="wishlist-variant-options" class="mt-4">
+                            ${renderModalVariants(variants)}
+                        </div>
+                        <div class="mt-4 flex items-center gap-2">
+                            <label class="text-sm text-gray-700">Qty</label>
+                            <input id="wishlist-variant-qty" type="number" value="1" min="1" class="w-20 px-3 py-2 border rounded" />
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const confirmed = await Modal.open({
+                title: 'Select Variant',
+                content,
+                confirmText: 'Add to Cart',
+                cancelText: 'Cancel',
+                size: 'md',
+                onConfirm: async () => {
+                    // find selected variant
+                    const active = document.querySelector('.wishlist-modal-variant-btn.border-primary-500');
+                    const btn = active || document.querySelector('.wishlist-modal-variant-btn');
+                    if (!btn) {
+                        Toast.error('Please select a variant.');
+                        return false;
+                    }
+                    const variantId = btn.dataset.variantId;
+                    const qty = parseInt(document.getElementById('wishlist-variant-qty')?.value) || 1;
+
+                    try {
+                        await CartApi.addItem(product.id, qty, variantId);
+                        Toast.success('Added to cart!');
+                        document.dispatchEvent(new CustomEvent('cart:updated'));
+                        return true;
+                    } catch (err) {
+                        Toast.error(err.message || 'Failed to add to cart.');
+                        return false;
+                    }
+                }
+            });
+
+            // bind variant buttons to update selection and price after modal is rendered
+            setTimeout(() => {
+                const variantBtns = document.querySelectorAll('.wishlist-modal-variant-btn');
+                variantBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        variantBtns.forEach(b => b.classList.remove('border-primary-500', 'bg-primary-50', 'text-primary-700'));
+                        btn.classList.add('border-primary-500', 'bg-primary-50', 'text-primary-700');
+
+                        const price = btn.dataset.price;
+                        if (price !== undefined) {
+                            const priceEl = document.getElementById('wishlist-variant-price');
+                            if (priceEl) priceEl.textContent = Templates.formatPrice(price);
+                        }
+                    });
+                });
+                // preselect first variant
+                const first = document.querySelector('.wishlist-modal-variant-btn');
+                if (first) first.click();
+            }, 20);
+
+        } catch (error) {
+            Toast.error('Failed to load variants.');
+        }
     }
 
     function destroy() {

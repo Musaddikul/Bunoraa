@@ -7,9 +7,6 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
-import logging
-
-logger = logging.getLogger(__name__)
 
 from ..models import WishlistItem
 from ..services import WishlistService, WishlistShareService, WishlistNotificationService
@@ -27,22 +24,14 @@ class WishlistViewSet(ViewSet):
     
     def list(self, request):
         """Get user's wishlist with all items."""
-        try:
-            wishlist = WishlistService.get_or_create_wishlist(request.user)
-            serializer = WishlistSerializer(wishlist, context={'request': request})
-            
-            return Response({
-                'success': True,
-                'message': 'Wishlist retrieved',
-                'data': serializer.data
-            })
-        except Exception:
-            logger.exception("Failed to retrieve wishlist for user %s", getattr(request, 'user', None))
-            return Response({
-                'success': False,
-                'message': 'Failed to retrieve wishlist',
-                'data': None
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        wishlist = WishlistService.get_or_create_wishlist(request.user)
+        serializer = WishlistSerializer(wishlist, context={'request': request})
+        
+        return Response({
+            'success': True,
+            'message': 'Wishlist retrieved',
+            'data': serializer.data
+        })
     
     def create(self, request):
         """Add item to wishlist."""

@@ -11,6 +11,9 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from django.db.models import Q
 from ..models import Product, ProductImage, ProductVariant, Tag, Attribute
 from ..services import ProductService, TagService, AttributeService
+import logging
+
+logger = logging.getLogger(__name__)
 from .serializers import (
     ProductListSerializer,
     ProductDetailSerializer,
@@ -182,15 +185,24 @@ class ProductViewSet(viewsets.ModelViewSet):
         })
     
     def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        instance.increment_view_count()
-        serializer = self.get_serializer(instance)
-        return Response({
-            'success': True,
-            'message': 'Product retrieved successfully.',
-            'data': serializer.data,
-            'meta': None
-        })
+        try:
+            instance = self.get_object()
+            instance.increment_view_count()
+            serializer = self.get_serializer(instance)
+            return Response({
+                'success': True,
+                'message': 'Product retrieved successfully.',
+                'data': serializer.data,
+                'meta': None
+            })
+        except Exception:
+            # Log exception and return JSON error so clients can handle gracefully
+            logger.exception('Failed to retrieve product for %s', kwargs.get(self.lookup_field))
+            return Response({
+                'success': False,
+                'message': 'Failed to retrieve product.',
+                'data': None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

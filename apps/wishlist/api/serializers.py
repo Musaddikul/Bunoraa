@@ -18,6 +18,7 @@ class WishlistItemSerializer(serializers.ModelSerializer):
     price_change_percentage = serializers.FloatField(read_only=True)
     is_in_stock = serializers.BooleanField(read_only=True)
     is_on_sale = serializers.BooleanField(read_only=True)
+    product_has_variants = serializers.SerializerMethodField()
     
     class Meta:
         model = WishlistItem
@@ -27,7 +28,7 @@ class WishlistItemSerializer(serializers.ModelSerializer):
             'variant', 'variant_name', 'added_at', 'notes',
             'price_at_add', 'price_change', 'price_change_percentage',
             'notify_on_sale', 'notify_on_restock', 'notify_on_price_drop',
-            'is_in_stock', 'is_on_sale'
+            'is_in_stock', 'is_on_sale', 'product_has_variants'
         ]
         read_only_fields = [
             'id', 'added_at', 'price_at_add',
@@ -49,6 +50,13 @@ class WishlistItemSerializer(serializers.ModelSerializer):
             discount = ((obj.product.price - obj.product.sale_price) / obj.product.price) * 100
             return round(discount)
         return None
+
+    def get_product_has_variants(self, obj):
+        """Whether the underlying product has variants."""
+        try:
+            return obj.product.variants.exists()
+        except Exception:
+            return False
 
 
 class WishlistSerializer(serializers.ModelSerializer):

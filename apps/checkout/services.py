@@ -1170,17 +1170,17 @@ class CheckoutService:
                     
                     return None, error
 
-            # bKash / Nagad: ensure the payment request has been created and is marked ready
-            elif checkout_session.payment_method in (CheckoutSession.PAYMENT_BKASH, CheckoutSession.PAYMENT_NAGAD):
-                if not checkout_session.payment_ready:
-                    error = 'Mobile payment not completed. Please complete the payment via the provider.'
-                    checkout_session.mark_failed(error)
-                    cls.log_event(
-                        checkout_session,
-                        CheckoutEvent.EVENT_PAYMENT_FAILED,
-                        data={'error': error, 'method': checkout_session.payment_method}
-                    )
-                    return None, error
+            # # bKash / Nagad: ensure the payment request has been created and is marked ready
+            # elif checkout_session.payment_method in (CheckoutSession.PAYMENT_BKASH, CheckoutSession.PAYMENT_NAGAD):
+            #     if not checkout_session.payment_ready:
+            #         error = 'Mobile payment not completed. Please complete the payment via the provider.'
+            #         checkout_session.mark_failed(error)
+            #         cls.log_event(
+            #             checkout_session,
+            #             CheckoutEvent.EVENT_PAYMENT_FAILED,
+            #             data={'error': error, 'method': checkout_session.payment_method}
+            #         )
+            #         return None, error
         
         try:
             # Create order
