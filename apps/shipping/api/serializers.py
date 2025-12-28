@@ -6,6 +6,7 @@ from ..models import (
     ShippingZone, ShippingCarrier, ShippingMethod, ShippingRate,
     Shipment, ShipmentEvent, ShippingSettings
 )
+from apps.currencies.models import Currency
 
 
 class ShippingCarrierSerializer(serializers.ModelSerializer):
@@ -33,9 +34,16 @@ class ShippingZoneSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'countries', 'states']
 
 
+class CurrencySimpleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Currency
+        fields = ['code', 'symbol', 'decimal_places', 'symbol_position']
+
+
 class ShippingRateSerializer(serializers.ModelSerializer):
     zone = ShippingZoneSerializer(read_only=True)
     method = ShippingMethodSerializer(read_only=True)
+    currency = CurrencySimpleSerializer(read_only=True)
     
     class Meta:
         model = ShippingRate

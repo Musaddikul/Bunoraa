@@ -3,6 +3,7 @@ Checkout views - Robust multi-step checkout process
 """
 import json
 import logging
+from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import TemplateView, View
 from django.contrib import messages
@@ -350,7 +351,13 @@ class InformationView(CheckoutMixin, View):
             ).order_by('-is_default', '-created_at')
         
         # Get countries list
-        context['countries'] = self._get_countries()
+        countries = self._get_countries()
+        context['countries'] = countries
+        # Build quick map code -> name for templates
+        try:
+            context['country_map'] = {c['code']: c['name'] for c in countries}
+        except Exception:
+            context['country_map'] = {}
         
         return render(request, self.template_name, context)
     
@@ -878,10 +885,99 @@ class SuccessView(TemplateView):
                 from django.http import Http404
                 raise Http404("Order not found")
         
+        # Try to find the checkout session associated with this order so we can show the same currency/summary
+        checkout_session = CheckoutSession.objects.filter(order=order).select_related('cart').first()
+        cart_summary = None
+        currency_symbol_local = None
+        currency_code_local = None
+
+        try:
+            from apps.cart.services import CartService
+            from apps.currencies.services import CurrencyService
+            if checkout_session and getattr(checkout_session, 'cart', None):
+                currency_obj = CurrencyService.get_currency_by_code(checkout_session.currency) if getattr(checkout_session, 'currency', None) else None
+                cart_summary = CartService.get_cart_summary(checkout_session.cart, currency=currency_obj)
+                if cart_summary and cart_summary.get('currency'):
+                    currency_symbol_local = cart_summary['currency'].get('symbol')
+                    currency_code_local = cart_summary['currency'].get('code')
+        except Exception:
+            # Fall back to default currency settings
+            try:
+                from apps.currencies.services import CurrencyService
+                default_cur = CurrencyService.get_default_currency()
+                currency_symbol_local = getattr(default_cur, 'symbol', None)
+                currency_code_local = getattr(default_cur, 'code', None)
+            except Exception:
+                currency_symbol_local = None
+                currency_code_local = None
+
+        # Compute display/converted shipping and formatted totals in the checkout currency
+        display_shipping = order.shipping_cost
+        formatted_shipping = None
+        formatted_subtotal = None
+        display_total = order.total
+        formatted_total = None
+        try:
+            from apps.currencies.services import CurrencyService, CurrencyConversionService
+            checkout_currency = CurrencyService.get_currency_by_code(currency_code_local) if currency_code_local else CurrencyService.get_default_currency()
+
+            # If shipping_rate exists and has a currency different from checkout currency, convert order.shipping_cost
+            if checkout_session and getattr(checkout_session, 'shipping_rate', None):
+                rate_currency_obj = getattr(checkout_session.shipping_rate, 'currency', None)
+                if rate_currency_obj and checkout_currency and rate_currency_obj.code != checkout_currency.code:
+                    try:
+                        display_shipping = CurrencyConversionService.convert_by_code(order.shipping_cost, rate_currency_obj.code, checkout_currency.code)
+                    except Exception:
+                        display_shipping = order.shipping_cost
+
+            # Recompute items subtotal from order items (safer for historical orders)
+            try:
+                items_total = sum((Decimal(str(it.unit_price)) * Decimal(it.quantity)) for it in order.items.all())
+            except Exception:
+                items_total = order.subtotal or Decimal('0')
+
+            # Recompute a display total using converted shipping and computed items_total
+            display_total = (items_total or Decimal('0')) - (order.discount or Decimal('0')) + (display_shipping or Decimal('0')) + (order.tax or Decimal('0')) + (order.gift_wrap_cost or Decimal('0'))
+
+            # Formatted strings
+            formatted_subtotal = checkout_currency.format_amount(items_total.quantize(Decimal('0.01'))) if checkout_currency else f"{currency_symbol_local}{items_total}"
+            formatted_shipping = 'Free' if Decimal(str(display_shipping)) == Decimal('0') else (checkout_currency.format_amount(display_shipping) if checkout_currency else f"{currency_symbol_local}{display_shipping}")
+            formatted_total = checkout_currency.format_amount(display_total.quantize(Decimal('0.01'))) if checkout_currency else f"{currency_symbol_local}{display_total}"
+            # Tax and discount formatting — prefer checkout session tax_amount when available
+            sess_tax = None
+            try:
+                if checkout_session and getattr(checkout_session, 'tax_amount', None) is not None:
+                    sess_tax = Decimal(str(checkout_session.tax_amount))
+            except Exception:
+                sess_tax = None
+
+            tax_to_display = sess_tax if sess_tax is not None else (order.tax or Decimal('0.00'))
+            formatted_tax = '' if not tax_to_display else (checkout_currency.format_amount(tax_to_display) if checkout_currency else f"{currency_symbol_local}{tax_to_display}")
+
+            formatted_discount = ''
+            if getattr(order, 'discount', None) and order.discount > 0:
+                formatted_discount = checkout_currency.format_amount(order.discount) if checkout_currency else f"{currency_symbol_local}{order.discount}"
+        except Exception:
+            # Fallback to simple formatting
+            formatted_subtotal = f"{currency_symbol_local}{order.subtotal}"
+            formatted_shipping = f"{currency_symbol_local}{order.shipping_cost}"
+            formatted_total = f"{currency_symbol_local}{order.total}"
+            formatted_tax = f"{currency_symbol_local}{order.tax}"
+            formatted_discount = f"{currency_symbol_local}{order.discount}"
         context.update({
             'page_title': f'Order Confirmed - {order.order_number}',
             'order': order,
             'order_items': order.items.select_related('product', 'variant').all(),
+            'cart_summary': cart_summary,
+            'currency_symbol_local': currency_symbol_local,
+            'currency_code_local': currency_code_local,
+            'display_shipping': display_shipping,
+            'formatted_shipping': formatted_shipping,
+            'formatted_subtotal': formatted_subtotal,
+            'display_total': display_total,
+            'formatted_total': formatted_total,
+            'formatted_tax': formatted_tax,
+            'formatted_discount': formatted_discount,
         })
         
         return context

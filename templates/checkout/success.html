@@ -37,18 +37,20 @@
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 text-left mb-8">
             <h2 class="font-semibold text-gray-900 dark:text-white mb-4 text-center">Order Summary</h2>
             
+
+            
             <div class="grid md:grid-cols-2 gap-6 mb-6">
                 <!-- Shipping Address -->
                 <div>
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Shipping Address</h3>
                     <p class="text-gray-900 dark:text-gray-200">
-                        {{ order.shipping_address.full_name }}<br>
-                        {{ order.shipping_address.address_line1 }}<br>
-                        {% if order.shipping_address.address_line2 %}
-                        {{ order.shipping_address.address_line2 }}<br>
+                        {{ order.shipping_full_name }}<br>
+                        {{ order.shipping_address_line_1 }}<br>
+                        {% if order.shipping_address_line_2 %}
+                        {{ order.shipping_address_line_2 }}<br>
                         {% endif %}
-                        {{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{ order.shipping_address.postal_code }}<br>
-                        {{ order.shipping_address.country }}
+                        {{ order.shipping_city }} - {{ order.shipping_postal_code }}, {{ order.shipping_state }}<br>
+                        {{ order.shipping_country }}
                     </p>
                 </div>
                 
@@ -57,20 +59,10 @@
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Order Details</h3>
                     <div class="text-gray-900 dark:text-gray-200 space-y-1">
                         <p><span class="text-gray-600 dark:text-gray-400">Order Date:</span> {{ order.created_at|date:"F j, Y" }}</p>
-                        <p><span class="text-gray-600 dark:text-gray-400">Shipping:</span> {{ order.shipping_method.name }}</p>
+                        <p><span class="text-gray-600 dark:text-gray-400">Shipping:</span> {{ order.get_shipping_method_display }}</p>
                         <p>
                             <span class="text-gray-600 dark:text-gray-400">Payment:</span>
-                            {% if order.payment_method.method == 'stripe' %}
-                                {{ order.payment_method.brand }} •••• {{ order.payment_method.last4 }}
-                            {% elif order.payment_method.method == 'bkash' %}
-                                bKash •••• {{ order.payment_method.last4 }}
-                            {% elif order.payment_method.method == 'nagad' %}
-                                Nagad •••• {{ order.payment_method.last4 }}
-                            {% elif order.payment_method.method == 'cod' %}
-                                Cash on Delivery
-                            {% elif order.payment_method.method == 'bank_transfer' %}
-                                Bank Transfer
-                            {% endif %}
+                            {{ order.get_payment_method_display }} {% if order.payment_status %}• {{ order.payment_status|capfirst }}{% endif %}
                         </p>
                         <p>
                             <span class="text-gray-600 dark:text-gray-400">Status:</span> 
@@ -93,15 +85,15 @@
                     {% for item in order.items.all %}
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
-                            <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.jpg' }}" loading="lazy" decoding="async" 
+                            <img src="{{ item.product_image|default:'/static/images/placeholder.jpg' }}" loading="lazy" decoding="async" 
                                  alt="{{ item.product_name }}"
                                  class="w-12 h-12 object-cover rounded bg-gray-100 dark:bg-gray-700">
                             <div class="ml-3">
                                 <p class="text-sm font-medium text-gray-900 dark:text-white">{{ item.product_name }}</p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Qty: {{ item.quantity }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Qty: {{ item.quantity }} · {{ currency_symbol_local }}{{ item.unit_price }}</p>
                             </div>
                         </div>
-                        <p class="text-sm font-medium text-gray-900 dark:text-white">{{ cart_summary.currency.symbol|default:currency_symbol }}{{ item.total_price }}</p>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">{{ currency_symbol_local }}{{ item.line_total }}</p>
                     </div>
                     {% endfor %}
                 </div>
@@ -130,29 +122,28 @@
             <div class="border-t border-gray-200 dark:border-gray-700 mt-4 pt-4 space-y-2">
                 <div class="flex justify-between text-sm">
                     <span class="text-gray-600 dark:text-gray-400">Subtotal</span>
-                    <span class="text-gray-900 dark:text-white">{{ order.currency|default:cart_summary.currency.code|default:currency_code }} {{ order.subtotal }}</span>
+                    <span class="text-gray-900 dark:text-white">{{ formatted_subtotal }}</span>
                 </div>
                 {% if order.discount > 0 %}
                 <div class="flex justify-between text-sm text-green-600 dark:text-green-400">
                     <span>Discount</span>
-                    <span>-{{ currency_symbol }}{{ order.discount }}</span>
+                    <span>-{{ formatted_discount }}</span>
                 </div>
                 {% endif %}
                 <div class="flex justify-between text-sm">
                     <span class="text-gray-600 dark:text-gray-400">Shipping</span>
-                    <span class="text-gray-900 dark:text-white">
-                        {% if order.shipping_cost == 0 %}Free{% else %}{{ currency_symbol }}{{ order.shipping_cost }}{% endif %}
-                    </span>
+                    <span class="text-gray-900 dark:text-white">{% if display_shipping|floatformat:2 == '0.00' %}Free{% else %}{{ formatted_shipping }}{% endif %}</span>
                 </div>
                 <div class="flex justify-between text-sm">
                     <span class="text-gray-600 dark:text-gray-400">Tax</span>
-                    <span class="text-gray-900 dark:text-white">{{ currency_symbol }}{{ order.tax }}</span>
+                    <span class="text-gray-900 dark:text-white">{{ formatted_tax }}</span>
                 </div>
                 <div class="flex justify-between font-semibold text-lg border-t border-gray-200 dark:border-gray-700 pt-2">
                     <span class="text-gray-900 dark:text-white">Total</span>
-                    <span class="text-primary-600 dark:text-primary-400">{{ currency_symbol }}{{ order.total }}</span>
+                    <span class="text-primary-600 dark:text-primary-400">{{ formatted_total }}</span>
                 </div>
             </div>
+
         </div>
         
         <!-- What's Next -->
@@ -228,14 +219,14 @@
                 If you have any questions about your order, our support team is here to help.
             </p>
             <div class="flex flex-col sm:flex-row gap-2 justify-center text-sm">
-                <a href="{% url 'support:contact' %}" class="text-primary-600 dark:text-primary-400 hover:underline flex items-center justify-center">
+                <a href="{% url 'pages:contact' %}" class="text-primary-600 dark:text-primary-400 hover:underline flex items-center justify-center">
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                     </svg>
                     Contact Support
                 </a>
                 <span class="hidden sm:inline text-gray-400">•</span>
-                <a href="{% url 'faq:list' %}" class="text-primary-600 dark:text-primary-400 hover:underline flex items-center justify-center">
+                <a href="{% url 'pages:faq' %}" class="text-primary-600 dark:text-primary-400 hover:underline flex items-center justify-center">
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>

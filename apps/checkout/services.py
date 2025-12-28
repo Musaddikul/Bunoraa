@@ -437,8 +437,20 @@ class CheckoutService:
                 ).first()
                 
                 if pickup_location:
+                    # Convert pickup fee into checkout currency if needed
+                    from apps.currencies.services import CurrencyService, CurrencyConversionService
+                    checkout_currency = CurrencyService.get_currency_by_code(checkout_session.currency) if checkout_session.currency else CurrencyService.get_default_currency()
+                    try:
+                        base_currency = CurrencyService.get_default_currency()
+                        if base_currency and checkout_currency and base_currency.code != checkout_currency.code:
+                            converted_fee = CurrencyConversionService.convert_by_code(pickup_location.pickup_fee, base_currency.code, checkout_currency.code)
+                        else:
+                            converted_fee = pickup_location.pickup_fee
+                    except Exception:
+                        converted_fee = pickup_location.pickup_fee
+
                     checkout_session.pickup_location = pickup_location
-                    checkout_session.shipping_cost = pickup_location.pickup_fee
+                    checkout_session.shipping_cost = converted_fee
                 else:
                     raise ValidationError("Invalid pickup location", code='invalid_pickup')
             else:
@@ -455,19 +467,42 @@ class CheckoutService:
                 # Get the method code from the rate's method
                 checkout_session.shipping_method = shipping_rate.method.code
                 
-                from apps.currencies.services import CurrencyService
-                checkout_currency = CurrencyService.get_currency_by_code(checkout_session.currency) if checkout_session.currency else None
+                from apps.currencies.services import CurrencyService, CurrencyConversionService
+                checkout_currency = CurrencyService.get_currency_by_code(checkout_session.currency) if checkout_session.currency else CurrencyService.get_default_currency()
                 cart_summary = CartService.get_cart_summary(checkout_session.cart, currency=checkout_currency)
                 subtotal = Decimal(str(cart_summary.get('subtotal', 0)))
                 item_count = cart_summary.get('item_count', 0)
                 weight = Decimal(str(cart_summary.get('total_weight', 0)))
-                
-                checkout_session.shipping_rate = shipping_rate
-                checkout_session.shipping_cost = shipping_rate.calculate_rate(
-                    subtotal=subtotal, 
-                    weight=weight, 
+
+                # Convert subtotal to the rate currency for correct threshold checks
+                rate_currency_obj = getattr(shipping_rate, 'currency', None)
+                rate_currency_code = rate_currency_obj.code if rate_currency_obj else (checkout_currency.code if checkout_currency else None)
+                try:
+                    if rate_currency_obj and checkout_currency and rate_currency_obj.code != checkout_currency.code:
+                        subtotal_in_rate_currency = CurrencyConversionService.convert_by_code(subtotal, checkout_currency.code, rate_currency_obj.code)
+                    else:
+                        subtotal_in_rate_currency = subtotal
+                except Exception:
+                    subtotal_in_rate_currency = subtotal
+
+                # Calculate rate (returns amount in rate currency)
+                rate_amount = shipping_rate.calculate_rate(
+                    subtotal=subtotal_in_rate_currency,
+                    weight=weight,
                     item_count=item_count
                 )
+
+                # Convert rate_amount back to checkout currency to store
+                try:
+                    if rate_currency_obj and checkout_currency and rate_currency_obj.code != checkout_currency.code:
+                        converted_rate = CurrencyConversionService.convert_by_code(rate_amount, rate_currency_obj.code, checkout_currency.code)
+                    else:
+                        converted_rate = rate_amount
+                except Exception:
+                    converted_rate = rate_amount
+
+                checkout_session.shipping_rate = shipping_rate
+                checkout_session.shipping_cost = converted_rate
             else:
                 raise ValidationError("Invalid shipping method selected", code='invalid_shipping')
         else:
@@ -786,7 +821,7 @@ class CheckoutService:
             List of shipping options sorted by cost
         """
         from apps.cart.services import CartService
-        from apps.currencies.services import CurrencyService
+        from apps.currencies.services import CurrencyService, CurrencyConversionService
 
         checkout_currency = CurrencyService.get_currency_by_code(checkout_session.currency) if checkout_session.currency else None
         cart_summary = CartService.get_cart_summary(checkout_session.cart, currency=checkout_currency)
@@ -846,16 +881,38 @@ class CheckoutService:
                     continue
                 seen_methods.add(method_zone_key)
                 
-                # Calculate cost using the rate's calculate_rate method
+                # Determine rate amount in the rate's currency then convert to checkout currency for display
+                rate_currency_obj = getattr(rate, 'currency', None)
+
                 try:
-                    cost = rate.calculate_rate(subtotal=subtotal, weight=weight, item_count=item_count)
+                    if rate_currency_obj and checkout_currency and rate_currency_obj.code != checkout_currency.code:
+                        # Convert subtotal into rate currency for threshold checks/pricing
+                        try:
+                            subtotal_in_rate_currency = CurrencyConversionService.convert_by_code(subtotal, checkout_currency.code, rate_currency_obj.code)
+                        except Exception:
+                            subtotal_in_rate_currency = subtotal
+                        try:
+                            rate_amount_in_rate_currency = rate.calculate_rate(subtotal=subtotal_in_rate_currency, weight=weight, item_count=item_count)
+                        except Exception:
+                            rate_amount_in_rate_currency = rate.base_rate
+                        # Convert rate amount back to checkout currency for display
+                        try:
+                            display_cost = CurrencyConversionService.convert_by_code(rate_amount_in_rate_currency, rate_currency_obj.code, checkout_currency.code)
+                        except Exception:
+                            display_cost = rate_amount_in_rate_currency
+                    else:
+                        # Same currency - calculate directly
+                        try:
+                            display_cost = rate.calculate_rate(subtotal=subtotal, weight=weight, item_count=item_count)
+                        except Exception:
+                            display_cost = rate.base_rate
                 except Exception:
-                    cost = rate.base_rate
-                
+                    display_cost = rate.base_rate
+
                 try:
-                    formatted_cost = checkout_currency.format_amount(cost) if (checkout_currency and cost > 0) else ('Free' if cost == 0 else f"{checkout_currency.symbol if checkout_currency else '৳'}{cost:,.2f}")
+                    formatted_cost = checkout_currency.format_amount(display_cost) if (checkout_currency and display_cost > 0) else ('Free' if display_cost == 0 else f"{checkout_currency.symbol if checkout_currency else '৳'}{display_cost:,.2f}")
                 except Exception:
-                    formatted_cost = f"{checkout_currency.symbol if checkout_currency else '৳'}{cost:,.2f}" if cost > 0 else 'Free'
+                    formatted_cost = f"{checkout_currency.symbol if checkout_currency else '৳'}{display_cost:,.2f}" if display_cost > 0 else 'Free'
 
                 options.append({
                     'id': str(rate.id),
@@ -863,10 +920,14 @@ class CheckoutService:
                     'name': rate.method.name,
                     'description': rate.method.description or f'Delivery to {zone.name}',
                     'carrier': rate.method.carrier.name if rate.method.carrier else '',
-                    'cost': float(cost),
+                    'cost': float(display_cost),
                     'formatted_cost': formatted_cost,
+                    'currency': {
+                        'code': rate_currency_obj.code if rate_currency_obj else (checkout_currency.code if checkout_currency else None),
+                        'symbol': rate_currency_obj.symbol if rate_currency_obj else (checkout_currency.symbol if checkout_currency else None)
+                    } if rate_currency_obj or checkout_currency else None,
                     'delivery_estimate': rate.method.delivery_estimate,
-                    'is_free': cost == 0,
+                    'is_free': display_cost == 0,
                     'zone': zone.name,
                     'zone_priority': zone.priority,
                 })
@@ -1053,6 +1114,7 @@ class CheckoutService:
         
         # Verify payment if required
         if checkout_session.requires_payment:
+            # Stripe: verify via payment intent
             if checkout_session.payment_method == CheckoutSession.PAYMENT_STRIPE:
                 verified, error = cls._verify_stripe_payment(checkout_session, payment_intent_id)
                 if not verified:
@@ -1064,6 +1126,18 @@ class CheckoutService:
                         data={'error': error}
                     )
                     
+                    return None, error
+
+            # bKash / Nagad: ensure the payment request has been created and is marked ready
+            elif checkout_session.payment_method in (CheckoutSession.PAYMENT_BKASH, CheckoutSession.PAYMENT_NAGAD):
+                if not checkout_session.payment_ready:
+                    error = 'Mobile payment not completed. Please complete the payment via the provider.'
+                    checkout_session.mark_failed(error)
+                    cls.log_event(
+                        checkout_session,
+                        CheckoutEvent.EVENT_PAYMENT_FAILED,
+                        data={'error': error, 'method': checkout_session.payment_method}
+                    )
                     return None, error
         
         try:
@@ -1150,8 +1224,8 @@ class CheckoutService:
     def _send_order_confirmation(cls, order) -> None:
         """Send order confirmation email."""
         try:
-            from apps.notifications.services import NotificationService
-            NotificationService.send_order_confirmation(order)
+            from apps.notifications.services import EmailService
+            EmailService.send_order_confirmation(order)
         except Exception as e:
             logger.warning(f"Failed to send order confirmation: {e}")
     

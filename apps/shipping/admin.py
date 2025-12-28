@@ -89,12 +89,12 @@ class ShippingMethodAdmin(admin.ModelAdmin):
 class ShippingRateInline(admin.TabularInline):
     model = ShippingRate
     extra = 1
-    fields = ['method', 'rate_type', 'base_rate', 'per_kg_rate', 'free_shipping_threshold', 'is_active']
+    fields = ['method', 'rate_type', 'base_rate', 'per_kg_rate', 'currency', 'free_shipping_threshold', 'is_active']
 
 
 @admin.register(ShippingRate)
 class ShippingRateAdmin(admin.ModelAdmin):
-    list_display = ['zone', 'method', 'rate_type', 'base_rate', 'free_shipping_threshold', 'is_active']
+    list_display = ['zone', 'method', 'rate_type', 'base_rate', 'currency', 'free_shipping_threshold', 'is_active']
     list_filter = ['zone', 'method', 'rate_type', 'is_active']
     search_fields = ['zone__name', 'method__name']
     

@@ -12,7 +12,5 @@ urlpatterns = [
     path('track/', views.OrderTrackView.as_view(), name='track'),
     path('<uuid:pk>/', views.OrderDetailView.as_view(), name='detail'),
     path('<str:order_number>/track/', views.OrderTrackView.as_view(), name='track_detail'),
-    
-    # Placeholder URLs - implement views as needed
-    # path('<str:order_number>/invoice/', views.OrderInvoiceView.as_view(), name='invoice'),
+    path('<str:order_number>/invoice/', views.OrderInvoiceView.as_view(), name='invoice'),
 ]

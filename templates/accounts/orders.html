@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static currency_tags %}
 
-{% block page_id %}orders{% endblock %
+{% block page_id %}orders{% endblock %}
 {% block title %}My Orders - {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
@@ -14,32 +14,32 @@
         
         <!-- Main Content -->
         <div class="flex-1">
-            <div class="bg-white rounded-lg shadow-sm">
-                <!-- Header -->
-                <div class="p-6 border-b border-gray-200">
-                    <h1 class="text-2xl font-bold text-gray-900">My Orders</h1>
-                    <p class="text-gray-600 mt-1">Track and manage your orders</p>
+<div class="bg-white dark:bg-stone-800 dark:border dark:border-stone-700 rounded-lg shadow-sm">
+                    <!-- Header -->
+                    <div class="p-6 border-b border-gray-200 dark:border-stone-700">
+                        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">My Orders</h1>
+                        <p class="text-gray-600 dark:text-stone-300 mt-1">Track and manage your orders</p>
                 </div>
                 
                 <!-- Filters -->
                 <div class="p-4 border-b border-gray-200 flex flex-wrap gap-2">
-                    <a href="{% url 'orders:list' %}" 
-                       class="px-4 py-2 rounded-full text-sm {% if not status %}bg-primary-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    <a href="{% url 'orders:list' %}" data-filter-status="" 
+                       class="px-4 py-2 rounded-full text-sm {% if not status %}bg-primary-600 text-white{% else %}bg-gray-100 dark:bg-stone-700 dark:text-stone-200 text-gray-700 hover:bg-gray-200 dark:hover:bg-stone-600{% endif %}">
                         All
                     </a>
-                    <a href="{% url 'orders:list' %}?status=pending" 
+                    <a href="{% url 'orders:list' %}?status=pending" data-filter-status="pending" 
                        class="px-4 py-2 rounded-full text-sm {% if status == 'pending' %}bg-primary-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
                         Pending
                     </a>
-                    <a href="{% url 'orders:list' %}?status=processing" 
+                    <a href="{% url 'orders:list' %}?status=processing" data-filter-status="processing" 
                        class="px-4 py-2 rounded-full text-sm {% if status == 'processing' %}bg-primary-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
                         Processing
                     </a>
-                    <a href="{% url 'orders:list' %}?status=shipped" 
+                    <a href="{% url 'orders:list' %}?status=shipped" data-filter-status="shipped" 
                        class="px-4 py-2 rounded-full text-sm {% if status == 'shipped' %}bg-primary-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
                         Shipped
                     </a>
-                    <a href="{% url 'orders:list' %}?status=delivered" 
+                    <a href="{% url 'orders:list' %}?status=delivered" data-filter-status="delivered" 
                        class="px-4 py-2 rounded-full text-sm {% if status == 'delivered' %}bg-primary-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
                         Delivered
                     </a>
@@ -49,11 +49,11 @@
                 {% if orders %}
                 <div class="divide-y divide-gray-200">
                     {% for order in orders %}
-                    <div class="p-6 hover:bg-gray-50 transition-colors">
+                    <div class="p-6 bg-white dark:bg-stone-800 dark:border dark:border-stone-700 rounded-lg hover:bg-gray-50 dark:hover:bg-stone-700 transition-colors">
                         <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
                             <div>
                                 <div class="flex items-center space-x-3">
-                                    <a href="{% url 'orders:detail' order.id %}" class="font-semibold text-gray-900 hover:text-primary-600">
+                                    <a href="{% url 'orders:detail' order.id %}" class="font-semibold text-gray-900 dark:text-white hover:text-primary-600">
                                         Order #{{ order.order_number }}
                                     </a>
                                     <span class="inline-block px-2 py-1 text-xs rounded-full
@@ -71,7 +71,7 @@
                                 </p>
                             </div>
                             <div class="mt-2 md:mt-0 text-right">
-                                <p class="font-semibold text-gray-900">{% format_price order.total %}</p>
+                                <p class="font-semibold text-gray-900">{{ order.formatted_total }}</p>
                                 <p class="text-sm text-gray-500">{{ order.items.count }} item{{ order.items.count|pluralize }}</p>
                             </div>
                         </div>
@@ -95,12 +95,12 @@
                         <!-- Actions -->
                         <div class="flex flex-wrap gap-3 mt-4">
                             <a href="{% url 'orders:detail' order.id %}" 
-                               class="text-sm text-primary-600 hover:text-primary-700 font-medium">
+                               class="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 font-medium">
                                 View Details
                             </a>
                             {% if order.status == 'delivered' %}
                             <a href="{% url 'orders:invoice' order.order_number %}" 
-                               class="text-sm text-gray-600 hover:text-gray-700">
+                               class="text-sm text-gray-600 hover:text-gray-700" target="_blank">
                                 Download Invoice
                             </a>
                             {% if not order.is_reviewed %}
@@ -117,8 +117,8 @@
                             </a>
                             {% endif %}
                             {% if order.can_cancel %}
-                            <button onclick="cancelOrder('{{ order.order_number }}')" 
-                                    class="text-sm text-red-600 hover:text-red-700">
+                            <button onclick="cancelOrder('{{ order.id }}')" 
+                                    class="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300">
                                 Cancel Order
                             </button>
                             {% endif %}
@@ -182,14 +182,14 @@
 
 <!-- Cancel Order Modal -->
 <div id="cancel-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
-    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-2">Cancel Order</h3>
-        <p class="text-gray-600 mb-4">Are you sure you want to cancel this order? This action cannot be undone.</p>
+    <div class="bg-white dark:bg-stone-900 rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Cancel Order</h3>
+        <p class="text-gray-600 dark:text-stone-300 mb-4">Are you sure you want to cancel this order? This action cannot be undone.</p>
         <form id="cancel-form" method="POST">
             {% csrf_token %}
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Reason for cancellation</label>
-                <select name="reason" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                <select name="cancel_reason" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
                     <option value="">Select a reason</option>
                     <option value="changed_mind">Changed my mind</option>
                     <option value="found_better_price">Found better price elsewhere</option>
@@ -200,7 +200,7 @@
             </div>
             <div class="flex justify-end space-x-3">
                 <button type="button" onclick="closeCancelModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">Keep Order</button>
-                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Cancel Order</button>
+                <button type="submit" name="cancel_order" value="1" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Cancel Order</button>
             </div>
         </form>
     </div>
@@ -209,9 +209,9 @@
 
 {% block extra_js %}
 <script>
-    function cancelOrder(orderNumber) {
+    function cancelOrder(orderId) {
         const form = document.getElementById('cancel-form');
-        form.action = `/accounts/orders/${orderNumber}/cancel/`;
+        form.action = `/orders/${orderId}/`;
         document.getElementById('cancel-modal').classList.remove('hidden');
         document.getElementById('cancel-modal').classList.add('flex');
     }

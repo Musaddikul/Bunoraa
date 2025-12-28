@@ -338,7 +338,14 @@ class ShippingRate(models.Model):
     
     # Settings
     is_active = models.BooleanField(default=True)
-    currency = models.CharField(max_length=3, default='USD')
+    # Currency for this shipping rate (location-based). Use a FK to Currency for consistency.
+    currency = models.ForeignKey(
+        'currencies.Currency',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='shipping_rates'
+    )
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)

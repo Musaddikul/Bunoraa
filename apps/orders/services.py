@@ -27,25 +27,102 @@ class OrderService:
         from apps.cart.services import CartService
         
         cart = checkout_session.cart
-        cart_summary = CartService.get_cart_summary(cart)
-        
-        # Calculate totals - use checkout session values which are already calculated
-        subtotal = Decimal(cart_summary['subtotal'])
-        
-        # Use discount from checkout session (coupon-based) or from cart
-        discount = checkout_session.discount_amount or Decimal(cart_summary.get('discount', '0'))
-        
-        # Shipping cost from checkout session
+        # Determine checkout currency object (fallback to default)
+        from apps.currencies.services import CurrencyService, CurrencyConversionService
+        checkout_currency = None
+        try:
+            checkout_currency = CurrencyService.get_currency_by_code(checkout_session.currency) if getattr(checkout_session, 'currency', None) else CurrencyService.get_default_currency()
+        except Exception:
+            checkout_currency = CurrencyService.get_default_currency()
+
+        # We'll compute converted unit prices per cart item to ensure order totals are in checkout currency
+        subtotal_acc = Decimal('0')
+        item_price_map = {}
+        item_image_map = {}
+
+        for cart_item in cart.items.select_related('product', 'variant').all():
+            # Determine item's source currency
+            try:
+                from_currency_obj = cart_item.product.get_currency() if hasattr(cart_item.product, 'get_currency') else CurrencyService.get_default_currency()
+                from_code = from_currency_obj.code if from_currency_obj else None
+            except Exception:
+                from_code = None
+
+            unit_price_source = Decimal(str(cart_item.price_at_add))
+
+            # Convert unit price into checkout currency if needed
+            if from_code and checkout_currency and from_code != checkout_currency.code:
+                try:
+                    converted = CurrencyConversionService.convert_by_code(unit_price_source, from_code, checkout_currency.code)
+                except Exception:
+                    converted = unit_price_source
+            else:
+                converted = unit_price_source
+
+            # Quantize converted unit price
+            converted = Decimal(str(converted)).quantize(Decimal('0.01'))
+
+            item_price_map[str(cart_item.id)] = converted
+            subtotal_acc += (converted * Decimal(cart_item.quantity))
+
+            # Get image (if product image exists)
+            primary_img = ''
+            try:
+                if cart_item.product:
+                    primary_img_obj = cart_item.product.images.filter(is_primary=True).first()
+                    if primary_img_obj:
+                        primary_img = primary_img_obj.image.url
+                    elif cart_item.product.images.exists():
+                        first_image = cart_item.product.images.first()
+                        primary_img = first_image.image.url if first_image else ''
+            except Exception:
+                primary_img = ''
+
+            item_image_map[str(cart_item.id)] = primary_img
+
+        # Use subtotal from converted item totals
+        subtotal = subtotal_acc.quantize(Decimal('0.01'))
+
+        # Use discount from checkout session (coupon-based) or from cart (ensure discount is in checkout currency)
+        discount = checkout_session.discount_amount or Decimal('0')
+        try:
+            if discount and checkout_currency and getattr(checkout_session, 'discount_currency', None) and checkout_session.discount_currency != checkout_currency.code:
+                # If discount stored in a different currency convert it
+                discount = CurrencyConversionService.convert_by_code(discount, checkout_session.discount_currency, checkout_currency.code)
+        except Exception:
+            pass
+
+        # Shipping cost from checkout session - convert if shipping rate had a different currency
         shipping = checkout_session.shipping_cost or Decimal('0')
-        
-        # Gift wrap cost
+        try:
+            if getattr(checkout_session, 'shipping_rate', None):
+                rate_currency_obj = getattr(checkout_session.shipping_rate, 'currency', None)
+                if rate_currency_obj and checkout_currency and rate_currency_obj.code != checkout_currency.code:
+                    shipping = CurrencyConversionService.convert_by_code(Decimal(str(checkout_session.shipping_cost)), rate_currency_obj.code, checkout_currency.code)
+        except Exception:
+            shipping = Decimal(str(checkout_session.shipping_cost or '0'))
+
+        # Gift wrap cost (assume stored in checkout currency)
         gift_wrap_cost = checkout_session.gift_wrap_cost or Decimal('0')
         
-        # Tax calculation using checkout session's tax rate
-        tax_rate = checkout_session.tax_rate or Decimal('0')
-        taxable_amount = subtotal - discount + gift_wrap_cost
-        tax = (taxable_amount * tax_rate / 100).quantize(Decimal('0.01'))
-        
+        # Tax calculation: prefer the checkout session's computed tax_amount if present (snapshot of checkout page)
+        tax = None
+        try:
+            if getattr(checkout_session, 'tax_amount', None) is not None:
+                tax = Decimal(str(checkout_session.tax_amount))
+            else:
+                tax_rate = checkout_session.tax_rate or Decimal('0')
+                taxable_amount = subtotal - discount + gift_wrap_cost
+                tax = (taxable_amount * tax_rate / 100).quantize(Decimal('0.01'))
+        except Exception:
+            # Fallback to computed tax
+            try:
+                tax_rate = checkout_session.tax_rate or Decimal('0')
+                taxable_amount = subtotal - discount + gift_wrap_cost
+                tax = (taxable_amount * tax_rate / 100).quantize(Decimal('0.01'))
+            except Exception:
+                tax = Decimal('0.00')
+
         # Total
         total = subtotal - discount + shipping + tax + gift_wrap_cost
         
@@ -117,6 +194,25 @@ class OrderService:
                 elif cart_item.product.images.exists():
                     product_image = cart_item.product.images.first().image.url
             
+            # Use converted unit price from our per-item conversion map when available
+            converted_unit_price = item_price_map.get(str(cart_item.id)) if item_price_map else None
+            if converted_unit_price is None:
+                # Fallback to converting on the fly
+                try:
+                    from_code = cart_item.product.get_currency().code if hasattr(cart_item.product, 'get_currency') and cart_item.product.get_currency() else None
+                except Exception:
+                    from_code = None
+                if from_code and checkout_currency and from_code != checkout_currency.code:
+                    try:
+                        converted_unit_price = CurrencyConversionService.convert_by_code(Decimal(str(cart_item.price_at_add)), from_code, checkout_currency.code)
+                    except Exception:
+                        converted_unit_price = Decimal(str(cart_item.price_at_add))
+                else:
+                    converted_unit_price = Decimal(str(cart_item.price_at_add))
+
+            # Prefer image from cart summary if present
+            img = item_image_map.get(str(cart_item.id)) if item_image_map else product_image
+
             OrderItem.objects.create(
                 order=order,
                 product=cart_item.product,
@@ -124,8 +220,8 @@ class OrderService:
                 product_name=cart_item.product.name if cart_item.product else 'Unknown Product',
                 product_sku=cart_item.variant.sku if cart_item.variant else (cart_item.product.sku if cart_item.product else ''),
                 variant_name=cart_item.variant.name if cart_item.variant else '',
-                product_image=product_image,
-                unit_price=cart_item.price_at_add,
+                product_image=img,
+                unit_price=converted_unit_price.quantize(Decimal('0.01')) if isinstance(converted_unit_price, Decimal) else Decimal(str(converted_unit_price)).quantize(Decimal('0.01')),
                 quantity=cart_item.quantity,
             )
             

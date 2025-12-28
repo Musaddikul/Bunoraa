@@ -134,6 +134,23 @@ class ShippingRateService:
                     if not settings.free_shipping_countries or country in settings.free_shipping_countries:
                         calculated_rate = Decimal('0.00')
             
+            # Prepare currency-aware display
+            rate_currency_obj = getattr(rate, 'currency', None)
+            try:
+                if rate_currency_obj:
+                    rate_display = rate_currency_obj.format_amount(calculated_rate) if calculated_rate > 0 else 'Free'
+                    currency_meta = {
+                        'code': rate_currency_obj.code,
+                        'symbol': rate_currency_obj.symbol,
+                        'decimal_places': rate_currency_obj.decimal_places,
+                    }
+                else:
+                    rate_display = f"${calculated_rate:.2f}" if calculated_rate > 0 else 'Free'
+                    currency_meta = None
+            except Exception:
+                rate_display = f"${calculated_rate:.2f}" if calculated_rate > 0 else 'Free'
+                currency_meta = None
+
             available_methods.append({
                 'id': str(method.id),
                 'code': method.code,
@@ -145,7 +162,8 @@ class ShippingRateService:
                     'logo': method.carrier.logo.url if method.carrier and method.carrier.logo else None,
                 } if method.carrier else None,
                 'rate': float(calculated_rate),
-                'rate_display': f"${calculated_rate:.2f}" if calculated_rate > 0 else "Free",
+                'rate_display': rate_display,
+                'currency': currency_meta,
                 'is_free': calculated_rate == 0,
                 'delivery_estimate': method.delivery_estimate,
                 'min_days': method.min_delivery_days,

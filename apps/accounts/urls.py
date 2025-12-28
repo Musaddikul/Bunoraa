@@ -31,7 +31,4 @@ urlpatterns = [
     # path('profile/delete-account/', views.DeleteAccountView.as_view(), name='delete_account'),
     # path('payment-methods/', views.PaymentMethodsView.as_view(), name='payment_methods'),
     # path('notifications/', views.NotificationsView.as_view(), name='notifications'),
-    # path('orders/', views.OrderListView.as_view(), name='orders'),
-    # path('orders/<str:order_number>/', views.OrderDetailView.as_view(), name='order_detail'),
-    # path('orders/<str:order_number>/cancel/', views.CancelOrderView.as_view(), name='cancel_order'),
 ]
