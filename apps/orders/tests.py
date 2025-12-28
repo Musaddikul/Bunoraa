@@ -208,6 +208,12 @@ class OrderItemModelTest(TestCase):
         
         self.assertEqual(item.line_total, Decimal('89.97'))
 
+    def test_line_total_with_missing_unit_price(self):
+        """line_total should handle missing unit_price on unsaved instances and return 0.00."""
+        # Create an unsaved OrderItem (unit_price omitted -> None)
+        item = OrderItem(order=self.order, product_name='Test Product', quantity=2)
+        self.assertEqual(item.line_total, Decimal('0.00'))
+
 
 class OrderServiceTest(TestCase):
     """Test cases for OrderService."""

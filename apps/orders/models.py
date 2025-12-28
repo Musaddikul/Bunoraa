@@ -265,7 +265,10 @@ class OrderItem(models.Model):
     
     @property
     def line_total(self):
-        return self.unit_price * self.quantity
+        """Return line total as Decimal, treating missing price or quantity as zero."""
+        unit = self.unit_price if self.unit_price is not None else Decimal('0.00')
+        qty = self.quantity if self.quantity is not None else 0
+        return unit * qty
 
 
 class OrderStatusHistory(models.Model):
