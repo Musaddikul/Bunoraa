@@ -2,7 +2,11 @@
 set -euo pipefail
 
 # Install dependencies already handled by Render
+echo "Starting build script..."
+pip install -r requirements.txt
+
 # Run migrations and collectstatic
+python manage.py makemigrations --noinput
 python manage.py migrate --noinput
 python manage.py collectstatic --noinput
 
