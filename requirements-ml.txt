@@ -5,5 +5,10 @@ scikit-learn
 tokenizers
 sentencepiece
 huggingface-hub
-# Optional: accelerate, peft, datasets[torch], wandb
+pyarrow
+s3fs
+accelerate
+mlflow
+# Optional: peft, datasets[torch,s3], wandb
 # To install: pip install -r requirements-ml.txt
+# For datasets streaming from S3: pip install 'datasets[s3]'
