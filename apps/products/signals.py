@@ -10,7 +10,7 @@ def product_categories_changed(sender, instance, action, pk_set, **kwargs):
     all ancestor categories.
     """
     if action == 'post_add' and pk_set:
-        from apps.categories.ml import Category
+        from apps.categories.models import Category
 
         ancestor_ids = set()
         for category_id in pk_set:

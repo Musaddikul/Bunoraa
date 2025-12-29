@@ -133,7 +133,7 @@ class ProductAdmin(admin.ModelAdmin):
             from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
             if db_field.name == 'categories':
                 try:
-                    from apps.categories.ml import Category
+                    from apps.categories.models import Category
 
                     queryset = Category.objects.filter(is_active=True, is_deleted=False).order_by('path', 'order', 'name')
                     cats = {str(c.id): c for c in queryset}

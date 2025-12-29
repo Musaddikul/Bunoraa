@@ -8,7 +8,7 @@ from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 
 from apps.products.models import Product
-from apps.categories.ml import Category
+from apps.categories.models import Category
 from apps.cart.models import Cart, CartItem
 from apps.cart.services import CartService
 from apps.checkout.models import CheckoutSession
