@@ -53,17 +53,27 @@
         border-radius: inherit; /* preserve control's rounding */
     }
 
-    /* On touch devices make focus visible immediately after tap as well */
-    @media (pointer: coarse) {
-        button:focus,
-        a:focus,
-        input:focus,
-        select:focus,
-        textarea:focus,
-        [role="button"]:focus {
-            box-shadow: 0 0 0 3px var(--focus-ring), 0 0 0 6px var(--focus-ring-offset);
+    /* On touch devices, avoid persistent focus rings/borders when the user taps controls. Keep keyboard-focus (focus-visible) intact for accessibility. */
+    @media (hover: none) and (pointer: coarse) {
+        /* Remove visible focus effects for tappable controls (buttons, links, role=button) */
+        button:focus, button:active,
+        a:focus, a:active,
+        [role="button"]:focus, [role="button"]:active {
+            outline: none !important;
+            box-shadow: none !important;
+            border-color: transparent !important;
+        }
+
+        /* Keep inputs and form controls focusable (so caret and selection work) but avoid showing strong rings */
+        input:focus, textarea:focus, select:focus {
             outline: none;
-            border-radius: inherit;
+            box-shadow: none;
+            /* keep border so users can see editable fields; no forced color change */
+        }
+
+        /* Make active state visually simple (no border change) */
+        button:active, a:active, [role="button"]:active {
+            background-color: rgba(0,0,0,0.03); /* subtle pressed feedback */
         }
     }
     
