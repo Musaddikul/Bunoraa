@@ -58,7 +58,6 @@ def main():
         num_train_epochs=args.epochs,
         per_device_train_batch_size=args.per_device_train_batch_size,
         save_strategy='epoch',
-        evaluation_strategy='no',
         predict_with_generate=False,
     )
 

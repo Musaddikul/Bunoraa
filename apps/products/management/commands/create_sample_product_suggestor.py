@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = 'Create a sample product_suggestor artifact at apps/products/models/product_suggestor.pt'
+    help = 'Create a sample product_suggestor artifact at apps/products/ml/artifacts/product_suggestor.pt'
 
     def handle(self, *args, **options):
         try:

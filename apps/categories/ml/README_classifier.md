@@ -2,7 +2,7 @@ Classifier model placement
 
 Place a PyTorch model file for product-category classification at:
 
-  apps/categories/models/classifier.pt
+  apps/categories/ml/classifier.pt
 
 The classifier module (`apps/categories/classifier.py`) will attempt to load this file at import time if `torch` is installed. The model should accept raw text input or expose a `predict` method that returns a list of predictions like:
 

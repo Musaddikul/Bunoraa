@@ -3,7 +3,7 @@ from django.core.management import call_command
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 from apps.products.services import generate_product_suggestions, ProductService
-from apps.categories.models import Category
+from apps.categories.ml import Category
 
 User = get_user_model()
 

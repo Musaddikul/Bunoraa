@@ -116,7 +116,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             category_filters.extend(split_values(categories_param))
 
         if category_filters:
-            from apps.categories.models import Category
+            from apps.categories.ml import Category
             matched_category_ids = set()
             for value in category_filters:
                 try:

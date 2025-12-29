@@ -13,7 +13,7 @@ from django.db import transaction
 from django.utils.text import slugify
 from typing import List, Union, Dict, Any
 
-from apps.categories.models import Category, Facet, CategoryAllowedFacet, ExternalCategoryMapping
+from apps.categories.ml import Category, Facet, CategoryAllowedFacet, ExternalCategoryMapping
 
 
 CATEGORY_TREE: List[Dict[str, Any]] = [

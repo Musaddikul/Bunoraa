@@ -415,7 +415,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         product = Product.objects.create(**validated_data)
         
         if category_ids:
-            from apps.categories.models import Category
+            from apps.categories.ml import Category
             categories = Category.objects.filter(id__in=category_ids)
             product.categories.set(categories)
         
@@ -480,7 +480,7 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
         instance.save()
         
         if category_ids is not None:
-            from apps.categories.models import Category
+            from apps.categories.ml import Category
             categories = Category.objects.filter(id__in=category_ids)
             instance.categories.set(categories)
         

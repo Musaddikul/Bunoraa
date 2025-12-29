@@ -14,9 +14,9 @@ from .models import Category
 from pathlib import Path
 
 # Optional torch model support: place your PyTorch model at
-# apps/categories/models/classifier.pt
+# apps/categories/ml/classifier.pt
 _TORCH_MODEL = None
-_MODEL_PATH = Path(__file__).resolve().parent / 'models' / 'classifier.pt'
+_MODEL_PATH = Path(__file__).resolve().parent / 'ml' / 'classifier.pt'
 
 # Attempt to load model at import time (best-effort)
 try:
