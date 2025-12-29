@@ -1,6 +1,7 @@
 """
 Category services - Business logic layer
 """
+from collections import Counter
 from django.db.models import Count, Q
 from .models import Category
 
