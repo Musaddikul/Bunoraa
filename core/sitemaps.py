@@ -50,7 +50,7 @@ class CategorySitemap(Sitemap):
     priority = 0.7
     
     def items(self):
-        from apps.categories.ml import Category
+        from apps.categories.models import Category
         return Category.objects.filter(is_active=True, is_deleted=False)
     
     def lastmod(self, obj):

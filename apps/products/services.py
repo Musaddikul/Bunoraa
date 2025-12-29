@@ -444,7 +444,7 @@ def generate_product_suggestions(payload: Dict[str, Any], top_k: int = 3) -> Lis
 
     # Add lightweight category suggestions by keyword matching against category slugs (if categories app available)
     try:
-        from apps.categories.ml import Category
+        from apps.categories.models import Category
         cat_suggestions: List[Tuple[str, float]] = []
         text = f"{name} {description}".lower()
         cats = Category.objects.filter(is_active=True, is_deleted=False).all()[:200]

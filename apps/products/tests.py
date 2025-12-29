@@ -8,7 +8,7 @@ from rest_framework import status
 from django.contrib.auth import get_user_model
 from .models import Product, ProductImage, ProductVariant, Tag
 from .services import ProductService
-from apps.categories.ml import Category
+from apps.categories.models import Category
 
 User = get_user_model()
 

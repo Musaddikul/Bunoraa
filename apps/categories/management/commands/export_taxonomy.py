@@ -9,7 +9,7 @@ import csv
 import json
 from pathlib import Path
 from django.core.management.base import BaseCommand
-from apps.categories.ml import Category, ExternalCategoryMapping
+from apps.categories.models import Category, ExternalCategoryMapping
 
 
 HEADERS = [

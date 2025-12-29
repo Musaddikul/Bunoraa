@@ -226,6 +226,31 @@ class CategoryViewSet(viewsets.ModelViewSet):
             'meta': {'count': len(serializer.data)}
         })
     
+    @action(detail=False, methods=['get'])
+    def tree(self, request):
+        """Get full category tree or subtree. Optional query params: parent_id, max_depth"""
+        parent_id = request.query_params.get('parent_id')
+        max_depth = request.query_params.get('max_depth')
+        try:
+            max_depth = int(max_depth) if max_depth is not None else None
+        except (ValueError, TypeError):
+            max_depth = None
+
+        # If a parent_id is provided, use service to build subtree with depth
+        if parent_id:
+            data = CategoryService.get_category_tree(parent_id=parent_id, max_depth=max_depth)
+            return Response({'success': True, 'message': 'Category tree retrieved successfully.', 'data': data})
+
+        # If no max_depth specified, serialize full roots for consistent image URLs
+        if max_depth is None:
+            roots = Category.objects.filter(parent__isnull=True, is_active=True, is_deleted=False).order_by('order', 'name')
+            serializer = CategoryTreeSerializer(roots, many=True, context={'request': request})
+            return Response({'success': True, 'message': 'Category tree retrieved successfully.', 'data': serializer.data})
+
+        # Fallback: use service to build tree with max_depth
+        data = CategoryService.get_category_tree(parent_id=None, max_depth=max_depth)
+        return Response({'success': True, 'message': 'Category tree retrieved successfully.', 'data': data})
+
     @action(detail=True, methods=['get'])
     def products(self, request, pk=None):
         """
