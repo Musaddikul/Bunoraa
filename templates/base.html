@@ -143,9 +143,9 @@
             --border-color: #e5e7eb;
         }
         .dark {
-            --bg-primary: #1f2937;
-            --bg-secondary: #111827;
-            --bg-tertiary: #0f172a;
+            --bg-primary: #000000;
+            --bg-secondary: #2b2e34;
+            --bg-tertiary: #202531;
             --text-primary: #f9fafb;
             --text-secondary: #d1d5db;
             --border-color: #374151;
@@ -242,14 +242,14 @@
     </div>
     {% endblock %}
 
-    <header id="main-header" class="sticky top-0 inset-x-0 z-40 border-transparent bg-white/60 dark:bg-stone-900/55 backdrop-blur-[12px] shadow-sm transition-colors transition-shadow">
+    <header id="main-header" class="sticky top-0 inset-x-0 z-40 border-b border-stone-100/30 bg-white/80 dark:bg-stone-900/80 backdrop-blur-[18px] backdrop-saturate-150 shadow-md transition-colors transition-shadow">
         <div class="container mx-auto px-2 md:px-4">
             <div class="main-header-row flex flex-wrap items-center gap-2 py-2 relative">
                 <div class="flex items-center gap-1 z-10">
                     <a href="{% url 'home' %}" class="inline-flex items-center gap-2" aria-label="Go to homepage">
                         {% if SITE_LOGO %}
-                        <img src="{{ SITE_LOGO }}" alt="{{ SITE_NAME }}" class="h-5 md:h-9 lg:h-10 w-auto dark:hidden" loading="eager" decoding="async" fetchpriority="high" width="140" height="36" style="height:36px;width:auto;min-width:110px;">
-                        <img src="{{ SITE_LOGO_DARK|default:SITE_LOGO }}" alt="{{ SITE_NAME }}" class="h-5 md:h-9 lg:h-10 w-auto hidden dark:block" loading="eager" decoding="async" fetchpriority="high" width="140" height="36" style="height:36px;width:auto;min-width:110px;">
+                        <img src="{{ SITE_LOGO }}" alt="{{ SITE_NAME }}" class="h-5 md:h-9 lg:h-10 w-auto dark:hidden" loading="eager" decoding="async" fetchpriority="high" width="140" height="36" style="height:28px;width:auto;min-width:90px;">
+                        <img src="{{ SITE_LOGO_DARK|default:SITE_LOGO }}" alt="{{ SITE_NAME }}" class="h-5 md:h-9 lg:h-10 w-auto hidden dark:block" loading="eager" decoding="async" fetchpriority="high" width="140" height="36" style="height:28px;width:auto;min-width:90px;">
                         {% else %}
                         <span class="w-7 h-7 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-white font-semibold flex items-center justify-center shadow-inner shadow-amber-900/30">{{ SITE_NAME|slice:":1" }}</span>
                         {% endif %}
@@ -370,14 +370,14 @@
         </div>
         
         <!-- Navigation -->
-        <nav class="hidden lg:block border-t border-transparent bg-white/60 dark:bg-stone-900/55 backdrop-blur-[12px]" data-main-nav>
+        <nav class="hidden lg:block border-b border-stone-100/30 dark:border-stone-800 bg-white/80 dark:bg-stone-900/80 backdrop-blur-[18px] backdrop-saturate-150 shadow-sm" data-main-nav>
             <div class="container mx-auto px-4 flex items-center justify-between">
-                <ul id="main-nav" class="flex items-center gap-1 h-10 overflow-x-auto scrollbar-hide">
+                <ul id="main-nav" class="flex items-end gap-1 h-11 overflow-x-auto scrollbar-hide">
                     <!-- Categories loaded via JS -->
-                    <li class="skeleton h-4 w-20 rounded-lg"></li>
-                    <li class="skeleton h-4 w-24 rounded-lg"></li>
-                    <li class="skeleton h-4 w-16 rounded-lg"></li>
-                    <li class="skeleton h-4 w-20 rounded-lg"></li>
+                    <li class="skeleton h-6 w-20 rounded-t"></li>
+                    <li class="skeleton h-6 w-24 rounded-t"></li>
+                    <li class="skeleton h-6 w-16 rounded-t"></li>
+                    <li class="skeleton h-6 w-20 rounded-t"></li> 
                 </ul>
                 <div class="flex items-center gap-2 ml-4">
                     <!-- Only right-side links: Custom Orders, All Products, Sale -->
@@ -405,7 +405,7 @@
             <div class="p-5 bg-gradient-to-r from-amber-600 to-amber-700 text-white flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     {% if SITE_LOGO_DARK or SITE_LOGO %}
-                    <img src="{{ SITE_LOGO_DARK|default:SITE_LOGO }}" alt="{{ SITE_NAME }}" class="h-8 w-auto" loading="eager" decoding="async" fetchpriority="high" width="160" height="40" style="height:40px;width:auto;min-width:120px;">
+                    <img src="{{ SITE_LOGO_DARK|default:SITE_LOGO }}" alt="{{ SITE_NAME }}" class="h-5 w-auto" loading="eager" decoding="async" fetchpriority="high" width="160" height="40" style="height:32px;width:auto;min-width:100px;">
                     {% else %}
                     <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
@@ -421,7 +421,7 @@
             <!-- Mobile Search -->
             <div class="p-4 bg-stone-50 border-b border-stone-200">
                 <form action="{% url 'products:search' %}" method="GET" class="relative">
-                    <input type="search" name="q" placeholder="Search handcrafted items..." class="w-full px-4 py-3 pl-11 border-2 border-stone-200 rounded-xl focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition-all bg-white">
+                    <input type="search" name="q" placeholder="Search handcrafted items..." class="w-full px-4 py-3 pl-11 border-0 border-stone-200 rounded-xl focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition-all bg-white">
                     <svg class="w-5 h-5 text-stone-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </form>
             </div>
@@ -459,7 +459,7 @@
                 <button id="currency-selector-toggle" aria-haspopup="listbox" aria-expanded="false" class="p-2 lg:p-2.5 rounded-xl text-stone-700 hover:text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:text-stone-300 dark:hover:text-amber-300">
                     <span id="currency-current">{{ currency_code }}</span>
                 </button>
-                <div id="currency-dropdown" role="listbox" aria-label="Choose currency" class="hidden fixed left-3 right-3 bottom-16 max-h-[60vh] overflow-auto rounded-xl py-2 bg-white border border-stone-200 z-50 dark:bg-stone-800 dark:border-stone-700 lg:absolute lg:right-0 lg:mt-2 lg:left-auto lg:w-56 lg:max-h-56 lg:overflow-auto lg:rounded-2xl lg:shadow-2xl">
+                <div id="currency-dropdown" role="listbox" aria-label="Choose currency" class="hidden fixed left-3 right-3 bottom-16 max-h-[60vh] overflow-auto rounded-xl py-2 bg-white border-0 border-stone-200 z-50 dark:bg-stone-800 dark:border-stone-700 lg:absolute lg:right-0 lg:mt-2 lg:left-auto lg:w-56 lg:max-h-56 lg:overflow-auto lg:rounded-2xl lg:shadow-2xl">
                     <div id="currency-list" class="max-h-56 overflow-auto scrollbar-thin"></div>
                 </div>
             </div>
@@ -1074,18 +1074,41 @@
                         featured = Array.isArray(featResp) ? featResp : (featResp?.data || featResp?.results || featResp || []);
                     } catch (e) { featured = []; }
 
-                    const navSource = (Array.isArray(featured) && featured.length) ? featured : categories;
-
-                    if (Array.isArray(navSource) && navSource.length > 0 && mainNav) {
-                        const navHtml = navSource.map(cat => `
+                    // Only show featured categories in main navigation (red accents)
+                    if (Array.isArray(featured) && featured.length > 0 && mainNav) {
+                        const navHtml = featured.map(cat => `
                             <li>
-                                <a href="${buildRoute('categoryDetail', cat.slug)}" class="inline-flex items-center px-3 py-2 text-stone-700 hover:text-amber-700 hover:bg-amber-50 font-medium text-sm rounded-lg transition-all dark:text-stone-300 dark:hover:text-amber-300 dark:hover:bg-stone-700">
+                                <a href="${buildRoute('categoryDetail', cat.slug)}" class="inline-flex items-center px-3 py-1 text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500" data-cat-slug="${cat.slug}">
                                     ${escapeHtml ? escapeHtml(cat.name) : cat.name}
                                 </a>
                             </li>
                         `).join('');
 
                         mainNav.innerHTML = navHtml;
+
+                        // Mark active tab (Chrome-like) based on current URL
+                        try {
+                            const currentPath = window.location.pathname.replace(/\/+$/,'');
+                            mainNav.querySelectorAll('a[data-cat-slug]').forEach(a => {
+                                try {
+                                    const hrefPath = new URL(a.href, window.location.origin).pathname.replace(/\/+$/,'');
+                                    if (currentPath === hrefPath || currentPath.startsWith(hrefPath + '/')) {
+                                        // Active tab: raised, rounded top, border, and shadow to mimic Chrome tabs
+                                        a.classList.add('bg-white', 'dark:bg-stone-900', 'relative', 'z-10', '-mb-px', 'rounded-t-lg', 'px-4', 'py-2', 'shadow-sm', 'border', 'border-stone-100', 'dark:border-stone-700', 'text-rose-700');
+                                        a.setAttribute('aria-current', 'page');
+                                    } else {
+                                        // Inactive tab: ensure default spacing and muted colors
+                                        a.classList.add('text-stone-700', 'dark:text-stone-300', 'hover:text-rose-800', 'hover:bg-rose-50', 'dark:hover:bg-rose-900/60', 'px-3', 'py-1');
+                                        // Remove any active-only classes left behind
+                                        a.classList.remove('rounded-t-lg', 'relative', 'z-10', '-mb-px', 'shadow-sm', 'border', 'border-stone-100', 'dark:border-stone-700', 'text-rose-700');
+                                        a.removeAttribute('aria-current');
+                                    }
+                                } catch (e) {}
+                            });
+                        } catch (e) {}
+                    } else if (mainNav) {
+                        // No featured categories: clear main nav
+                        mainNav.innerHTML = '';
                     }
 
                     // Mobile nav
@@ -1119,54 +1142,67 @@
                                 </li>
                             `).join('');
 
-                            // For each root, fetch immediate children and grandchildren (small limits to avoid many requests)
+                            // Initialize panels as unloaded and define a lazy loader to fetch when opened
                             const panels = headerCats.querySelectorAll('.mega-panel');
-                            await Promise.all(Array.from(panels).map(async panel => {
-                                const parentLi = panel.closest('li[data-cat-id]');
-                                if (!parentLi) return;
-                                const catId = parentLi.dataset.catId;
-                                // fetch second-level categories
-                                let subs = [];
+                            panels.forEach(panel => { panel.dataset.loaded = 'false'; panel.innerHTML = ''; panel.setAttribute('aria-hidden','true'); });
+
+                            async function loadPanel(panel, catId) {
+                                if (!panel || !catId) return;
+                                if (panel.dataset.loaded === 'loading' || panel.dataset.loaded === 'true') return;
+                                panel.dataset.loaded = 'loading';
+                                // show spinner immediately
+                                panel.innerHTML = `<div class="flex items-center justify-center p-8"><div class="w-8 h-8 border-4 border-stone-200 border-t-amber-500 rounded-full animate-spin"></div></div>`;
                                 try {
-                                    const resp = await CategoriesApi.getSubcategories(catId);
-                                    subs = Array.isArray(resp) ? resp : (resp?.data || resp?.results || resp || []);
-                                } catch (e) { subs = []; }
+                                    let subs = [];
+                                    try {
+                                        const resp = await CategoriesApi.getSubcategories(catId);
+                                        subs = Array.isArray(resp) ? resp : (resp?.data || resp?.results || resp || []);
+                                    } catch (e) { subs = []; }
 
-                                // For each sub, get its children (grandchildren)
-                                const limitedSubs = subs.slice(0, 10);
-                                const grandchildrenRequests = limitedSubs.map(s => CategoriesApi.getSubcategories(s.id).catch(() => []));
-                                const grandchildrenResults = await Promise.all(grandchildrenRequests);
-                                limitedSubs.forEach((s, idx) => {
-                                    const gr = grandchildrenResults[idx];
-                                    s.children = Array.isArray(gr) ? gr : (gr?.data || gr?.results || gr || []);
-                                });
+                                    const limitedSubs = subs.slice(0, 10);
 
-                                if (!limitedSubs.length) {
-                                    panel.classList.add('hidden');
-                                    return;
+                                    // Fetch grandchildren one-by-one (sequentially) to reduce burst load
+                                    for (let i = 0; i < limitedSubs.length; i++) {
+                                        const s = limitedSubs[i];
+                                        try {
+                                            const gr = await CategoriesApi.getSubcategories(s.id);
+                                            s.children = Array.isArray(gr) ? gr : (gr?.data || gr?.results || gr || []);
+                                        } catch (_) {
+                                            s.children = [];
+                                        }
+                                    }
+
+                                    if (!limitedSubs.length) {
+                                        panel.innerHTML = `<p class="p-4 text-center text-stone-500">No subcategories</p>`;
+                                        panel.dataset.loaded = 'true';
+                                        return;
+                                    }
+
+                                    const columnsHtml = limitedSubs.map(s => {
+                                        return `
+                                            <div class="min-w-[180px]">
+                                                <a href="${buildRoute('categoryDetail', s.slug)}" class="flex items-center gap-3 p-2 rounded-md hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors">
+                                                    <div class="w-12 h-12 bg-stone-100 dark:bg-stone-800 rounded-lg overflow-hidden flex items-center justify-center">
+                                                        ${s.image ? `<img src="${s.image}" alt="${escapeHtml ? escapeHtml(s.name) : s.name}" class="w-full h-full object-cover" />` : `<span class="text-amber-700 font-semibold">${(s.name||'').charAt(0)}</span>`}
+                                                    </div>
+                                                    <div class="truncate">
+                                                        <div class="text-sm font-semibold text-stone-700 dark:text-stone-100">${escapeHtml ? escapeHtml(s.name) : s.name}</div>
+                                                        <div class="text-xs text-stone-500 dark:text-stone-400 mt-1 line-clamp-2">${(s.description||'').slice(0,80)}</div>
+                                                    </div>
+                                                </a>
+                                                ${Array.isArray(s.children) && s.children.length ? `<ul class="mt-2 text-sm text-stone-600 dark:text-stone-300 space-y-1">${s.children.slice(0,8).map(g => `<li><a href="${buildRoute('categoryDetail', g.slug)}" class="block py-1 hover:text-amber-700">${escapeHtml ? escapeHtml(g.name) : g.name}</a></li>`).join('')}</ul>` : ''}
+                                            </div>
+                                        `;
+                                    }).join('');
+
+                                    panel.innerHTML = `<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">${columnsHtml}</div>`;
+                                    panel.dataset.loaded = 'true';
+                                    panel.setAttribute('aria-hidden','false');
+                                } catch (e) {
+                                    panel.innerHTML = `<p class="p-4 text-center text-stone-500">Failed to load menu.</p>`;
+                                    panel.dataset.loaded = 'error';
                                 }
-
-                                // Build simple grid megamenu: each subcategory as a column with its children listed
-                                const columnsHtml = limitedSubs.map(s => {
-                                    return `
-                                        <div class="min-w-[180px]">
-                                            <a href="${buildRoute('categoryDetail', s.slug)}" class="flex items-center gap-3 p-2 rounded-md hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors">
-                                                <div class="w-12 h-12 bg-stone-100 dark:bg-stone-800 rounded-lg overflow-hidden flex items-center justify-center">
-                                                    ${s.image ? `<img src="${s.image}" alt="${escapeHtml ? escapeHtml(s.name) : s.name}" class="w-full h-full object-cover" />` : `<span class="text-amber-700 font-semibold">${(s.name||'').charAt(0)}</span>`}
-                                                </div>
-                                                <div class="truncate">
-                                                    <div class="text-sm font-semibold text-stone-700 dark:text-stone-100">${escapeHtml ? escapeHtml(s.name) : s.name}</div>
-                                                    <div class="text-xs text-stone-500 dark:text-stone-400 mt-1 line-clamp-2">${(s.description||'').slice(0,80)}</div>
-                                                </div>
-                                            </a>
-                                            ${Array.isArray(s.children) && s.children.length ? `<ul class="mt-2 text-sm text-stone-600 dark:text-stone-300 space-y-1">${s.children.slice(0,8).map(g => `<li><a href="${buildRoute('categoryDetail', g.slug)}" class="block py-1 hover:text-amber-700">${escapeHtml ? escapeHtml(g.name) : g.name}</a></li>`).join('')}</ul>` : ''}
-                                        </div>
-                                    `;
-                                }).join('');
-
-                                panel.innerHTML = `<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">${columnsHtml}</div>`;
-                                panel.setAttribute('aria-hidden','false');
-                            }));
+                            }
 
                             // Interactions: basic keyboard and click/outside handling
                             headerCats.querySelectorAll('li[data-cat-id]').forEach(li => {
@@ -1175,10 +1211,15 @@
                                 if (!trigger || !panel) return;
 
                                 // helpers
+                                const catId = li.dataset.catId;
                                 const openPanel = () => {
                                     panel.classList.remove('hidden');
                                     panel.setAttribute('aria-hidden','false');
                                     trigger.setAttribute('aria-expanded','true');
+                                    // Load content lazily after opening; shows spinner immediately
+                                    if (panel.dataset.loaded !== 'true' && panel.dataset.loaded !== 'loading') {
+                                        loadPanel(panel, catId);
+                                    }
                                 };
                                 const closePanel = () => {
                                     panel.classList.add('hidden');
@@ -1370,11 +1411,12 @@
                     function renderLevel(items){
                         return `<ul class="space-y-1">${items.map(it => {
                             const hasChildren = Array.isArray(it.children) ? it.children.length > 0 : !!it.has_children;
-                            const icon = hasChildren ? `<span class="ml-auto text-xs text-stone-400">›</span>` : '';
-                            const childrenHtml = (hasChildren && Array.isArray(it.children) && it.children.length) ? renderLevel(it.children) : `<ul data-children-for="${it.id}" class="hidden pl-4"></ul>`;
+                            const icon = hasChildren ? `<svg class="ml-auto w-4 h-4 text-stone-400 chevron transform transition-transform duration-150" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 6l6 6-6 6"/></svg>` : '';
+                            const childRendered = (hasChildren && Array.isArray(it.children) && it.children.length) ? renderLevel(it.children) : '';
+                            const childrenHtml = `<div data-children-for="${it.id}" class="hidden pl-4 transition-all duration-150">${childRendered}</div>`;
                             return `
                                 <li>
-                                    <button data-toggle-cat data-cat-id="${it.id}" data-lazy="${lazy && !Array.isArray(it.children)}" class="w-full text-left flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-stone-50 dark:hover:bg-stone-800">
+                                    <button type="button" data-toggle-cat data-cat-id="${it.id}" data-lazy="${lazy && !Array.isArray(it.children)}" aria-expanded="false" class="w-full text-left flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors">
                                         <span class="truncate text-stone-800 dark:text-stone-100">${it.name}</span>
                                         ${icon}
                                     </button>
@@ -1391,11 +1433,18 @@
                     const mobileNav = document.getElementById('mobile-nav');
                     if (!mobileNav) return;
 
-                    // Show skeleton placeholders immediately
-                    mobileNav.innerHTML = Array.from({length:6}).map(()=>'<div class="h-10 bg-stone-100 dark:bg-stone-800 rounded-md animate-pulse mb-2"></div>').join('');
+                    // If we already have categories from the earlier fetch (finalCategories), render them immediately
+                    try {
+                        if (typeof finalCategories !== 'undefined' && Array.isArray(finalCategories) && finalCategories.length) {
+                            renderMobileCategoryTree(finalCategories, mobileNav, { lazy: true });
+                            mobileNavLoaded = true;
+                            return;
+                        }
+                    } catch (e) {
+                        // ignore and proceed to network fetch
+                    }
 
                     try {
-                        // Try to fetch full tree endpoint first (fast if implemented server-side)
                         const resp = await CategoriesApi.getTree();
                         const data = Array.isArray(resp) ? resp : (resp?.data || resp?.results || resp || []);
                         mobileCategoriesCache = data;
@@ -1429,14 +1478,14 @@
                         }
                         const html = subs.map(s => `
                             <li>
-                                <button data-toggle-cat data-cat-id="${s.id}" data-lazy="true" class="w-full text-left flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-stone-50 dark:hover:bg-stone-800">
+                                <button type="button" data-toggle-cat data-cat-id="${s.id}" data-lazy="true" aria-expanded="false" class="w-full text-left flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors">
                                     <span class="truncate text-stone-800 dark:text-stone-100">${s.name}</span>
-                                    ${s.has_children ? '<span class="ml-auto text-xs text-stone-400">›</span>' : ''}
+                                    ${s.has_children ? '<svg class="ml-auto w-4 h-4 text-stone-400 chevron" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 6l6 6-6 6"/></svg>' : ''}
                                 </button>
-                                <ul data-children-for="${s.id}" class="hidden pl-4"></ul>
+                                <div data-children-for="${s.id}" class="hidden pl-4 transition-all duration-150"></div>
                             </li>
                         `).join('');
-                        listEl.innerHTML = html;
+                        listEl.innerHTML = `<ul class="space-y-1">${html}</ul>`;
                         listEl.dataset.loaded = 'true';
                     } catch (e) {
                         listEl.innerHTML = '';
@@ -1485,11 +1534,19 @@
                         const catId = catBtn.dataset.catId;
                         const lazy = catBtn.dataset.lazy === 'true';
                         const childrenList = catBtn.nextElementSibling;
+                        const chevron = catBtn.querySelector('.chevron');
                         if (lazy && childrenList && childrenList.dataset.loaded !== 'true') {
                             // load children then toggle
                             await ensureChildrenLoaded(catId, childrenList);
                         }
-                        if (childrenList) childrenList.classList.toggle('hidden');
+                        if (childrenList) {
+                            const isHidden = childrenList.classList.toggle('hidden');
+                            // Update aria and chevron rotation
+                            catBtn.setAttribute('aria-expanded', (!isHidden).toString());
+                            if (chevron) chevron.classList.toggle('rotate-90', !isHidden);
+                            // Visual state on button
+                            catBtn.classList.toggle('bg-stone-50', !isHidden);
+                        }
                     }
                 });
 
