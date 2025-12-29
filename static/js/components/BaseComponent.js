@@ -231,10 +231,22 @@ export class BaseComponent {
 
   /**
    * Focus element
+   * By default prevents scrolling the page when focusing (avoid jumping to focused element on load).
+   * Pass an options object to control behavior (e.g., { preventScroll: false }).
    */
-  focus() {
-    if (this.element) {
-      this.element.focus();
+  focus(options) {
+    if (!this.element) return;
+
+    try {
+      if (typeof options === 'undefined') {
+        // default: avoid changing scroll position when focusing
+        this.element.focus({ preventScroll: true });
+      } else {
+        this.element.focus(options);
+      }
+    } catch (err) {
+      // Fallback for older browsers that don't support focus options
+      try { this.element.focus(); } catch (e) { /* ignore */ }
     }
   }
 

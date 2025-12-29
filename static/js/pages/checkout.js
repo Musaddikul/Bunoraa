@@ -258,10 +258,17 @@ const CheckoutPage = (async function() {
         if (!container) return;
         const first = container.querySelector('[data-error-for]');
         if (!first) return;
-        // Try to focus associated input
+        // Try to focus associated input without scrolling the page
         const name = first.getAttribute('data-error-for');
         const input = container.querySelector(`[name="${name}"]`) || container.querySelector(`#${name}`) || first.previousElementSibling;
-        if (input && typeof input.focus === 'function') input.focus();
+        if (input && typeof input.focus === 'function') {
+            try {
+                input.focus({ preventScroll: true });
+            } catch (e) {
+                // Old browsers may not support options — fallback to normal focus
+                input.focus();
+            }
+        }
     }
 
     function validateShippingAddress() {

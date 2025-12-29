@@ -34,6 +34,28 @@ const App = (function() {
         initMobileMenu();
         initLanguageSelector();
         // Currency selector disabled in single-currency mode
+
+        // Mitigate unexpected initial jumps caused by JS focusing or layout shifts.
+        // If the navigation is a fresh navigate (not back/forward) and there's no URL hash,
+        // and the page is already scrolled near the bottom on initial load, reset to top.
+        try {
+            const navEntries = performance.getEntriesByType ? performance.getEntriesByType('navigation') : [];
+            const nav = (navEntries && navEntries[0]) || null;
+            if ((nav && nav.type === 'navigate') && !window.location.hash) {
+                setTimeout(() => {
+                    const doc = document.scrollingElement || document.documentElement;
+                    if (!doc) return;
+                    const scrolled = doc.scrollTop || window.pageYOffset || 0;
+                    const maxScroll = Math.max(0, doc.scrollHeight - window.innerHeight);
+                    // If already scrolled more than half the document height or very close to bottom, reset
+                    if (scrolled > Math.max(100, maxScroll * 0.6)) {
+                        window.scrollTo({ top: 0, behavior: 'auto' });
+                    }
+                }, 60);
+            }
+        } catch (e) {
+            // ignore
+        }
     }
     async function initWishlistBadge() {
         // Update wishlist badge on page load; sync wishlist button states. Fallback to cached value if API fails
