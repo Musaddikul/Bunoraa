@@ -159,6 +159,27 @@
     img {
         @apply max-w-full h-auto;
     }
+
+    /* Tables - provide sensible defaults and dark variants */
+    table {
+        @apply w-full text-left table-auto border-collapse;
+    }
+
+    thead {
+        @apply bg-gray-50 dark:bg-stone-800;
+    }
+
+    tbody {
+        @apply divide-y divide-gray-100 dark:divide-stone-700;
+    }
+
+    th {
+        @apply px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-stone-100;
+    }
+
+    td {
+        @apply px-6 py-3 text-sm text-stone-700 dark:text-stone-300;
+    }
     
     /* Form elements */
     input, textarea, select {
