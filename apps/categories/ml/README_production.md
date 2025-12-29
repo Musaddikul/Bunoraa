@@ -3,7 +3,7 @@ Production-ready Category Classifier — Overview and instructions
 Purpose
 -------
 This document describes how to train, validate, export and deploy a production-ready product category classifier compatible with Bunoraa's app.
-The production model should: expose a `predict(texts: List[str]) -> List[dict]` API returning predictions: list of {"category_code": "CAT_...", "confidence": 0.0..1.0} per text, be serializable to `apps/categories/models/classifier.pt` (Torch serialized object or TorchScript/ONNX artifact), and be robust for CPU inference.
+The production model should: expose a `predict(texts: List[str]) -> List[dict]` API returning predictions: list of {"category_code": "CAT_...", "confidence": 0.0..1.0} per text, be serializable to `apps/categories/ml/classifier.pt` (Torch serialized object or TorchScript/ONNX artifact), and be robust for CPU inference.
 
 High-level recipe
 -----------------

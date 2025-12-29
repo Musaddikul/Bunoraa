@@ -51,7 +51,7 @@ class ProductListView(ListView):
             sort = sort_param
         
         if category:
-            from apps.categories.models import Category
+            from apps.categories.ml import Category
             try:
                 cat = Category.objects.get(slug=category)
                 category_ids = cat.get_descendant_ids(include_self=True)

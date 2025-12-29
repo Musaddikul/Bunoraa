@@ -8,7 +8,7 @@ from rest_framework import status
 from django.contrib.auth import get_user_model
 from .models import Product, ProductImage, ProductVariant, Tag
 from .services import ProductService
-from apps.categories.models import Category
+from apps.categories.ml import Category
 
 User = get_user_model()
 
@@ -283,3 +283,24 @@ class ProductAPITest(APITestCase):
         self.assertEqual(response.status_code, 200)
         content = response.content.decode('utf-8')
         self.assertIn(f'currencyCode: "{default.code}"', content)
+
+
+class SeedTagsCommandTest(TestCase):
+    """Tests for seed_tags management command"""
+
+    def test_seed_tags_command_dry_run_and_overwrite(self):
+        from django.core.management import call_command
+        from .models import Tag
+
+        # Ensure no tags initially
+        Tag.objects.all().delete()
+        # Dry-run should not create any tags
+        call_command('seed_tags', '--dry-run')
+        self.assertEqual(Tag.objects.count(), 0)
+
+        # Run with file and overwrite
+        call_command('seed_tags', '--file=apps/products/data/tags.json', '--overwrite')
+        self.assertTrue(Tag.objects.exists())
+        # Running again should not duplicate
+        call_command('seed_tags', '--file=apps/products/data/tags.json')
+        self.assertEqual(Tag.objects.count(), len([t for t in open('apps/products/data/tags.json').read().strip().splitlines() if t.strip()]))

@@ -1,4 +1,4 @@
-"""Create a small sample PyTorch classifier model at apps/categories/models/classifier.pt.
+"""Create a small sample PyTorch classifier model at apps/categories/ml/classifier.pt.
 
 This is only for development/testing. The sample model implements a `predict(texts)` method
 that returns a list of dictionaries: {"category_code": "CAT_...", "confidence": 0.9}.
@@ -10,18 +10,18 @@ from __future__ import annotations
 from django.core.management.base import BaseCommand
 from pathlib import Path
 
-MODEL_PATH = Path(__file__).resolve().parent.parent.parent / 'models' / 'classifier.pt'
+MODEL_PATH = Path(__file__).resolve().parent.parent.parent / 'ml' / 'classifier.pt'
 
 
 class Command(BaseCommand):
-    help = 'Create a sample PyTorch classifier model at apps/categories/models/classifier.pt (dev only)'
+    help = 'Create a sample PyTorch classifier model at apps/categories/ml/classifier.pt (dev only)'
 
     def handle(self, *args, **options):
         try:
             import torch
         except Exception:
             self.stderr.write('PyTorch is not installed. Install torch (cpu) and re-run: pip install torch')
-            self.stdout.write('Alternatively, provide a real model at: apps/categories/models/classifier.pt')
+            self.stdout.write('Alternatively, provide a real model at: apps/categories/ml/classifier.pt')
             return
 
         # Build simple sample model object with a predict method

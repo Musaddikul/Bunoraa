@@ -279,7 +279,7 @@ class Product(models.Model):
 
     # Proxy model to surface Category in the Products admin section
     try:
-        from apps.categories.models import Category as CategoryModel
+        from apps.categories.ml import Category as CategoryModel
 
         class CategoryProxy(CategoryModel):
             """Proxy for Category registered under the 'products' app label so it appears in Products section of admin."""

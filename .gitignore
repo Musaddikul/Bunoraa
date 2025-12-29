@@ -16,8 +16,12 @@ develop-eggs/
 dist/
 downloads/
 scripts/
+tests/
 # cloudflare/
 docs/
+outputs/
+wandb/
+mlruns/
 eggs/
 .eggs/
 lib/

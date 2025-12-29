@@ -40,7 +40,7 @@
           toggle.type = 'button';
           toggle.className = 'toggle-children';
           toggle.setAttribute('aria-expanded', 'false');
-          toggle.innerHTML = '<span class="caret">▸</span>';
+          toggle.innerHTML = '<span class="caret">&gt;</span>';
           toggle.classList.add('w-5','h-5','flex','items-center','justify-center','text-sm','text-gray-500','dark:text-slate-300');
           toggle.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -49,7 +49,7 @@
             if (childUl) {
               childUl.classList.toggle('collapsed');
             }
-            toggle.querySelector('.caret').textContent = expanded ? '▸' : '▾';
+            toggle.querySelector('.caret').textContent = expanded ? '>' : 'v';
           });
           row.appendChild(toggle);
         } else {
@@ -60,29 +60,19 @@
           row.appendChild(spacer);
         }
 
-        // Node icon
-        const nodeIcon = document.createElement('span');
-        nodeIcon.className = 'node-icon';
-        nodeIcon.textContent = item.children.length > 0 ? '📁' : '📄';
-        nodeIcon.classList.add('w-5','text-center');
-        row.appendChild(nodeIcon);
-
-        // Checkbox
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.dataset.id = item.id;
-        checkbox.checked = item.selected;
-        checkbox.className = 'category-checkbox';
-        checkbox.classList.add('w-4','h-4');
-        checkbox.tabIndex = -1; // keep focus on row
-
-        const label = document.createElement('label');
+        // (No icon and no checkbox for single-select behavior)
+        // Render label as simple text — clicking/selecting a row will select the category
+        const label = document.createElement('div');
         label.className = 'category-label';
-        label.appendChild(checkbox);
-        label.appendChild(document.createTextNode(' ' + item.label));
+        label.textContent = item.label;
         label.classList.add('flex','items-center','gap-2','text-sm','text-gray-700','dark:text-slate-200');
 
         row.appendChild(label);
+
+        // Mark selected if this option is currently selected
+        if (item.selected) {
+          row.classList.add('category-selected','bg-indigo-50','dark:bg-indigo-900/20');
+        }
         li.appendChild(row);
 
         if (item.children.length > 0) {
@@ -99,29 +89,6 @@
     return { rootList: createList(root), nodes };
   }
 
-  function updateAncestorStates(li) {
-    let parentLi = li.parentElement && li.parentElement.closest('li.category-item');
-    while (parentLi) {
-      const childCheckboxes = Array.from(parentLi.querySelectorAll(':scope > ul li input.category-checkbox'));
-      const allChecked = childCheckboxes.length > 0 && childCheckboxes.every(cb => cb.checked && !cb.indeterminate);
-      const noneChecked = childCheckboxes.every(cb => !cb.checked && !cb.indeterminate);
-      const parentCb = parentLi.querySelector(':scope > .category-row input.category-checkbox');
-      if (parentCb) {
-        parentCb.checked = allChecked;
-        parentCb.indeterminate = !allChecked && !noneChecked;
-      }
-      parentLi = parentLi.parentElement && parentLi.parentElement.closest('li.category-item');
-    }
-  }
-
-  function setDescendantsState(li, checked) {
-    li.querySelectorAll('ul li input.category-checkbox').forEach(cb => {
-      cb.checked = checked;
-      cb.indeterminate = false;
-      const opt = document.querySelector(`select[name="categories"] option[value="${cb.dataset.id}"]`);
-      if (opt) opt.selected = cb.checked;
-    });
-  }
 
   document.addEventListener('DOMContentLoaded', function() {
     const select = document.querySelector('select[name="categories"]');
@@ -145,7 +112,7 @@
     expandAll.addEventListener('click', function() {
       wrapper.querySelectorAll('ul.category-tree ul').forEach(u => u.classList.remove('collapsed'));
       wrapper.querySelectorAll('button.toggle-children').forEach(b => b.setAttribute('aria-expanded', 'true'));
-      wrapper.querySelectorAll('.toggle-children .caret').forEach(c => c.textContent = '▾');
+      wrapper.querySelectorAll('.toggle-children .caret').forEach(c => c.textContent = 'v');
     });
 
     const collapseAll = document.createElement('button');
@@ -155,7 +122,7 @@
     collapseAll.addEventListener('click', function() {
       wrapper.querySelectorAll('ul.category-tree ul').forEach(u => u.classList.add('collapsed'));
       wrapper.querySelectorAll('button.toggle-children').forEach(b => b.setAttribute('aria-expanded', 'false'));
-      wrapper.querySelectorAll('.toggle-children .caret').forEach(c => c.textContent = '▸');
+      wrapper.querySelectorAll('.toggle-children .caret').forEach(c => c.textContent = '>');
     });
 
     controls.appendChild(expandAll);
@@ -166,67 +133,52 @@
     wrapper.appendChild(rootList);
     select.parentNode.insertBefore(wrapper, select.nextSibling);
 
-    // Initialize indeterminate states for parents based on selected options
-    wrapper.querySelectorAll('li.category-item').forEach(li => {
-      const checkbox = li.querySelector(':scope > .category-row input.category-checkbox');
-      if (!checkbox) return;
-      const childCheckboxes = Array.from(li.querySelectorAll(':scope > ul li input.category-checkbox'));
-      if (childCheckboxes.length > 0) {
-        const allChecked = childCheckboxes.every(cb => cb.checked);
-        const noneChecked = childCheckboxes.every(cb => !cb.checked);
-        checkbox.checked = allChecked;
-        checkbox.indeterminate = !allChecked && !noneChecked;
-      }
-    });
+    // Single-select behavior: clicking a row selects it and deselects others
+    function selectCategoryById(id) {
+      // Deselect all options
+      Array.from(select.options).forEach(opt => { opt.selected = false; });
+      if (!id) return;
+      const opt = select.querySelector(`option[value="${id}"]`);
+      if (opt) opt.selected = true;
 
-    // Handle checkbox changes with indeterminate/parent logic
-    wrapper.addEventListener('change', function(e) {
-      const cb = e.target;
-      if (cb.tagName.toLowerCase() !== 'input' || cb.type !== 'checkbox') return;
-      const li = cb.closest('li.category-item');
-      if (!li) return;
-
-      // Set descendants
-      setDescendantsState(li, cb.checked);
-
-      // Update corresponding option for this checkbox and descendants
-      const opt = select.querySelector(`option[value="${cb.dataset.id}"]`);
-      if (opt) opt.selected = cb.checked;
-      li.querySelectorAll('ul li input.category-checkbox').forEach(ch => {
-        const optc = select.querySelector(`option[value="${ch.dataset.id}"]`);
-        if (optc) optc.selected = ch.checked;
+      // Update visual classes
+      wrapper.querySelectorAll('li.category-item').forEach(li => {
+        const r = li.querySelector('.category-row');
+        const thisId = li.dataset.id;
+        const isSelected = (thisId === id);
+        r.classList.toggle('category-selected', isSelected);
+        r.classList.toggle('bg-indigo-50', isSelected);
+        r.classList.toggle('dark:bg-indigo-900/20', isSelected);
       });
 
-      // Update ancestors
-      updateAncestorStates(li);
-
-      // Update visual selected classes using Tailwind utilities
-      li.querySelectorAll('.category-row').forEach(r => {
-        const checked = !!r.querySelector('input.category-checkbox').checked;
-        r.classList.toggle('bg-indigo-50', checked);
-        r.classList.toggle('dark:bg-indigo-900/20', checked);
-      });
-
-      // Trigger change on select so any listeners (e.g., admin JS) update
+      // Dispatch change event
       select.dispatchEvent(new Event('change', { bubbles: true }));
-    });
+      // Update summary text (only if dropdownContainer is initialized)
+      if (typeof dropdownContainer !== 'undefined' && dropdownContainer) {
+        const summaryText = dropdownContainer.querySelector('.category-summary');
+        if (summaryText) summaryText.textContent = buildSummary();
+      }
+    }
+
+    // Initialize selected class states based on underlying <select>
+    const initiallySelected = select.querySelector('option:checked');
+    if (initiallySelected) {
+      selectCategoryById(initiallySelected.value);
+    }
 
     // Click / label handling and keyboard navigation
     wrapper.addEventListener('click', function(e) {
       const row = e.target.closest('.category-row');
       if (!row) return;
       const li = row.closest('li.category-item');
-      const cb = row.querySelector('input.category-checkbox');
+      const id = li.dataset.id;
       // If click target was toggle button or caret, ignore (handled elsewhere)
       if (e.target.closest('.toggle-children')) return;
-      // Toggle checkbox when clicking row
-      if (cb && e.target.tagName.toLowerCase() !== 'input') {
-        cb.checked = !cb.checked;
-        cb.dispatchEvent(new Event('change', { bubbles: true }));
-      }
+      // Select the category (single select)
+      selectCategoryById(id);
     });
 
-    // Keyboard navigation: arrow keys & space to toggle
+    // Keyboard navigation: arrow keys & space/enter to select
     wrapper.addEventListener('keydown', function(e) {
       const row = e.target.closest('.category-row');
       if (!row) return;
@@ -244,9 +196,10 @@
           if (parentLi) parentLi.querySelector('.category-row').focus();
         }
         e.preventDefault();
-      } else if (e.key === ' ' || e.key === 'Spacebar') {
-        const cb = row.querySelector('input.category-checkbox');
-        if (cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change', { bubbles: true })); }
+      } else if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'Enter') {
+        const li = row.closest('li.category-item');
+        const id = li.dataset.id;
+        selectCategoryById(id);
         e.preventDefault();
       } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         // Move focus to next/previous visible row
@@ -258,14 +211,87 @@
       }
     });
 
-    // Initialize selected class states using Tailwind bg utilities
-    wrapper.querySelectorAll('li.category-item').forEach(li => {
-      const row = li.querySelector('.category-row');
-      const cb = row.querySelector('input.category-checkbox');
-      const checked = !!cb.checked;
-      row.classList.toggle('bg-indigo-50', checked);
-      row.classList.toggle('dark:bg-indigo-900/20', checked);
+
+
+
+
+    // --------------------------------------------------
+    // Dropdown wrapper & summary button (pure JS)
+    // --------------------------------------------------
+    // Create a dropdown toggle that shows/hides the category tree
+    const dropdownContainer = document.createElement('div');
+    dropdownContainer.classList.add('category-dropdown','relative','w-full');
+
+    const toggleBtn = document.createElement('button');
+    toggleBtn.type = 'button';
+    toggleBtn.classList.add('category-dropdown-toggle','w-full','text-left','px-3','py-2','rounded','border','border-gray-200','dark:border-slate-700','bg-white','dark:bg-slate-900','text-sm','flex','items-center','justify-between');
+    toggleBtn.setAttribute('aria-haspopup', 'true');
+    toggleBtn.setAttribute('aria-expanded', 'false');
+
+    function buildSummary() {
+      const selected = Array.from(select.querySelectorAll('option:checked'));
+      if (!selected.length) return 'Select categories';
+      if (selected.length === 1) return selected[0].textContent.trim();
+      if (selected.length <= 3) return selected.map(o => o.textContent.trim()).join(', ');
+      return `${selected.length} categories selected`;
+    }
+
+    const summaryText = document.createElement('span');
+    summaryText.classList.add('category-summary','truncate');
+    summaryText.textContent = buildSummary();
+
+    const caret = document.createElement('span');
+    caret.classList.add('caret','ml-2','text-gray-500');
+    caret.textContent = 'v';
+
+    toggleBtn.appendChild(summaryText);
+    toggleBtn.appendChild(caret);
+
+    const panel = document.createElement('div');
+    panel.classList.add('category-dropdown-panel','hidden','absolute','z-50','mt-1','w-full','bg-white','dark:bg-slate-900','border','border-gray-200','dark:border-slate-700','rounded','shadow-lg','p-2','max-h-64','overflow-auto');
+
+    // Move existing wrapper inside panel so it behaves like a dropdown
+    const originalParent = wrapper.parentNode;
+    originalParent.insertBefore(dropdownContainer, wrapper);
+    panel.appendChild(wrapper);
+    dropdownContainer.appendChild(toggleBtn);
+    dropdownContainer.appendChild(panel);
+
+    // Toggle panel visibility
+    function openPanel() {
+      panel.classList.remove('hidden');
+      toggleBtn.setAttribute('aria-expanded', 'true');
+      caret.textContent = '^';
+    }
+    function closePanel() {
+      panel.classList.add('hidden');
+      toggleBtn.setAttribute('aria-expanded', 'false');
+      caret.textContent = 'v';
+    }
+
+    toggleBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (panel.classList.contains('hidden')) openPanel(); else closePanel();
     });
 
+    // Close when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!dropdownContainer.contains(e.target)) closePanel();
+    });
+
+    // Close with Escape
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closePanel();
+    });
+
+    // Update summary when selection changes
+    select.addEventListener('change', function() {
+      summaryText.textContent = buildSummary();
+    });
+
+    // Ensure clicking inside panel doesn't propagate to document click handler
+    panel.addEventListener('click', function(e) { e.stopPropagation(); });
+
   });
+
 })();

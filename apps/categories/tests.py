@@ -268,7 +268,7 @@ class CategoryAPITest(APITestCase):
         """create_sample_classifier should either create the model file (if torch present) or print instructions."""
         import subprocess
         from pathlib import Path
-        MODEL_PATH = Path(__file__).resolve().parent / 'models' / 'classifier.pt'
+        MODEL_PATH = Path(__file__).resolve().parent / 'ml' / 'classifier.pt'
         # Remove if exists (cleanup)
         if MODEL_PATH.exists():
             try:

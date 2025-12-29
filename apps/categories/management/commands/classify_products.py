@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from django.core.management.base import BaseCommand
 from apps.categories.classifier import classify_text
-from apps.categories.models import ProductCategorySuggestion, Category
+from apps.categories.ml import ProductCategorySuggestion, Category
 from apps.products.models import Product
 
 class Command(BaseCommand):

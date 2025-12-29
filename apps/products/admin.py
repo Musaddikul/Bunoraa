@@ -76,6 +76,22 @@ class ProductAttributeInline(admin.TabularInline):
     fields = ['attribute_value']
 
 
+@admin.register(ProductImage)
+class ProductImageAdmin(admin.ModelAdmin):
+    """Product image admin."""
+    
+    list_display = ['product', 'is_primary', 'order', 'created_at', 'image_preview']
+    list_filter = ['is_primary', 'created_at']
+    search_fields = ['product__name']
+    raw_id_fields = ['product']
+    
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" width="50" height="50" style="object-fit: cover;" />', obj.image.url)
+        return '-'
+    image_preview.short_description = 'Preview'
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     """Product admin."""
@@ -85,6 +101,7 @@ class ProductAdmin(admin.ModelAdmin):
             'all': ('css/admin/category_tree.css',)
         }
         js = (
+            'js/admin/move_inlines_top.js',
             'js/admin/image_preview.js',
             'js/admin/attribute_inline.js',
             'js/admin/category_tree.js',
@@ -116,7 +133,7 @@ class ProductAdmin(admin.ModelAdmin):
             from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
             if db_field.name == 'categories':
                 try:
-                    from apps.categories.models import Category
+                    from apps.categories.ml import Category
 
                     queryset = Category.objects.filter(is_active=True, is_deleted=False).order_by('path', 'order', 'name')
                     cats = {str(c.id): c for c in queryset}
@@ -178,7 +195,7 @@ class ProductAdmin(admin.ModelAdmin):
     inlines = [ProductImageInline, ProductVariantInline, ProductAttributeInline]
     
     fieldsets = (
-        (None, {'fields': ('name', 'slug', 'sku', 'description', 'short_description')}),
+        (_('Basic Information'), {'fields': ('name', 'slug', 'sku', 'description', 'short_description')}),
         ('Pricing', {'fields': ('price', 'sale_price', 'cost_price', 'currency')}),
         ('Inventory', {
             'fields': ('stock_quantity', 'low_stock_threshold', 'track_inventory', 'allow_backorder')
@@ -220,22 +237,6 @@ class ProductAdmin(admin.ModelAdmin):
     remove_featured.short_description = 'Remove featured status'
 
 
-@admin.register(ProductImage)
-class ProductImageAdmin(admin.ModelAdmin):
-    """Product image admin."""
-    
-    list_display = ['product', 'is_primary', 'order', 'created_at', 'image_preview']
-    list_filter = ['is_primary', 'created_at']
-    search_fields = ['product__name']
-    raw_id_fields = ['product']
-    
-    def image_preview(self, obj):
-        if obj.image:
-            return format_html('<img src="{}" width="50" height="50" style="object-fit: cover;" />', obj.image.url)
-        return '-'
-    image_preview.short_description = 'Preview'
-
-
 @admin.register(ProductVariant)
 class ProductVariantAdmin(admin.ModelAdmin):
     """Product variant admin."""
@@ -265,24 +266,6 @@ class TagAdmin(admin.ModelAdmin):
     def product_count(self, obj):
         return obj.products.filter(is_active=True, is_deleted=False).count()
     product_count.short_description = 'Products'
-
-# Register a Category proxy under Products admin so Categories appear in the Products app section
-try:
-    from apps.categories.models import Category as CategoryModel
-    from apps.categories.admin import CategoryAdmin
-
-    class CategoryProxy(CategoryModel):
-        """Proxy for Category registered under the 'products' app label."""
-        class Meta:
-            proxy = True
-            app_label = 'products'
-            verbose_name = _('category')
-            verbose_name_plural = _('categories')
-
-    admin.site.register(CategoryProxy, CategoryAdmin)
-except Exception:
-    # Do not fail on import in manage commands
-    pass
 
 
 @admin.register(Attribute)

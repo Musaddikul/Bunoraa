@@ -84,7 +84,7 @@ python manage.py seed_categories --backfill-products
 python manage.py classify_products --limit 1000 --min_confidence 0.2
 ```
 
-- To use a local PyTorch model, place the model file at `apps/categories/models/classifier.pt`.
+- To use a local PyTorch model, place the model file at `apps/categories/ml/classifier.pt`.
   The classifier module will attempt to load it automatically if `torch` is installed; otherwise it falls back to the keyword heuristic.
 - Export taxonomy:
 
