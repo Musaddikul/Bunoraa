@@ -107,7 +107,7 @@
     <style>
       /* Minimal critical styles - keep tiny */
       body{background:var(--bg-primary,#fff);color:var(--text-primary,#111)}
-      header#main-header{position:sticky;top:0;z-index:40;background:transparent}
+      header#main-header{position:sticky;top:0;z-index:40}
       .skeleton{background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:200% 100%;animation:skeleton-loading 1.5s infinite}
       @keyframes skeleton-loading{0%{background-position:200% 0}100%{background-position:-200% 0}}
       .skip-link{position:absolute;left:-9999px}
@@ -203,19 +203,6 @@
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
         
-        /* Glass effect (blurred, slightly opaque) */
-        .glass {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(0,0,0,0.04);
-        }
-        /* Dark variant for glass surfaces */
-        .dark .glass {
-            background: rgba(17, 24, 39, 0.78);
-            border-bottom: 1px solid rgba(255,255,255,0.03);
-        }
-        
         /* Loading states */
         .skeleton {
             background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
@@ -255,125 +242,123 @@
     </div>
     {% endblock %}
 
-    <header id="main-header" class="sticky top-0 inset-x-0 z-40 border-transparent glass shadow-sm transition-colors transition-shadow">
-        <div class="bg-transparent">
-            <div class="container mx-auto px-2 md:px-4">
-                <div class="main-header-row flex flex-wrap items-center gap-2 py-2 relative">
-                    <div class="flex items-center gap-1 z-10">
-                        <a href="{% url 'home' %}" class="inline-flex items-center gap-2" aria-label="Go to homepage">
-                            {% if SITE_LOGO %}
-                            <img src="{{ SITE_LOGO }}" alt="{{ SITE_NAME }}" class="h-5 md:h-9 lg:h-10 w-auto dark:hidden" loading="eager" decoding="async" fetchpriority="high" width="140" height="36" style="height:36px;width:auto;min-width:110px;">
-                            <img src="{{ SITE_LOGO_DARK|default:SITE_LOGO }}" alt="{{ SITE_NAME }}" class="h-5 md:h-9 lg:h-10 w-auto hidden dark:block" loading="eager" decoding="async" fetchpriority="high" width="140" height="36" style="height:36px;width:auto;min-width:110px;">
-                            {% else %}
-                            <span class="w-7 h-7 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-white font-semibold flex items-center justify-center shadow-inner shadow-amber-900/30">{{ SITE_NAME|slice:":1" }}</span>
-                            {% endif %}
-                            <span class="sr-only">{{ SITE_NAME }}</span>
-                        </a>
-                    </div>
-
-                    <!-- Centered Search Bar -->
-                    <div class="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl min-w-[320px] justify-center z-0">
-                        <form action="{% url 'products:search' %}" method="GET" class="w-full relative group" id="search-form">
-                            <div class="relative">
-                                <svg width="20" height="20" style="width:20px;height:20px;" class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 dark:text-stone-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                                <input 
-                                    type="search" 
-                                    name="q" 
-                                    placeholder="Search products..." 
-                                    class="w-full pl-12 pr-4 py-2.5 bg-stone-100 border-2 border-transparent rounded-xl focus:bg-white focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition-all duration-200 text-stone-700 placeholder-stone-400 dark:bg-stone-800 dark:focus:bg-stone-700 dark:text-stone-200 dark:placeholder-stone-500 dark:focus:border-amber-500 dark:focus:ring-amber-900/30"
-                                    autocomplete="off"
-                                    id="search-input"
-                                >
-                            </div>
-                            <!-- Search Suggestions -->
-                            <div id="search-suggestions" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-stone-200 overflow-hidden z-50 dark:bg-stone-800 dark:border-stone-700">
-                                <!-- Populated via JS -->
-                            </div>
-                        </form>
-                    </div>
-                    <!-- Actions -->
-                    <div class="flex items-center gap-0 lg:gap-2 ml-auto">
-                    <!-- Mobile Search Toggle -->
-                    <button class="lg:hidden p-1 lg:p-2.5 text-stone-700 hover:text-amber-700 rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-stone-300 dark:hover:text-amber-300 dark:focus-visible:ring-amber-400 dark:focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-900" id="mobile-search-toggle" aria-label="Search">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    </button>
-
-
-                    <!-- Currency Selector (inlined) -->
-                    <div id="currency-selector" class="relative currency-selector">
-                        <button id="currency-selector-toggle" aria-haspopup="listbox" aria-expanded="false" class="p-2 lg:p-2.5 rounded-xl text-stone-700 hover:text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:text-stone-300 dark:hover:text-amber-300">
-                            <span id="currency-current">{{ currency_code }}</span>
-                        </button>
-                        <div id="currency-dropdown" role="listbox" aria-label="Choose currency" class="hidden fixed left-1/2 top-auto transform -translate-x-1/2 w-[min(92%,420px)] max-h-[60vh] overflow-auto rounded-xl py-2 bg-white border border-stone-200 z-50 dark:bg-stone-800 dark:border-stone-700 lg:absolute lg:right-auto lg:mt-2 lg:left-auto lg:w-64 lg:max-h-56 lg:overflow-auto lg:rounded-2xl lg:shadow-2xl">
-                            <div id="currency-list" class="max-h-56 overflow-auto scrollbar-thin"></div>
-                        </div>
-                    </div>
-
-                    <!-- Theme toggle -->
-                    <button id="theme-toggle" class="p-1 lg:p-2.5 rounded-xl text-stone-700 hover:text-amber-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:text-stone-300 dark:hover:text-amber-400" aria-label="Toggle theme">
-                        <!-- Light icon (sun) with filled center -->
-                        <svg id="theme-toggle-light-icon" width="20" height="20" style="width:20px;height:20px;" class="w-5 h-5 block text-amber-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-label="Light theme" aria-hidden="false" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <!-- Filled sun core for better visibility -->
-                            <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none" />
-                            <!-- Rays -->
-                            <g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
-                              <line x1="12" y1="1.5" x2="12" y2="4" />
-                              <line x1="12" y1="20" x2="12" y2="22.5" />
-                              <line x1="1.5" y1="12" x2="4" y2="12" />
-                              <line x1="20" y1="12" x2="22.5" y2="12" />
-                              <line x1="4.2" y1="4.2" x2="6.3" y2="6.3" />
-                              <line x1="17.7" y1="17.7" x2="19.8" y2="19.8" />
-                              <line x1="4.2" y1="19.8" x2="6.3" y2="17.7" />
-                              <line x1="17.7" y1="6.3" x2="19.8" y2="4.2" />
-                            </g>
-                        </svg>
-                        <!-- Dark icon (moon) -->
-                        <svg id="theme-toggle-dark-icon" width="20" height="20" style="width:20px;height:20px;" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
-                    </button>
-
-                    <!-- Account -->
-                    <div class="relative hidden lg:block dropdown-container">
-                        <button class="dropdown-toggle p-1 text-stone-700 hover:opacity-80 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:text-stone-300 dark:focus-visible:ring-amber-400">
-                            {% if request.user.is_authenticated %}
-                                {% if request.user.avatar %}
-                                <img src="{{ request.user.avatar.url }}" alt="{{ request.user.first_name }}" loading="lazy" decoding="async" class="w-9 h-9 rounded-full object-cover ring-2 ring-amber-400/50">
-                                {% else %}
-                                <div class="w-9 h-9 bg-gradient-to-br from-amber-500 to-amber-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                                    {{ request.user.first_name|slice:":1"|upper|default:"U" }}
-                                </div>
-                                {% endif %}
-                            {% else %}
-                            <div class="w-9 h-9 bg-stone-100 rounded-full flex items-center justify-center dark:bg-stone-800">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                            </div>
-                            {% endif %}
-                        </button>
-                        <div id="account-dropdown" class="dropdown-menu hidden absolute right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-stone-200 py-2 min-w-[240px] z-50 opacity-0 transform scale-95 transition-all duration-200 dark:bg-stone-800 dark:border-stone-700">
-                            <!-- Populated via JS based on auth state -->
-                        </div>
-                    </div>
-                    
-                    <!-- Wishlist -->
-                    <a href="{% url 'wishlist:list' %}" class="relative p-1.5 lg:p-2.5 text-stone-700 hover:text-rose-600 rounded-xl transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-stone-300 dark:hover:text-rose-400 dark:focus-visible:ring-rose-400" aria-label="Wishlist">
-                        <svg class="w-5 h-5 sm:w-7 sm:h-7 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                        <span data-wishlist-count class="hidden absolute -top-1 -right-1 sm:-top-1 sm:-right-1 bg-rose-600 text-white dark:text-white text-[8px] sm:text-[10px] font-bold min-w-[16px] h-[16px] rounded-full flex items-center justify-center px-1">0</span>
-                    </a> 
-                    
-                    <!-- Cart -->
-                    <button type="button" data-cart-open class="relative p-1.5 lg:p-2.5 text-stone-700 hover:text-amber-700 rounded-xl transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:text-stone-300 dark:hover:text-amber-400 dark:focus-visible:ring-amber-400" aria-label="Cart">
-                        <svg class="w-6 h-5 sm:w-7 sm:h-7 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-                        <span data-cart-count class="hidden absolute -top-1 -right-1 sm:-top-1 sm:-right-1 bg-amber-600 text-white dark:text-white text-[8px] sm:text-[10px] font-bold min-w-[16px] h-[16px] rounded-full flex items-center justify-center px-1">0</span>
-                    </button>
-                    <!-- Mobile Menu (moved after cart) -->
-                    <button type="button" data-mobile-menu-toggle class="lg:hidden p-1 lg:p-2.5 rounded-xl text-stone-700 hover:text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-stone-300 dark:hover:text-amber-400 dark:focus-visible:ring-amber-400 dark:focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-900" aria-label="Open menu">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                    </button>
+    <header id="main-header" class="sticky top-0 inset-x-0 z-40 border-transparent bg-white/60 dark:bg-stone-900/55 backdrop-blur-[12px] shadow-sm transition-colors transition-shadow">
+        <div class="container mx-auto px-2 md:px-4">
+            <div class="main-header-row flex flex-wrap items-center gap-2 py-2 relative">
+                <div class="flex items-center gap-1 z-10">
+                    <a href="{% url 'home' %}" class="inline-flex items-center gap-2" aria-label="Go to homepage">
+                        {% if SITE_LOGO %}
+                        <img src="{{ SITE_LOGO }}" alt="{{ SITE_NAME }}" class="h-5 md:h-9 lg:h-10 w-auto dark:hidden" loading="eager" decoding="async" fetchpriority="high" width="140" height="36" style="height:36px;width:auto;min-width:110px;">
+                        <img src="{{ SITE_LOGO_DARK|default:SITE_LOGO }}" alt="{{ SITE_NAME }}" class="h-5 md:h-9 lg:h-10 w-auto hidden dark:block" loading="eager" decoding="async" fetchpriority="high" width="140" height="36" style="height:36px;width:auto;min-width:110px;">
+                        {% else %}
+                        <span class="w-7 h-7 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-white font-semibold flex items-center justify-center shadow-inner shadow-amber-900/30">{{ SITE_NAME|slice:":1" }}</span>
+                        {% endif %}
+                        <span class="sr-only">{{ SITE_NAME }}</span>
+                    </a>
                 </div>
+
+                <!-- Centered Search Bar -->
+                <div class="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl min-w-[320px] justify-center z-0">
+                    <form action="{% url 'products:search' %}" method="GET" class="w-full relative group" id="search-form">
+                        <div class="relative">
+                            <svg width="20" height="20" style="width:20px;height:20px;" class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 dark:text-stone-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            <input 
+                                type="search" 
+                                name="q" 
+                                placeholder="Search products..." 
+                                class="w-full pl-12 pr-4 py-2.5 bg-stone-100 border-2 border-transparent rounded-xl focus:bg-white focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition-all duration-200 text-stone-700 placeholder-stone-400 dark:bg-stone-800 dark:focus:bg-stone-700 dark:text-stone-200 dark:placeholder-stone-500 dark:focus:border-amber-500 dark:focus:ring-amber-900/30"
+                                autocomplete="off"
+                                id="search-input"
+                            >
+                        </div>
+                        <!-- Search Suggestions -->
+                        <div id="search-suggestions" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-stone-200 overflow-hidden z-50 dark:bg-stone-800 dark:border-stone-700">
+                            <!-- Populated via JS -->
+                        </div>
+                    </form>
+                </div>
+                <!-- Actions -->
+                <div class="flex items-center gap-0 lg:gap-2 ml-auto">
+                <!-- Mobile Search Toggle -->
+                <button class="lg:hidden p-1 lg:p-2.5 text-stone-700 hover:text-amber-700 rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-stone-300 dark:hover:text-amber-300 dark:focus-visible:ring-amber-400 dark:focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-900" id="mobile-search-toggle" aria-label="Search">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </button>
+
+
+                <!-- Currency Selector (inlined) -->
+                <div id="currency-selector" class="relative currency-selector">
+                    <button id="currency-selector-toggle" aria-haspopup="listbox" aria-expanded="false" class="p-2 lg:p-2.5 rounded-xl text-stone-700 hover:text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:text-stone-300 dark:hover:text-amber-300">
+                        <span id="currency-current">{{ currency_code }}</span>
+                    </button>
+                    <div id="currency-dropdown" role="listbox" aria-label="Choose currency" class="hidden fixed left-1/2 top-auto transform -translate-x-1/2 w-[min(92%,420px)] max-h-[60vh] overflow-auto rounded-xl py-2 bg-white border border-stone-200 z-50 dark:bg-stone-800 dark:border-stone-700 lg:absolute lg:right-auto lg:mt-2 lg:left-auto lg:w-64 lg:max-h-56 lg:overflow-auto lg:rounded-2xl lg:shadow-2xl">
+                        <div id="currency-list" class="max-h-56 overflow-auto scrollbar-thin"></div>
+                    </div>
+                </div>
+
+                <!-- Theme toggle -->
+                <button id="theme-toggle" class="p-1 lg:p-2.5 rounded-xl text-stone-700 hover:text-amber-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:text-stone-300 dark:hover:text-amber-400" aria-label="Toggle theme">
+                    <!-- Light icon (sun) with filled center -->
+                    <svg id="theme-toggle-light-icon" width="20" height="20" style="width:20px;height:20px;" class="w-5 h-5 block text-amber-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-label="Light theme" aria-hidden="false" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <!-- Filled sun core for better visibility -->
+                        <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none" />
+                        <!-- Rays -->
+                        <g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+                            <line x1="12" y1="1.5" x2="12" y2="4" />
+                            <line x1="12" y1="20" x2="12" y2="22.5" />
+                            <line x1="1.5" y1="12" x2="4" y2="12" />
+                            <line x1="20" y1="12" x2="22.5" y2="12" />
+                            <line x1="4.2" y1="4.2" x2="6.3" y2="6.3" />
+                            <line x1="17.7" y1="17.7" x2="19.8" y2="19.8" />
+                            <line x1="4.2" y1="19.8" x2="6.3" y2="17.7" />
+                            <line x1="17.7" y1="6.3" x2="19.8" y2="4.2" />
+                        </g>
+                    </svg>
+                    <!-- Dark icon (moon) -->
+                    <svg id="theme-toggle-dark-icon" width="20" height="20" style="width:20px;height:20px;" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+                </button>
+
+                <!-- Account -->
+                <div class="relative hidden lg:block dropdown-container">
+                    <button class="dropdown-toggle p-1 text-stone-700 hover:opacity-80 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:text-stone-300 dark:focus-visible:ring-amber-400">
+                        {% if request.user.is_authenticated %}
+                            {% if request.user.avatar %}
+                            <img src="{{ request.user.avatar.url }}" alt="{{ request.user.first_name }}" loading="lazy" decoding="async" class="w-9 h-9 rounded-full object-cover ring-2 ring-amber-400/50">
+                            {% else %}
+                            <div class="w-9 h-9 bg-gradient-to-br from-amber-500 to-amber-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                {{ request.user.first_name|slice:":1"|upper|default:"U" }}
+                            </div>
+                            {% endif %}
+                        {% else %}
+                        <div class="w-9 h-9 bg-stone-100 rounded-full flex items-center justify-center dark:bg-stone-800">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        </div>
+                        {% endif %}
+                    </button>
+                    <div id="account-dropdown" class="dropdown-menu hidden absolute right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-stone-200 py-2 min-w-[240px] z-50 opacity-0 transform scale-95 transition-all duration-200 dark:bg-stone-800 dark:border-stone-700">
+                        <!-- Populated via JS based on auth state -->
+                    </div>
+                </div>
+                
+                <!-- Wishlist -->
+                <a href="{% url 'wishlist:list' %}" class="relative p-1.5 lg:p-2.5 text-stone-700 hover:text-rose-600 rounded-xl transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-stone-300 dark:hover:text-rose-400 dark:focus-visible:ring-rose-400" aria-label="Wishlist">
+                    <svg class="w-5 h-5 sm:w-7 sm:h-7 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                    <span data-wishlist-count class="hidden absolute -top-1 -right-1 sm:-top-1 sm:-right-1 bg-rose-600 text-white dark:text-white text-[8px] sm:text-[10px] font-bold min-w-[16px] h-[16px] rounded-full flex items-center justify-center px-1">0</span>
+                </a> 
+                
+                <!-- Cart -->
+                <button type="button" data-cart-open class="relative p-1.5 lg:p-2.5 text-stone-700 hover:text-amber-700 rounded-xl transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:text-stone-300 dark:hover:text-amber-400 dark:focus-visible:ring-amber-400" aria-label="Cart">
+                    <svg class="w-6 h-5 sm:w-7 sm:h-7 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                    <span data-cart-count class="hidden absolute -top-1 -right-1 sm:-top-1 sm:-right-1 bg-amber-600 text-white dark:text-white text-[8px] sm:text-[10px] font-bold min-w-[16px] h-[16px] rounded-full flex items-center justify-center px-1">0</span>
+                </button>
+                <!-- Mobile Menu (moved after cart) -->
+                <button type="button" data-mobile-menu-toggle class="lg:hidden p-1 lg:p-2.5 rounded-xl text-stone-700 hover:text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-stone-300 dark:hover:text-amber-400 dark:focus-visible:ring-amber-400 dark:focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-900" aria-label="Open menu">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
             </div>
         </div>
         
         <!-- Navigation -->
-        <nav class="hidden lg:block border-t border-transparent glass" data-main-nav>
+        <nav class="hidden lg:block border-t border-transparent bg-white/60 dark:bg-stone-900/55 backdrop-blur-[12px]" data-main-nav>
             <div class="container mx-auto px-4 flex items-center justify-between">
                 <ul id="main-nav" class="flex items-center gap-1 h-10 overflow-x-auto scrollbar-hide">
                     <!-- Categories loaded via JS -->
@@ -1103,6 +1088,107 @@
                         `;
                     }
 
+                    // Header megamenu (desktop)
+                    try {
+                        const headerCats = document.getElementById('header-categories');
+                        if (headerCats && Array.isArray(finalCategories) && finalCategories.length > 0) {
+                            const roots = finalCategories.slice(0, 8); // limit to first 8 for layout
+                            headerCats.innerHTML = roots.map(cat => `
+                                <li class="relative group" data-cat-id="${cat.id}">
+                                    <a href="${buildRoute('categoryDetail', cat.slug)}" class="inline-flex items-center px-3 py-2 text-stone-700 hover:text-amber-700 hover:bg-amber-50 rounded-md text-sm font-medium transition" aria-haspopup="true" aria-expanded="false">${escapeHtml ? escapeHtml(cat.name) : cat.name}</a>
+                                    <div class="mega-panel hidden absolute left-1/2 top-full -translate-x-1/2 mt-2 w-[min(96vw,900px)] bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-700 rounded-xl shadow-2xl p-4 z-50" aria-hidden="true"></div>
+                                </li>
+                            `).join('');
+
+                            // For each root, fetch immediate children and grandchildren (small limits to avoid many requests)
+                            const panels = headerCats.querySelectorAll('.mega-panel');
+                            await Promise.all(Array.from(panels).map(async panel => {
+                                const parentLi = panel.closest('li[data-cat-id]');
+                                if (!parentLi) return;
+                                const catId = parentLi.dataset.catId;
+                                // fetch second-level categories
+                                let subs = [];
+                                try {
+                                    const resp = await CategoriesApi.getSubcategories(catId);
+                                    subs = Array.isArray(resp) ? resp : (resp?.data || resp?.results || resp || []);
+                                } catch (e) { subs = []; }
+
+                                // For each sub, get its children (grandchildren)
+                                const limitedSubs = subs.slice(0, 10);
+                                const grandchildrenRequests = limitedSubs.map(s => CategoriesApi.getSubcategories(s.id).catch(() => []));
+                                const grandchildrenResults = await Promise.all(grandchildrenRequests);
+                                limitedSubs.forEach((s, idx) => {
+                                    const gr = grandchildrenResults[idx];
+                                    s.children = Array.isArray(gr) ? gr : (gr?.data || gr?.results || gr || []);
+                                });
+
+                                if (!limitedSubs.length) {
+                                    panel.classList.add('hidden');
+                                    return;
+                                }
+
+                                // Build simple grid megamenu: each subcategory as a column with its children listed
+                                const columnsHtml = limitedSubs.map(s => {
+                                    return `
+                                        <div class="min-w-[180px]">
+                                            <a href="${buildRoute('categoryDetail', s.slug)}" class="flex items-center gap-3 p-2 rounded-md hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors">
+                                                <div class="w-12 h-12 bg-stone-100 dark:bg-stone-800 rounded-lg overflow-hidden flex items-center justify-center">
+                                                    ${s.image ? `<img src="${s.image}" alt="${escapeHtml ? escapeHtml(s.name) : s.name}" class="w-full h-full object-cover" />` : `<span class="text-amber-700 font-semibold">${(s.name||'').charAt(0)}</span>`}
+                                                </div>
+                                                <div class="truncate">
+                                                    <div class="text-sm font-semibold text-stone-700 dark:text-stone-100">${escapeHtml ? escapeHtml(s.name) : s.name}</div>
+                                                    <div class="text-xs text-stone-500 dark:text-stone-400 mt-1 line-clamp-2">${(s.description||'').slice(0,80)}</div>
+                                                </div>
+                                            </a>
+                                            ${Array.isArray(s.children) && s.children.length ? `<ul class="mt-2 text-sm text-stone-600 dark:text-stone-300 space-y-1">${s.children.slice(0,8).map(g => `<li><a href="${buildRoute('categoryDetail', g.slug)}" class="block py-1 hover:text-amber-700">${escapeHtml ? escapeHtml(g.name) : g.name}</a></li>`).join('')}</ul>` : ''}
+                                        </div>
+                                    `;
+                                }).join('');
+
+                                panel.innerHTML = `<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">${columnsHtml}</div>`;
+                                panel.setAttribute('aria-hidden','false');
+                            }));
+
+                            // Interactions: basic keyboard and click/outside handling
+                            headerCats.querySelectorAll('li[data-cat-id]').forEach(li => {
+                                const trigger = li.querySelector('a[aria-haspopup]');
+                                const panel = li.querySelector('.mega-panel');
+                                if (!trigger || !panel) return;
+                                trigger.addEventListener('keydown', (e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        panel.classList.toggle('hidden');
+                                        const expanded = panel.classList.contains('hidden') ? 'false' : 'true';
+                                        trigger.setAttribute('aria-expanded', expanded);
+                                    } else if (e.key === 'Escape') {
+                                        panel.classList.add('hidden');
+                                        trigger.setAttribute('aria-expanded','false');
+                                        trigger.blur();
+                                    }
+                                });
+                                li.addEventListener('mouseleave', () => {
+                                    panel.classList.add('hidden');
+                                    trigger.setAttribute('aria-expanded','false');
+                                });
+                                li.addEventListener('focusout', (e) => {
+                                    if (!li.contains(e.relatedTarget)) {
+                                        panel.classList.add('hidden');
+                                        trigger.setAttribute('aria-expanded','false');
+                                    }
+                                });
+                            });
+
+                            document.addEventListener('click', (e) => {
+                                if (!document.getElementById('header-categories')?.contains(e.target)) {
+                                    document.querySelectorAll('#header-categories .mega-panel').forEach(p => p.classList.add('hidden'));
+                                    document.querySelectorAll('#header-categories a[aria-expanded]').forEach(a => a.setAttribute('aria-expanded','false'));
+                                }
+                            });
+                        }
+                    } catch (e) {
+                        console.error('Header megamenu error:', e);
+                    }
+
                     // Footer categories
                     if (Array.isArray(finalCategories) && finalCategories.length > 0 && footerCats) {
                         footerCats.innerHTML = finalCategories.slice(0, 5).map(cat => `
@@ -1403,7 +1489,8 @@
                             'supports-[backdrop-filter]:bg-white/70', 'dark:supports-[backdrop-filter]:bg-stone-900/70',
                             'backdrop-blur-xl'
                         );
-                        header.classList.add('bg-transparent', 'border-transparent', 'backdrop-blur-none', 'shadow-none');
+                        // Restore frosted glass look at top instead of transparent
+                        header.classList.add('bg-white/30', 'dark:bg-stone-900/40', 'backdrop-blur-[12px]', 'border-transparent', 'shadow-sm');
                     }
 
                     if (!isCollapsed && currentScroll > collapseThreshold) {
