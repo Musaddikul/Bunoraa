@@ -10,13 +10,14 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 
-from ..models import Payment, PaymentMethod, Refund, PaymentGateway
-from ..services import StripeService, PaymentService, PaymentMethodService
+from ..models import Payment, PaymentMethod, Refund, PaymentGateway, PaymentLink, BNPLProvider, RecurringCharge, PaymentTransaction
+from ..services import StripeService, PaymentService, PaymentMethodService, SSLCommerzService, BkashService, NagadService
 from .serializers import (
     PaymentSerializer, PaymentMethodSerializer, RefundSerializer,
     CreatePaymentIntentSerializer, SavePaymentMethodSerializer,
     SetDefaultPaymentMethodSerializer, RefundCreateSerializer,
-    PaymentGatewaySerializer
+    PaymentGatewaySerializer, PaymentLinkSerializer, PaymentLinkCreateSerializer,
+    BNPLProviderSerializer, RecurringChargeSerializer
 )
 
 
@@ -330,21 +331,18 @@ class PaymentMethodViewSet(viewsets.ModelViewSet):
 class RefundAdminViewSet(viewsets.ModelViewSet):
     """
     Admin ViewSet for refunds.
-    
-    GET /api/v1/payments/admin/refunds/ - List all refunds
-    POST /api/v1/payments/admin/refunds/ - Create refund
-    GET /api/v1/payments/admin/refunds/{id}/ - Get refund detail
     """
     queryset = Refund.objects.all().order_by('-created_at')
     serializer_class = RefundSerializer
     permission_classes = [IsAdminUser]
-    
+
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
-        
+
         if page is not None:
             serializer = self.get_serializer(page, many=True)
+            response = self.get_paginated_response(serializer.data)
             return Response({
                 'success': True,
                 'message': 'Refunds retrieved successfully',
@@ -353,7 +351,7 @@ class RefundAdminViewSet(viewsets.ModelViewSet):
                     'count': self.paginator.page.paginator.count
                 }
             })
-        
+
         serializer = self.get_serializer(queryset, many=True)
         return Response({
             'success': True,
@@ -361,16 +359,16 @@ class RefundAdminViewSet(viewsets.ModelViewSet):
             'data': serializer.data,
             'meta': {'count': len(serializer.data)}
         })
-    
+
     def create(self, request, *args, **kwargs):
         """Create a refund."""
         serializer = RefundCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
+
         payment = Payment.objects.filter(
             id=serializer.validated_data['payment_id']
         ).first()
-        
+
         if not payment:
             return Response({
                 'success': False,
@@ -378,7 +376,7 @@ class RefundAdminViewSet(viewsets.ModelViewSet):
                 'data': {},
                 'meta': {}
             }, status=status.HTTP_404_NOT_FOUND)
-        
+
         try:
             refund = PaymentService.refund_payment(
                 payment=payment,
@@ -387,14 +385,14 @@ class RefundAdminViewSet(viewsets.ModelViewSet):
                 notes=serializer.validated_data.get('notes'),
                 created_by=request.user
             )
-            
+
             return Response({
                 'success': True,
                 'message': 'Refund processed successfully',
                 'data': RefundSerializer(refund).data,
                 'meta': {}
             }, status=status.HTTP_201_CREATED)
-        
+
         except ValueError as e:
             return Response({
                 'success': False,
@@ -402,7 +400,7 @@ class RefundAdminViewSet(viewsets.ModelViewSet):
                 'data': {},
                 'meta': {}
             }, status=status.HTTP_400_BAD_REQUEST)
-        
+
         except stripe.error.StripeError as e:
             return Response({
                 'success': False,
@@ -410,6 +408,70 @@ class RefundAdminViewSet(viewsets.ModelViewSet):
                 'data': {},
                 'meta': {}
             }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PaymentLinkViewSet(viewsets.GenericViewSet):
+    """Create and retrieve payment links."""
+    serializer_class = PaymentLinkSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return PaymentLink.objects.filter(order__user=self.request.user)
+
+    @action(detail=False, methods=['post'])
+    def create_link(self, request):
+        serializer = PaymentLinkCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        from apps.orders.models import Order
+        order = Order.objects.filter(id=serializer.validated_data['order_id'], user=request.user).first()
+        if not order:
+            return Response({'success': False, 'message': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
+        from django.utils.crypto import get_random_string
+        code = get_random_string(32)
+        gateway = None
+        gw_code = serializer.validated_data.get('gateway_code')
+        if gw_code:
+            gateway = PaymentGateway.objects.filter(code=gw_code).first()
+        amount = serializer.validated_data.get('amount') or order.total_amount
+        currency = serializer.validated_data.get('currency') or 'BDT'
+        expires_at = serializer.validated_data.get('expires_at')
+        pl = PaymentLink.objects.create(order=order, gateway=gateway, code=code, amount=amount, currency=currency, expires_at=expires_at)
+        return Response({'success': True, 'message': 'Payment link created', 'data': PaymentLinkSerializer(pl).data}, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['get'])
+    def my_links(self, request):
+        qs = self.get_queryset()
+        serializer = PaymentLinkSerializer(qs, many=True)
+        return Response({'success': True, 'data': serializer.data})
+
+
+class BNPLViewSet(viewsets.ReadOnlyModelViewSet):
+    """Public endpoints to list BNPL providers and check agreements."""
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        providers = BNPLProvider.objects.filter(is_active=True)
+        data = [{'code': p.code, 'name': p.name, 'config': p.config} for p in providers]
+        return Response({'success': True, 'data': data})
+
+    @action(detail=False, methods=['post'])
+    def create_agreement(self, request):
+        code = request.data.get('provider_code')
+        provider = BNPLProvider.objects.filter(code=code).first()
+        if not provider:
+            return Response({'success': False, 'message': 'BNPL provider not found'}, status=status.HTTP_404_NOT_FOUND)
+        # TODO: initiate provider-specific flow and return URL or widget data
+        return Response({'success': True, 'message': 'BNPL flow initiated (stub)'} )
+
+
+class RecurringChargeAdminViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = RecurringCharge.objects.order_by('-created_at')
+    permission_classes = [IsAdminUser]
+
+    def list(self, request, *args, **kwargs):
+        qs = self.filter_queryset(self.get_queryset())
+        serializer = RecurringChargeSerializer(qs, many=True)
+        return Response({'success': True, 'data': serializer.data})
 
 
 @api_view(['POST'])
@@ -439,3 +501,68 @@ def stripe_webhook(request):
         PaymentService.process_payment_failure(data['id'], failure_message)
     
     return HttpResponse(status=200)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+@csrf_exempt
+def sslcommerz_ipn(request):
+    """Handle SSLCommerz IPN notifications.
+
+    Docs: https://developer.sslcommerz.com
+    """
+    payload = request.POST.dict() if request.method == 'POST' else {}
+    gateway_code = request.GET.get('gateway')
+    gateway = PaymentGateway.objects.filter(code=gateway_code).first() if gateway_code else None
+
+    # Verify and normalize
+    result = SSLCommerzService.verify_transaction(payload, gateway)
+    if not result.get('success'):
+        return HttpResponse(status=400)
+    # Create transaction log
+    PaymentTransaction.objects.create(
+        gateway=gateway,
+        reference=result.get('reference'),
+        payload=payload,
+        event_type='sslcommerz_ipn'
+    )
+    # TODO: tie to Payment and update order
+    return HttpResponse('OK')
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+@csrf_exempt
+def bkash_webhook(request):
+    payload = request.body
+    gateway = PaymentGateway.objects.filter(code=PaymentGateway.CODE_BKASH).first()
+    result = BkashService.verify_payment(payload, gateway)
+    if not result.get('success'):
+        return HttpResponse(status=400)
+    PaymentTransaction.objects.create(
+        gateway=gateway,
+        reference=result.get('reference'),
+        payload={'raw': payload.decode('utf-8') if isinstance(payload, (bytes,)) else str(payload)},
+        event_type='bkash_webhook'
+    )
+    # TODO: process and link to Payment
+    return HttpResponse('OK')
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+@csrf_exempt
+def nagad_webhook(request):
+    payload = request.body
+    gateway = PaymentGateway.objects.filter(code=PaymentGateway.CODE_NAGAD).first()
+    result = NagadService.verify_callback(payload, gateway)
+    if not result.get('success'):
+        return HttpResponse(status=400)
+    PaymentTransaction.objects.create(
+        gateway=gateway,
+        reference=result.get('reference'),
+        payload={'raw': payload.decode('utf-8') if isinstance(payload, (bytes,)) else str(payload)},
+        event_type='nagad_webhook'
+    )
+    # TODO: process and link to Payment
+    return HttpResponse('OK')

@@ -67,11 +67,30 @@ class PaymentGateway(models.Model):
     max_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     
     # API Configuration (encrypted in production)
-    api_key = models.CharField(max_length=255, blank=True)
-    api_secret = models.CharField(max_length=255, blank=True)
+    api_key = models.CharField(max_length=255, blank=True, help_text="Public/publishable key where applicable (store secrets securely)")
+    api_secret = models.CharField(max_length=255, blank=True, help_text="Secret key (store encrypted in production, e.g., a secrets manager)")
     merchant_id = models.CharField(max_length=100, blank=True)
     webhook_secret = models.CharField(max_length=255, blank=True)
     is_sandbox = models.BooleanField(default=True, help_text="Use sandbox/test mode")
+
+    # Bangladesh gateway specific configuration (inline fields for admin configuration)
+    ssl_store_id = models.CharField(max_length=200, blank=True, help_text='SSLCommerz store id')
+    ssl_store_passwd = models.CharField(max_length=200, blank=True, help_text='SSLCommerz store password (treat as secret)')
+
+    bkash_mode = models.CharField(max_length=20, blank=True, db_index=True, help_text='bKash mode (sandbox/live)')
+    bkash_app_key = models.CharField(max_length=255, blank=True, help_text='bKash app key (store securely)')
+    bkash_app_secret = models.CharField(max_length=255, blank=True, help_text='bKash app secret (store securely)')
+    bkash_username = models.CharField(max_length=255, blank=True, help_text='bKash API username')
+    bkash_password = models.CharField(max_length=255, blank=True, help_text='bKash API password or secret')
+
+    nagad_merchant_id = models.CharField(max_length=255, blank=True, help_text='Nagad merchant id')
+    nagad_public_key = models.TextField(blank=True, help_text='Nagad public key (PEM)')
+    nagad_private_key = models.TextField(blank=True, help_text='Nagad private key (PEM)')
+
+    # Capability flags (index for fast filtering)
+    supports_partial = models.BooleanField(default=False, db_index=True, help_text='Supports partial payments / splits')
+    supports_recurring = models.BooleanField(default=False, db_index=True, help_text='Supports recurring payments/subscriptions')
+    supports_bnpl = models.BooleanField(default=False, db_index=True, help_text='Supports BNPL provider integration')
     
     # Instructions for customers
     instructions = models.TextField(blank=True, help_text="Instructions shown to customer after selecting this payment method")
@@ -251,7 +270,7 @@ class Payment(models.Model):
     
     # Amount
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    currency = models.CharField(max_length=3, default='USD')
+    currency = models.CharField(max_length=3, default='BDT', help_text='Primary currency is BDT (Bangladeshi Taka)')
     
     # Payment method
     payment_method = models.ForeignKey(
@@ -369,3 +388,173 @@ class Refund(models.Model):
     
     def __str__(self):
         return f"Refund {self.id} - {self.amount} ({self.status})"
+
+
+# ------------------------- Advanced Payments & Gateway Extensions -------------------------
+class PaymentTransaction(models.Model):
+    """Generic transaction log for analytics and troubleshooting.
+
+    Stores raw gateway payloads and normalized metadata for reporting and
+    reconciliation.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    gateway = models.ForeignKey(PaymentGateway, on_delete=models.SET_NULL, null=True, related_name='transactions')
+    payment = models.ForeignKey(Payment, on_delete=models.SET_NULL, null=True, blank=True, related_name='transactions')
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='payment_transactions'
+    )
+    order = models.ForeignKey('orders.Order', on_delete=models.SET_NULL, null=True, blank=True)
+
+    event_type = models.CharField(max_length=100, help_text='Event type reported by gateway (e.g., payment_success, refund)')
+    reference = models.CharField(max_length=255, blank=True, null=True, db_index=True, help_text='Gateway reference id (transaction id)')
+    payload = models.JSONField(default=dict, blank=True)
+    fee_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = (("gateway", "reference"),)
+        indexes = [
+            models.Index(fields=['gateway', '-created_at']),
+            models.Index(fields=['reference']),
+            models.Index(fields=['order']),
+            models.Index(fields=['payment']),
+        ]
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Txn {self.reference or self.id} - {self.event_type}"
+
+
+class PaymentLink(models.Model):
+    """Shareable payment link for invoices or one-off payments."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    order = models.ForeignKey('orders.Order', on_delete=models.CASCADE, related_name='payment_links')
+    gateway = models.ForeignKey(PaymentGateway, on_delete=models.SET_NULL, null=True, blank=True)
+    code = models.CharField(max_length=64, unique=True, db_index=True, help_text='Auto-generated unique code')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=3, default='BDT')
+    expires_at = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name_plural = "Payment Links"
+        indexes = [
+            models.Index(fields=['code']),
+            models.Index(fields=['is_active']),
+            models.Index(fields=['expires_at']),
+            models.Index(fields=['order']),
+        ]
+
+    def __str__(self):
+        return f"PaymentLink {self.code} for Order {self.order_id}"
+
+
+class BkashCredential(models.Model):
+    """Store bKash credentials and token cache for server-side integration.
+
+    Tokens should be rotated and stored securely (use a secrets manager in prod).
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    gateway = models.OneToOneField(PaymentGateway, on_delete=models.CASCADE, related_name='bkash_credentials')
+    app_key = models.CharField(max_length=255, blank=True)
+    app_secret = models.CharField(max_length=255, blank=True)
+    username = models.CharField(max_length=255, blank=True)
+    password = models.CharField(max_length=255, blank=True)
+    auth_token = models.CharField(max_length=1024, blank=True)
+    token_expires_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['token_expires_at'])]
+
+    def __str__(self):
+        return f"bKash credentials for {self.gateway.name}"
+
+
+class BNPLProvider(models.Model):
+    """BNPL provider configuration (e.g., provider code, merchant keys)."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    code = models.CharField(max_length=50, unique=True)
+    name = models.CharField(max_length=200)
+    is_active = models.BooleanField(default=True, db_index=True)
+    config = models.JSONField(default=dict, blank=True, help_text='Provider-specific configuration')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['code']), models.Index(fields=['is_active'])]
+
+    def __str__(self):
+        return self.name
+
+
+class BNPLAgreement(models.Model):
+    """Record of a customer's BNPL agreement/approval with a provider."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='bnpl_agreements')
+    provider = models.ForeignKey(BNPLProvider, on_delete=models.CASCADE, related_name='agreements')
+    provider_reference = models.CharField(max_length=255, blank=True, db_index=True)
+    approved = models.BooleanField(default=False, db_index=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['user']), models.Index(fields=['provider_reference'])]
+
+    def __str__(self):
+        return f"BNPL {self.provider} for {self.user} ({'approved' if self.approved else 'pending'})"
+
+
+class AuditLog(models.Model):
+    """Simple audit log for tracking sensitive payment actions."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
+    action = models.CharField(max_length=255)
+    object_type = models.CharField(max_length=100, blank=True)
+    object_id = models.CharField(max_length=255, blank=True)
+    data = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['user']), models.Index(fields=['action']), models.Index(fields=['created_at'])]
+
+    def __str__(self):
+        return f"Audit {self.action} by {self.user} at {self.created_at}"
+
+
+class RecurringCharge(models.Model):
+    """Track recurring billing attempts for subscriptions (invoices created, attempts, failures)."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    subscription = models.ForeignKey('subscriptions.Subscription', on_delete=models.CASCADE, related_name='recurring_charges')
+    payment = models.ForeignKey(Payment, on_delete=models.SET_NULL, null=True, blank=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=3, default='BDT')
+    status = models.CharField(max_length=30, default='pending')
+    attempt_at = models.DateTimeField(null=True, blank=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    stripe_subscription_id = models.CharField(max_length=255, blank=True, null=True, db_index=True, help_text='Optional external subscription id reference')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['subscription']),
+            models.Index(fields=['status']),
+            models.Index(fields=['attempt_at']),
+            models.Index(fields=['payment']),
+            models.Index(fields=['stripe_subscription_id']),
+        ]
+
+    def __str__(self):
+        return f"RecurringCharge {self.subscription} - {self.amount} {self.currency} ({self.status})"
+
+
+# Helper property on PaymentGateway
+def gateway_requires_client_js(self):
+    return self.code in (self.CODE_STRIPE, self.CODE_BKASH)
+
+PaymentGateway.requires_client_js = property(gateway_requires_client_js)

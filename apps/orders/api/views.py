@@ -5,6 +5,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 
 from ..models import Order
 from ..services import OrderService
@@ -28,6 +29,8 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
     - POST /api/v1/orders/{id}/cancel/ - Cancel order
     - GET /api/v1/orders/{id}/track/ - Get tracking info
     """
+    throttle_classes = [UserRateThrottle]
+    throttle_scope = 'orders'
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
@@ -52,6 +55,14 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
         if status_filter:
             queryset = queryset.filter(status=status_filter)
         
+        # Date range filtering
+        date_from = request.query_params.get('date_from')
+        date_to = request.query_params.get('date_to')
+        if date_from:
+            queryset = queryset.filter(created_at__date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(created_at__date__lte=date_to)
+
         # Pagination
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -135,7 +146,7 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
 class OrderAdminViewSet(viewsets.ModelViewSet):
     """
     ViewSet for admin order management.
-    
+
     Endpoints:
     - GET /api/v1/admin/orders/ - List all orders
     - GET /api/v1/admin/orders/{id}/ - Get order detail
@@ -143,6 +154,8 @@ class OrderAdminViewSet(viewsets.ModelViewSet):
     - POST /api/v1/admin/orders/{id}/tracking/ - Add tracking
     - GET /api/v1/admin/orders/statistics/ - Get statistics
     """
+    throttle_classes = [UserRateThrottle]
+    throttle_scope = 'admin-orders'
     permission_classes = [IsAdminUser]
     queryset = Order.objects.filter(is_deleted=False).prefetch_related('items', 'status_history')
     

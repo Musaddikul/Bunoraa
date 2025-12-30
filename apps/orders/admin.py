@@ -29,11 +29,12 @@ class OrderStatusHistoryInline(admin.TabularInline):
 class OrderAdmin(admin.ModelAdmin):
     list_display = [
         'order_number', 'user_email', 'status', 'status_badge', 'item_count',
-        'total', 'payment_status', 'created_at'
+        'total', 'payment_status_badge', 'created_at'
     ]
     list_editable = ['status']
     list_filter = ['status', 'payment_status', 'payment_method', 'shipping_method', 'created_at']
-    search_fields = ['order_number', 'email', 'user__email', 'shipping_first_name', 'shipping_last_name']
+    search_fields = ['order_number', 'email', 'user__email', 'phone', 'shipping_first_name', 'shipping_last_name']
+    raw_id_fields = ['user']
     readonly_fields = [
         'id', 'order_number', 'subtotal', 'discount', 'tax', 'total',
         'stripe_payment_intent_id', 'created_at', 'updated_at',
@@ -43,6 +44,10 @@ class OrderAdmin(admin.ModelAdmin):
     ordering = ['-created_at']
     
     inlines = [OrderItemInline, OrderStatusHistoryInline]
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.filter(is_deleted=False)
     
     fieldsets = (
         ('Order Info', {
@@ -81,7 +86,7 @@ class OrderAdmin(admin.ModelAdmin):
         }),
     )
     
-    actions = ['mark_confirmed', 'mark_processing', 'mark_shipped', 'mark_delivered', 'mark_cancelled', 'mark_refunded']
+    actions = ['mark_confirmed', 'mark_processing', 'mark_shipped', 'mark_delivered', 'mark_cancelled', 'mark_refunded', 'soft_delete_selected']
 
     def save_model(self, request, obj, form, change):
         """Override save to record status changes in history with the admin user."""
@@ -100,13 +105,36 @@ class OrderAdmin(admin.ModelAdmin):
                 pass
         super().save_model(request, obj, form, change)
 
+    def payment_status_badge(self, obj):
+        colors = {
+            'pending': '#f59e0b',
+            'succeeded': '#10b981',
+            'failed': '#ef4444',
+            'refunded': '#6b7280',
+        }
+        color = colors.get(obj.payment_status, '#6b7280')
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 2px 8px; '
+            'border-radius: 4px; font-size: 11px;">{}</span>',
+            color, obj.get_payment_status_display()
+        )
+    payment_status_badge.short_description = 'Payment Status'
+
     def mark_cancelled(self, request, queryset):
-        """Admin action to cancel selected orders (uses OrderService to handle refunds)."""
+        """Admin action to cancel selected orders (uses OrderService to handle refunds) and ensure stock restore."""
         from .services import OrderService
         count = 0
-        for order in queryset:
+        for order in queryset.exclude(status=Order.STATUS_CANCELLED):
             success, message = OrderService.cancel_order(order, reason='Cancelled by admin', cancelled_by=request.user)
             if success:
+                # Ensure stock restore if not handled (signal handles it normally)
+                for item in order.items.all():
+                    if item.variant:
+                        item.variant.stock_quantity += item.quantity
+                        item.variant.save(update_fields=['stock_quantity'])
+                    elif item.product:
+                        item.product.stock_quantity += item.quantity
+                        item.product.save(update_fields=['stock_quantity'])
                 count += 1
         self.message_user(request, f'{count} orders cancelled.')
     mark_cancelled.short_description = 'Cancel selected orders'
@@ -116,6 +144,16 @@ class OrderAdmin(admin.ModelAdmin):
         updated = queryset.filter(payment_status__in=['succeeded', 'paid']).update(status=Order.STATUS_REFUNDED)
         self.message_user(request, f'{updated} orders marked as refunded.')
     mark_refunded.short_description = 'Mark selected orders as refunded'
+
+    def soft_delete_selected(self, request, queryset):
+        """Soft-delete selected orders."""
+        count = 0
+        for order in queryset:
+            if not order.is_deleted:
+                order.soft_delete()
+                count += 1
+        self.message_user(request, f'{count} orders soft-deleted.')
+    soft_delete_selected.short_description = 'Soft-delete selected orders'
     
     def user_email(self, obj):
         return obj.user.email if obj.user else obj.email
