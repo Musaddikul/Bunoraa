@@ -6,7 +6,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.utils import timezone
 
-from .models import Payment, PaymentMethod, Refund
+from .models import Payment, PaymentMethod, Refund, BkashCredential, PaymentGateway
 
 
 # Initialize Stripe
@@ -41,7 +41,90 @@ class StripeService:
             params['customer'] = customer_id
         
         return stripe.PaymentIntent.create(**params)
-    
+
+
+# ------------------- Bangladesh Gateway Services (stubs) -------------------
+class SSLCommerzService:
+    """Integration layer for SSLCommerz (https://developer.sslcommerz.com/).
+
+    Note: Use admin-configured `ssl_store_id` and `ssl_store_passwd`. Implement
+    sandbox vs live endpoints depending on `is_sandbox` flag.
+    """
+
+    @staticmethod
+    def init_transaction(order, gateway: PaymentGateway, return_url: str, cancel_url: str):
+        """Initialize SSLCommerz transaction and return redirect/payment page URL.
+
+        This is a synchronous call to get the payment page URL (or form parameters) that
+        the client should be redirected to. sslcommerz expects store credentials and order details.
+        """
+        # Implementation stub: build payload and call SSLCommerz endpoint via `requests`.
+        # Return a dict with keys: { 'status': 'success', 'redirect_url': 'https://...'}
+        return {'status': 'error', 'message': 'Not implemented'}
+
+    @staticmethod
+    def verify_transaction(payload, gateway: PaymentGateway):
+        """Verify IPN / callback payload and return normalized result dict."""
+        # Verify signature if provided and return dict with keys: success(bool), reference(str), amount, currency, raw
+        return {'success': False, 'raw': payload}
+
+
+class BkashService:
+    """Server-side bKash integration helper (token management, checkout, refunds).
+
+    See bKash API docs for details. Keep tokens secure and rotate regularly.
+    """
+
+    @staticmethod
+    def get_token(creds: BkashCredential):
+        """Retrieve/refresh auth token using BkashCredential. Store token and expiry on creds."""
+        # Implementation stub: call bKash token endpoint and update creds.auth_token
+        return None
+
+    @staticmethod
+    def create_checkout_payment(order, gateway: PaymentGateway):
+        """Create a bKash checkout session for the order and return payment URL or token."""
+        return {'status': 'error', 'message': 'Not implemented'}
+
+    @staticmethod
+    def verify_payment(payload, gateway: PaymentGateway):
+        """Verify bKash webhook / callback payload."""
+        return {'success': False, 'raw': payload}
+
+    @staticmethod
+    def refund(payment: Payment, amount=None, reason=None):
+        """Initiate a refund with bKash (if supported)."""
+        return {'status': 'error', 'message': 'Not implemented'}
+
+
+class NagadService:
+    """Nagad payment helper stubs (payment init, verification, refund).
+
+    Implement Nagad-specific request signing and verification (merchant public/private keys).
+    """
+
+    @staticmethod
+    def init_payment(order, gateway: PaymentGateway):
+        return {'status': 'error', 'message': 'Not implemented'}
+
+    @staticmethod
+    def verify_callback(payload, gateway: PaymentGateway):
+        return {'success': False, 'raw': payload}
+
+
+# ------------------- Orchestration helpers -------------------
+class GatewayRouter:
+    """Helper to choose gateway service by PaymentGateway.code"""
+
+    @staticmethod
+    def service_for_gateway(gateway: PaymentGateway):
+        if gateway.code == PaymentGateway.CODE_BKASH:
+            return BkashService
+        if gateway.code == PaymentGateway.CODE_NAGAD:
+            return NagadService
+        if gateway.code == 'sslcommerz' or gateway.ssl_store_id:
+            return SSLCommerzService
+        return None    
     @staticmethod
     def retrieve_payment_intent(payment_intent_id):
         """Retrieve a PaymentIntent from Stripe."""

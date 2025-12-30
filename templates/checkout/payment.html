@@ -434,7 +434,7 @@
                             <img src="{% static 'images/payments/visa.svg' %}" alt="Visa" class="h-6">
                             <img src="{% static 'images/payments/mastercard.svg' %}" alt="Mastercard" class="h-6">
                             <img src="{% static 'images/payments/amex.svg' %}" alt="Amex" class="h-6">
-                            <img src="{% static 'images/payments/bkash.svg' %}" alt="bKash" class="h-6" onerror="this.style.display='none'">
+                            <img src="{% static 'images/payments/bkash_logo_icon.svg' %}" alt="bKash" class="h-6" onerror="this.style.display='none'">
                             <img src="{% static 'images/payments/nagad.svg' %}" alt="Nagad" class="h-6" onerror="this.style.display='none'">
                         </div>
                     </div>
@@ -714,63 +714,186 @@ document.addEventListener('DOMContentLoaded', function() {
     const buttonText = document.getElementById('button-text');
     const spinner = document.getElementById('spinner');
     const arrowIcon = document.getElementById('arrow-icon');
-    
+
+    // Client secret provided by server for Stripe (if any)
+    const CLIENT_SECRET = '{{ client_secret|default:""|escapejs }}';
+
+    function getCsrfToken() {
+        return document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || '';
+    }
+
     function setLoadingState(loading) {
         submitButton.disabled = loading;
         buttonText.textContent = loading ? 'Processing...' : 'Continue to Review';
         spinner.classList.toggle('hidden', !loading);
         arrowIcon.classList.toggle('hidden', loading);
-        
+
         if (loading) {
             submitButton.classList.add('animate-pulse');
         } else {
             submitButton.classList.remove('animate-pulse');
         }
     }
-    
+
+    async function setPaymentMethodAPI(method) {
+        const payload = {
+            payment_method: method,
+            billing_same_as_shipping: document.getElementById('same-as-shipping')?.checked || false
+        };
+
+        try {
+            const res = await fetch('/api/v1/checkout/payment-method/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify(payload)
+            });
+            return res; // caller will inspect status / ok
+        } catch (e) {
+            // Network error
+            return { ok: false, status: 0, error: e };
+        }
+    }
+
+    async function fetchCheckoutSession() {
+        try {
+            const res = await fetch('/api/v1/checkout/');
+            return res.json();
+        } catch (e) {
+            return null;
+        }
+    }
+
     form.addEventListener('submit', async function(event) {
         event.preventDefault();
-        
+
         const selectedMethod = document.querySelector('input[name="payment_method"]:checked')?.value;
-        
+
         if (!selectedMethod) {
             Utils.showToast('Please select a payment method', 'warning');
             return;
         }
-        
+
         setLoadingState(true);
-        
-        // Non-Stripe payment methods - just submit
+
+        // Handle non-Stripe gateways via checkout API so backend can initialize provider flows if needed
         if (selectedMethod !== 'stripe') {
-            form.submit();
+            try {
+                const res = await setPaymentMethodAPI(selectedMethod);
+
+                if (!res || !res.ok) {
+                    // If endpoint is missing (404) or network failed, fall back to standard server form submit
+                    if (res && res.status === 404) {
+                        Utils.showToast('Payment API not available; submitting using server form.', 'info');
+                        form.submit();
+                        return;
+                    }
+
+                    // Attempt to parse error message
+                    let errMsg = 'Failed to save payment method';
+                    try {
+                        const errJson = res && typeof res.json === 'function' ? await res.json() : null;
+                        errMsg = errJson?.message || errMsg;
+                    } catch (e) {}
+
+                    Utils.showToast(errMsg, 'error');
+                    setLoadingState(false);
+                    return;
+                }
+
+                const json = await res.json();
+
+                // Fetch latest session to check for payment readiness or instructions
+                const sessionRes = await fetchCheckoutSession();
+                const session = sessionRes?.data || {};
+
+                // If backend provides a redirect URL for the gateway, follow it
+                if (session && session.payment_redirect_url) {
+                    // Open in new tab to preserve checkout state
+                    window.open(session.payment_redirect_url, '_blank');
+                    Utils.showToast('Payment started. Complete the payment in the provider window.', 'info');
+                    // Redirect to review where backend will verify completion
+                    window.location.href = '{% url "checkout:review" %}';
+                    return;
+                }
+
+                // If payment is ready already, proceed to review, else still proceed to review and let backend handle pending mobile payments
+                if (session && session.payment_ready) {
+                    window.location.href = '{% url "checkout:review" %}';
+                } else {
+                    Utils.showToast('Payment method saved. Please follow instructions to complete the payment with your provider.', 'info');
+                    window.location.href = '{% url "checkout:review" %}';
+                }
+            } catch (err) {
+                // If anything goes wrong, fallback to server-side form submit to preserve behavior
+                Utils.showToast('Failed to set payment method via API; falling back to server submission.', 'warning');
+                form.submit();
+            }
+
             return;
         }
-        
-        // Stripe payment - create payment method first
+
+        // Stripe flow - prefer confirmCardPayment when server created a client secret
         const cardholderName = document.getElementById('cardholder-name')?.value;
-        
+
         if (!cardholderName) {
             Utils.showToast('Please enter cardholder name', 'warning');
             setLoadingState(false);
             return;
         }
-        
+
         try {
+            if (CLIENT_SECRET && stripe && cardElement) {
+                // Confirm payment client-side (handles SCA flows)
+                const result = await stripe.confirmCardPayment(CLIENT_SECRET, {
+                    payment_method: {
+                        card: cardElement,
+                        billing_details: { name: cardholderName }
+                    }
+                });
+
+                if (result.error) {
+                    document.getElementById('card-errors').textContent = result.error.message;
+                    Utils.showToast(result.error.message, 'error');
+                    setLoadingState(false);
+                    return;
+                }
+
+                // Payment succeeded or is processing
+                if (result.paymentIntent && result.paymentIntent.status) {
+                    document.getElementById('payment-intent-id').value = result.paymentIntent.id;
+                    // Set payment method on server (saves selection) before finalizing
+                    await setPaymentMethodAPI('stripe');
+                    form.submit();
+                    return;
+                }
+
+                Utils.showToast('Unexpected payment result. Please contact support.', 'error');
+                setLoadingState(false);
+                return;
+            }
+
+            // Fallback: create a PaymentMethod and POST to server as older flow
             const { paymentMethod, error } = await stripe.createPaymentMethod({
                 type: 'card',
                 card: cardElement,
                 billing_details: { name: cardholderName },
             });
-            
+
             if (error) {
                 document.getElementById('card-errors').textContent = error.message;
                 Utils.showToast(error.message, 'error');
                 setLoadingState(false);
                 return;
             }
-            
+
             document.getElementById('payment-method-id').value = paymentMethod.id;
+            // Persist selection on server
+            await setPaymentMethodAPI('stripe');
             form.submit();
+
         } catch (err) {
             Utils.showToast('Payment processing error. Please try again.', 'error');
             setLoadingState(false);

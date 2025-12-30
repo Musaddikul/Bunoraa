@@ -4,7 +4,7 @@ Payments API serializers
 from rest_framework import serializers
 from django.conf import settings
 
-from ..models import Payment, PaymentMethod, Refund, PaymentGateway
+from ..models import Payment, PaymentMethod, Refund, PaymentGateway, PaymentLink, BNPLProvider, RecurringCharge
 
 
 class PaymentGatewaySerializer(serializers.ModelSerializer):
@@ -116,3 +116,31 @@ class RefundCreateSerializer(serializers.Serializer):
     amount = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
     reason = serializers.ChoiceField(choices=Refund.REASON_CHOICES)
     notes = serializers.CharField(required=False, allow_blank=True)
+
+
+class PaymentLinkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PaymentLink
+        fields = ['id', 'order', 'gateway', 'code', 'amount', 'currency', 'expires_at', 'is_active', 'created_at']
+        read_only_fields = fields
+
+
+class PaymentLinkCreateSerializer(serializers.Serializer):
+    order_id = serializers.UUIDField()
+    gateway_code = serializers.CharField(max_length=50, required=False)
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
+    currency = serializers.CharField(max_length=3, required=False)
+    expires_at = serializers.DateTimeField(required=False)
+
+
+class BNPLProviderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BNPLProvider
+        fields = ['code', 'name', 'is_active', 'config']
+
+
+class RecurringChargeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RecurringCharge
+        fields = ['id', 'subscription', 'payment', 'amount', 'currency', 'status', 'attempt_at', 'processed_at', 'created_at']
+        read_only_fields = fields

@@ -14,3 +14,16 @@ class PaymentMethodsView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'Payment Methods'
         return context
+
+
+class GatewayIPNView(TemplateView):
+    """Basic handler that can be extended to render a response for gateway callbacks.
+
+    Gateways like SSLCommerz use server-to-server callbacks (IPN). See API views for
+    JSON webhook handlers used by frontend APIs.
+    """
+    template_name = 'payments/ipn_ack.html'
+
+    def post(self, request, *args, **kwargs):
+        # Acknowledge immediately; real processing should be done by API endpoint
+        return self.render_to_response({'status': 'ok'})

@@ -84,7 +84,9 @@ class Order(models.Model):
     shipping_method = models.CharField(
         max_length=20,
         choices=SHIPPING_CHOICES,
-        default=SHIPPING_STANDARD
+        default=SHIPPING_STANDARD,
+        db_index=True,
+        help_text='Shipping method chosen for this order'
     )
     shipping_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     tracking_number = models.CharField(max_length=100, blank=True)
@@ -100,16 +102,30 @@ class Order(models.Model):
     payment_method = models.CharField(
         max_length=20,
         choices=PAYMENT_CHOICES,
-        default=PAYMENT_STRIPE
+        default=PAYMENT_STRIPE,
+        db_index=True,
+        help_text='Payment method used for this order'
     )
-    payment_status = models.CharField(max_length=20, default='pending')
+
+    # Payment status
+    PAYMENT_PENDING = 'pending'
+    PAYMENT_SUCCEEDED = 'succeeded'
+    PAYMENT_FAILED = 'failed'
+    PAYMENT_REFUNDED = 'refunded'
+    PAYMENT_CHOICES = [
+        (PAYMENT_PENDING, 'Pending'),
+        (PAYMENT_SUCCEEDED, 'Succeeded'),
+        (PAYMENT_FAILED, 'Failed'),
+        (PAYMENT_REFUNDED, 'Refunded'),
+    ]
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_CHOICES, default=PAYMENT_PENDING, db_index=True)
     stripe_payment_intent_id = models.CharField(max_length=255, blank=True)
     
     # Amounts
-    subtotal = models.DecimalField(max_digits=10, decimal_places=2)
-    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    tax = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    total = models.DecimalField(max_digits=10, decimal_places=2)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, help_text='Order subtotal in BDT')
+    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text='Discount amount applied')
+    tax = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text='Tax amount applied')
+    total = models.DecimalField(max_digits=10, decimal_places=2, help_text='Order total in BDT')
     
     # Coupon
     coupon = models.ForeignKey(
@@ -140,15 +156,23 @@ class Order(models.Model):
     cancelled_at = models.DateTimeField(null=True, blank=True)
     
     # Soft delete
-    is_deleted = models.BooleanField(default=False)
-    deleted_at = models.DateTimeField(null=True, blank=True)
+    is_deleted = models.BooleanField(default=False, db_index=True, help_text='Soft-delete flag; delete is logical')
+    deleted_at = models.DateTimeField(null=True, blank=True, help_text='Timestamp when the order was soft-deleted')
+
+    def soft_delete(self):
+        """Soft-delete the order (logical delete)."""
+        if not self.is_deleted:
+            self.is_deleted = True
+            self.deleted_at = timezone.now()
+            self.save(update_fields=['is_deleted', 'deleted_at'])
     
     class Meta:
         ordering = ['-created_at']
         verbose_name = 'Order'
         verbose_name_plural = 'Orders'
         indexes = [
-            models.Index(fields=['user', 'status']),
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['status', '-created_at']),
             models.Index(fields=['order_number']),
             models.Index(fields=['email']),
         ]

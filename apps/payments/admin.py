@@ -2,12 +2,15 @@
 Payments admin configuration
 """
 from django.contrib import admin
-from .models import Payment, PaymentMethod, Refund, PaymentGateway
+from .models import (
+    Payment, PaymentMethod, Refund, PaymentGateway,
+    PaymentTransaction, PaymentLink, BkashCredential, BNPLProvider, BNPLAgreement, RecurringCharge
+)
 
 
 @admin.register(PaymentGateway)
 class PaymentGatewayAdmin(admin.ModelAdmin):
-    list_display = ['name', 'code', 'is_active', 'fee_text', 'is_sandbox', 'sort_order']
+    list_display = ['name', 'code', 'is_active', 'fee_text', 'is_sandbox', 'ssl_store_id', 'bkash_mode', 'nagad_merchant_id', 'supports_recurring', 'supports_bnpl', 'sort_order']
     list_filter = ['is_active', 'is_sandbox', 'fee_type']
     search_fields = ['name', 'code', 'description']
     list_editable = ['is_active', 'sort_order']
@@ -33,6 +36,19 @@ class PaymentGatewayAdmin(admin.ModelAdmin):
             'fields': ('api_key', 'api_secret', 'merchant_id', 'webhook_secret', 'is_sandbox'),
             'classes': ('collapse',),
             'description': 'API credentials for this payment gateway'
+        }),
+        ('Bangladesh Gateways', {
+            'fields': (
+                'ssl_store_id', 'ssl_store_passwd',
+                'bkash_mode', 'bkash_app_key', 'bkash_app_secret', 'bkash_username', 'bkash_password',
+                'nagad_merchant_id', 'nagad_public_key', 'nagad_private_key'
+            ),
+            'classes': ('collapse',),
+            'description': 'Configure SSLCommerz, bKash, and Nagad credentials for Bangladesh integrations'
+        }),
+        ('Capabilities', {
+            'fields': ('supports_partial', 'supports_recurring', 'supports_bnpl'),
+            'description': 'Toggle gateway capabilities for admin use'
         }),
         ('Bank Transfer Details', {
             'fields': ('bank_name', 'bank_account_name', 'bank_account_number', 'bank_routing_number', 'bank_branch'),
@@ -154,3 +170,40 @@ class RefundAdmin(admin.ModelAdmin):
     
     def has_add_permission(self, request):
         return False
+
+
+@admin.register(PaymentTransaction)
+class PaymentTransactionAdmin(admin.ModelAdmin):
+    list_display = ['reference', 'gateway', 'event_type', 'fee_amount', 'created_at']
+    list_filter = ['gateway', 'event_type', 'created_at']
+    search_fields = ['reference', 'payload']
+    readonly_fields = ['id', 'gateway', 'payment', 'order', 'reference', 'payload', 'fee_amount', 'created_at']
+
+
+@admin.register(PaymentLink)
+class PaymentLinkAdmin(admin.ModelAdmin):
+    list_display = ['code', 'order', 'gateway', 'amount', 'currency', 'is_active', 'expires_at', 'created_at']
+    list_filter = ['is_active', 'gateway', 'currency']
+    search_fields = ['code', 'order__order_number']
+    readonly_fields = ['id', 'code', 'created_at']
+
+
+@admin.register(BNPLProvider)
+class BNPLProviderAdmin(admin.ModelAdmin):
+    list_display = ['code', 'name', 'is_active', 'created_at']
+    list_filter = ['is_active']
+    search_fields = ['code', 'name']
+
+
+@admin.register(BNPLAgreement)
+class BNPLAgreementAdmin(admin.ModelAdmin):
+    list_display = ['provider', 'user', 'approved', 'approved_at', 'created_at']
+    list_filter = ['approved', 'provider']
+    search_fields = ['provider__code', 'user__email']
+
+
+@admin.register(RecurringCharge)
+class RecurringChargeAdmin(admin.ModelAdmin):
+    list_display = ['subscription', 'amount', 'currency', 'status', 'attempt_at', 'processed_at']
+    list_filter = ['status', 'currency']
+    search_fields = ['subscription__stripe_subscription_id']
