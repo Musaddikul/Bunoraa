@@ -115,7 +115,7 @@ export async function initCurrencySelector(selector) {
             list.appendChild(spinnerDiv);
 
             try {
-                const resp = await fetch('/api/v1/currencies/', { credentials: 'same-origin' });
+                const resp = await fetch('/api/v1/i18n/currencies/', { credentials: 'same-origin' });
                 if (!resp.ok) {
                     const txt = await resp.text().catch(() => String(resp.status));
                     throw new Error('HTTP ' + resp.status + ': ' + txt);
@@ -275,7 +275,7 @@ export async function initCurrencySelector(selector) {
                 }
 
                 async function doPost(token) {
-                    return fetch('/api/v1/currencies/preference/', {
+                    return fetch('/api/v1/i18n/preferences/', {
                         method: 'POST',
                         credentials: 'same-origin',
                         headers: {
@@ -317,7 +317,7 @@ export async function initCurrencySelector(selector) {
                         }
 
                         // Otherwise, try refreshing cookies by fetching the currencies endpoint, then retry once
-                        try { await fetch('/api/v1/currencies/', { credentials: 'same-origin' }); } catch (e) { /* ignore */ }
+                        try { await fetch('/api/v1/i18n/currencies/', { credentials: 'same-origin' }); } catch (e) { /* ignore */ }
                         const refreshedToken = getCsrfToken();
                         if (refreshedToken && refreshedToken !== csrftoken) {
                             const retryResp2 = await doPost(refreshedToken);

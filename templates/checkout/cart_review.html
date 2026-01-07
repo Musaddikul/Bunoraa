@@ -40,7 +40,7 @@
                         <h1 class="text-2xl font-semibold text-gray-900">Review Your Cart</h1>
                         <p class="text-sm text-gray-500 mt-1">Make sure quantities and variants look right before choosing shipping.</p>
                     </div>
-                    <a href="{% url 'cart:cart' %}" class="text-sm text-primary-600 hover:text-primary-700">Edit Cart</a>
+                    <a href="{% url 'commerce:cart' %}" class="text-sm text-primary-600 hover:text-primary-700">Edit Cart</a>
                 </div>
 
                 {% if cart_items %}
@@ -48,7 +48,7 @@
                     {% for item in cart_items %}
                     <div class="py-4 flex flex-col md:flex-row md:items-center md:space-x-4">
                         <div class="flex items-center space-x-4 flex-1">
-                            <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.jpg' }}" loading="lazy" decoding="async" alt="{{ item.product.name }}" class="w-20 h-20 rounded-lg object-cover">
+                            <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.svg' }}" loading="lazy" decoding="async" alt="{{ item.product.name }}" class="w-20 h-20 rounded-lg object-cover">
                             <div>
                                 <p class="font-medium text-gray-900">{{ item.product.name }}</p>
                                 {% if item.variant %}
@@ -78,7 +78,7 @@
                 </div>
                 {% else %}
                 <div class="text-center py-12">
-                    <p class="text-lg text-gray-600">Your cart is empty. <a href="{% url 'products:list' %}" class="text-primary-600 hover:text-primary-700">Continue shopping</a></p>
+                    <p class="text-lg text-gray-600">Your cart is empty. <a href="{% url 'catalog:product-list' %}" class="text-primary-600 hover:text-primary-700">Continue shopping</a></p>
                 </div>
                 {% endif %}
             </div>
@@ -126,10 +126,10 @@
                 {% endif %}
 
                 <div class="mt-6 space-y-3">
-                    <a href="{% url 'checkout:shipping' %}" class="block w-full bg-primary-600 text-white text-center py-3 rounded-lg font-medium hover:bg-primary-700 transition-colors">
+                    <a href="{% url 'commerce:checkout_shipping' %}" class="block w-full bg-primary-600 text-white text-center py-3 rounded-lg font-medium hover:bg-primary-700 transition-colors">
                         Continue to Shipping
                     </a>
-                    <a href="{% url 'cart:cart' %}" class="block w-full text-center text-gray-600 hover:text-gray-800">Return to Cart</a>
+                    <a href="{% url 'commerce:cart' %}" class="block w-full text-center text-gray-600 hover:text-gray-800">Return to Cart</a>
                 </div>
 
                 <div class="mt-6 flex items-center justify-center text-sm text-gray-500">

@@ -107,7 +107,7 @@
         data.append('image_filenames', JSON.stringify(imageFiles));
       }
 
-      fetch('/api/v1/products/suggest/', {
+      fetch('/api/v1/catalog/products/suggest/', {
         method: 'POST',
         headers: {
           'X-CSRFToken': (function(){const c=document.cookie.match(/(^|;)\s*csrftoken\s*=\s*([^;]+)/); return c?c.pop():''})()

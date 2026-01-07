@@ -14,7 +14,7 @@ from django.conf import settings
 from django.utils.http import url_has_allowed_host_and_scheme
 from .services import UserService, AddressService
 from .models import Address
-from apps.localization.services import CountryService
+from apps.i18n.services import GeoService as CountryService
 from .forms import LoginForm, RegistrationForm
 
 

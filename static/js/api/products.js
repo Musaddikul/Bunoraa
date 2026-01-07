@@ -24,36 +24,36 @@ const ProductsApi = (function() {
             currency: params.currency || currencyCode
         };
 
-        return ApiClient.get('/products/', queryParams, { useCache: true, cacheTTL: 60000 });
+        return ApiClient.get('/catalog/products/', queryParams, { useCache: true, cacheTTL: 60000 });
     }
 
     async function getProduct(idOrSlug) {
         const currencyCode = (typeof window !== 'undefined' && window.BUNORAA_CURRENCY && window.BUNORAA_CURRENCY.code) ? window.BUNORAA_CURRENCY.code : undefined;
-        return ApiClient.get(`/products/${idOrSlug}/`, { currency: currencyCode }, { useCache: true, cacheTTL: 120000 });
+        return ApiClient.get(`/catalog/products/${idOrSlug}/`, { currency: currencyCode }, { useCache: true, cacheTTL: 120000 });
     }
 
     async function getFeatured(limit = 8) {
-        return ApiClient.get('/products/', { is_featured: 'true', page_size: limit }, { useCache: true });
+        return ApiClient.get('/catalog/products/', { is_featured: 'true', page_size: limit }, { useCache: true });
     }
 
     async function getNewArrivals(limit = 10) {
-        return ApiClient.get('/products/', { ordering: '-created_at', page_size: limit }, { useCache: true });
+        return ApiClient.get('/catalog/products/', { ordering: '-created_at', page_size: limit }, { useCache: true });
     }
 
     async function getBestSellers(limit = 10) {
-        return ApiClient.get('/products/', { ordering: '-sold_count', page_size: limit }, { useCache: true });
+        return ApiClient.get('/catalog/products/', { ordering: '-sold_count', page_size: limit }, { useCache: true });
     }
 
     async function getOnSale(limit = 10) {
-        return ApiClient.get('/products/', { is_on_sale: 'true', page_size: limit }, { useCache: true });
+        return ApiClient.get('/catalog/products/', { is_on_sale: 'true', page_size: limit }, { useCache: true });
     }
 
     async function getRelated(productId, limit = 6) {
-        return ApiClient.get(`/products/${productId}/related/`, { limit }, { useCache: true });
+        return ApiClient.get(`/catalog/products/${productId}/related/`, { limit }, { useCache: true });
     }
 
     async function search(query, params = {}) {
-        return ApiClient.get('/products/', {
+        return ApiClient.get('/catalog/products/', {
             search: query,
             page: params.page || 1,
             page_size: params.pageSize || 20,
@@ -83,21 +83,33 @@ const ProductsApi = (function() {
     }
 
     async function getTags() {
-        return ApiClient.get('/products/tags/', {}, { useCache: true, cacheTTL: 300000 });
+        return ApiClient.get('/catalog/tags/', {}, { useCache: true, cacheTTL: 300000 });
     }
 
     async function getAttributes() {
-        return ApiClient.get('/products/attributes/', {}, { useCache: true, cacheTTL: 300000 });
+        return ApiClient.get('/catalog/products/attributes/', {}, { useCache: true, cacheTTL: 300000 });
+    }
+
+    // Backwards-compatible alias
+    async function getBySlug(slugOrId) {
+        return getProduct(slugOrId);
+    }
+
+    // Recommendations: frequently_bought_together | similar | you_may_also_like | all
+    async function getRecommendations(productId, type = 'all', limit = 6) {
+        return ApiClient.get('/recommendations/', { product_id: productId, type, limit }, { useCache: true, cacheTTL: 120000 });
     }
 
     return {
         getProducts,
         getProduct,
+        getBySlug,
         getFeatured,
         getNewArrivals,
         getBestSellers,
         getOnSale,
         getRelated,
+        getRecommendations,
         search,
         getReviews,
         submitReview,

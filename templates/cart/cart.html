@@ -7,18 +7,76 @@
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <!-- Breadcrumb -->
-    <nav class="mb-8">
-        <ol class="flex items-center space-x-2 text-sm text-gray-500">
-            <li><a href="{% url 'pages:home' %}" class="hover:text-primary-600">Home</a></li>
+    <nav class="mb-8" aria-label="Breadcrumb">
+        <ol class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+            <li><a href="{% url 'pages:home' %}" class="hover:text-primary-600 dark:hover:text-primary-400">Home</a></li>
             <li><span class="mx-2">/</span></li>
-            <li class="text-gray-900">Shopping Cart</li>
+            <li class="text-gray-900 dark:text-white">Shopping Cart</li>
         </ol>
     </nav>
     
-    <h1 class="text-3xl font-bold text-gray-900 mb-8">Shopping Cart</h1>
+    <div class="flex flex-col lg:flex-row gap-4 lg:gap-8 items-start lg:items-center justify-between mb-8">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Shopping Cart</h1>
+        
+        {% if cart_items %}
+        <!-- Cart Actions -->
+        <div class="flex flex-wrap gap-3">
+            <button id="validate-cart-btn" 
+                    class="inline-flex items-center px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-200">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Validate
+            </button>
+            <button id="lock-prices-btn" 
+                    class="inline-flex items-center px-4 py-2 text-sm border border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-400 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+                Lock Prices
+            </button>
+            <button id="share-cart-btn" 
+                    class="inline-flex items-center px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-200">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+                </svg>
+                Share
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Validation Messages -->
+    <div id="validation-messages" class="hidden mb-6">
+        <div id="validation-issues" class="hidden bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg p-4 mb-4">
+            <h3 class="font-semibold text-red-800 dark:text-red-300 mb-2">Issues Found</h3>
+            <ul id="issues-list" class="space-y-1 text-sm text-red-700 dark:text-red-400"></ul>
+        </div>
+        <div id="validation-warnings" class="hidden bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg p-4">
+            <h3 class="font-semibold text-amber-800 dark:text-amber-300 mb-2">Warnings</h3>
+            <ul id="warnings-list" class="space-y-1 text-sm text-amber-700 dark:text-amber-400"></ul>
+        </div>
+    </div>
     
     <div id="cart-container">
         {% if cart_items %}
+        <!-- Free Shipping Progress -->
+        <div id="free-shipping-banner" class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 border border-green-200 dark:border-green-700 rounded-lg p-4 mb-6">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-green-800 dark:text-green-300">
+                    <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"></path>
+                    </svg>
+                    <span id="free-shipping-message">Free delivery on orders over {{ currency_symbol }}{{ free_shipping_threshold|floatformat:0 }}</span>
+                </span>
+                <span class="text-xs text-green-600 dark:text-green-400" id="free-shipping-status"></span>
+            </div>
+            <div class="w-full bg-green-200 dark:bg-green-800 rounded-full h-2">
+                <div id="free-shipping-progress" class="bg-green-600 dark:bg-green-400 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+        </div>
+        
         <div class="flex flex-col lg:flex-row gap-8">
             <!-- Cart Items -->
             <div class="flex-1">
@@ -37,38 +95,82 @@
                         <div class="cart-item grid md:grid-cols-12 gap-4 px-6 py-6" data-item-id="{{ it.id }}" data-product-id="{{ it.product_id }}">
                             <!-- Product Info -->
                             <div class="md:col-span-6 flex items-center space-x-4">
-                                <a href="{% url 'products:detail' it.product_slug %}">
-                                    <img src="{{ it.image|default:'/static/images/placeholder.jpg' }}" loading="lazy" decoding="async"
+                                <a href="{% url 'catalog:product-detail' it.product_slug %}">
+                                    <img src="{{ it.image|default:'/static/images/placeholder.svg' }}" loading="lazy" decoding="async"
                                          alt="{{ it.product_name }}"
                                          class="w-20 h-20 object-cover rounded-lg">
                                 </a>
                                 <div class="flex-1">
-                                    <a href="{% url 'products:detail' it.product_slug %}" class="font-medium text-gray-900 hover:text-primary-600">
+                                    <a href="{% url 'catalog:product-detail' it.product_slug %}" class="font-medium text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400">
                                         {{ it.product_name }}
                                     </a>
                                     {% if it.variant_name %}
-                                    <p class="text-sm text-gray-500 mt-1">{{ it.variant_name }}</p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ it.variant_name }}</p>
                                     {% endif %}
-                                    <button class="remove-item-btn text-sm text-red-600 hover:text-red-700 mt-2 flex items-center" data-item-id="{{ it.id }}">
-                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    
+                                    <!-- Price Lock Indicator -->
+                                    {% if it.is_price_locked %}
+                                    <div class="mt-1 inline-flex items-center px-2 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 rounded">
+                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                                         </svg>
-                                        Remove
-                                    </button>
+                                        Price locked
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <!-- Stock Warning -->
+                                    {% if it.available_quantity <= 5 and it.available_quantity > 0 %}
+                                    <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">Only {{ it.available_quantity }} left</p>
+                                    {% endif %}
+                                    
+                                    <!-- Item Actions -->
+                                    <div class="flex flex-wrap items-center gap-2 mt-2 text-sm">
+                                        <button class="save-for-later-btn text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 flex items-center" data-item-id="{{ it.id }}">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                                            </svg>
+                                            Save
+                                        </button>
+                                        <button class="gift-wrap-btn text-gray-500 dark:text-gray-400 hover:text-pink-600 dark:hover:text-pink-400 flex items-center" 
+                                                data-item-id="{{ it.id }}"
+                                                data-gift-wrap="{{ it.gift_wrap|yesno:'true,false' }}">
+                                            <svg class="w-4 h-4 mr-1" fill="{% if it.gift_wrap %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a4 4 0 00-4-4H6m6 6h4a4 4 0 014 4v1m-4-5h4"></path>
+                                            </svg>
+                                            Gift
+                                        </button>
+                                        <button class="remove-item-btn text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 flex items-center" data-item-id="{{ it.id }}">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                            Remove
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Gift Wrap Display -->
+                                    {% if it.gift_wrap %}
+                                    <div class="mt-2 text-xs text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-900/30 rounded p-2">
+                                        🎁 Gift wrapped {% if it.gift_message %}- "{{ it.gift_message|truncatechars:50 }}"{% endif %}
+                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
                             
                             <!-- Price -->
-                            <div class="md:col-span-2 flex items-center justify-center">
-                                <div class="md:hidden text-sm text-gray-500 mr-2">Price:</div>
-                                <span class="font-medium text-gray-900">{{ it.formatted_unit_price }}</span>
+                            <div class="md:col-span-2 flex flex-col items-center justify-center">
+                                <div class="md:hidden text-sm text-gray-500 dark:text-gray-400 mr-2">Price:</div>
+                                <span class="font-medium text-gray-900 dark:text-white">{{ it.formatted_unit_price }}</span>
+                                {% if it.original_price and it.original_price > it.unit_price %}
+                                <span class="text-xs text-gray-400 line-through">{{ it.formatted_original_price }}</span>
+                                <span class="text-xs text-green-600 dark:text-green-400">Save {{ it.discount_percent|floatformat:0 }}%</span>
+                                {% endif %}
                             </div>
                             
                             <!-- Quantity -->
                             <div class="md:col-span-2 flex items-center justify-center">
-                                <div class="md:hidden text-sm text-gray-500 mr-2">Qty:</div>
-                                <div class="flex items-center border border-gray-300 rounded-lg">
-                                    <button class="qty-decrease px-3 py-2 text-gray-600 hover:text-gray-800 disabled:opacity-50"
+                                <div class="md:hidden text-sm text-gray-500 dark:text-gray-400 mr-2">Qty:</div>
+                                <div class="flex items-center border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+                                    <button class="qty-decrease px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white disabled:opacity-50"
                                             data-item-id="{{ it.id }}"
                                             {% if it.quantity <= 1 %}disabled{% endif %}>
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,10 +178,10 @@
                                         </svg>
                                     </button>
                                     <input type="number" value="{{ it.quantity }}" min="1" max="{{ it.available_quantity }}"
-                                           class="qty-input w-12 text-center border-0 focus:ring-0"
+                                           class="qty-input w-12 text-center border-0 focus:ring-0 bg-transparent text-gray-900 dark:text-white"
                                            data-item-id="{{ it.id }}"
                                            data-max="{{ it.available_quantity }}">
-                                    <button class="qty-increase px-3 py-2 text-gray-600 hover:text-gray-800"
+                                    <button class="qty-increase px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white disabled:opacity-50"
                                             data-item-id="{{ it.id }}"
                                             {% if it.quantity >= it.available_quantity %}disabled{% endif %}>
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,9 +192,12 @@
                             </div>
                             
                             <!-- Total -->
-                            <div class="md:col-span-2 flex items-center justify-end">
-                                <div class="md:hidden text-sm text-gray-500 mr-2">Total:</div>
-                                <span class="font-semibold text-gray-900 item-total">{{ it.formatted_total }}</span>
+                            <div class="md:col-span-2 flex flex-col items-center justify-end md:items-end">
+                                <div class="md:hidden text-sm text-gray-500 dark:text-gray-400 mr-2">Total:</div>
+                                <span class="font-semibold text-gray-900 dark:text-white item-total">{{ it.formatted_total }}</span>
+                                {% if it.savings and it.savings > 0 %}
+                                <span class="text-xs text-green-600 dark:text-green-400 item-savings">Saved {{ it.formatted_savings }}</span>
+                                {% endif %}
                             </div>
                         </div>
                         {% endfor %}
@@ -101,7 +206,7 @@
                 
                 <!-- Continue Shopping -->
                 <div class="mt-6 flex justify-between items-center">
-                    <a href="{% url 'products:list' %}" class="flex items-center text-primary-600 hover:text-primary-700">
+                    <a href="{% url 'catalog:product-list' %}" class="flex items-center text-primary-600 hover:text-primary-700">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                         </svg>
@@ -115,24 +220,45 @@
             
             <!-- Order Summary -->
             <div class="lg:w-96">
-                <div class="bg-white rounded-lg shadow-sm p-6 sticky top-24">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 sticky top-24">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Order Summary</h2>
+                    
+                    <!-- Delivery Location Selector -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Delivery Location</label>
+                        <select id="delivery-division" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary-500 focus:border-primary-500">
+                            <option value="dhaka" selected>Dhaka</option>
+                            <option value="chittagong">Chittagong</option>
+                            <option value="rajshahi">Rajshahi</option>
+                            <option value="khulna">Khulna</option>
+                            <option value="barisal">Barisal</option>
+                            <option value="sylhet">Sylhet</option>
+                            <option value="rangpur">Rangpur</option>
+                            <option value="mymensingh">Mymensingh</option>
+                        </select>
+                        <p id="delivery-estimate" class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Est. delivery: 1-2 business days
+                        </p>
+                    </div>
                     
                     <!-- Coupon Code -->
                     <div class="mb-6">
                         <div class="flex space-x-2">
                             <input type="text" id="coupon-code" placeholder="Enter coupon code"
-                                   class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                                   class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary-500 focus:border-primary-500">
                             <button id="apply-coupon-btn" 
-                                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                                    class="px-4 py-2 bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors">
                                 Apply
                             </button>
                         </div>
                         <div id="coupon-message" class="mt-2 text-sm hidden"></div>
                         <div id="applied-coupon" class="mt-2 hidden">
-                            <div class="flex items-center justify-between bg-green-50 text-green-700 px-3 py-2 rounded-lg text-sm">
+                            <div class="flex items-center justify-between bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-3 py-2 rounded-lg text-sm">
                                 <span><span id="coupon-name"></span> applied</span>
-                                <button id="remove-coupon-btn" class="text-green-600 hover:text-green-800">
+                                <button id="remove-coupon-btn" class="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                     </svg>
@@ -142,56 +268,99 @@
                     </div>
                     
                     <!-- Totals -->
-                    <div class="space-y-3 border-t border-gray-200 pt-4">
-                        <div class="flex justify-between text-gray-600">
+                    <div class="space-y-3 border-t border-gray-200 dark:border-gray-700 pt-4">
+                        <div class="flex justify-between text-gray-600 dark:text-gray-400">
                             <span>Subtotal</span>
                             <span id="subtotal">{{ cart_summary.formatted_subtotal }}</span>
                         </div>
-                        <div id="discount-row" class="flex justify-between text-green-600 {% if not cart_summary.discount_amount or cart_summary.discount_amount == '0' %}hidden{% endif %}">
+                        <div id="discount-row" class="flex justify-between text-green-600 dark:text-green-400 {% if not cart_summary.discount_amount or cart_summary.discount_amount == '0' %}hidden{% endif %}">
                             <span>Discount</span>
                             <span id="discount">-{{ cart_summary.formatted_discount }}</span>
                         </div>
-                        <div class="flex justify-between text-gray-600">
-                            <span>Estimated Shipping</span>
+                        <div id="savings-row" class="flex justify-between text-green-600 dark:text-green-400 {% if not cart_summary.total_savings %}hidden{% endif %}">
+                            <span>You Save</span>
+                            <span id="savings">{{ cart_summary.formatted_savings }}</span>
+                        </div>
+                        <div class="flex justify-between text-gray-600 dark:text-gray-400">
+                            <span>Shipping (<span id="shipping-location">Dhaka</span>)</span>
                             <span id="shipping">{{ cart_summary.formatted_shipping }}</span>
                         </div>
-                        <div class="flex justify-between text-gray-600">
-                            <span>Tax</span>
+                        <div id="cod-fee-row" class="flex justify-between text-gray-600 dark:text-gray-400 hidden">
+                            <span>COD Fee</span>
+                            <span id="cod-fee">{{ currency_symbol }}{{ cod_fee|floatformat:0 }}</span>
+                        </div>
+                        <div class="flex justify-between text-gray-600 dark:text-gray-400">
+                            <span>VAT (5%)</span>
                             <span id="tax">{{ cart_summary.formatted_tax }}</span>
                         </div>
-                        <div class="flex justify-between text-lg font-bold text-gray-900 dark:text-white">
+                        <div class="flex justify-between text-lg font-bold text-gray-900 dark:text-white border-t border-gray-200 dark:border-gray-700 pt-3">
                             <span>Total</span>
                             <span id="total">{{ cart_summary.formatted_total }}</span>
                         </div>
                     </div>
                     
+                    <!-- Payment Method Selection -->
+                    <div class="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Payment Method</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center p-3 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors payment-method-option">
+                                <input type="radio" name="payment_preview" value="bkash" class="text-primary-600 focus:ring-primary-500">
+                                <img src="{% static 'images/payments/bkash.svg' %}" alt="bKash" class="h-6 ml-3">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">bKash</span>
+                            </label>
+                            <label class="flex items-center p-3 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors payment-method-option">
+                                <input type="radio" name="payment_preview" value="nagad" class="text-primary-600 focus:ring-primary-500">
+                                <img src="{% static 'images/payments/nagad.svg' %}" alt="Nagad" class="h-6 ml-3">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Nagad</span>
+                            </label>
+                            <label class="flex items-center p-3 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors payment-method-option">
+                                <input type="radio" name="payment_preview" value="cod" class="text-primary-600 focus:ring-primary-500">
+                                <svg class="w-6 h-6 ml-3 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                </svg>
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Cash on Delivery{% if cod_fee %} (+{{ currency_symbol }}{{ cod_fee|floatformat:0 }}){% endif %}</span>
+                            </label>
+                            <label class="flex items-center p-3 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors payment-method-option">
+                                <input type="radio" name="payment_preview" value="card" class="text-primary-600 focus:ring-primary-500">
+                                <div class="flex items-center ml-3 space-x-2">
+                                    <img src="{% static 'images/payments/visa.svg' %}" alt="Visa" class="h-5">
+                                    <img src="{% static 'images/payments/mastercard.svg' %}" alt="Mastercard" class="h-5">
+                                </div>
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Debit/Credit Card</span>
+                            </label>
+                        </div>
+                    </div>
+                    
                     <!-- Checkout Button -->
                     {% if user.is_authenticated %}
-                    <a href="{% url 'checkout:checkout' %}" 
+                    <a href="{% url 'commerce:checkout' %}" 
                        class="block w-full mt-6 bg-primary-600 text-white text-center py-3 rounded-lg font-medium hover:bg-primary-700 transition-colors">
                         Proceed to Checkout
                     </a>
                     {% else %}
-                    <a href="{% url 'accounts:login' %}?next={% url 'checkout:checkout' %}" 
+                    <a href="{% url 'accounts:login' %}?next={% url 'commerce:checkout' %}" 
                        class="block w-full mt-6 bg-primary-600 text-white text-center py-3 rounded-lg font-medium hover:bg-primary-700 transition-colors">
-                        Proceed to Checkout
+                        Login to Checkout
                     </a>
+                    <p class="text-xs text-center text-gray-500 dark:text-gray-400 mt-2">
+                        Or <a href="{% url 'commerce:guest-checkout' %}" class="text-primary-600 hover:underline">checkout as guest</a>
+                    </p>
                     {% endif %}
                     
                     <!-- Security Info -->
-                    <div class="mt-6 flex items-center justify-center text-sm text-gray-500">
+                    <div class="mt-6 flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                         </svg>
-                        Secure Checkout
+                        Secure Checkout - SSL Encrypted
                     </div>
                     
-                    <!-- Payment Methods -->
-                    <div class="mt-4 flex items-center justify-center space-x-4">
+                    <!-- Bangladesh Payment Methods -->
+                    <div class="mt-4 flex items-center justify-center space-x-3">
+                        <img src="{% static 'images/payments/bkash.svg' %}" alt="bKash" class="h-8" loading="lazy" decoding="async">
+                        <img src="{% static 'images/payments/nagad.svg' %}" alt="Nagad" class="h-8" loading="lazy" decoding="async">
                         <img src="{% static 'images/payments/visa.svg' %}" alt="Visa" class="h-6" loading="lazy" decoding="async">
                         <img src="{% static 'images/payments/mastercard.svg' %}" alt="Mastercard" class="h-6" loading="lazy" decoding="async">
-                        <img src="{% static 'images/payments/amex.svg' %}" alt="Amex" class="h-6" loading="lazy" decoding="async">
-                        <img src="{% static 'images/payments/paypal.svg' %}" alt="PayPal" class="h-6">
                     </div>
                 </div>
             </div>
@@ -205,7 +374,7 @@
             </svg>
             <h2 class="text-2xl font-semibold text-gray-900 mb-2">Your cart is empty</h2>
             <p class="text-gray-600 mb-6">Looks like you haven't added anything to your cart yet.</p>
-            <a href="{% url 'products:list' %}" 
+            <a href="{% url 'catalog:product-list' %}" 
                class="inline-block bg-primary-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-primary-700 transition-colors">
                 Start Shopping
             </a>
@@ -236,8 +405,8 @@
     window.BUNORAA_CART = {
         // Currency parameters removed; frontend uses server-provided formatting via Templates.formatPrice()
         hasItems: {% if cart_items %}true{% else %}false{% endif %},
-        checkoutUrl: '{% if user.is_authenticated %}{% url "checkout:checkout" %}{% else %}{% url "accounts:login" %}?next={% url "checkout:checkout" %}{% endif %}',
-        productsUrl: '{% url "products:list" %}'
+        checkoutUrl: '{% if user.is_authenticated %}{% url "commerce:checkout" %}{% else %}{% url "accounts:login" %}?next={% url "commerce:checkout" %}{% endif %}',
+        productsUrl: '{% url "catalog:product-list" %}'
     };
 </script>
 {% endblock %}

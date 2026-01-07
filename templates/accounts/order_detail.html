@@ -141,13 +141,13 @@
                 <div class="divide-y divide-gray-200">
                     {% for item in order.items.all %}
                     <div class="p-6 flex items-center space-x-4">
-                        <a href="{% url 'products:detail' item.product.slug %}">
-                            <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.jpg' }}" loading="lazy" decoding="async" 
+                        <a href="{% url 'catalog:product-detail' item.product.slug %}">
+                            <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.svg' }}" loading="lazy" decoding="async" 
                                  alt="{{ item.product_name }}"
                                  class="w-20 h-20 object-cover rounded-lg">
                         </a>
                         <div class="flex-1">
-                            <a href="{% url 'products:detail' item.product.slug %}" class="font-medium text-gray-900 hover:text-primary-600">
+                            <a href="{% url 'catalog:product-detail' item.product.slug %}" class="font-medium text-gray-900 hover:text-primary-600">
                                 {{ item.product_name }}
                             </a>
                             {% if item.variant_name %}

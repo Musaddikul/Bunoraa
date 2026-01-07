@@ -236,10 +236,6 @@ const App = (function() {
             currentPage = 'wishlist';
         } else if (path.startsWith('/contact')) {
             currentPage = 'contact';
-        } else if (path.startsWith('/faq')) {
-            currentPage = 'faq';
-        } else if (path.includes('privacy') || path.includes('terms') || path.includes('legal') || path.includes('policy')) {
-            currentPage = 'legal';
         }
     }
 

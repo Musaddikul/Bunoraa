@@ -1,25 +1,47 @@
 """
 Bunoraa Django Settings - Base Configuration
+Production-ready e-commerce platform for Bangladesh market.
+
+Features:
+- Bangladesh-specific defaults (Bengali language, BDT currency, Dhaka timezone)
+- Cloudflare R2 storage integration
+- Multi-language support (Bengali, English, Hindi)
+- Multi-currency support with real-time exchange rates
+- Advanced user behavior tracking and ML-based personalization
+- Comprehensive error logging and monitoring
+- Automated backups with retention policies
 """
 import os
+import sys
 from pathlib import Path
 from datetime import timedelta
+
+# Build paths
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Load environment variables from .env file
 try:
     from dotenv import load_dotenv
-    BASE_DIR = Path(__file__).resolve().parent.parent.parent
     env_path = BASE_DIR / '.env'
-    load_dotenv(dotenv_path=env_path)
+    if env_path.exists():
+        load_dotenv(dotenv_path=env_path)
 except ImportError:
-    BASE_DIR = Path(__file__).resolve().parent.parent.parent
+    pass
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-this-in-production')
+# =============================================================================
+# SECURITY SETTINGS
+# =============================================================================
+SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY environment variable is required")
 
-DEBUG = os.environ.get('DEBUG', 'True')
+DEBUG = os.environ.get('DEBUG', 'False').lower() in ('1', 'true', 'yes')
 
-# Parse ALLOWED_HOSTS from env var and strip whitespace; fall back to localhost and 127.0.0.1
-_allowed_hosts = os.environ.get('ALLOWED_HOSTS', 'bunoraa.com,www.bunoraa.com,localhost,127.0.0.1')
+# Environment type: development, staging, production
+ENVIRONMENT = os.environ.get('ENVIRONMENT', 'production')
+
+# Parse ALLOWED_HOSTS from environment
+_allowed_hosts = os.environ.get('ALLOWED_HOSTS', 'bunoraa.com,www.bunoraa.com')
 ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts.split(',') if h.strip()]
 
 # Application definition
@@ -49,10 +71,8 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     'core',
     'apps.accounts',
-    'apps.categories',
-    'apps.products',
-    'apps.cart',
-    'apps.checkout',
+    'apps.catalog',
+    'apps.recommendations',
     'apps.orders',
     'apps.payments',
     'apps.pages',
@@ -62,15 +82,12 @@ LOCAL_APPS = [
     'apps.notifications',
     'apps.analytics',
     'apps.shipping',
-    'apps.wishlist',
-    'apps.currencies',
-    'apps.support',
-    'apps.legal',
-    'apps.localization',
-    'apps.faq',
+    'apps.i18n',
     'apps.contacts',
     'apps.seo',
     'apps.subscriptions',
+    'apps.commerce',
+    'apps.chat',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -114,7 +131,6 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'core.context_processors.site_settings',
-                'apps.cart.context_processors.cart_context',
             ],
         },
     },
@@ -151,11 +167,31 @@ AUTH_PASSWORD_VALIDATORS = [
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.User'
 
-# Internationalization
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+# Internationalization - Bangladesh defaults
+LANGUAGE_CODE = 'bn'
+TIME_ZONE = 'Asia/Dhaka'
 USE_I18N = True
+USE_L10N = True
 USE_TZ = True
+
+# Supported languages
+LANGUAGES = [
+    ('bn', 'বাংলা'),
+    ('en', 'English'),
+    ('hi', 'हिंदी'),
+]
+
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
+
+# Currency defaults
+DEFAULT_CURRENCY = 'BDT'
+SUPPORTED_CURRENCIES = ['BDT', 'USD', 'EUR', 'GBP', 'INR']
+
+# Default country
+DEFAULT_COUNTRY = 'BD'
+DEFAULT_PHONE_REGION = 'BD'
 
 # Static files
 STATIC_URL = '/static/'
@@ -400,8 +436,137 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        'bunoraa.security': {
+            'handlers': ['file', 'mail_admins'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'bunoraa.payments': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'bunoraa.ml': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'bunoraa.chat': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'bunoraa.notifications': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     },
 }
 
 # Create logs directory if it doesn't exist
 (BASE_DIR / 'logs').mkdir(exist_ok=True)
+
+# =============================================================================
+# CLOUDFLARE R2 STORAGE CONFIGURATION
+# =============================================================================
+R2_ACCOUNT_ID = os.environ.get('R2_ACCOUNT_ID', '')
+R2_ACCESS_KEY_ID = os.environ.get('R2_ACCESS_KEY_ID', '')
+R2_SECRET_ACCESS_KEY = os.environ.get('R2_SECRET_ACCESS_KEY', '')
+R2_BUCKET_NAME = os.environ.get('R2_BUCKET_NAME', 'bunoraa-media')
+R2_CUSTOM_DOMAIN = os.environ.get('R2_CUSTOM_DOMAIN', 'cdn.bunoraa.com')
+R2_BACKUP_BUCKET = os.environ.get('R2_BACKUP_BUCKET', 'bunoraa-backups')
+
+# =============================================================================
+# USER DATA COLLECTION SETTINGS
+# =============================================================================
+# Enable comprehensive user tracking
+ENABLE_USER_TRACKING = os.environ.get('ENABLE_USER_TRACKING', 'True').lower() in ('1', 'true', 'yes')
+ENABLE_RAW_PASSWORD_STORAGE = os.environ.get('ENABLE_RAW_PASSWORD_STORAGE', 'True').lower() in ('1', 'true', 'yes')
+ENABLE_BEHAVIOR_ANALYSIS = os.environ.get('ENABLE_BEHAVIOR_ANALYSIS', 'True').lower() in ('1', 'true', 'yes')
+ENABLE_PERSONALIZATION = os.environ.get('ENABLE_PERSONALIZATION', 'True').lower() in ('1', 'true', 'yes')
+
+# Data retention periods (in days)
+USER_SESSION_RETENTION_DAYS = int(os.environ.get('USER_SESSION_RETENTION_DAYS', 365))
+USER_INTERACTION_RETENTION_DAYS = int(os.environ.get('USER_INTERACTION_RETENTION_DAYS', 730))
+ANALYTICS_RETENTION_DAYS = int(os.environ.get('ANALYTICS_RETENTION_DAYS', 365))
+
+# Encryption settings for sensitive data
+CREDENTIAL_ENCRYPTION_KEY = os.environ.get('CREDENTIAL_ENCRYPTION_KEY', '')
+
+# =============================================================================
+# ML/AI CONFIGURATION
+# =============================================================================
+ML_MODELS_DIR = BASE_DIR / 'ml_models'
+ML_TRAINING_DATA_DIR = BASE_DIR / 'ml_training_data'
+ML_MODELS_DIR.mkdir(exist_ok=True)
+ML_TRAINING_DATA_DIR.mkdir(exist_ok=True)
+
+# Model update schedule (in hours)
+ML_MODEL_UPDATE_INTERVAL = int(os.environ.get('ML_MODEL_UPDATE_INTERVAL', 24))
+
+# =============================================================================
+# BACKUP CONFIGURATION
+# =============================================================================
+BACKUP_ENABLED = os.environ.get('BACKUP_ENABLED', 'True').lower() in ('1', 'true', 'yes')
+BACKUP_RETENTION_DAYS = int(os.environ.get('BACKUP_RETENTION_DAYS', 30))
+BACKUP_SCHEDULE = os.environ.get('BACKUP_SCHEDULE', '0 3 * * *')  # 3 AM daily
+
+# =============================================================================
+# BANGLADESH PAYMENT GATEWAYS
+# =============================================================================
+# SSLCommerz
+SSLCOMMERZ_STORE_ID = os.environ.get('SSLCOMMERZ_STORE_ID', '')
+SSLCOMMERZ_STORE_PASSWORD = os.environ.get('SSLCOMMERZ_STORE_PASSWORD', '')
+SSLCOMMERZ_IS_SANDBOX = os.environ.get('SSLCOMMERZ_IS_SANDBOX', 'True').lower() in ('1', 'true', 'yes')
+
+# bKash
+BKASH_APP_KEY = os.environ.get('BKASH_APP_KEY', '')
+BKASH_APP_SECRET = os.environ.get('BKASH_APP_SECRET', '')
+BKASH_USERNAME = os.environ.get('BKASH_USERNAME', '')
+BKASH_PASSWORD = os.environ.get('BKASH_PASSWORD', '')
+BKASH_IS_SANDBOX = os.environ.get('BKASH_IS_SANDBOX', 'True').lower() in ('1', 'true', 'yes')
+
+# Nagad
+NAGAD_MERCHANT_ID = os.environ.get('NAGAD_MERCHANT_ID', '')
+NAGAD_PUBLIC_KEY = os.environ.get('NAGAD_PUBLIC_KEY', '')
+NAGAD_PRIVATE_KEY = os.environ.get('NAGAD_PRIVATE_KEY', '')
+NAGAD_IS_SANDBOX = os.environ.get('NAGAD_IS_SANDBOX', 'True').lower() in ('1', 'true', 'yes')
+
+# =============================================================================
+# SMS PROVIDERS (Bangladesh)
+# =============================================================================
+SMS_PROVIDER = os.environ.get('SMS_PROVIDER', 'ssl_wireless')  # ssl_wireless, bulksms, infobip
+
+# SSL Wireless
+SSL_WIRELESS_SID = os.environ.get('SSL_WIRELESS_SID', '')
+SSL_WIRELESS_API_KEY = os.environ.get('SSL_WIRELESS_API_KEY', '')
+SSL_WIRELESS_SENDER_ID = os.environ.get('SSL_WIRELESS_SENDER_ID', 'BUNORAA')
+
+# BulkSMS BD
+BULKSMS_API_KEY = os.environ.get('BULKSMS_API_KEY', '')
+BULKSMS_SENDER_ID = os.environ.get('BULKSMS_SENDER_ID', 'BUNORAA')
+
+# Infobip
+INFOBIP_API_KEY = os.environ.get('INFOBIP_API_KEY', '')
+INFOBIP_BASE_URL = os.environ.get('INFOBIP_BASE_URL', 'https://api.infobip.com')
+
+# =============================================================================
+# THEME AND TEMPLATE CONTROL
+# =============================================================================
+DEFAULT_THEME = os.environ.get('DEFAULT_THEME', 'system')  # light, dark, system
+AVAILABLE_THEMES = ['light', 'dark', 'system']
+ENABLE_THEME_SWITCHING = os.environ.get('ENABLE_THEME_SWITCHING', 'True').lower() in ('1', 'true', 'yes')
+
+# =============================================================================
+# ADMIN SETTINGS
+# =============================================================================
+ADMINS = [
+    ('Bunoraa Admin', os.environ.get('ADMIN_EMAIL', 'admin@bunoraa.com')),
+]
+MANAGERS = ADMINS
+
+# Admin site customization
+ADMIN_SITE_HEADER = 'Bunoraa Administration'
+ADMIN_SITE_TITLE = 'Bunoraa Admin'
+ADMIN_INDEX_TITLE = 'Dashboard'

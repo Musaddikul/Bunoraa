@@ -55,7 +55,7 @@ class ProductView(models.Model):
     """Track product views."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     product = models.ForeignKey(
-        'products.Product',
+        'catalog.Product',
         on_delete=models.CASCADE,
         related_name='analytics_views'
     )
@@ -97,7 +97,7 @@ class SearchQuery(models.Model):
     
     results_count = models.IntegerField(default=0)
     clicked_product = models.ForeignKey(
-        'products.Product',
+        'catalog.Product',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -146,7 +146,7 @@ class CartEvent(models.Model):
     session_key = models.CharField(max_length=40, blank=True, null=True)
     
     product = models.ForeignKey(
-        'products.Product',
+        'catalog.Product',
         on_delete=models.SET_NULL,
         null=True,
         blank=True
@@ -208,7 +208,7 @@ class DailyStat(models.Model):
 class ProductStat(models.Model):
     """Product-level statistics."""
     product = models.ForeignKey(
-        'products.Product',
+        'catalog.Product',
         on_delete=models.CASCADE,
         related_name='stats'
     )
@@ -233,7 +233,7 @@ class ProductStat(models.Model):
 class CategoryStat(models.Model):
     """Category-level statistics."""
     category = models.ForeignKey(
-        'categories.Category',
+        'catalog.Category',
         on_delete=models.CASCADE,
         related_name='stats'
     )

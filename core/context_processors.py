@@ -90,26 +90,62 @@ def site_settings(request):
             }
     
     # Determine per-request currency (do not cache - user/session based)
+    # Also fetch shipping and payment settings
+    free_shipping_threshold = 2000  # Default
+    default_shipping_cost = 60  # Default
+    cod_fee = 0  # Default
+    
     try:
-        from apps.currencies.services import CurrencyService
+        from apps.i18n.services import CurrencyService
         currency = CurrencyService.get_user_currency(
             user=request.user if request.user.is_authenticated else None,
             request=request
         )
         currency_code = currency.code if currency else 'BDT'
         currency_symbol = currency.symbol if currency else '৳'
+        currency_native_symbol = getattr(currency, 'native_symbol', currency_symbol) if currency else '৳'
         currency_decimal_places = currency.decimal_places if currency else 2
-        currency_thousand_separator = currency.thousand_separator if currency else ','
-        currency_decimal_separator = currency.decimal_separator if currency else '.'
+        currency_thousand_separator = getattr(currency, 'thousand_separator', ',') if currency else ','
+        currency_decimal_separator = getattr(currency, 'decimal_separator', '.') if currency else '.'
         currency_symbol_position = currency.symbol_position if currency else 'before'
-        currency_locale = 'en-BD' if currency and getattr(currency, 'code', '') == 'BDT' else 'en-US'
+        currency_number_system = getattr(currency, 'number_system', 'western') if currency else 'western'
+        currency_locale = 'bn-BD' if currency and getattr(currency, 'code', '') == 'BDT' else 'en-US'
+        
+        # Get free shipping threshold from ShippingSettings (robust source)
+        try:
+            from apps.shipping.models import ShippingSettings, ShippingRate
+            shipping_settings = ShippingSettings.get_settings()
+            if shipping_settings.enable_free_shipping and shipping_settings.free_shipping_threshold:
+                free_shipping_threshold = float(shipping_settings.free_shipping_threshold)
+            
+            # Get default shipping cost from first active rate or settings
+            default_rate = ShippingRate.objects.filter(
+                zone__is_active=True,
+                method__is_active=True
+            ).order_by('base_rate').first()
+            if default_rate:
+                default_shipping_cost = float(default_rate.base_rate)
+        except Exception:
+            pass
+        
+        # Get COD fee from PaymentGateway
+        try:
+            from apps.payments.models import PaymentGateway
+            cod_gateway = PaymentGateway.objects.filter(code='cod', is_active=True).first()
+            if cod_gateway and cod_gateway.fee_amount:
+                cod_fee = float(cod_gateway.fee_amount)
+        except Exception:
+            pass
+            
     except Exception:
         currency_code = 'BDT'
         currency_symbol = '৳'
+        currency_native_symbol = '৳'
         currency_decimal_places = 2
         currency_thousand_separator = ','
         currency_decimal_separator = '.'
         currency_symbol_position = 'before'
+        currency_number_system = 'western'
         currency_locale = 'en-US'
 
     # Build a canonical URL (strip common tracking params, keep search/page where relevant)
@@ -147,11 +183,16 @@ def site_settings(request):
         'STRIPE_PUBLIC_KEY': getattr(settings, 'STRIPE_PUBLIC_KEY', ''),
         'currency_code': currency_code,
         'currency_symbol': currency_symbol,
+        'currency_native_symbol': currency_native_symbol,
         'currency_locale': currency_locale,
         'currency_decimal_places': currency_decimal_places,
         'currency_thousand_separator': currency_thousand_separator,
         'currency_decimal_separator': currency_decimal_separator,
         'currency_symbol_position': currency_symbol_position,
+        'currency_number_system': currency_number_system,
+        'free_shipping_threshold': free_shipping_threshold,
+        'default_shipping_cost': default_shipping_cost,
+        'cod_fee': cod_fee,
         'canonical_url': build_canonical(request),
         'meta_robots': compute_meta_robots(request),
         'IS_CRAWLER': is_crawler,

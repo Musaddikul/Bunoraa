@@ -13,27 +13,27 @@ const LocalizationApi = (function() {
     const BASE_CURRENCY = 'BDT';
 
     async function getCurrencies() {
-        return ApiClient.get('/currencies/', {}, { useCache: true, cacheTTL: 3600000 });
+        return ApiClient.get('/i18n/currencies/', {}, { useCache: true, cacheTTL: 3600000 });
     }
 
     async function getLanguages() {
-        return ApiClient.get('/localization/languages/', {}, { useCache: true, cacheTTL: 3600000 });
+        return ApiClient.get('/i18n/languages/', {}, { useCache: true, cacheTTL: 3600000 });
     }
 
     async function getTimezones() {
-        return ApiClient.get('/localization/timezones/', {}, { useCache: true, cacheTTL: 3600000 });
+        return ApiClient.get('/i18n/timezones/', {}, { useCache: true, cacheTTL: 3600000 });
     }
 
     async function getCountries() {
-        return ApiClient.get('/localization/countries/', {}, { useCache: true, cacheTTL: 3600000 });
+        return ApiClient.get('/i18n/countries/', {}, { useCache: true, cacheTTL: 3600000 });
     }
 
     async function getDivisions(countryCode) {
-        return ApiClient.get(`/localization/countries/${countryCode}/divisions/`, {}, { useCache: true, cacheTTL: 3600000 });
+        return ApiClient.get(`/i18n/countries/${countryCode}/divisions/`, {}, { useCache: true, cacheTTL: 3600000 });
     }
 
     async function convertCurrency(amount, from, to) {
-        return ApiClient.get('/currencies/convert/', { amount, from, to });
+        return ApiClient.get('/i18n/convert/', { amount, from, to });
     }
     
     async function getExchangeRate(from, to) {
@@ -57,7 +57,7 @@ const LocalizationApi = (function() {
 
     async function getCurrentCurrency() {
         try {
-            const resp = await ApiClient.get('/currencies/current/');
+            const resp = await ApiClient.get('/i18n/currencies/current/');
             if (resp && resp.data && resp.data.code) return resp.data.code;
         } catch (err) {
             // ignore

@@ -6,7 +6,7 @@ from ..models import (
     ShippingZone, ShippingCarrier, ShippingMethod, ShippingRate,
     Shipment, ShipmentEvent, ShippingSettings
 )
-from apps.currencies.models import Currency
+from apps.i18n.models import Currency
 
 
 class ShippingCarrierSerializer(serializers.ModelSerializer):

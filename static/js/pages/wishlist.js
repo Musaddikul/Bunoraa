@@ -1,17 +1,37 @@
 /**
- * Wishlist Page
+ * Wishlist Page - Comprehensive Version
  * @module pages/wishlist
+ * Features: Priority levels, price tracking, reminders, target prices, bulk operations
  */
 
 const WishlistPage = (function() {
     'use strict';
 
     let currentPage = 1;
+    let currentSort = 'added_desc';
+    let currentFilter = 'all';
+
+    // Get currency configuration dynamically
+    function getCurrencySymbol() {
+        return window.BUNORAA_CURRENCY?.symbol || '৳';
+    }
+
+    // Configuration
+    const CONFIG = {
+        get CURRENCY_SYMBOL() { return getCurrencySymbol(); },
+        PRIORITY_LEVELS: {
+            low: { label: 'Low', color: 'gray', icon: '○' },
+            normal: { label: 'Normal', color: 'blue', icon: '◐' },
+            high: { label: 'High', color: 'amber', icon: '●' },
+            urgent: { label: 'Urgent', color: 'red', icon: '★' }
+        }
+    };
 
     async function init() {
         if (!AuthGuard.protectPage()) return;
 
         await loadWishlist();
+        bindGlobalEvents();
     }
 
     function resolveProductImage(item = {}) {
@@ -51,9 +71,6 @@ const WishlistPage = (function() {
 
     function resolvePrices(item = {}) {
         const product = item.product || item || {};
-        // For wishlist items, API now returns:
-        // - item.product_price (original price)
-        // - item.product_sale_price (sale price if on sale)
         
         const pickNumber = (val) => {
             if (val === null || val === undefined) return null;
@@ -61,7 +78,6 @@ const WishlistPage = (function() {
             return Number.isFinite(num) ? num : null;
         };
 
-        // Get regular price - prefer product_price from wishlist API
         const priceCandidates = [
             item.product_price,
             product.price,
@@ -76,7 +92,6 @@ const WishlistPage = (function() {
             if (price !== null) break;
         }
 
-        // Get sale price - prefer product_sale_price from wishlist API
         const saleCandidates = [
             item.product_sale_price,
             product.sale_price,
@@ -89,9 +104,19 @@ const WishlistPage = (function() {
             if (salePrice !== null) break;
         }
 
+        // Price tracking
+        const lowestPrice = pickNumber(item.lowest_price_seen);
+        const highestPrice = pickNumber(item.highest_price_seen);
+        const targetPrice = pickNumber(item.target_price);
+        const priceAtAdd = pickNumber(item.price_at_add);
+
         return {
             price: price !== null ? price : 0,
-            salePrice: salePrice !== null ? salePrice : null
+            salePrice: salePrice !== null ? salePrice : null,
+            lowestPrice,
+            highestPrice,
+            targetPrice,
+            priceAtAdd
         };
     }
 
@@ -102,17 +127,14 @@ const WishlistPage = (function() {
         Loader.show(container, 'skeleton');
 
         try {
-            const response = await WishlistApi.getWishlist({ page: currentPage });
-            // Normalize various API shapes to a flat array and meta
+            const response = await WishlistApi.getWishlist({ page: currentPage, sort: currentSort });
             let items = [];
             let meta = {};
 
             if (Array.isArray(response)) {
                 items = response;
             } else if (response && typeof response === 'object') {
-                // Common shapes: { data: [...] }, { results: [...] }, { items: [...] }
                 items = response.data || response.results || response.items || [];
-                // Some APIs return { data: { items: [...], meta: {...} } }
                 if (!Array.isArray(items) && response.data && typeof response.data === 'object') {
                     items = response.data.items || response.data.results || [];
                     meta = response.data.meta || response.meta || {};
@@ -122,17 +144,35 @@ const WishlistPage = (function() {
             }
 
             if (!Array.isArray(items)) {
-                // Last-ditch attempt: single item object => wrap; otherwise empty
                 items = items && typeof items === 'object' ? [items] : [];
             }
 
-            renderWishlist(items, meta);
+            // Apply client-side filter
+            let filteredItems = items;
+            if (currentFilter === 'on_sale') {
+                filteredItems = items.filter(item => {
+                    const prices = resolvePrices(item);
+                    return prices.salePrice && prices.salePrice < prices.price;
+                });
+            } else if (currentFilter === 'in_stock') {
+                filteredItems = items.filter(item => item.is_in_stock !== false);
+            } else if (currentFilter === 'price_drop') {
+                filteredItems = items.filter(item => {
+                    const prices = resolvePrices(item);
+                    return prices.priceAtAdd && prices.price < prices.priceAtAdd;
+                });
+            } else if (currentFilter === 'at_target') {
+                filteredItems = items.filter(item => {
+                    const prices = resolvePrices(item);
+                    return prices.targetPrice && prices.price <= prices.targetPrice;
+                });
+            }
+
+            renderWishlist(filteredItems, items, meta);
         } catch (error) {
             const msg = (error && (error.message || error.detail)) || 'Failed to load wishlist.';
 
-            // If authentication is required, redirect to login (AuthGuard will handle)
             if (error && error.status === 401) {
-                // Trigger login redirect
                 AuthGuard.redirectToLogin();
                 return;
             }
@@ -141,18 +181,33 @@ const WishlistPage = (function() {
         }
     }
 
-    function renderWishlist(items, meta) {
+    function renderWishlist(filteredItems, allItems, meta) {
         const container = document.getElementById('wishlist-container');
         if (!container) return;
 
-        if (items.length === 0) {
+        // Calculate stats
+        const totalItems = allItems.length;
+        const onSaleCount = allItems.filter(item => {
+            const p = resolvePrices(item);
+            return p.salePrice && p.salePrice < p.price;
+        }).length;
+        const priceDropCount = allItems.filter(item => {
+            const p = resolvePrices(item);
+            return p.priceAtAdd && p.price < p.priceAtAdd;
+        }).length;
+        const atTargetCount = allItems.filter(item => {
+            const p = resolvePrices(item);
+            return p.targetPrice && p.price <= p.targetPrice;
+        }).length;
+
+        if (totalItems === 0) {
             container.innerHTML = `
                 <div class="text-center py-16">
                     <svg class="w-24 h-24 text-gray-300 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                     </svg>
-                    <h2 class="text-2xl font-bold text-gray-900 mb-2">Your wishlist is empty</h2>
-                    <p class="text-gray-600 mb-8">Start adding items you love to your wishlist.</p>
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Your wishlist is empty</h2>
+                    <p class="text-gray-600 dark:text-gray-400 mb-8">Start adding items you love to your wishlist.</p>
                     <a href="/products/" class="inline-flex items-center px-6 py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors">
                         Browse Products
                     </a>
@@ -162,21 +217,91 @@ const WishlistPage = (function() {
         }
 
         container.innerHTML = `
-            <div class="mb-6 flex items-center justify-between">
-                <h1 class="text-2xl font-bold text-gray-900">My Wishlist (${items.length} items)</h1>
-                <button id="clear-wishlist-btn" class="text-red-600 hover:text-red-700 font-medium text-sm">
-                    Clear All
-                </button>
+            <!-- Header with Stats -->
+            <div class="mb-6">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">My Wishlist</h1>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">${totalItems} items saved</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button id="add-all-to-cart-btn" class="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                            Add All to Cart
+                        </button>
+                        <button id="share-wishlist-btn" class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+                            </svg>
+                            Share
+                        </button>
+                        <button id="clear-wishlist-btn" class="px-4 py-2 text-red-600 dark:text-red-400 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                            Clear All
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Quick Stats -->
+                <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                        <div class="text-2xl font-bold text-gray-900 dark:text-white">${totalItems}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">Total Items</div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700 ${onSaleCount > 0 ? 'ring-2 ring-green-500' : ''}">
+                        <div class="text-2xl font-bold text-green-600 dark:text-green-400">${onSaleCount}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">On Sale</div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700 ${priceDropCount > 0 ? 'ring-2 ring-blue-500' : ''}">
+                        <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">${priceDropCount}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">Price Dropped</div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700 ${atTargetCount > 0 ? 'ring-2 ring-amber-500' : ''}">
+                        <div class="text-2xl font-bold text-amber-600 dark:text-amber-400">${atTargetCount}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">At Target Price</div>
+                    </div>
+                </div>
             </div>
+            
+            <!-- Filters and Sort -->
+            <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div class="flex flex-wrap gap-2">
+                    <button class="filter-btn px-3 py-1.5 text-sm rounded-lg transition-colors ${currentFilter === 'all' ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}" data-filter="all">All</button>
+                    <button class="filter-btn px-3 py-1.5 text-sm rounded-lg transition-colors ${currentFilter === 'on_sale' ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}" data-filter="on_sale">On Sale</button>
+                    <button class="filter-btn px-3 py-1.5 text-sm rounded-lg transition-colors ${currentFilter === 'in_stock' ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}" data-filter="in_stock">In Stock</button>
+                    <button class="filter-btn px-3 py-1.5 text-sm rounded-lg transition-colors ${currentFilter === 'price_drop' ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}" data-filter="price_drop">Price Drop</button>
+                    <button class="filter-btn px-3 py-1.5 text-sm rounded-lg transition-colors ${currentFilter === 'at_target' ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}" data-filter="at_target">At Target</button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label class="text-sm text-gray-500 dark:text-gray-400">Sort:</label>
+                    <select id="wishlist-sort" class="text-sm border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:ring-primary-500 focus:border-primary-500">
+                        <option value="added_desc" ${currentSort === 'added_desc' ? 'selected' : ''}>Newest First</option>
+                        <option value="added_asc" ${currentSort === 'added_asc' ? 'selected' : ''}>Oldest First</option>
+                        <option value="price_asc" ${currentSort === 'price_asc' ? 'selected' : ''}>Price: Low to High</option>
+                        <option value="price_desc" ${currentSort === 'price_desc' ? 'selected' : ''}>Price: High to Low</option>
+                        <option value="priority" ${currentSort === 'priority' ? 'selected' : ''}>Priority</option>
+                        <option value="name" ${currentSort === 'name' ? 'selected' : ''}>Name A-Z</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Items Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                ${items.map(item => renderWishlistItem(item)).join('')}
-            </div> 
-            ${meta.total_pages > 1 ? `
-                <div id="wishlist-pagination" class="mt-8"></div>
+                ${filteredItems.map(item => renderWishlistItem(item)).join('')}
+            </div>
+            
+            ${filteredItems.length === 0 && totalItems > 0 ? `
+                <div class="text-center py-12">
+                    <p class="text-gray-500 dark:text-gray-400">No items match the selected filter.</p>
+                    <button class="mt-4 text-primary-600 hover:underline" onclick="document.querySelector('[data-filter=all]').click()">Show all items</button>
+                </div>
             ` : ''}
+            
+            ${meta.total_pages > 1 ? `<div id="wishlist-pagination" class="mt-8"></div>` : ''}
         `;
 
-        // Mount modern Pagination component if needed
+        // Mount pagination
         if (meta && meta.total_pages > 1) {
             const mount = document.getElementById('wishlist-pagination');
             if (mount && window.Pagination) {
@@ -207,90 +332,220 @@ const WishlistPage = (function() {
             const imageUrl = resolveProductImage(item || {});
             const requiresVariants = !!item.product_has_variants;
 
-            let priceObj = { price: 0, salePrice: null };
+            let priceObj = { price: 0, salePrice: null, lowestPrice: null, highestPrice: null, targetPrice: null, priceAtAdd: null };
             try { priceObj = resolvePrices(item || {}); } catch { priceObj = { price: 0, salePrice: null }; }
-            const { price, salePrice } = priceObj;
+            const { price, salePrice, lowestPrice, highestPrice, targetPrice, priceAtAdd } = priceObj;
+            
+            // Calculate price change
+            const currentPrice = salePrice || price;
+            const hasPriceDrop = priceAtAdd && currentPrice < priceAtAdd;
+            const priceChangePercent = priceAtAdd ? Math.round(((currentPrice - priceAtAdd) / priceAtAdd) * 100) : 0;
+            const isAtTarget = targetPrice && currentPrice <= targetPrice;
+            const isOnSale = salePrice && salePrice < price;
+            
+            // Priority
+            const priority = item.priority || 'normal';
+            const priorityConfig = CONFIG.PRIORITY_LEVELS[priority] || CONFIG.PRIORITY_LEVELS.normal;
 
             const safeEscape = (s) => {
                 try { return Templates.escapeHtml(s || ''); } catch { return String(s || ''); }
             };
 
             const safePriceRender = (p) => {
-                try { return Price.render({ price: p.price, salePrice: p.salePrice }); } catch { return `<span class="font-bold">${p.price || ''}</span>`; }
+                try { return Price.render({ price: p.price, salePrice: p.salePrice }); } catch { return `<span class="font-bold">${CONFIG.CURRENCY_SYMBOL}${p.price || 0}</span>`; }
+            };
+
+            const formatPrice = (p) => {
+                try { return Templates.formatPrice(p); } catch { return `${CONFIG.CURRENCY_SYMBOL}${p}`; }
             };
 
             const aspectCss = (product && product.aspect && (product.aspect.css || (product.aspect.width && product.aspect.height ? `${product.aspect.width}/${product.aspect.height}` : null))) || '1/1';
 
             return `
-                <div class="wishlist-item relative bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" data-item-id="${item && item.id ? item.id : ''}" data-product-id="${(product && product.id) ? product.id : (item && item.product) ? item.product : ''}" data-product-slug="${safeEscape(productSlug)}" data-product-has-variants="${requiresVariants}">
+                <div class="wishlist-item relative bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden group" 
+                     data-item-id="${item && item.id ? item.id : ''}" 
+                     data-product-id="${(product && product.id) ? product.id : (item && item.product) ? item.product : ''}" 
+                     data-product-slug="${safeEscape(productSlug)}" 
+                     data-product-has-variants="${requiresVariants}"
+                     data-priority="${priority}">
+                    
+                    <!-- Image Section -->
                     <div class="relative" style="aspect-ratio: ${aspectCss};">
-                        ${item && item.discount_percentage ? `
-                            <div class="absolute top-2 left-2 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-                                -${item.discount_percentage}%
-                            </div>
-                        ` : ''}
-                        <button class="remove-btn absolute top-2 right-2 z-20 w-10 h-10 bg-gray-900 text-white rounded-full shadow-lg ring-2 ring-white/25 border border-white/30 flex items-center justify-center hover:bg-gray-800 transition-colors" aria-label="Remove from wishlist" style="pointer-events:auto;">
-                            <svg class="w-5 h-5" fill="none" stroke="white" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                        <!-- Badges -->
+                        <div class="absolute top-2 left-2 z-10 flex flex-col gap-1">
+                            ${isOnSale ? `
+                                <div class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                                    -${Math.round((1 - salePrice / price) * 100)}%
+                                </div>
+                            ` : ''}
+                            ${hasPriceDrop ? `
+                                <div class="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded flex items-center">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                                    </svg>
+                                    ${Math.abs(priceChangePercent)}% drop
+                                </div>
+                            ` : ''}
+                            ${isAtTarget ? `
+                                <div class="bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded flex items-center">
+                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                    </svg>
+                                    Target!
+                                </div>
+                            ` : ''}
+                            ${!inStock ? `
+                                <div class="bg-gray-800 text-white text-xs font-bold px-2 py-1 rounded">
+                                    Out of Stock
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <!-- Priority Indicator -->
+                        <div class="absolute top-2 right-12 z-10">
+                            <button class="priority-btn w-8 h-8 rounded-full bg-white dark:bg-gray-700 shadow-md flex items-center justify-center text-${priorityConfig.color}-500 hover:scale-110 transition-transform" title="Priority: ${priorityConfig.label}" data-item-id="${item.id}">
+                                <span class="text-sm">${priorityConfig.icon}</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Remove Button -->
+                        <button class="remove-btn absolute top-2 right-2 z-20 w-8 h-8 bg-gray-900/80 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100" aria-label="Remove from wishlist">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                             </svg>
                         </button>
+                        
+                        <!-- Product Image -->
                         <a href="/products/${safeEscape(productSlug)}/">
                             ${imageUrl ? `
                                 <img 
                                     src="${imageUrl}" 
                                     alt="${safeEscape(productName)}"
-                                    class="w-full h-full object-cover"
+                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                     loading="lazy"
                                 >
                             ` : `
-                                <div class="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs uppercase tracking-wide">No Image</div>
+                                <div class="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-400 dark:text-gray-500 text-xs uppercase tracking-wide">No Image</div>
                             `}
                         </a>
                     </div>
+                    
+                    <!-- Content Section -->
                     <div class="p-4">
                         ${product && product.category ? `
-                            <a href="/categories/${safeEscape(product.category.slug)}/" class="text-xs text-gray-500 hover:text-primary-600">
+                            <a href="/categories/${safeEscape(product.category.slug)}/" class="text-xs text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">
                                 ${safeEscape(product.category.name)}
                             </a>
                         ` : ''}
-                        <h3 class="font-medium text-gray-900 mt-1 line-clamp-2">
-                            <a href="/products/${safeEscape(productSlug)}/" class="hover:text-primary-600">
+                        <h3 class="font-medium text-gray-900 dark:text-white mt-1 line-clamp-2">
+                            <a href="/products/${safeEscape(productSlug)}/" class="hover:text-primary-600 dark:hover:text-primary-400">
                                 ${safeEscape(productName)}
                             </a>
                         </h3>
+                        
+                        <!-- Price Section -->
                         <div class="mt-2">
                             ${safePriceRender({ price, salePrice })}
                         </div>
+                        
+                        <!-- Price History -->
+                        ${lowestPrice || targetPrice ? `
+                            <div class="mt-2 text-xs space-y-1">
+                                ${lowestPrice ? `
+                                    <div class="flex items-center justify-between text-gray-500 dark:text-gray-400">
+                                        <span>Lowest:</span>
+                                        <span class="font-medium text-green-600 dark:text-green-400">${formatPrice(lowestPrice)}</span>
+                                    </div>
+                                ` : ''}
+                                ${targetPrice ? `
+                                    <div class="flex items-center justify-between text-gray-500 dark:text-gray-400">
+                                        <span>Target:</span>
+                                        <span class="font-medium text-amber-600 dark:text-amber-400">${formatPrice(targetPrice)}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        ` : ''}
+                        
+                        <!-- Rating -->
                         ${product && product.average_rating ? `
                             <div class="flex items-center gap-1 mt-2">
                                 ${Templates.renderStars(product.average_rating)}
-                                <span class="text-xs text-gray-500">(${product.review_count || 0})</span>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">(${product.review_count || 0})</span>
                             </div>
                         ` : ''}
-                        <button 
-                            class="add-to-cart-btn mt-4 w-full px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm"
-                            ${!inStock ? 'disabled' : ''}
-                        >
-                            ${requiresVariants ? 'Select variant' : (inStock ? 'Add to Cart' : 'Out of Stock')}
-                        </button>
+                        
+                        <!-- Actions -->
+                        <div class="mt-4 flex gap-2">
+                            <button 
+                                class="add-to-cart-btn flex-1 px-3 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm flex items-center justify-center"
+                                ${!inStock ? 'disabled' : ''}
+                            >
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                </svg>
+                                ${requiresVariants ? 'Options' : (inStock ? 'Add' : 'Sold Out')}
+                            </button>
+                            <button class="set-target-btn px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm" title="Set target price" data-item-id="${item.id}" data-current-price="${currentPrice}">
+                                <svg class="w-4 h-4" fill="${targetPrice ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
+                    
+                    <!-- Added Date -->
                     ${item && item.added_at ? `
-                        <div class="px-4 pb-4">
-                            <p class="text-xs text-gray-400">Added ${Templates.formatDate(item.added_at)}</p>
+                        <div class="px-4 pb-3 border-t border-gray-100 dark:border-gray-700 pt-3">
+                            <p class="text-xs text-gray-400 dark:text-gray-500">Added ${Templates.formatDate(item.added_at)}</p>
                         </div>
                     ` : ''}
                 </div>
             `;
         } catch (err) {
-            return '<div class="p-4 bg-white rounded shadow text-gray-500">Failed to render item</div>';
+            console.error('Failed to render wishlist item:', err);
+            return '<div class="p-4 bg-white dark:bg-gray-800 rounded shadow text-gray-500 dark:text-gray-400">Failed to render item</div>';
         }
+    }
+
+    function bindGlobalEvents() {
+        // Sort change
+        document.getElementById('wishlist-sort')?.addEventListener('change', (e) => {
+            currentSort = e.target.value;
+            loadWishlist();
+        });
+
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentFilter = btn.dataset.filter;
+                loadWishlist();
+            });
+        });
     }
 
     function bindEvents() {
         const clearAllBtn = document.getElementById('clear-wishlist-btn');
+        const addAllBtn = document.getElementById('add-all-to-cart-btn');
+        const shareBtn = document.getElementById('share-wishlist-btn');
         const wishlistItems = document.querySelectorAll('.wishlist-item');
-        const paginationContainer = document.getElementById('wishlist-pagination');
+        const sortSelect = document.getElementById('wishlist-sort');
+        const filterBtns = document.querySelectorAll('.filter-btn');
 
+        // Sort change
+        sortSelect?.addEventListener('change', (e) => {
+            currentSort = e.target.value;
+            loadWishlist();
+        });
+
+        // Filter buttons
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentFilter = btn.dataset.filter;
+                loadWishlist();
+            });
+        });
+
+        // Clear all
         clearAllBtn?.addEventListener('click', async () => {
             const confirmed = await Modal.confirm({
                 title: 'Clear Wishlist',
@@ -310,10 +565,74 @@ const WishlistPage = (function() {
             }
         });
 
+        // Add all to cart
+        addAllBtn?.addEventListener('click', async () => {
+            const btn = addAllBtn;
+            btn.disabled = true;
+            btn.innerHTML = '<svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Adding...';
+            
+            try {
+                // Get all items without variants
+                const items = document.querySelectorAll('.wishlist-item:not([data-product-has-variants="true"])');
+                let added = 0;
+                let failed = 0;
+                
+                for (const item of items) {
+                    const productId = item.dataset.productId;
+                    if (!productId) continue;
+                    
+                    try {
+                        await CartApi.addItem(productId, 1);
+                        added++;
+                    } catch (err) {
+                        failed++;
+                    }
+                }
+                
+                if (added > 0) {
+                    Toast.success(`Added ${added} items to cart!`);
+                    document.dispatchEvent(new CustomEvent('cart:updated'));
+                }
+                if (failed > 0) {
+                    Toast.warning(`${failed} items could not be added (may require variant selection).`);
+                }
+            } catch (error) {
+                Toast.error(error.message || 'Failed to add items to cart.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>Add All to Cart';
+            }
+        });
+
+        // Share wishlist
+        shareBtn?.addEventListener('click', async () => {
+            try {
+                const shareUrl = `${window.location.origin}/wishlist/share/`;
+                
+                if (navigator.share) {
+                    await navigator.share({
+                        title: 'My Wishlist',
+                        text: 'Check out my wishlist!',
+                        url: shareUrl
+                    });
+                } else {
+                    await navigator.clipboard.writeText(shareUrl);
+                    Toast.success('Wishlist link copied to clipboard!');
+                }
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    Toast.error('Failed to share wishlist.');
+                }
+            }
+        });
+
+        // Item-specific events
         wishlistItems.forEach(item => {
             const itemId = item.dataset.itemId;
             const productId = item.dataset.productId;
+            const productSlug = item.dataset.productSlug;
 
+            // Remove button
             item.querySelector('.remove-btn')?.addEventListener('click', async () => {
                 try {
                     await WishlistApi.removeItem(itemId);
@@ -329,20 +648,98 @@ const WishlistPage = (function() {
                 }
             });
 
+            // Priority button
+            item.querySelector('.priority-btn')?.addEventListener('click', async () => {
+                const priorities = ['low', 'normal', 'high', 'urgent'];
+                const currentPriority = item.dataset.priority || 'normal';
+                const currentIndex = priorities.indexOf(currentPriority);
+                const nextPriority = priorities[(currentIndex + 1) % priorities.length];
+                
+                try {
+                    // Update via API if available
+                    if (WishlistApi.updateItem) {
+                        await WishlistApi.updateItem(itemId, { priority: nextPriority });
+                    }
+                    
+                    // Update UI
+                    item.dataset.priority = nextPriority;
+                    const btn = item.querySelector('.priority-btn');
+                    const config = CONFIG.PRIORITY_LEVELS[nextPriority];
+                    btn.title = `Priority: ${config.label}`;
+                    btn.innerHTML = `<span class="text-sm">${config.icon}</span>`;
+                    btn.className = `priority-btn w-8 h-8 rounded-full bg-white dark:bg-gray-700 shadow-md flex items-center justify-center text-${config.color}-500 hover:scale-110 transition-transform`;
+                    
+                    Toast.success(`Priority set to ${config.label}`);
+                } catch (error) {
+                    Toast.error('Failed to update priority.');
+                }
+            });
+
+            // Set target price button
+            item.querySelector('.set-target-btn')?.addEventListener('click', async () => {
+                const currentPrice = parseFloat(item.querySelector('.set-target-btn').dataset.currentPrice) || 0;
+                
+                const content = `
+                    <div class="space-y-4">
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Set a target price and we'll notify you when the item drops to or below this price.</p>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current Price</label>
+                            <div class="text-lg font-bold text-gray-900 dark:text-white">${CONFIG.CURRENCY_SYMBOL}${currentPrice.toLocaleString()}</div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Target Price</label>
+                            <div class="flex items-center">
+                                <span class="text-gray-500 mr-2">${CONFIG.CURRENCY_SYMBOL}</span>
+                                <input type="number" id="target-price-input" value="${Math.round(currentPrice * 0.9)}" min="1" max="${currentPrice}" class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary-500 focus:border-primary-500">
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Suggested: ${CONFIG.CURRENCY_SYMBOL}${Math.round(currentPrice * 0.9).toLocaleString()} (10% off)</p>
+                        </div>
+                    </div>
+                `;
+                
+                const confirmed = await Modal.open({
+                    title: 'Set Target Price',
+                    content,
+                    confirmText: 'Set Alert',
+                    cancelText: 'Cancel',
+                    onConfirm: async () => {
+                        const targetPrice = parseFloat(document.getElementById('target-price-input').value);
+                        
+                        if (!targetPrice || targetPrice <= 0) {
+                            Toast.error('Please enter a valid target price.');
+                            return false;
+                        }
+                        
+                        try {
+                            if (WishlistApi.updateItem) {
+                                await WishlistApi.updateItem(itemId, { target_price: targetPrice });
+                            }
+                            Toast.success(`Price alert set for ${CONFIG.CURRENCY_SYMBOL}${targetPrice.toLocaleString()}`);
+                            await loadWishlist();
+                            return true;
+                        } catch (error) {
+                            Toast.error('Failed to set price alert.');
+                            return false;
+                        }
+                    }
+                });
+            });
+
+            // Add to cart button
             item.querySelector('.add-to-cart-btn')?.addEventListener('click', async (e) => {
-                const btn = e.target;
+                const btn = e.target.closest('.add-to-cart-btn');
                 if (btn.disabled) return;
 
                 btn.disabled = true;
-                btn.textContent = 'Adding...';
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
 
-                const productSlug = item.dataset.productSlug || ''; // fallback if not present
                 const requiresVariants = item.dataset.productHasVariants === 'true' || item.dataset.productHasVariants === 'True' || item.dataset.productHasVariants === '1';
 
-                // If product requires variants, redirect user to product page to choose
                 if (requiresVariants) {
-                    // Open inline variant picker modal
                     showVariantPicker(item);
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
                     return;
                 }
 
@@ -351,7 +748,6 @@ const WishlistPage = (function() {
                     Toast.success('Added to cart!');
                     document.dispatchEvent(new CustomEvent('cart:updated'));
                 } catch (error) {
-                    // If the product requires a variant, redirect user to product page to choose variant
                     const hasVariantError = Boolean(
                         error && (
                             (error.errors && error.errors.variant_id) ||
@@ -360,18 +756,9 @@ const WishlistPage = (function() {
                     );
 
                     if (hasVariantError) {
-                        Toast.info('This product requires selecting a variant. Redirecting to the product page...');
-                        // If we don't have a slug, fall back to using the product anchor
-                        let slug = productSlug;
-                        if (!slug) {
-                            const href = item.querySelector('a')?.getAttribute('href');
-                            if (href) {
-                                const m = href.match(/\/products\/(.*)\/?$/);
-                                if (m) slug = m[1];
-                            }
-                        }
-                        if (slug) {
-                            window.location.href = `/products/${slug}/`;
+                        Toast.info('This product requires selecting a variant.');
+                        if (productSlug) {
+                            window.location.href = `/products/${productSlug}/`;
                             return;
                         }
                     }
@@ -379,12 +766,10 @@ const WishlistPage = (function() {
                     Toast.error(error.message || 'Failed to add to cart.');
                 } finally {
                     btn.disabled = false;
-                    btn.textContent = 'Add to Cart';
+                    btn.innerHTML = originalText;
                 }
             });
         });
-
-        // Pagination handled by component onChange
     }
 
     function renderModalVariants(variants) {
@@ -421,7 +806,7 @@ const WishlistPage = (function() {
                 res = await ProductsApi.getProduct(slug || id);
             } else {
                 const currency = (window.BUNORAA_CURRENCY && window.BUNORAA_CURRENCY.code) || undefined;
-                res = await ApiClient.get(`/products/${slug || id}/`, { currency });
+                res = await ApiClient.get(`/catalog/products/${slug || id}/`, { currency });
             }
 
             if (!res || !res.success || !res.data) {

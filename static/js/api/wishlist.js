@@ -6,7 +6,7 @@
 const WishlistApi = (function() {
     'use strict';
 
-    const WISHLIST_PATH = '/wishlist/';
+    const WISHLIST_PATH = '/commerce/wishlist/';
 
     async function getWishlist(params = {}) {
         const response = await ApiClient.get(WISHLIST_PATH, {

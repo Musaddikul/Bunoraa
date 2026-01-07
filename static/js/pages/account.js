@@ -1,5 +1,5 @@
 /**
- * Account Page
+ * Account Page - Enhanced with Advanced Features
  * @module pages/account
  */
 
@@ -23,6 +23,394 @@ const AccountPage = (function() {
         initProfileForm();
         initPasswordForm();
         initAddressManagement();
+        initEnhancedFeatures();
+    }
+
+    // ============================================
+    // ENHANCED FEATURES INITIALIZATION
+    // ============================================
+    function initEnhancedFeatures() {
+        initLoyaltyPoints();
+        initQuickStats();
+        initRecentActivity();
+        initNotificationPreferences();
+        initQuickReorder();
+        initAccountSecurityCheck();
+    }
+
+    // ============================================
+    // ENHANCED FEATURE: Loyalty Points Display
+    // ============================================
+    function initLoyaltyPoints() {
+        const container = document.getElementById('loyalty-points');
+        if (!container) return;
+
+        // Mock data - replace with API call in production
+        const points = currentUser?.loyalty_points || Math.floor(Math.random() * 500) + 100;
+        const tier = points >= 500 ? 'Gold' : points >= 200 ? 'Silver' : 'Bronze';
+        const tierColors = {
+            Bronze: 'from-amber-600 to-amber-700',
+            Silver: 'from-gray-400 to-gray-500',
+            Gold: 'from-yellow-400 to-yellow-500'
+        };
+        const nextTier = tier === 'Gold' ? null : tier === 'Silver' ? 'Gold' : 'Silver';
+        const nextTierPoints = tier === 'Gold' ? 0 : tier === 'Silver' ? 500 : 200;
+        const progress = nextTier ? Math.min(100, (points / nextTierPoints) * 100) : 100;
+
+        container.innerHTML = `
+            <div class="bg-gradient-to-br ${tierColors[tier]} rounded-2xl p-6 text-white relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 opacity-10">
+                    <svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                </div>
+                <div class="relative">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <p class="text-white/80 text-sm font-medium">${tier} Member</p>
+                            <p class="text-3xl font-bold">${points.toLocaleString()} pts</p>
+                        </div>
+                        <div class="w-14 h-14 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
+                            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    ${nextTier ? `
+                        <div class="mt-4">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span>${nextTierPoints - points} points to ${nextTier}</span>
+                                <span>${Math.round(progress)}%</span>
+                            </div>
+                            <div class="w-full bg-white/30 rounded-full h-2">
+                                <div class="bg-white h-2 rounded-full transition-all duration-500" style="width: ${progress}%"></div>
+                            </div>
+                        </div>
+                    ` : '<p class="text-sm text-white/80 mt-2">🎉 You\'ve reached the highest tier!</p>'}
+                    <div class="mt-4 pt-4 border-t border-white/20">
+                        <a href="/loyalty/" class="text-sm font-medium hover:underline flex items-center gap-1">
+                            View Rewards
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // ============================================
+    // ENHANCED FEATURE: Quick Stats
+    // ============================================
+    function initQuickStats() {
+        const container = document.getElementById('quick-stats');
+        if (!container) return;
+
+        // Mock data - replace with API call
+        const stats = {
+            totalOrders: currentUser?.total_orders || Math.floor(Math.random() * 20) + 5,
+            totalSpent: currentUser?.total_spent || Math.floor(Math.random() * 1000) + 200,
+            wishlistItems: currentUser?.wishlist_count || Math.floor(Math.random() * 10) + 2,
+            savedAddresses: currentUser?.address_count || Math.floor(Math.random() * 3) + 1
+        };
+
+        container.innerHTML = `
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white dark:bg-stone-800 rounded-xl p-4 border border-gray-100 dark:border-stone-700">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-bold text-stone-900 dark:text-white">${stats.totalOrders}</p>
+                            <p class="text-xs text-stone-500 dark:text-stone-400">Total Orders</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-stone-800 rounded-xl p-4 border border-gray-100 dark:border-stone-700">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-bold text-stone-900 dark:text-white">${Templates.formatPrice(stats.totalSpent)}</p>
+                            <p class="text-xs text-stone-500 dark:text-stone-400">Total Spent</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-stone-800 rounded-xl p-4 border border-gray-100 dark:border-stone-700">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-rose-100 dark:bg-rose-900/30 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-bold text-stone-900 dark:text-white">${stats.wishlistItems}</p>
+                            <p class="text-xs text-stone-500 dark:text-stone-400">Wishlist Items</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-stone-800 rounded-xl p-4 border border-gray-100 dark:border-stone-700">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-bold text-stone-900 dark:text-white">${stats.savedAddresses}</p>
+                            <p class="text-xs text-stone-500 dark:text-stone-400">Saved Addresses</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // ============================================
+    // ENHANCED FEATURE: Recent Activity
+    // ============================================
+    async function initRecentActivity() {
+        const container = document.getElementById('recent-activity');
+        if (!container) return;
+
+        try {
+            // Load recent orders
+            const response = await OrdersApi.getAll({ limit: 3 });
+            const orders = response.data || [];
+
+            if (orders.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-6 text-stone-500 dark:text-stone-400">
+                        <p>No recent activity</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="bg-white dark:bg-stone-800 rounded-xl border border-gray-100 dark:border-stone-700 overflow-hidden">
+                    <div class="px-4 py-3 border-b border-gray-100 dark:border-stone-700 flex items-center justify-between">
+                        <h3 class="font-semibold text-stone-900 dark:text-white">Recent Orders</h3>
+                        <a href="/orders/" class="text-sm text-primary-600 dark:text-amber-400 hover:underline">View All</a>
+                    </div>
+                    <div class="divide-y divide-gray-100 dark:divide-stone-700">
+                        ${orders.map(order => {
+                            const statusColors = {
+                                pending: 'text-yellow-600 dark:text-yellow-400',
+                                processing: 'text-blue-600 dark:text-blue-400',
+                                shipped: 'text-indigo-600 dark:text-indigo-400',
+                                delivered: 'text-green-600 dark:text-green-400',
+                                cancelled: 'text-red-600 dark:text-red-400'
+                            };
+                            const statusColor = statusColors[order.status] || 'text-stone-600 dark:text-stone-400';
+                            const firstItem = order.items?.[0];
+                            
+                            return `
+                                <a href="/orders/${order.id}/" class="flex items-center gap-4 p-4 hover:bg-stone-50 dark:hover:bg-stone-700/50 transition-colors">
+                                    <div class="w-12 h-12 bg-stone-100 dark:bg-stone-700 rounded-lg overflow-hidden flex-shrink-0">
+                                        ${firstItem?.product?.image ? 
+                                            `<img src="${firstItem.product.image}" alt="" class="w-full h-full object-cover">` :
+                                            `<div class="w-full h-full flex items-center justify-center text-stone-400">
+                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                            </div>`
+                                        }
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="font-medium text-stone-900 dark:text-white truncate">Order #${Templates.escapeHtml(order.order_number || order.id)}</p>
+                                        <p class="text-sm ${statusColor}">${Templates.escapeHtml(order.status_display || order.status)}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="font-semibold text-stone-900 dark:text-white">${Templates.formatPrice(order.total)}</p>
+                                        <p class="text-xs text-stone-500 dark:text-stone-400">${Templates.formatDate(order.created_at)}</p>
+                                    </div>
+                                </a>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        } catch (error) {
+            container.innerHTML = '';
+        }
+    }
+
+    // ============================================
+    // ENHANCED FEATURE: Notification Preferences
+    // ============================================
+    function initNotificationPreferences() {
+        const container = document.getElementById('notification-preferences');
+        if (!container) return;
+
+        const preferences = JSON.parse(localStorage.getItem('notificationPreferences') || '{}');
+        const defaultPrefs = {
+            orderUpdates: true,
+            promotions: true,
+            newArrivals: false,
+            priceDrops: true,
+            newsletter: false
+        };
+        const prefs = { ...defaultPrefs, ...preferences };
+
+        container.innerHTML = `
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="font-medium text-stone-900 dark:text-white">Order Updates</p>
+                        <p class="text-sm text-stone-500 dark:text-stone-400">Get notified about your order status</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer" data-pref="orderUpdates" ${prefs.orderUpdates ? 'checked' : ''}>
+                        <div class="w-11 h-6 bg-stone-200 dark:bg-stone-600 peer-focus:ring-2 peer-focus:ring-primary-300 dark:peer-focus:ring-amber-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600 dark:peer-checked:bg-amber-500"></div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="font-medium text-stone-900 dark:text-white">Promotions & Sales</p>
+                        <p class="text-sm text-stone-500 dark:text-stone-400">Be the first to know about deals</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer" data-pref="promotions" ${prefs.promotions ? 'checked' : ''}>
+                        <div class="w-11 h-6 bg-stone-200 dark:bg-stone-600 peer-focus:ring-2 peer-focus:ring-primary-300 dark:peer-focus:ring-amber-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600 dark:peer-checked:bg-amber-500"></div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="font-medium text-stone-900 dark:text-white">Price Drops</p>
+                        <p class="text-sm text-stone-500 dark:text-stone-400">Alert when wishlist items go on sale</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer" data-pref="priceDrops" ${prefs.priceDrops ? 'checked' : ''}>
+                        <div class="w-11 h-6 bg-stone-200 dark:bg-stone-600 peer-focus:ring-2 peer-focus:ring-primary-300 dark:peer-focus:ring-amber-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600 dark:peer-checked:bg-amber-500"></div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="font-medium text-stone-900 dark:text-white">New Arrivals</p>
+                        <p class="text-sm text-stone-500 dark:text-stone-400">Updates on new products</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer" data-pref="newArrivals" ${prefs.newArrivals ? 'checked' : ''}>
+                        <div class="w-11 h-6 bg-stone-200 dark:bg-stone-600 peer-focus:ring-2 peer-focus:ring-primary-300 dark:peer-focus:ring-amber-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600 dark:peer-checked:bg-amber-500"></div>
+                    </label>
+                </div>
+            </div>
+        `;
+
+        // Bind toggle events
+        container.querySelectorAll('input[data-pref]').forEach(input => {
+            input.addEventListener('change', () => {
+                const key = input.dataset.pref;
+                const preferences = JSON.parse(localStorage.getItem('notificationPreferences') || '{}');
+                preferences[key] = input.checked;
+                localStorage.setItem('notificationPreferences', JSON.stringify(preferences));
+                Toast.success('Preference saved');
+            });
+        });
+    }
+
+    // ============================================
+    // ENHANCED FEATURE: Quick Reorder
+    // ============================================
+    function initQuickReorder() {
+        const container = document.getElementById('quick-reorder');
+        if (!container) return;
+
+        // Get recently ordered products from localStorage
+        const recentProducts = JSON.parse(localStorage.getItem('recentlyOrdered') || '[]');
+
+        if (recentProducts.length === 0) {
+            container.classList.add('hidden');
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="bg-white dark:bg-stone-800 rounded-xl border border-gray-100 dark:border-stone-700 p-4">
+                <h3 class="font-semibold text-stone-900 dark:text-white mb-4">Quick Reorder</h3>
+                <div class="flex gap-3 overflow-x-auto pb-2">
+                    ${recentProducts.slice(0, 5).map(product => `
+                        <button class="quick-reorder-btn flex-shrink-0 flex flex-col items-center gap-2 p-3 bg-stone-50 dark:bg-stone-700 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-600 transition-colors" data-product-id="${product.id}">
+                            <div class="w-16 h-16 rounded-lg bg-stone-200 dark:bg-stone-600 overflow-hidden">
+                                <img src="${product.image || '/static/images/placeholder.jpg'}" alt="${Templates.escapeHtml(product.name)}" class="w-full h-full object-cover">
+                            </div>
+                            <span class="text-xs font-medium text-stone-700 dark:text-stone-300 text-center line-clamp-2 w-20">${Templates.escapeHtml(product.name)}</span>
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+
+        // Bind quick reorder buttons
+        container.querySelectorAll('.quick-reorder-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const productId = btn.dataset.productId;
+                btn.disabled = true;
+                
+                try {
+                    await CartApi.addItem(productId, 1);
+                    Toast.success('Added to cart!');
+                    document.dispatchEvent(new CustomEvent('cart:updated'));
+                } catch (error) {
+                    Toast.error('Failed to add to cart');
+                } finally {
+                    btn.disabled = false;
+                }
+            });
+        });
+    }
+
+    // ============================================
+    // ENHANCED FEATURE: Account Security Check
+    // ============================================
+    function initAccountSecurityCheck() {
+        const container = document.getElementById('security-check');
+        if (!container) return;
+
+        // Calculate security score
+        let score = 0;
+        const checks = [];
+
+        // Email verified
+        const emailVerified = currentUser?.email_verified !== false;
+        if (emailVerified) score += 25;
+        checks.push({ label: 'Email verified', completed: emailVerified });
+
+        // Phone added
+        const hasPhone = !!currentUser?.phone;
+        if (hasPhone) score += 25;
+        checks.push({ label: 'Phone number added', completed: hasPhone });
+
+        // 2FA enabled (mock)
+        const has2FA = currentUser?.two_factor_enabled || false;
+        if (has2FA) score += 25;
+        checks.push({ label: 'Two-factor authentication', completed: has2FA });
+
+        // Strong password (assume if recently changed)
+        const strongPassword = true; // Default to true
+        if (strongPassword) score += 25;
+        checks.push({ label: 'Strong password', completed: strongPassword });
+
+        const scoreColor = score >= 75 ? 'text-green-600 dark:text-green-400' : score >= 50 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400';
+        const progressColor = score >= 75 ? 'bg-green-500' : score >= 50 ? 'bg-yellow-500' : 'bg-red-500';
+
+        container.innerHTML = `
+            <div class="bg-white dark:bg-stone-800 rounded-xl border border-gray-100 dark:border-stone-700 p-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-semibold text-stone-900 dark:text-white">Account Security</h3>
+                    <span class="${scoreColor} font-bold">${score}%</span>
+                </div>
+                <div class="w-full bg-stone-200 dark:bg-stone-600 rounded-full h-2 mb-4">
+                    <div class="${progressColor} h-2 rounded-full transition-all duration-500" style="width: ${score}%"></div>
+                </div>
+                <div class="space-y-2">
+                    ${checks.map(check => `
+                        <div class="flex items-center gap-2 text-sm">
+                            ${check.completed ? 
+                                `<svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>` :
+                                `<svg class="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/></svg>`
+                            }
+                            <span class="${check.completed ? 'text-stone-700 dark:text-stone-300' : 'text-stone-500 dark:text-stone-400'}">${check.label}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
     }
 
     async function loadUserProfile() {

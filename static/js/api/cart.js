@@ -6,7 +6,7 @@
 const CartApi = (function() {
     'use strict';
 
-    const CART_PATH = '/cart/';
+    const CART_PATH = '/commerce/cart/';
 
     async function getCart() {
         const response = await ApiClient.get(CART_PATH);
@@ -21,8 +21,18 @@ const CartApi = (function() {
         const data = { product_id: productId, quantity };
         if (variantId) data.variant_id = variantId;
 
+        // Optimistic UI: mark pending add so UI can react quickly
+        try {
+            const pendingKey = 'cart:pending_add';
+            localStorage.setItem(pendingKey, JSON.stringify({ product_id: productId, quantity, variant_id: variantId, ts: Date.now() }));
+            window.dispatchEvent(new CustomEvent('cart:pending', { detail: { product_id: productId, quantity } }));
+        } catch (e) {}
+
         const response = await ApiClient.post(`${CART_PATH}add/`, data);
         
+        // Clear pending marker
+        try { localStorage.removeItem('cart:pending_add'); } catch (e) {}
+
         if (response.success) {
             updateBadge(response.data?.cart);
             window.dispatchEvent(new CustomEvent('cart:item-added', { detail: response.data }));

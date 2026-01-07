@@ -68,7 +68,7 @@ const PreordersPage = (function() {
         const imageUrl = category.image?.url || category.image || category.thumbnail || '';
         const hasImage = imageUrl && imageUrl.length > 0;
         const escapeHtml = Templates?.escapeHtml || ((s) => s);
-        const formatPrice = Templates?.formatPrice || ((p) => `৳${p}`);
+        const formatPrice = Templates?.formatPrice || ((p) => `${window.BUNORAA_CURRENCY?.symbol || '৳'}${p}`);
 
         return `
             <a href="${landingUrl}category/${category.slug}/" 

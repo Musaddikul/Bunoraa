@@ -1,5 +1,5 @@
 /**
- * Home Page
+ * Home Page - Enhanced with Advanced E-commerce Features
  * @module pages/home
  */
 
@@ -7,8 +7,12 @@ const HomePage = (function() {
     'use strict';
 
     let heroSliderInterval = null;
+    let liveVisitorCount = 0;
+    let socialProofInterval = null;
+    let countdownInterval = null;
 
     async function init() {
+        // Initialize core features in parallel
         await Promise.all([
             loadHeroBanners(),
             loadFeaturedProducts(),
@@ -19,7 +23,413 @@ const HomePage = (function() {
             loadBestSellers(),
             loadTestimonials()
         ]);
+        
+        // Initialize enhanced features
         initNewsletterForm();
+        initLiveVisitorCounter();
+        initSocialProofPopups();
+        initRecentlyViewed();
+        initFlashSaleCountdown();
+        initArtisanSpotlight();
+        initScrollAnimations();
+        initQuickViewModal();
+        initBackToTop();
+    }
+
+    // ============================================
+    // ENHANCED FEATURE: Live Visitor Counter
+    // ============================================
+    function initLiveVisitorCounter() {
+        const container = document.getElementById('live-visitors');
+        if (!container) return;
+
+        // Simulate live visitor count (in production, use WebSocket or API)
+        liveVisitorCount = Math.floor(Math.random() * 50) + 25;
+        
+        function updateCount() {
+            const change = Math.random() > 0.5 ? 1 : -1;
+            liveVisitorCount = Math.max(15, Math.min(100, liveVisitorCount + change));
+            container.innerHTML = `
+                <div class="flex items-center gap-2 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span class="text-xs font-medium text-emerald-700 dark:text-emerald-300">${liveVisitorCount} browsing now</span>
+                </div>
+            `;
+        }
+        
+        updateCount();
+        setInterval(updateCount, 8000);
+    }
+
+    // ============================================
+    // ENHANCED FEATURE: Social Proof Popups
+    // ============================================
+    function initSocialProofPopups() {
+        
+        const proofMessages = [
+            { type: 'purchase', location: 'Dhaka', time: '2 min ago', product: 'Handcrafted Leather Bag' },
+            { type: 'purchase', location: 'Sylhet', time: '5 min ago', product: 'Artisan Ceramic Vase' },
+            { type: 'review', location: 'Dhaka', time: '8 min ago', rating: 5, product: 'Woven Basket Set' },
+            { type: 'signup', location: 'Rangpur', time: '12 min ago' },
+            { type: 'purchase', location: 'Chattogram', time: '15 min ago', product: 'Custom Jewelry Box' },
+        ];
+
+        let index = 0;
+        let proofCount = 0;
+        const maxProofs = 10; // Limit to 10 popups per session
+
+        function showProof() {
+            if (proofCount >= maxProofs) return; // Stop showing after max count
+            const proof = proofMessages[index];
+            const popup = document.createElement('div');
+            popup.className = 'social-proof-popup fixed bottom-4 left-4 z-50 max-w-xs bg-white dark:bg-stone-800 rounded-xl shadow-2xl border border-stone-200 dark:border-stone-700 p-4 transform translate-y-full opacity-0 transition-all duration-500';
+            
+            let content = '';
+            if (proof.type === 'purchase') {
+                content = `
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-stone-900 dark:text-white">Someone in ${proof.location} purchased</p>
+                            <p class="text-sm text-stone-600 dark:text-stone-400">${proof.product}</p>
+                            <p class="text-xs text-stone-400 dark:text-stone-500 mt-1">${proof.time}</p>
+                        </div>
+                    </div>
+                `;
+            } else if (proof.type === 'review') {
+                content = `
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.178c.969 0 1.371 1.24.588 1.81l-3.385 2.46a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.54 1.118l-3.385-2.46a1 1 0 00-1.175 0l-3.385 2.46c-.784.57-1.838-.196-1.54-1.118l1.287-3.966a1 1 0 00-.364-1.118l-3.385-2.46c-.783-.57-.38-1.81.588-1.81h4.178a1 1 0 00.95-.69l1.286-3.967z"/></svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-stone-900 dark:text-white">New 5-star review from ${proof.location}</p>
+                            <p class="text-sm text-stone-600 dark:text-stone-400">"${proof.product}"</p>
+                            <p class="text-xs text-stone-400 dark:text-stone-500 mt-1">${proof.time}</p>
+                        </div>
+                    </div>
+                `;
+            } else if (proof.type === 'signup') {
+                content = `
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-stone-900 dark:text-white">New member joined</p>
+                            <p class="text-sm text-stone-600 dark:text-stone-400">Someone in ${proof.location} signed up</p>
+                            <p class="text-xs text-stone-400 dark:text-stone-500 mt-1">${proof.time}</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            popup.innerHTML = `
+                ${content}
+                <button class="absolute top-2 right-2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300" onclick="this.parentElement.remove()">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            `;
+
+            document.body.appendChild(popup);
+            proofCount++; // Increment counter
+            
+            // Animate in
+            requestAnimationFrame(() => {
+                popup.classList.remove('translate-y-full', 'opacity-0');
+            });
+
+            // Remove after 5 seconds
+            setTimeout(() => {
+                popup.classList.add('translate-y-full', 'opacity-0');
+                setTimeout(() => popup.remove(), 500);
+            }, 5000);
+
+            index = (index + 1) % proofMessages.length;
+            
+            // Stop showing if we've reached max count
+            if (proofCount >= maxProofs && socialProofInterval) {
+                clearInterval(socialProofInterval);
+            }
+        }
+
+        // Show first popup after 10 seconds, then every 30 seconds
+        setTimeout(() => {
+            showProof();
+            socialProofInterval = setInterval(() => {
+                if (proofCount < maxProofs) showProof();
+                else clearInterval(socialProofInterval);
+            }, 30000);
+        }, 10000);
+    }
+
+    // ============================================
+    // ENHANCED FEATURE: Recently Viewed Products
+    // ============================================
+    function initRecentlyViewed() {
+        const section = document.getElementById('recently-viewed-section');
+        const container = document.getElementById('recently-viewed');
+        const clearBtn = document.getElementById('clear-recently-viewed');
+        
+        if (!section || !container) return;
+
+        const viewed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+        
+        if (viewed.length === 0) {
+            section.classList.add('hidden');
+            return;
+        }
+
+        section.classList.remove('hidden');
+        
+        container.innerHTML = viewed.slice(0, 5).map(product => {
+            let badge = null;
+            if (product.discount_percent && product.discount_percent > 0) {
+                badge = `-${product.discount_percent}%`;
+            }
+            return ProductCard.render(product, { showBadge: !!badge, badge, priceSize: 'small' });
+        }).join('');
+        
+        ProductCard.bindEvents(container);
+
+        clearBtn?.addEventListener('click', () => {
+            localStorage.removeItem('recentlyViewed');
+            section.classList.add('hidden');
+            Toast.success('Recently viewed items cleared');
+        });
+    }
+
+    // ============================================
+    // ENHANCED FEATURE: Flash Sale Countdown
+    // ============================================
+    function initFlashSaleCountdown() {
+        const section = document.getElementById('flash-sale-section');
+        const countdown = document.getElementById('flash-sale-countdown');
+        
+        if (!section || !countdown) return;
+
+        // Check if there's an active flash sale (in production, fetch from API)
+        const saleEndTime = localStorage.getItem('flashSaleEnd');
+        
+        if (!saleEndTime) {
+            // Set a mock flash sale for demo (ends in 4 hours)
+            const endTime = new Date().getTime() + (4 * 60 * 60 * 1000);
+            localStorage.setItem('flashSaleEnd', endTime.toString());
+        }
+
+        const endTime = parseInt(localStorage.getItem('flashSaleEnd'));
+        
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = endTime - now;
+
+            if (distance <= 0) {
+                section.classList.add('hidden');
+                clearInterval(countdownInterval);
+                localStorage.removeItem('flashSaleEnd');
+                return;
+            }
+
+            section.classList.remove('hidden');
+
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            countdown.innerHTML = `
+                <div class="flex items-center gap-2 text-white">
+                    <span class="text-sm font-medium">Ends in:</span>
+                    <div class="flex items-center gap-1">
+                        <span class="bg-white/20 px-2 py-1 rounded font-mono font-bold">${hours.toString().padStart(2, '0')}</span>
+                        <span class="font-bold">:</span>
+                        <span class="bg-white/20 px-2 py-1 rounded font-mono font-bold">${minutes.toString().padStart(2, '0')}</span>
+                        <span class="font-bold">:</span>
+                        <span class="bg-white/20 px-2 py-1 rounded font-mono font-bold">${seconds.toString().padStart(2, '0')}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        updateCountdown();
+        countdownInterval = setInterval(updateCountdown, 1000);
+    }
+
+    // ============================================
+    // ENHANCED FEATURE: Artisan Spotlight
+    // ============================================
+    async function initArtisanSpotlight() {
+        const container = document.getElementById('artisan-spotlight');
+        if (!container) return;
+        try {
+            // In production, fetch from API
+            const artisans = [
+                {
+                    name: 'Sarah Chen',
+                    specialty: 'Ceramic Art',
+                    image: '/static/images/artisans/sarah.jpg',
+                    story: 'Third-generation potter from the mountain villages, crafting unique pieces for over 15 years.',
+                    products: 45,
+                    rating: 4.9
+                },
+                {
+                    name: 'Ahmed Hassan',
+                    specialty: 'Leatherwork',
+                    image: '/static/images/artisans/ahmed.jpg',
+                    story: 'Master craftsman preserving traditional techniques passed down through generations.',
+                    products: 32,
+                    rating: 4.8
+                },
+                {
+                    name: 'Maria Santos',
+                    specialty: 'Textile Weaving',
+                    image: '/static/images/artisans/maria.jpg',
+                    story: 'Creating vibrant handwoven textiles using natural dyes and ancestral patterns.',
+                    products: 28,
+                    rating: 4.9
+                }
+            ];
+
+            container.innerHTML = `
+                <div class="grid md:grid-cols-3 gap-6">
+                    ${artisans.map(artisan => `
+                        <div class="group relative bg-white dark:bg-stone-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
+                            <div class="aspect-[4/3] overflow-hidden bg-stone-100 dark:bg-stone-700">
+                                <img src="${artisan.image}" alt="${Templates.escapeHtml(artisan.name)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" decoding="async">
+                            </div>
+                            <div class="p-6">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h3 class="text-lg font-semibold text-stone-900 dark:text-white">${Templates.escapeHtml(artisan.name)}</h3>
+                                    <div class="flex items-center gap-1 text-amber-500">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.178c.969 0 1.371 1.24.588 1.81l-3.385 2.46a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.54 1.118l-3.385-2.46a1 1 0 00-1.175 0l-3.385 2.46c-.784.57-1.838-.196-1.54-1.118l1.287-3.966a1 1 0 00-.364-1.118l-3.385-2.46c-.783-.57-.38-1.81.588-1.81h4.178a1 1 0 00.95-.69l1.286-3.967z"/></svg>
+                                        <span class="text-sm font-medium">${artisan.rating}</span>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-primary-600 dark:text-amber-400 font-medium mb-3">${Templates.escapeHtml(artisan.specialty)}</p>
+                                <p class="text-sm text-stone-600 dark:text-stone-400 mb-4 line-clamp-2">${Templates.escapeHtml(artisan.story)}</p>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs text-stone-500 dark:text-stone-500">${artisan.products} products</span>
+                                    <a href="/artisans/${artisan.name.toLowerCase().replace(/\s+/g, '-')}/" class="text-sm font-medium text-primary-600 dark:text-amber-400 hover:underline">View Profile →</a>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } catch (error) {
+            console.warn('Artisan spotlight unavailable:', error);
+        }
+    }
+
+    // ============================================
+    // ENHANCED FEATURE: Scroll Animations
+    // ============================================
+    function initScrollAnimations() {
+        const animatedElements = document.querySelectorAll('[data-animate]');
+        
+        if (!animatedElements.length) return;
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const animation = entry.target.dataset.animate || 'fadeInUp';
+                    entry.target.classList.add('animate-' + animation);
+                    entry.target.classList.remove('opacity-0');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        });
+
+        animatedElements.forEach(el => {
+            el.classList.add('opacity-0');
+            observer.observe(el);
+        });
+    }
+
+    // ============================================
+    // ENHANCED FEATURE: Quick View Modal
+    // ============================================
+    function initQuickViewModal() {
+        document.addEventListener('click', async (e) => {
+            const quickViewBtn = e.target.closest('[data-quick-view]');
+            if (!quickViewBtn) return;
+
+            const productId = quickViewBtn.dataset.quickView;
+            if (!productId) return;
+
+            e.preventDefault();
+            
+            // Show loading modal
+            const modal = document.createElement('div');
+            modal.id = 'quick-view-modal';
+            modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4';
+            modal.innerHTML = `
+                <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="document.getElementById('quick-view-modal').remove()"></div>
+                <div class="relative bg-white dark:bg-stone-800 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-auto">
+                    <button class="absolute top-4 right-4 z-10 w-10 h-10 bg-stone-100 dark:bg-stone-700 rounded-full flex items-center justify-center hover:bg-stone-200 dark:hover:bg-stone-600 transition-colors" onclick="document.getElementById('quick-view-modal').remove()">
+                        <svg class="w-5 h-5 text-stone-600 dark:text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                    <div class="p-8 flex items-center justify-center min-h-[400px]">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            try {
+                const response = await ProductsApi.getProduct(productId);
+                const product = response.data || response;
+
+                const modalContent = modal.querySelector('.relative');
+                modalContent.innerHTML = `
+                    <button class="absolute top-4 right-4 z-10 w-10 h-10 bg-stone-100 dark:bg-stone-700 rounded-full flex items-center justify-center hover:bg-stone-200 dark:hover:bg-stone-600 transition-colors" onclick="document.getElementById('quick-view-modal').remove()">
+                        <svg class="w-5 h-5 text-stone-600 dark:text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                    <div class="grid md:grid-cols-2 gap-8 p-8">
+                        <div class="aspect-square rounded-xl overflow-hidden bg-stone-100 dark:bg-stone-700">
+                            <img src="${product.primary_image || product.image || '/static/images/placeholder.jpg'}" alt="${Templates.escapeHtml(product.name)}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex flex-col">
+                            <h2 class="text-2xl font-bold text-stone-900 dark:text-white mb-2">${Templates.escapeHtml(product.name)}</h2>
+                            <div class="flex items-center gap-2 mb-4">
+                                <div class="flex text-amber-400">
+                                    ${'<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.178c.969 0 1.371 1.24.588 1.81l-3.385 2.46a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.54 1.118l-3.385-2.46a1 1 0 00-1.175 0l-3.385 2.46c-.784.57-1.838-.196-1.54-1.118l1.287-3.966a1 1 0 00-.364-1.118l-3.385-2.46c-.783-.57-.38-1.81.588-1.81h4.178a1 1 0 00.95-.69l1.286-3.967z"/></svg>'.repeat(Math.round(product.rating || 4))}
+                                </div>
+                                <span class="text-sm text-stone-500 dark:text-stone-400">(${product.review_count || 0} reviews)</span>
+                            </div>
+                            <div class="mb-6">
+                                ${product.sale_price || product.discounted_price ? `
+                                    <span class="text-3xl font-bold text-primary-600 dark:text-amber-400">${Templates.formatPrice(product.sale_price || product.discounted_price)}</span>
+                                    <span class="text-lg text-stone-400 line-through ml-2">${Templates.formatPrice(product.price)}</span>
+                                ` : `
+                                    <span class="text-3xl font-bold text-stone-900 dark:text-white">${Templates.formatPrice(product.price)}</span>
+                                `}
+                            </div>
+                            <p class="text-stone-600 dark:text-stone-400 mb-6 line-clamp-3">${Templates.escapeHtml(product.short_description || product.description || '')}</p>
+                            <div class="mt-auto space-y-3">
+                                <button class="w-full py-3 px-6 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl transition-colors" onclick="CartApi.addItem(${product.id}, 1).then(() => { Toast.success('Added to cart'); document.getElementById('quick-view-modal').remove(); })">
+                                    Add to Cart
+                                </button>
+                                <a href="/products/${product.slug || product.id}/" class="block w-full py-3 px-6 border-2 border-stone-200 dark:border-stone-600 text-stone-700 dark:text-stone-300 font-semibold rounded-xl text-center hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors">
+                                    View Full Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Failed to load product:', error);
+                modal.remove();
+                Toast.error('Failed to load product details');
+            }
+        });
     }
 
 
@@ -80,7 +490,7 @@ const HomePage = (function() {
                 console.error('Failed to load testimonials:', error);
                 container.innerHTML = '<p class="text-red-500 text-center py-8">Failed to load testimonials. Please try again later.</p>';
             }
-        }
+    }
     async function loadBestSellers() {
         const container = document.getElementById('best-sellers');
         if (!container) return;
@@ -106,17 +516,6 @@ const HomePage = (function() {
                 }
                 return ProductCard.render(product, { showBadge: !!badge, badge, priceSize: 'small' });
             }).join('');
-            // Eager-load first images
-            try {
-                const imgs = grid.querySelectorAll('img');
-                imgs.forEach((img, i) => {
-                    if (i < 2) {
-                        img.setAttribute('loading', 'eager');
-                        img.setAttribute('fetchpriority', 'high');
-                        img.setAttribute('decoding', 'async');
-                    }
-                });
-            } catch {}
             ProductCard.bindEvents(grid);
         } catch (error) {
             console.error('Failed to load best sellers:', error);
@@ -208,13 +607,13 @@ const HomePage = (function() {
 
         function goToSlide(index) {
             slides[currentSlide].classList.add('hidden');
-            dots[currentSlide]?.classList.remove('bg-white');
+            dots[currentSlide]?.classList.remove('bg-stone-100');
             dots[currentSlide]?.classList.add('bg-white/50');
 
             currentSlide = (index + totalSlides) % totalSlides;
 
             slides[currentSlide].classList.remove('hidden');
-            dots[currentSlide]?.classList.add('bg-white');
+            dots[currentSlide]?.classList.add('bg-stone-100');
             dots[currentSlide]?.classList.remove('bg-white/50');
         }
 
@@ -291,17 +690,6 @@ const HomePage = (function() {
                 }
                 return ProductCard.render(product, { showBadge: !!badge, badge, priceSize: 'small' });
             }).join('');
-            // Ensure top-of-viewport product images load eagerly for better LCP
-            try {
-                const imgs = grid.querySelectorAll('img');
-                imgs.forEach((img, i) => {
-                    if (i < 2) {
-                        img.setAttribute('loading', 'eager');
-                        img.setAttribute('fetchpriority', 'high');
-                        img.setAttribute('decoding', 'async');
-                    }
-                });
-            } catch {}
             ProductCard.bindEvents(grid);
         } catch (error) {
             console.error('Failed to load featured products:', error);
@@ -319,8 +707,8 @@ const HomePage = (function() {
 
         try {
             // Clear any client cache for categories and fetch fresh data
-            try { window.ApiClient?.clearCache('/api/v1/categories/'); } catch (e) {}
-            const response = await window.ApiClient.get('/categories/', { page_size: 6, is_featured: true }, { useCache: false });
+            try { window.ApiClient?.clearCache('/api/v1/catalog/categories/'); } catch (e) {}
+            const response = await window.ApiClient.get('/catalog/categories/', { page_size: 6, is_featured: true }, { useCache: false });
             // info removed
             const categories = response.data?.results || response.data || response.results || [];
 
@@ -379,17 +767,6 @@ const HomePage = (function() {
                 }
                 return ProductCard.render(product, { showBadge: !!badge, badge, priceSize: 'small' });
             }).join('');
-            // Eager-load first images to reduce lazy-load intervention note
-            try {
-                const imgs = grid.querySelectorAll('img');
-                imgs.forEach((img, i) => {
-                    if (i < 2) {
-                        img.setAttribute('loading', 'eager');
-                        img.setAttribute('fetchpriority', 'high');
-                        img.setAttribute('decoding', 'async');
-                    }
-                });
-            } catch {}
             ProductCard.bindEvents(grid);
         } catch (error) {
             console.error('Failed to load new arrivals:', error);
@@ -444,7 +821,7 @@ const HomePage = (function() {
                                     <p class="text-2xl font-mono font-bold text-white tracking-wider">${Templates.escapeHtml(promo.code)}</p>
                                 </div>
                             ` : ''}
-                            <a href="/products/?promotion=${promo.id || ''}" class="inline-flex items-center px-6 py-3 bg-white text-primary-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors">
+                            <a href="/products/?promotion=${promo.id || ''}" class="inline-flex items-center px-6 py-3 bg-stone-100 text-primary-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors">
                                 Shop Now
                                 <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
@@ -652,11 +1029,28 @@ const HomePage = (function() {
             clearInterval(heroSliderInterval);
             heroSliderInterval = null;
         }
+        if (socialProofInterval) {
+            clearInterval(socialProofInterval);
+            socialProofInterval = null;
+        }
+        if (countdownInterval) {
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+        }
+        // Remove back to top button
+        document.getElementById('back-to-top')?.remove();
+        // Remove quick view modal
+        document.getElementById('quick-view-modal')?.remove();
+        // Remove social proof popups
+        document.querySelectorAll('.social-proof-popup').forEach(el => el.remove());
     }
 
     return {
         init,
-        destroy
+        destroy,
+        // Expose for external use
+        initRecentlyViewed,
+        initFlashSaleCountdown
     };
 })();
 

@@ -23,7 +23,7 @@ def update_product_rating_on_delete(sender, instance, **kwargs):
 
 def update_product_rating(product):
     """Calculate and update product average rating."""
-    from apps.products.models import Product
+    from apps.catalog.models import Product
     
     avg_rating = Review.objects.filter(
         product=product,

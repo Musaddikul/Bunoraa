@@ -1,0 +1,152 @@
+<!-- Bunoraa Loading Screen -->
+{% load static %}
+
+<div id="bunoraa-loader" class="fixed inset-0 z-[9999] flex items-center justify-center bg-white dark:bg-stone-950 transition-opacity duration-500" aria-label="Loading" role="progressbar">
+    <div class="text-center">
+        <!-- Animated Logo -->
+        <div class="relative mb-6">
+            <!-- Main logo container -->
+            <div class="relative inline-flex items-center justify-center">
+                {% if SITE_LOGO %}
+                <img 
+                    src="{{ SITE_LOGO }}" 
+                    alt="{{ SITE_NAME }}" 
+                    class="h-12 md:h-16 w-auto dark:hidden animate-pulse"
+                    style="animation: bunoraa-logo-pulse 2s ease-in-out infinite;"
+                >
+                <img 
+                    src="{{ SITE_LOGO_DARK|default:SITE_LOGO }}" 
+                    alt="{{ SITE_NAME }}" 
+                    class="h-12 md:h-16 w-auto hidden dark:block animate-pulse"
+                    style="animation: bunoraa-logo-pulse 2s ease-in-out infinite;"
+                >
+                {% else %}
+                <!-- Fallback animated logo -->
+                <div class="relative">
+                    <span class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 bg-clip-text text-transparent animate-pulse">
+                        {{ SITE_NAME }}
+                    </span>
+                    <!-- Animated underline -->
+                    <div class="absolute -bottom-2 left-0 h-1 bg-gradient-to-r from-amber-400 to-amber-600 rounded-full animate-loading-bar"></div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Decorative rings -->
+            <div class="absolute inset-0 -m-8 pointer-events-none">
+                <div class="w-full h-full border-2 border-amber-200 dark:border-amber-800 rounded-full animate-ping opacity-20" style="animation-duration: 2s;"></div>
+            </div>
+        </div>
+        
+        <!-- Loading spinner -->
+        <div class="flex items-center justify-center gap-2 mb-4">
+            <div class="flex space-x-1">
+                <div class="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
+                <div class="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
+                <div class="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
+            </div>
+        </div>
+        
+        <!-- Loading text -->
+        <p class="text-sm text-stone-500 dark:text-stone-400 font-medium">
+            <span id="loader-text">Loading</span><span class="animate-pulse">...</span>
+        </p>
+        
+        <!-- Optional tagline -->
+        {% if SITE_TAGLINE %}
+        <p class="mt-2 text-xs text-stone-400 dark:text-stone-500 italic max-w-xs mx-auto">
+            {{ SITE_TAGLINE }}
+        </p>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    @keyframes bunoraa-logo-pulse {
+        0%, 100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.05);
+            opacity: 0.9;
+        }
+    }
+    
+    @keyframes loading-bar {
+        0% {
+            width: 0;
+            left: 0;
+        }
+        50% {
+            width: 100%;
+            left: 0;
+        }
+        100% {
+            width: 0;
+            left: 100%;
+        }
+    }
+    
+    .animate-loading-bar {
+        animation: loading-bar 1.5s ease-in-out infinite;
+    }
+    
+    /* Fade out animation */
+    #bunoraa-loader.fade-out {
+        opacity: 0;
+        pointer-events: none;
+    }
+    
+    /* Hide loader completely after animation */
+    #bunoraa-loader.hidden {
+        display: none !important;
+    }
+</style>
+
+<script>
+    // Loader script - hide when page is ready
+    (function() {
+        const loader = document.getElementById('bunoraa-loader');
+        if (!loader) return;
+        
+        const loaderText = document.getElementById('loader-text');
+        const loadingMessages = ['Loading', 'Preparing', 'Almost ready'];
+        let messageIndex = 0;
+        
+        // Cycle through loading messages
+        const messageInterval = setInterval(() => {
+            messageIndex = (messageIndex + 1) % loadingMessages.length;
+            if (loaderText) {
+                loaderText.textContent = loadingMessages[messageIndex];
+            }
+        }, 1500);
+        
+        function hideLoader() {
+            clearInterval(messageInterval);
+            loader.classList.add('fade-out');
+            setTimeout(() => {
+                loader.classList.add('hidden');
+                loader.remove();
+            }, 500);
+        }
+        
+        // Hide loader when page is fully loaded
+        if (document.readyState === 'complete') {
+            // Page already loaded, hide immediately with slight delay for aesthetics
+            setTimeout(hideLoader, 300);
+        } else {
+            window.addEventListener('load', () => {
+                // Add a minimum display time for better UX
+                setTimeout(hideLoader, 500);
+            });
+        }
+        
+        // Fallback: hide loader after max 5 seconds regardless
+        setTimeout(() => {
+            if (!loader.classList.contains('hidden')) {
+                hideLoader();
+            }
+        }, 5000);
+    })();
+</script>

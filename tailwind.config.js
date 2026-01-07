@@ -23,10 +23,7 @@ module.exports = {
                 'full': '100%',
             },
             colors: {
-                // Base colors for light/dark mode
-                light: '#f5f5f5',
-                dark: '#212121',
-                // Brand colors
+                // Brand primary - Warm terracotta/rust
                 primary: {
                     DEFAULT: '#7c2d12',
                     50: '#fdf4f3',
@@ -41,34 +38,37 @@ module.exports = {
                     900: '#792d23',
                     950: '#41140e',
                 },
+                // Neutral secondary - Stone grays
                 secondary: {
-                    DEFAULT: '#2bb073',
-                    50: '#f6f6f6',
-                    100: '#e7e7e7',
-                    200: '#d1d1d1',
-                    300: '#b0b0b0',
-                    400: '#888888',
-                    500: '#6d6d6d',
-                    600: '#5d5d5d',
-                    700: '#4f4f4f',
-                    800: '#454545',
-                    900: '#3d3d3d',
-                    950: '#262626',
+                    DEFAULT: '#57534e',
+                    50: '#fafaf9',
+                    100: '#f5f5f4',
+                    200: '#e7e5e4',
+                    300: '#d6d3d1',
+                    400: '#a8a29e',
+                    500: '#78716c',
+                    600: '#57534e',
+                    700: '#44403c',
+                    800: '#292524',
+                    900: '#1c1917',
+                    950: '#0c0a09',
                 },
+                // Accent - Amber/gold
                 accent: {
-                    DEFAULT: '#b1c21a',
-                    50: '#fff7ed',
-                    100: '#ffedd5',
-                    200: '#fed7aa',
-                    300: '#fdba74',
-                    400: '#fb923c',
-                    500: '#f97316',
-                    600: '#ea580c',
-                    700: '#c2410c',
-                    800: '#9a3412',
-                    900: '#7c2d12',
-                    950: '#431407',
+                    DEFAULT: '#f59e0b',
+                    50: '#fffbeb',
+                    100: '#fef3c7',
+                    200: '#fde68a',
+                    300: '#fcd34d',
+                    400: '#fbbf24',
+                    500: '#f59e0b',
+                    600: '#d97706',
+                    700: '#b45309',
+                    800: '#92400e',
+                    900: '#78350f',
+                    950: '#451a03',
                 },
+                // Semantic colors
                 success: {
                     DEFAULT: '#22c55e',
                     50: '#f0fdf4',
@@ -85,17 +85,17 @@ module.exports = {
                 },
                 warning: {
                     DEFAULT: '#f97316',
-                    50: '#fffbeb',
-                    100: '#fef3c7',
-                    200: '#fde68a',
-                    300: '#fcd34d',
-                    400: '#fbbf24',
-                    500: '#f59e0b',
-                    600: '#d97706',
-                    700: '#b45309',
-                    800: '#92400e',
-                    900: '#78350f',
-                    950: '#451a03',
+                    50: '#fff7ed',
+                    100: '#ffedd5',
+                    200: '#fed7aa',
+                    300: '#fdba74',
+                    400: '#fb923c',
+                    500: '#f97316',
+                    600: '#ea580c',
+                    700: '#c2410c',
+                    800: '#9a3412',
+                    900: '#7c2d12',
+                    950: '#431407',
                 },
                 error: {
                     DEFAULT: '#ef4444',
@@ -125,10 +125,6 @@ module.exports = {
                 '18': '4.5rem',
                 '88': '22rem',
                 '128': '32rem',
-            },
-            maxWidth: {
-                '8xl': '88rem',
-                '9xl': '96rem',
             },
             borderRadius: {
                 '4xl': '2rem',
@@ -209,18 +205,10 @@ module.exports = {
                                 color: theme('colors.primary.700'),
                             },
                         },
-                        h1: {
-                            color: theme('colors.secondary.900'),
-                        },
-                        h2: {
-                            color: theme('colors.secondary.900'),
-                        },
-                        h3: {
-                            color: theme('colors.secondary.900'),
-                        },
-                        h4: {
-                            color: theme('colors.secondary.900'),
-                        },
+                        h1: { color: theme('colors.secondary.900') },
+                        h2: { color: theme('colors.secondary.900') },
+                        h3: { color: theme('colors.secondary.900') },
+                        h4: { color: theme('colors.secondary.900') },
                     },
                 },
             }),
@@ -282,183 +270,6 @@ module.exports = {
                     backgroundSize: '200% 100%',
                     animation: 'shimmer 2s linear infinite',
                     borderRadius: theme('borderRadius.md'),
-                },
-            });
-            
-            // Button components
-            addComponents({
-                '.btn': {
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: `${theme('spacing.2')} ${theme('spacing.4')}`,
-                    fontSize: theme('fontSize.sm[0]'),
-                    fontWeight: theme('fontWeight.medium'),
-                    lineHeight: theme('lineHeight.tight'),
-                    borderRadius: theme('borderRadius.lg'),
-                    transitionProperty: 'all',
-                    transitionDuration: '200ms',
-                    cursor: 'pointer',
-                    '&:disabled': {
-                        opacity: '0.5',
-                        cursor: 'not-allowed',
-                    },
-                },
-                '.btn-primary': {
-                    backgroundColor: theme('colors.primary.600'),
-                    color: theme('colors.white'),
-                    '&:hover:not(:disabled)': {
-                        backgroundColor: theme('colors.primary.700'),
-                    },
-                    '&:focus': {
-                        outline: 'none',
-                        boxShadow: `0 0 0 3px ${theme('colors.primary.200')}`,
-                    },
-                },
-                '.btn-secondary': {
-                    backgroundColor: theme('colors.secondary.100'),
-                    color: theme('colors.secondary.700'),
-                    '&:hover:not(:disabled)': {
-                        backgroundColor: theme('colors.secondary.200'),
-                    },
-                    '&:focus': {
-                        outline: 'none',
-                        boxShadow: `0 0 0 3px ${theme('colors.secondary.200')}`,
-                    },
-                },
-                '.btn-outline': {
-                    backgroundColor: 'transparent',
-                    borderWidth: '1px',
-                    borderColor: theme('colors.secondary.300'),
-                    color: theme('colors.secondary.700'),
-                    '&:hover:not(:disabled)': {
-                        backgroundColor: theme('colors.secondary.50'),
-                        borderColor: theme('colors.secondary.400'),
-                    },
-                },
-                '.btn-ghost': {
-                    backgroundColor: 'transparent',
-                    color: theme('colors.secondary.600'),
-                    '&:hover:not(:disabled)': {
-                        backgroundColor: theme('colors.secondary.100'),
-                    },
-                },
-                '.btn-lg': {
-                    padding: `${theme('spacing.3')} ${theme('spacing.6')}`,
-                    fontSize: theme('fontSize.base[0]'),
-                },
-                '.btn-sm': {
-                    padding: `${theme('spacing.1')} ${theme('spacing.3')}`,
-                    fontSize: theme('fontSize.xs[0]'),
-                },
-                '.btn-icon': {
-                    padding: theme('spacing.2'),
-                },
-            });
-            
-            // Form input components
-            addComponents({
-                '.input': {
-                    display: 'block',
-                    width: '100%',
-                    padding: `${theme('spacing.2')} ${theme('spacing.3')}`,
-                    fontSize: theme('fontSize.sm[0]'),
-                    lineHeight: theme('lineHeight.normal'),
-                    color: theme('colors.secondary.900'),
-                    backgroundColor: theme('colors.white'),
-                    borderWidth: '1px',
-                    borderColor: theme('colors.secondary.300'),
-                    borderRadius: theme('borderRadius.lg'),
-                    transitionProperty: 'border-color, box-shadow',
-                    transitionDuration: '200ms',
-                    '&::placeholder': {
-                        color: theme('colors.secondary.400'),
-                    },
-                    '&:focus': {
-                        outline: 'none',
-                        borderColor: theme('colors.primary.500'),
-                        boxShadow: `0 0 0 3px ${theme('colors.primary.100')}`,
-                    },
-                    '&:disabled': {
-                        backgroundColor: theme('colors.secondary.50'),
-                        cursor: 'not-allowed',
-                    },
-                },
-                '.input-error': {
-                    borderColor: theme('colors.error.500'),
-                    '&:focus': {
-                        borderColor: theme('colors.error.500'),
-                        boxShadow: `0 0 0 3px ${theme('colors.error.100')}`,
-                    },
-                },
-                '.label': {
-                    display: 'block',
-                    marginBottom: theme('spacing.1'),
-                    fontSize: theme('fontSize.sm[0]'),
-                    fontWeight: theme('fontWeight.medium'),
-                    color: theme('colors.secondary.700'),
-                },
-                '.help-text': {
-                    marginTop: theme('spacing.1'),
-                    fontSize: theme('fontSize.xs[0]'),
-                    color: theme('colors.secondary.500'),
-                },
-                '.error-text': {
-                    marginTop: theme('spacing.1'),
-                    fontSize: theme('fontSize.xs[0]'),
-                    color: theme('colors.error.600'),
-                },
-            });
-            
-            // Card components
-            addComponents({
-                '.card': {
-                    backgroundColor: theme('colors.white'),
-                    borderRadius: theme('borderRadius.xl'),
-                    boxShadow: theme('boxShadow.soft'),
-                    overflow: 'hidden',
-                },
-                '.card-body': {
-                    padding: theme('spacing.6'),
-                },
-                '.card-header': {
-                    padding: `${theme('spacing.4')} ${theme('spacing.6')}`,
-                    borderBottomWidth: '1px',
-                    borderColor: theme('colors.secondary.100'),
-                },
-                '.card-footer': {
-                    padding: `${theme('spacing.4')} ${theme('spacing.6')}`,
-                    borderTopWidth: '1px',
-                    borderColor: theme('colors.secondary.100'),
-                    backgroundColor: theme('colors.secondary.50'),
-                },
-            });
-            
-            // Badge components
-            addComponents({
-                '.badge': {
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    padding: `${theme('spacing.0.5')} ${theme('spacing.2')}`,
-                    fontSize: theme('fontSize.xs[0]'),
-                    fontWeight: theme('fontWeight.medium'),
-                    borderRadius: theme('borderRadius.full'),
-                },
-                '.badge-primary': {
-                    backgroundColor: theme('colors.primary.100'),
-                    color: theme('colors.primary.700'),
-                },
-                '.badge-success': {
-                    backgroundColor: theme('colors.success.100'),
-                    color: theme('colors.success.700'),
-                },
-                '.badge-warning': {
-                    backgroundColor: theme('colors.warning.100'),
-                    color: theme('colors.warning.700'),
-                },
-                '.badge-error': {
-                    backgroundColor: theme('colors.error.100'),
-                    color: theme('colors.error.700'),
                 },
             });
         },

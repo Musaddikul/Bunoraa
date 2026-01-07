@@ -6,7 +6,7 @@
 const CheckoutApi = (function() {
     'use strict';
 
-    const CHECKOUT_PATH = '/checkout/checkout/';
+    const CHECKOUT_PATH = '/commerce/checkout/';
 
     async function getSession() {
         return ApiClient.get(CHECKOUT_PATH);
@@ -47,7 +47,7 @@ const CheckoutApi = (function() {
         const response = await ApiClient.post(`${CHECKOUT_PATH}complete/`, paymentData);
         
         if (response.success) {
-            ApiClient.clearCache('/cart/');
+            ApiClient.clearCache('/commerce/cart/');
             window.dispatchEvent(new CustomEvent('checkout:completed', { detail: response.data }));
             window.dispatchEvent(new CustomEvent('cart:cleared'));
         }

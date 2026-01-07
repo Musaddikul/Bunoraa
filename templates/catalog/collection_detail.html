@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_id %}collection{% endblock %}
+{% block title %}{{ collection.name }} - {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}{{ collection.meta_description|default:collection.description }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <nav class="mb-8">
+        <ol class="flex items-center space-x-2 text-sm text-gray-500">
+            <li><a href="{% url 'home' %}" class="hover:text-primary-600">Home</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li><a href="{% url 'catalog:collection-list' %}" class="hover:text-primary-600">Collections</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li class="text-gray-900">{{ collection.name }}</li>
+        </ol>
+    </nav>
+    
+    <!-- Collection Header -->
+    <div class="mb-12">
+        {% if collection.image %}
+        <div class="relative h-64 md:h-80 rounded-2xl overflow-hidden mb-8">
+            <img src="{{ collection.image.url }}" alt="{{ collection.name }}" loading="lazy" decoding="async" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent flex items-end">
+                <div class="p-8 text-white">
+                    <h1 class="text-4xl font-bold">{{ collection.name }}</h1>
+                    {% if collection.description %}
+                    <p class="text-lg text-white/90 mt-2 max-w-2xl">{{ collection.description }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <h1 class="text-4xl font-bold text-gray-900">{{ collection.name }}</h1>
+        {% if collection.description %}
+        <p class="text-lg text-gray-600 mt-2">{{ collection.description }}</p>
+        {% endif %}
+        {% endif %}
+    </div>
+    
+    <!-- Products -->
+    {% if products %}
+    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
+        {% for product in products %}
+        {% include 'catalog/partials/product_card.html' with product=product %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-16 bg-white rounded-lg">
+        <p class="text-gray-500">No products in this collection yet.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

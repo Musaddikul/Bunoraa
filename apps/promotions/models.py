@@ -60,13 +60,13 @@ class Coupon(models.Model):
     
     # Restrictions
     categories = models.ManyToManyField(
-        'categories.Category',
+        'catalog.Category',
         blank=True,
         related_name='coupons',
         help_text="If set, coupon only applies to these categories"
     )
     products = models.ManyToManyField(
-        'products.Product',
+        'catalog.Product',
         blank=True,
         related_name='coupons',
         help_text="If set, coupon only applies to these products"
@@ -294,12 +294,12 @@ class Sale(models.Model):
     
     # Products in sale
     products = models.ManyToManyField(
-        'products.Product',
+        'catalog.Product',
         related_name='sales',
         blank=True
     )
     categories = models.ManyToManyField(
-        'categories.Category',
+        'catalog.Category',
         related_name='sales',
         blank=True,
         help_text="All products in these categories are on sale"

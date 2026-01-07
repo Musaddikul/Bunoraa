@@ -44,8 +44,10 @@ class Command(BaseCommand):
         self.create_pages()
         self.create_reviews()
         
-        # Seed additional data
+        # Seed additional data (currencies, shipping, payments, locations)
+        self.seed_currencies()
         self.seed_localization()
+        self.seed_shipping_settings()
         self.seed_shipping()
         self.seed_payment_gateways()
 
@@ -55,14 +57,13 @@ class Command(BaseCommand):
         """Clear existing data"""
         self.stdout.write('Clearing existing data...')
         
-        from apps.products.models import Product, Category, Brand
+        from apps.catalog.models import Product, Category
         from apps.promotions.models import Promotion, Coupon
         from apps.reviews.models import Review
         from apps.pages.models import Page
         
         Product.objects.all().delete()
         Category.objects.all().delete()
-        Brand.objects.all().delete()
         Promotion.objects.all().delete()
         Coupon.objects.all().delete()
         Review.objects.all().delete()
@@ -104,7 +105,7 @@ class Command(BaseCommand):
         """Create sample categories"""
         self.stdout.write('Creating categories...')
 
-        from apps.products.models import Category
+        from apps.catalog.models import Category
 
         categories_data = [
             {
@@ -184,44 +185,11 @@ class Command(BaseCommand):
 
         self.categories = list(Category.objects.filter(parent__isnull=False))
 
-    def create_brands(self):
-        """Create sample brands"""
-        self.stdout.write('Creating brands...')
-
-        from apps.products.models import Brand
-
-        brands_data = [
-            {'name': 'Apple', 'description': 'Think Different'},
-            {'name': 'Samsung', 'description': 'Do What You Cant'},
-            {'name': 'Sony', 'description': 'Be Moved'},
-            {'name': 'Nike', 'description': 'Just Do It'},
-            {'name': 'Adidas', 'description': 'Impossible Is Nothing'},
-            {'name': 'Zara', 'description': 'Fashion Forward'},
-            {'name': 'IKEA', 'description': 'The Wonderful Everyday'},
-            {'name': 'LG', 'description': 'Life is Good'},
-            {'name': 'HP', 'description': 'Keep Reinventing'},
-            {'name': 'Bunoraa', 'description': 'Premium Quality'},
-        ]
-
-        for brand_data in brands_data:
-            brand, created = Brand.objects.get_or_create(
-                name=brand_data['name'],
-                defaults={
-                    'slug': slugify(brand_data['name']),
-                    'description': brand_data['description'],
-                    'is_active': True,
-                }
-            )
-            if created:
-                self.stdout.write(f"  Created brand: {brand.name}")
-
-        self.brands = list(Brand.objects.all())
-
     def create_products(self, count):
         """Create sample products"""
         self.stdout.write(f'Creating {count} products...')
 
-        from apps.products.models import Product
+        from apps.catalog.models import Product
 
         product_templates = [
             # Electronics
@@ -260,7 +228,7 @@ class Command(BaseCommand):
             {'name': 'Vitamin D3 Supplements', 'base_price': 19.99, 'category': 'Health'},
         ]
 
-        from apps.products.models import Category
+        from apps.catalog.models import Category
 
         created_count = 0
         for i in range(count):
@@ -508,6 +476,33 @@ class Command(BaseCommand):
         except Exception as e:
             self.stdout.write(self.style.WARNING(f'  Could not seed locations: {e}'))
 
+    def seed_currencies(self):
+        """Seed currencies, i18n settings, and exchange rates."""
+        self.stdout.write('Seeding currencies and exchange rates...')
+        from django.core.management import call_command
+        try:
+            # First seed I18n settings
+            call_command('seed_i18n_settings')
+            # Add common currencies
+            call_command('add_currency', '--add-common')
+            # Then try to fetch rates from available providers
+            try:
+                call_command('update_exchange_rates', '--all')
+            except Exception:
+                # Fallback to manual rates if all providers fail
+                call_command('seed_exchange_rates')
+        except Exception as e:
+            self.stdout.write(self.style.WARNING(f'  Could not seed currencies: {e}'))
+
+    def seed_shipping_settings(self):
+        """Seed shipping settings."""
+        self.stdout.write('Seeding shipping settings...')
+        from django.core.management import call_command
+        try:
+            call_command('seed_shipping_settings')
+        except Exception as e:
+            self.stdout.write(self.style.WARNING(f'  Could not seed shipping settings: {e}'))
+
     def seed_shipping(self):
         """Seed shipping zones and rates."""
         self.stdout.write('Seeding shipping data...')
@@ -525,3 +520,4 @@ class Command(BaseCommand):
             call_command('seed_payment_gateways')
         except Exception as e:
             self.stdout.write(self.style.WARNING(f'  Could not seed payment gateways: {e}'))
+

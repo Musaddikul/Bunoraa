@@ -1,0 +1,60 @@
+<!-- Category Card Partial for Catalog App -->
+<div class="category-card group relative bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-700"
+     data-category-id="{{ category.id }}">
+    <!-- Category Image -->
+    <a href="{% url 'catalog:category-detail' category.get_slug_path %}" 
+       class="block relative overflow-hidden aspect-square">
+        {% if category.image %}
+        <img src="{{ category.image.url }}" 
+             alt="{{ category.name }}" 
+             loading="lazy" 
+             decoding="async"
+             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+        {% else %}
+        <div class="w-full h-full bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/30 dark:to-primary-800/30 flex items-center justify-center">
+            {% if category.icon %}
+            <i class="{{ category.icon }} text-4xl text-primary-600 dark:text-primary-400"></i>
+            {% else %}
+            <svg class="w-16 h-16 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+            </svg>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <!-- Overlay -->
+        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+        
+        <!-- Category Info -->
+        <div class="absolute bottom-0 left-0 right-0 p-4">
+            <h3 class="text-lg font-bold text-white mb-1">{{ category.name }}</h3>
+            <p class="text-sm text-white/80">{{ category.product_count }} Products</p>
+        </div>
+        
+        <!-- Subcategory Count Badge -->
+        {% if category.children.count > 0 %}
+        <div class="absolute top-3 right-3">
+            <span class="bg-white/90 dark:bg-gray-900/90 text-gray-700 dark:text-gray-300 text-xs font-medium px-2 py-1 rounded-full">
+                {{ category.children.count }} Subcategories
+            </span>
+        </div>
+        {% endif %}
+    </a>
+    
+    <!-- Quick Links to Subcategories -->
+    {% if category.children.exists and show_children %}
+    <div class="p-3 border-t border-gray-100 dark:border-gray-700">
+        <div class="flex flex-wrap gap-2">
+            {% for child in category.children.all|slice:":4" %}
+            <a href="{% url 'catalog:category-detail' child.get_slug_path %}" 
+               class="text-xs text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full transition-colors">
+                {{ child.name }}
+            </a>
+            {% endfor %}
+            {% if category.children.count > 4 %}
+            <span class="text-xs text-gray-400">+{{ category.children.count|add:"-4" }} more</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>

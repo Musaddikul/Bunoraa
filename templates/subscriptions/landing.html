@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+{% load static currency_tags %}
+
+{% block title %}Subscription Plans | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <!-- Hero Section -->
+    <section class="relative bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white overflow-hidden">
+        <div class="absolute inset-0 bg-black/20"></div>
+        <div class="absolute inset-0 opacity-20">
+            <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <defs>
+                    <pattern id="dots" width="10" height="10" patternUnits="userSpaceOnUse">
+                        <circle cx="1" cy="1" r="1" fill="currentColor" opacity="0.3"/>
+                    </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#dots)"/>
+            </svg>
+        </div>
+        
+        <div class="relative container mx-auto px-4 py-20">
+            <div class="max-w-3xl mx-auto text-center">
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+                    Choose Your Perfect Plan
+                </h1>
+                <p class="text-xl md:text-2xl text-white/90 mb-8">
+                    Unlock premium features, exclusive discounts, and priority support with our subscription plans.
+                </p>
+                
+                <!-- Billing Toggle -->
+                <div class="inline-flex items-center bg-white/10 backdrop-blur-sm rounded-full p-1">
+                    <button id="toggle-monthly" class="billing-toggle px-6 py-2 rounded-full text-sm font-medium transition-all bg-white text-gray-900">
+                        Monthly
+                    </button>
+                    <button id="toggle-yearly" class="billing-toggle px-6 py-2 rounded-full text-sm font-medium transition-all text-white">
+                        Yearly <span class="text-green-300 ml-1">Save 20%</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Plans Section -->
+    <section class="py-16 -mt-10">
+        <div class="container mx-auto px-4">
+            <!-- Monthly Plans -->
+            <div id="monthly-plans" class="plans-container grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                {% for plan in monthly_plans %}
+                <div class="plan-card relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-700 {% if plan.name == 'Pro' %}ring-2 ring-primary-500{% endif %}">
+                    {% if plan.name == 'Pro' %}
+                    <div class="absolute top-0 right-0 bg-gradient-to-r from-primary-500 to-purple-500 text-white text-xs font-bold px-4 py-1 rounded-bl-lg">
+                        Most Popular
+                    </div>
+                    {% endif %}
+                    
+                    <div class="p-8">
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{{ plan.name }}</h3>
+                        <p class="text-gray-600 dark:text-gray-400 mb-6">{{ plan.description }}</p>
+                        
+                        <div class="mb-6">
+                            <span class="text-4xl font-bold text-gray-900 dark:text-white">{% format_price plan.price_amount plan.currency %}</span>
+                            <span class="text-gray-500 dark:text-gray-400">/month</span>
+                        </div>
+                        
+                        {% if plan.trial_period_days > 0 %}
+                        <p class="text-sm text-green-600 dark:text-green-400 mb-6">
+                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            {{ plan.trial_period_days }}-day free trial
+                        </p>
+                        {% endif %}
+                        
+                        <!-- Features -->
+                        <ul class="space-y-3 mb-8">
+                            {% if plan.metadata.features %}
+                            {% for feature in plan.metadata.features %}
+                            <li class="flex items-start">
+                                <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span class="text-gray-600 dark:text-gray-300">{{ feature }}</span>
+                            </li>
+                            {% endfor %}
+                            {% else %}
+                            <li class="flex items-start">
+                                <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span class="text-gray-600 dark:text-gray-300">Full access to all features</span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span class="text-gray-600 dark:text-gray-300">Priority customer support</span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span class="text-gray-600 dark:text-gray-300">Exclusive member discounts</span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                        
+                        {% if active_subscription and active_subscription.plan == plan %}
+                        <button disabled class="w-full py-3 px-4 bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 font-semibold rounded-xl cursor-not-allowed">
+                            Current Plan
+                        </button>
+                        {% else %}
+                        <form action="{% url 'subscriptions:subscribe' plan.id %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="w-full py-3 px-4 {% if plan.name == 'Pro' %}bg-gradient-to-r from-primary-500 to-purple-500 hover:from-primary-600 hover:to-purple-600{% else %}bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100{% endif %} text-white {% if plan.name != 'Pro' %}dark:text-gray-900{% endif %} font-semibold rounded-xl transition-colors">
+                                {% if plan.trial_period_days > 0 %}Start Free Trial{% else %}Subscribe Now{% endif %}
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-span-full text-center py-12">
+                    <p class="text-gray-500 dark:text-gray-400">No subscription plans available at the moment.</p>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Yearly Plans (Hidden by default) -->
+            <div id="yearly-plans" class="plans-container hidden grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                {% for plan in yearly_plans %}
+                <div class="plan-card relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-700 {% if plan.name == 'Pro' %}ring-2 ring-primary-500{% endif %}">
+                    {% if plan.name == 'Pro' %}
+                    <div class="absolute top-0 right-0 bg-gradient-to-r from-primary-500 to-purple-500 text-white text-xs font-bold px-4 py-1 rounded-bl-lg">
+                        Most Popular
+                    </div>
+                    {% endif %}
+                    
+                    <div class="absolute top-0 left-0 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-br-lg">
+                        Save 20%
+                    </div>
+                    
+                    <div class="p-8 pt-10">
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{{ plan.name }}</h3>
+                        <p class="text-gray-600 dark:text-gray-400 mb-6">{{ plan.description }}</p>
+                        
+                        <div class="mb-6">
+                            <span class="text-4xl font-bold text-gray-900 dark:text-white">{% format_price plan.price_amount plan.currency %}</span>
+                            <span class="text-gray-500 dark:text-gray-400">/year</span>
+                        </div>
+                        
+                        {% if plan.trial_period_days > 0 %}
+                        <p class="text-sm text-green-600 dark:text-green-400 mb-6">
+                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            {{ plan.trial_period_days }}-day free trial
+                        </p>
+                        {% endif %}
+                        
+                        <!-- Features -->
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-start">
+                                <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span class="text-gray-600 dark:text-gray-300">All monthly features</span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span class="text-gray-600 dark:text-gray-300">2 months free</span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span class="text-gray-600 dark:text-gray-300">Priority support</span>
+                            </li>
+                        </ul>
+                        
+                        {% if active_subscription and active_subscription.plan == plan %}
+                        <button disabled class="w-full py-3 px-4 bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 font-semibold rounded-xl cursor-not-allowed">
+                            Current Plan
+                        </button>
+                        {% else %}
+                        <form action="{% url 'subscriptions:subscribe' plan.id %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="w-full py-3 px-4 {% if plan.name == 'Pro' %}bg-gradient-to-r from-primary-500 to-purple-500 hover:from-primary-600 hover:to-purple-600{% else %}bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100{% endif %} text-white {% if plan.name != 'Pro' %}dark:text-gray-900{% endif %} font-semibold rounded-xl transition-colors">
+                                {% if plan.trial_period_days > 0 %}Start Free Trial{% else %}Subscribe Now{% endif %}
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Comparison -->
+    <section class="py-16 bg-white dark:bg-gray-800">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
+                Compare Plans
+            </h2>
+            
+            <div class="max-w-4xl mx-auto overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200 dark:border-gray-700">
+                            <th class="text-left py-4 px-4 font-medium text-gray-600 dark:text-gray-400">Feature</th>
+                            {% for plan in monthly_plans %}
+                            <th class="text-center py-4 px-4 font-bold text-gray-900 dark:text-white">{{ plan.name }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                        <tr>
+                            <td class="py-4 px-4 text-gray-600 dark:text-gray-300">Exclusive Discounts</td>
+                            {% for plan in monthly_plans %}
+                            <td class="text-center py-4 px-4">
+                                <svg class="w-5 h-5 mx-auto text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td class="py-4 px-4 text-gray-600 dark:text-gray-300">Free Shipping</td>
+                            {% for plan in monthly_plans %}
+                            <td class="text-center py-4 px-4">
+                                {% if forloop.counter > 1 %}
+                                <svg class="w-5 h-5 mx-auto text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                {% else %}
+                                <svg class="w-5 h-5 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td class="py-4 px-4 text-gray-600 dark:text-gray-300">Early Access</td>
+                            {% for plan in monthly_plans %}
+                            <td class="text-center py-4 px-4">
+                                {% if forloop.counter > 1 %}
+                                <svg class="w-5 h-5 mx-auto text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                {% else %}
+                                <svg class="w-5 h-5 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td class="py-4 px-4 text-gray-600 dark:text-gray-300">Priority Support</td>
+                            {% for plan in monthly_plans %}
+                            <td class="text-center py-4 px-4">
+                                {% if forloop.counter == 3 %}
+                                <svg class="w-5 h-5 mx-auto text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                {% else %}
+                                <svg class="w-5 h-5 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-16 bg-gray-50 dark:bg-gray-900">
+        <div class="container mx-auto px-4">
+            <div class="max-w-3xl mx-auto">
+                <h2 class="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
+                    Frequently Asked Questions
+                </h2>
+                
+                <div class="space-y-4">
+                    <details class="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+                        <summary class="p-6 cursor-pointer font-semibold text-gray-900 dark:text-white hover:text-primary-600 transition-colors">
+                            Can I cancel my subscription anytime?
+                        </summary>
+                        <div class="px-6 pb-6 text-gray-600 dark:text-gray-400">
+                            Yes, you can cancel your subscription at any time. Your benefits will continue until the end of your current billing period.
+                        </div>
+                    </details>
+                    
+                    <details class="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+                        <summary class="p-6 cursor-pointer font-semibold text-gray-900 dark:text-white hover:text-primary-600 transition-colors">
+                            How do I change my plan?
+                        </summary>
+                        <div class="px-6 pb-6 text-gray-600 dark:text-gray-400">
+                            You can upgrade or downgrade your plan at any time from your account settings. Changes will be prorated based on your billing cycle.
+                        </div>
+                    </details>
+                    
+                    <details class="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+                        <summary class="p-6 cursor-pointer font-semibold text-gray-900 dark:text-white hover:text-primary-600 transition-colors">
+                            What payment methods do you accept?
+                        </summary>
+                        <div class="px-6 pb-6 text-gray-600 dark:text-gray-400">
+                            We accept all major credit cards, debit cards, and mobile payment methods like bKash and Nagad.
+                        </div>
+                    </details>
+                    
+                    <details class="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+                        <summary class="p-6 cursor-pointer font-semibold text-gray-900 dark:text-white hover:text-primary-600 transition-colors">
+                            Is there a refund policy?
+                        </summary>
+                        <div class="px-6 pb-6 text-gray-600 dark:text-gray-400">
+                            If you're not satisfied within the first 7 days of your subscription, we offer a full refund. Contact our support team to process your refund.
+                        </div>
+                    </details>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+{% block extra_js %}
+<script>
+// Billing toggle functionality
+const toggleMonthly = document.getElementById('toggle-monthly');
+const toggleYearly = document.getElementById('toggle-yearly');
+const monthlyPlans = document.getElementById('monthly-plans');
+const yearlyPlans = document.getElementById('yearly-plans');
+
+toggleMonthly.addEventListener('click', function() {
+    this.classList.add('bg-white', 'text-gray-900');
+    this.classList.remove('text-white');
+    toggleYearly.classList.remove('bg-white', 'text-gray-900');
+    toggleYearly.classList.add('text-white');
+    monthlyPlans.classList.remove('hidden');
+    yearlyPlans.classList.add('hidden');
+});
+
+toggleYearly.addEventListener('click', function() {
+    this.classList.add('bg-white', 'text-gray-900');
+    this.classList.remove('text-white');
+    toggleMonthly.classList.remove('bg-white', 'text-gray-900');
+    toggleMonthly.classList.add('text-white');
+    yearlyPlans.classList.remove('hidden');
+    monthlyPlans.classList.add('hidden');
+});
+</script>
+{% endblock %}
+{% endblock %}

@@ -248,18 +248,20 @@ class OrderItem(models.Model):
     order = models.ForeignKey(
         Order,
         on_delete=models.CASCADE,
-        related_name='items'
+        related_name='items',
+        null=True,
+        blank=True
     )
     
     # Product reference (keep even if product deleted)
     product = models.ForeignKey(
-        'products.Product',
+        'catalog.Product',
         on_delete=models.SET_NULL,
         related_name='order_items',
         null=True
     )
     variant = models.ForeignKey(
-        'products.ProductVariant',
+        'catalog.ProductVariant',
         on_delete=models.SET_NULL,
         related_name='order_items',
         null=True,
@@ -304,7 +306,9 @@ class OrderStatusHistory(models.Model):
     order = models.ForeignKey(
         Order,
         on_delete=models.CASCADE,
-        related_name='status_history'
+        related_name='status_history',
+        null=True,
+        blank=True
     )
     
     old_status = models.CharField(max_length=20, blank=True)

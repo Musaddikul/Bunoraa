@@ -71,7 +71,7 @@ class CreateReviewSerializer(serializers.Serializer):
     content = serializers.CharField(min_length=10, max_length=5000)
     
     def validate_product_id(self, value):
-        from apps.products.models import Product
+        from apps.catalog.models import Product
         
         try:
             product = Product.objects.get(id=value, is_active=True, is_deleted=False)

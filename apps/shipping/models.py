@@ -340,7 +340,7 @@ class ShippingRate(models.Model):
     is_active = models.BooleanField(default=True)
     # Currency for this shipping rate (location-based). Use a FK to Currency for consistency.
     currency = models.ForeignKey(
-        'currencies.Currency',
+        'i18n.Currency',
         on_delete=models.PROTECT,
         null=True,
         blank=True,

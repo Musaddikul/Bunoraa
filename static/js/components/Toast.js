@@ -107,12 +107,17 @@ export class Toast extends BaseComponent {
     });
     toastElement.appendChild(messageElement);
 
+    // Add ARIA for assistive technologies
+    toastElement.setAttribute('role', this.type === 'error' ? 'alert' : 'status');
+    toastElement.setAttribute('aria-live', this.type === 'error' ? 'assertive' : 'polite');
+
     // Close button
     const closeBtn = createElement('button', {
       className: 'text-base hover:opacity-70 transition-opacity flex-shrink-0',
       text: '×'
     });
 
+    closeBtn.setAttribute('aria-label', 'Dismiss notification');
     closeBtn.addEventListener('click', () => {
       this.destroy();
     });
@@ -190,6 +195,12 @@ export class Toast extends BaseComponent {
     const element = toast.create();
     return toast;
   }
+
+  // Convenience helpers
+  static success(message, options = {}) { return this.show(message, { ...options, type: 'success' }); }
+  static error(message, options = {}) { return this.show(message, { ...options, type: 'error', position: options.position || 'top-right' }); }
+  static info(message, options = {}) { return this.show(message, { ...options, type: 'info' }); }
+  static warning(message, options = {}) { return this.show(message, { ...options, type: 'warning' }); }
 }
 
 // Add CSS animation

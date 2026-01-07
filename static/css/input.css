@@ -1,8 +1,92 @@
+/**
+ * Bunoraa - Main Stylesheet
+ * 
+ * This file contains all custom styles for the Bunoraa e-commerce platform.
+ * Uses Tailwind CSS with custom configurations.
+ * 
+ * Sections:
+ * 1. Tailwind Directives
+ * 2. CSS Custom Properties (Theme Variables)
+ * 3. Base Styles
+ * 4. Component Styles
+ * 5. Utility Styles
+ * 6. Animations
+ * 7. Dark Mode Overrides
+ */
+
+/* ============================================
+   1. TAILWIND DIRECTIVES
+   ============================================ */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ===== BASE STYLES ===== */
+/* ============================================
+   2. CSS CUSTOM PROPERTIES (THEME VARIABLES)
+   ============================================ */
+@layer base {
+    :root {
+        /* Background colors - Pure white for light mode */
+        --color-bg-primary: 255 255 255;       /* #ffffff - Pure white */
+        --color-bg-secondary: 250 250 249;     /* #fafaf9 - stone-50 */
+        --color-bg-tertiary: 245 245 244;      /* #f5f5f4 - stone-100 */
+        --color-bg-muted: 231 229 228;         /* #e7e5e4 - stone-200 */
+        
+        /* Text colors */
+        --color-text-primary: 28 25 23;        /* #1c1917 - stone-900 */
+        --color-text-secondary: 87 83 78;      /* #57534e - stone-600 */
+        --color-text-muted: 120 113 108;       /* #78716c - stone-500 */
+        --color-text-inverse: 255 255 255;     /* #ffffff */
+        
+        /* Border colors */
+        --color-border: 231 229 228;           /* #e7e5e4 - stone-200 */
+        --color-border-muted: 245 245 244;     /* #f5f5f4 - stone-100 */
+        
+        /* Focus ring */
+        --color-focus-ring: 245 158 11;        /* #f59e0b - amber-500 */
+        --color-focus-offset: 255 255 255;     /* #ffffff */
+        
+        /* Card/Surface */
+        --color-card: 255 255 255;             /* #ffffff */
+        --color-card-elevated: 255 255 255;    /* #ffffff */
+        
+        /* Shadows */
+        --shadow-color: 0 0 0;
+    }
+    
+    .dark {
+        /* Background colors - Pure black for dark mode */
+        --color-bg-primary: 0 0 0;             /* #000000 - Pure black */
+        --color-bg-secondary: 12 10 9;         /* #0c0a09 - stone-950 */
+        --color-bg-tertiary: 28 25 23;         /* #1c1917 - stone-900 */
+        --color-bg-muted: 41 37 36;            /* #292524 - stone-800 */
+        
+        /* Text colors */
+        --color-text-primary: 250 250 249;     /* #fafaf9 - stone-50 */
+        --color-text-secondary: 214 211 209;   /* #d6d3d1 - stone-300 */
+        --color-text-muted: 168 162 158;       /* #a8a29e - stone-400 */
+        --color-text-inverse: 0 0 0;           /* #000000 */
+        
+        /* Border colors */
+        --color-border: 41 37 36;              /* #292524 - stone-800 */
+        --color-border-muted: 28 25 23;        /* #1c1917 - stone-900 */
+        
+        /* Focus ring */
+        --color-focus-ring: 251 191 36;        /* #fbbf24 - amber-400 */
+        --color-focus-offset: 0 0 0;           /* #000000 */
+        
+        /* Card/Surface */
+        --color-card: 12 10 9;                 /* #0c0a09 - stone-950 */
+        --color-card-elevated: 28 25 23;       /* #1c1917 - stone-900 */
+        
+        /* Shadows - invisible in dark mode */
+        --shadow-color: 0 0 0;
+    }
+}
+
+/* ============================================
+   3. BASE STYLES
+   ============================================ */
 @layer base {
     html {
         scroll-behavior: smooth;
@@ -11,113 +95,77 @@
     }
     
     body {
-        @apply font-sans text-gray-900 antialiased bg-stone-50 dark:bg-stone-950 dark:text-stone-100;
+        @apply font-sans antialiased;
         min-height: 100vh;
-        color: var(--text-primary);
-        background-color: var(--bg-primary);
+        background-color: rgb(var(--color-bg-primary));
+        color: rgb(var(--color-text-primary));
     }
     
-    /* Focus styles */
-    /* Centralised focus ring variables - tuned for light/dark mode */
-    :root {
-        --focus-ring: rgba(245,158,11,0.95); /* amber-500 */
-        --focus-ring-offset: rgba(255,255,255,0.6);
-    }
-    .dark {
-        --focus-ring: rgba(250,204,21,0.95); /* amber-300-ish for dark */
-        --focus-ring-offset: rgba(0,0,0,0.45);
-    }
-
-    /* Remove default outline and provide consistent, accessible focus-visible styling */
+    /* ----- Focus States ----- */
     *:focus {
         outline: none;
     }
-
-    button:focus,
-    a:focus,
-    input:focus,
-    select:focus,
-    textarea:focus,
-    [role="button"]:focus {
-        outline: none;
-    }
-
+    
     button:focus-visible,
     a:focus-visible,
     input:focus-visible,
     select:focus-visible,
     textarea:focus-visible,
     [role="button"]:focus-visible {
-        box-shadow: 0 0 0 3px var(--focus-ring), 0 0 0 6px var(--focus-ring-offset);
+        box-shadow: 0 0 0 3px rgb(var(--color-focus-ring) / 0.6),
+                    0 0 0 6px rgb(var(--color-focus-offset) / 0.4);
         outline: none;
-        border-radius: inherit; /* preserve control's rounding */
+        border-radius: inherit;
     }
-
-    /* On touch devices, avoid persistent focus rings/borders when the user taps controls. Keep keyboard-focus (focus-visible) intact for accessibility. */
+    
+    /* Touch devices: avoid persistent focus rings */
     @media (hover: none) and (pointer: coarse) {
-        /* Remove visible focus effects for tappable controls (buttons, links, role=button) */
         button:focus, button:active,
         a:focus, a:active,
         [role="button"]:focus, [role="button"]:active {
             outline: none !important;
             box-shadow: none !important;
-            border-color: transparent !important;
         }
-
-        /* Keep inputs and form controls focusable (so caret and selection work) but avoid showing strong rings */
-        input:focus, textarea:focus, select:focus {
-            outline: none;
-            box-shadow: none;
-            /* keep border so users can see editable fields; no forced color change */
-        }
-
-        /* Make active state visually simple (no border change) */
+        
         button:active, a:active, [role="button"]:active {
-            background-color: rgba(0,0,0,0.03); /* subtle pressed feedback */
+            background-color: rgba(0, 0, 0, 0.03);
+        }
+        
+        .dark button:active, .dark a:active, .dark [role="button"]:active {
+            background-color: rgba(255, 255, 255, 0.05);
         }
     }
     
-    /* Typography */
+    /* ----- Typography ----- */
     h1, h2, h3, h4, h5, h6 {
-        @apply font-display font-bold text-stone-900;
+        @apply font-display font-bold;
+        color: rgb(var(--color-text-primary));
     }
-
-    /* Mobile typography adjustments: slightly smaller base font and component text for compact phone view */
+    
+    /* Mobile typography */
     @media (max-width: 640px) {
-        /* Decrease root font so rem-based utilities scale down site-wide */
         html { font-size: 14px; }
-
-        /* Product cards: smaller overall text for compactness */
+        
         .product-card { font-size: 0.85rem; }
-        .product-card h3 { font-size: 0.95rem; line-height:1.15; }
+        .product-card h3 { font-size: 0.95rem; line-height: 1.15; }
         .product-card p, .product-card .text-sm { font-size: 0.75rem; }
         .product-card .text-lg { font-size: 1rem; }
         .product-card .p-4 { padding: 0.75rem; }
-
-        /* List view image: prevent fixed wide columns from overflowing on small screens */
         .product-card.flex .w-48 { width: 8rem; min-width: 8rem; }
-
-        /* Toasts / notifications: slightly smaller text and less padding so they don't dominate screen */
-        .toast { font-size: 0.875rem; padding: 0.25rem 0.5rem; min-width: 140px; max-width: calc(100% - 2rem); }
-        .toast .text-base { font-size: 0.875rem; line-height: 1.2; }
-
-        /* Buttons & inputs: slightly reduced font-size for compactness */
-        .btn, .input { font-size: 0.875rem; }
-
-        /* Headings tuning */
+        
         h1 { font-size: 1.5rem; }
         h2 { font-size: 1.125rem; }
     }
     
-    /* Links - theme aware */
+    /* ----- Links ----- */
     a {
-        color: #1c1917; /* stone-900 */
+        color: rgb(var(--color-text-primary));
         text-decoration: none;
         position: relative;
         transition: color 0.2s;
         cursor: pointer;
     }
-
+    
     a::after {
         content: '';
         position: absolute;
@@ -127,77 +175,72 @@
         height: 2px;
         background: currentColor;
         transform: scaleX(0);
-        transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         border-radius: 1px;
         opacity: 0.7;
         pointer-events: none;
     }
-
+    
     a:hover::after,
     a:focus-visible::after {
         transform: scaleX(1);
     }
-
+    
     a:hover {
-        color: #b45309; /* amber-700 */
-    }
-
-    a:focus-visible {
-        outline: 2px solid #fbbf24; /* amber-400 */
-        outline-offset: 2px;
-    }
-
-    /* Dark mode support */
-    .dark a {
-        color: #f5f5f4; /* stone-100 */
-    }
-
-    .dark a::after {
-        background: #fbbf24; /* amber-300 */
-    }
-
-    .dark a:hover {
-        color: #fde68a; /* amber-300 */
-    }
-
-    .dark a:focus-visible {
-        outline: 2px solid #fbbf24; /* amber-400 */
-        outline-offset: 2px;
+        @apply text-amber-700;
     }
     
-    /* Images */
+    .dark a:hover {
+        @apply text-amber-400;
+    }
+    
+    /* ----- Images ----- */
     img {
         @apply max-w-full h-auto;
     }
-
-    /* Tables - provide sensible defaults and dark variants */
+    
+    /* ----- Tables ----- */
     table {
         @apply w-full text-left table-auto border-collapse;
     }
-
+    
     thead {
-        @apply bg-gray-50 dark:bg-stone-800;
-    }
-
-    tbody {
-        @apply divide-y divide-gray-100 dark:divide-stone-700;
-    }
-
-    th {
-        @apply px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-stone-100;
-    }
-
-    td {
-        @apply px-6 py-3 text-sm text-stone-700 dark:text-stone-300;
+        background-color: rgb(var(--color-bg-tertiary));
     }
     
-    /* Form elements */
+    tbody {
+        @apply divide-y;
+        border-color: rgb(var(--color-border));
+    }
+    
+    th {
+        @apply px-6 py-3 text-left text-sm font-semibold;
+        color: rgb(var(--color-text-primary));
+    }
+    
+    td {
+        @apply px-6 py-3 text-sm;
+        color: rgb(var(--color-text-secondary));
+    }
+    
+    /* ----- Form Elements ----- */
     input, textarea, select {
-        @apply w-full rounded-xl border border-stone-300 px-4 py-3 text-stone-900 
-               placeholder-stone-400 transition-all duration-200
-               focus:border-amber-500 focus:ring-4 focus:ring-amber-100
-               dark:bg-stone-900 dark:border-stone-700 dark:text-stone-100 dark:placeholder-stone-500 
-               dark:focus:border-amber-400 dark:focus:ring-amber-800/40;
+        @apply w-full rounded-xl px-4 py-3 transition-all duration-200;
+        background-color: rgb(var(--color-bg-primary));
+        border: 1px solid rgb(var(--color-border));
+        color: rgb(var(--color-text-primary));
+    }
+    
+    input::placeholder, textarea::placeholder {
+        color: rgb(var(--color-text-muted));
+    }
+    
+    input:focus, textarea:focus, select:focus {
+        @apply border-amber-500 ring-4 ring-amber-500/20;
+    }
+    
+    .dark input:focus, .dark textarea:focus, .dark select:focus {
+        @apply border-amber-400 ring-amber-400/20;
     }
     
     button {
@@ -205,19 +248,20 @@
     }
 }
 
-/* ===== COMPONENT STYLES ===== */
+/* ============================================
+   4. COMPONENT STYLES
+   ============================================ */
 @layer components {
-    /* Container - Full Width */
+    /* ----- Container ----- */
     .container-fluid {
         @apply w-full px-4 sm:px-6 lg:px-8;
     }
     
-    /* Standard Container */
     .container {
         @apply mx-auto w-full max-w-[1920px] px-4 sm:px-6 lg:px-8;
     }
     
-    /* Buttons */
+    /* ----- Buttons ----- */
     .btn {
         @apply inline-flex items-center justify-center gap-2 px-6 py-3 
                font-semibold rounded-xl transition-all duration-200
@@ -230,124 +274,181 @@
     }
     
     .btn-secondary {
-        @apply btn bg-stone-100 text-stone-800 hover:bg-stone-200;
+        @apply btn bg-stone-100 text-stone-800 hover:bg-stone-200
+               dark:bg-stone-800 dark:text-stone-100 dark:hover:bg-stone-700;
     }
     
     .btn-outline {
         @apply btn border-2 border-amber-600 text-amber-600 
-               hover:bg-amber-600 hover:text-white;
+               hover:bg-amber-600 hover:text-white
+               dark:border-amber-400 dark:text-amber-400 
+               dark:hover:bg-amber-400 dark:hover:text-black;
     }
     
     .btn-ghost {
-        @apply btn text-stone-600 hover:bg-stone-100 hover:text-stone-900;
+        @apply btn text-stone-600 hover:bg-stone-100 hover:text-stone-900
+               dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-stone-100;
     }
     
-    .btn-sm {
-        @apply px-4 py-2 text-sm;
-    }
+    .btn-sm { @apply px-4 py-2 text-sm; }
+    .btn-lg { @apply px-8 py-4 text-lg; }
     
-    .btn-lg {
-        @apply px-8 py-4 text-lg;
-    }
-    
-    /* Cards */
+    /* ----- Cards ----- */
     .card {
-        @apply bg-white rounded-2xl shadow-sm hover:shadow-lg 
-               transition-shadow duration-300 overflow-hidden;
-        @apply dark:bg-stone-900 dark:border dark:border-stone-700 dark:shadow-none;
+        @apply rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden;
+        background-color: rgb(var(--color-card));
+        border: 1px solid rgb(var(--color-border));
     }
-
-    /* CTA (Unlock membership) - guaranteed focus-visible on both themes */
-    .cta-unlock:focus-visible,
-    .btn-primary:focus-visible {
-        /* stronger, theme-aware focus shadow using CSS vars defined in :root/.dark */
-        box-shadow: 0 0 0 4px var(--focus-ring), 0 0 0 8px var(--focus-ring-offset);
-        outline: none;
+    
+    .dark .card {
+        @apply shadow-none;
     }
-
-    /* Card gradient utilities (ensure gradients available even if utilities are purged) */
-    .card-gradient-emerald {
-        background-image: linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(236,253,245,0.04) 100%);
-    }
-
-    .card-gradient-indigo {
-        background-image: linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(238,242,255,0.04) 100%);
-    }
-
-    /* Lookbook card helpers to ensure good contrast in light and dark modes */
-    .lookbook-card {
-        @apply bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700;
-    }
-    .lookbook-title { @apply text-stone-900 dark:text-white; }
-    .lookbook-meta { @apply text-stone-600 dark:text-white/60; }
-
-    /* Product card: force square corners across the site */
+    
+    /* Product cards: square corners */
     .product-card {
         @apply rounded-none;
-        border-radius: 0 !important; /* Extra safeguard against accidental utility classes */
+        border-radius: 0 !important;
     }
-
+    
     .product-card img,
     .product-card .skeleton {
         @apply rounded-none;
         border-radius: 0 !important;
     }
     
-    /* Badges */
+    /* Lookbook cards */
+    .lookbook-card {
+        @apply bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800;
+    }
+    .lookbook-title { @apply text-stone-900 dark:text-white; }
+    .lookbook-meta { @apply text-stone-600 dark:text-stone-400; }
+    
+    /* ----- Badges ----- */
     .badge {
         @apply inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full;
     }
     
-    .badge-primary {
-        @apply badge bg-amber-100 text-amber-800;
-    }
+    .badge-primary { @apply bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400; }
+    .badge-success { @apply bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400; }
+    .badge-danger { @apply bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400; }
+    .badge-info { @apply bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400; }
     
-    .badge-success {
-        @apply badge bg-green-100 text-green-800;
+    /* ----- Form Groups ----- */
+    .form-group { @apply mb-6; }
+    .form-label { 
+        @apply block text-sm font-medium mb-2;
+        color: rgb(var(--color-text-secondary));
     }
+    .form-error { @apply text-sm text-red-600 dark:text-red-400 mt-1; }
     
-    .badge-danger {
-        @apply badge bg-red-100 text-red-800;
-    }
-    
-    .badge-info {
-        @apply badge bg-blue-100 text-blue-800;
-    }
-    
-    /* Form Groups */
-    .form-group {
-        @apply mb-6;
-    }
-    
-    .form-label {
-        @apply block text-sm font-medium text-stone-700 mb-2;
-    }
-    
-    .form-error {
-        @apply text-sm text-red-600 mt-1;
-    }
-    
-    /* Skeleton Loading */
+    /* ----- Skeleton Loading ----- */
     .skeleton {
-        @apply animate-pulse bg-stone-200 rounded;
+        @apply animate-pulse rounded;
+        background-color: rgb(var(--color-bg-muted));
     }
     
-    /* Search Form - Hide input by default */
-    #search-form.collapsed input[type="search"] {
-        display: none;
+    /* ----- Dropdown Menu ----- */
+    .dropdown-menu {
+        @apply absolute z-50 rounded-xl shadow-xl py-2 min-w-[160px] 
+               opacity-0 transform scale-95 transition-all duration-200 origin-top-right;
+        background-color: rgb(var(--color-card));
+        border: 1px solid rgb(var(--color-border));
     }
     
+    .dropdown-menu.open {
+        @apply opacity-100 scale-100;
+    }
+    
+    .dropdown-item {
+        @apply flex items-center gap-3 px-4 py-2.5 transition-colors;
+        color: rgb(var(--color-text-secondary));
+    }
+    
+    .dropdown-item:hover {
+        @apply bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400;
+    }
+    
+    /* ----- Modal ----- */
+    .modal-overlay {
+        @apply fixed inset-0 bg-black/60 backdrop-blur-sm z-50;
+    }
+    
+    .modal-content {
+        @apply rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto;
+        background-color: rgb(var(--color-card));
+        color: rgb(var(--color-text-primary));
+    }
+    
+    .dark .modal-content { @apply shadow-none; }
+    
+    /* Quick View Modal */
+    .quick-view-modal {
+        @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+    }
+    
+    .quick-view-content {
+        @apply rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] 
+               overflow-y-auto transform transition-all duration-300;
+        background-color: rgb(var(--color-card));
+    }
+    
+    /* ----- Product Actions ----- */
+    .product-actions {
+        @apply absolute flex flex-col gap-2 
+               opacity-0 group-hover:opacity-100 
+               transition-all duration-300;
+    }
+    
+    .product-action-btn {
+        @apply p-2.5 rounded-full shadow-lg flex-none 
+               hover:scale-110 transition-all duration-200;
+        background-color: rgb(var(--color-card));
+    }
+    
+    .product-action-btn:hover {
+        @apply bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400;
+    }
+    
+    @media (max-width: 640px) {
+        .product-action-btn {
+            @apply p-3.5;
+            min-width: 44px;
+            min-height: 44px;
+        }
+        .product-card .mobile-actions { display: flex; }
+        .product-card .overlay-actions { display: none; }
+    }
+    
+    /* ----- Hero Slider Controls ----- */
+    .hero-prev,
+    .hero-next {
+        background-color: rgb(var(--color-card) / 0.9);
+        color: rgb(var(--color-text-primary));
+    }
+    
+    .hero-prev:focus-visible,
+    .hero-next:focus-visible {
+        outline: 2px solid rgb(var(--color-focus-ring));
+        outline-offset: 2px;
+    }
+    
+    .hero-dots button {
+        background-color: rgb(var(--color-bg-muted));
+    }
+    
+    /* ----- Search Form ----- */
+    #search-form.collapsed input[type="search"],
     #search-form.collapsed #search-suggestions {
         display: none;
     }
     
-    /* Header Collapse Animation */
+    /* ----- Header Collapse ----- */
     #main-header {
         @apply transition-all duration-500 ease-out;
     }
     
     nav[data-main-nav] {
-        @apply transition-all duration-500 ease-in-out;
+        @apply transition-all duration-500 ease-in-out will-change-transform;
         max-height: 100px;
         opacity: 1;
     }
@@ -358,140 +459,48 @@
         overflow: hidden;
     }
     
-    /* Dark Mode Button Styling - Dropdown Toggles */
-    .dark .dropdown-toggle {
-        @apply text-stone-300;
-    }
-    
-    .dark .dropdown-toggle:hover {
-        background-color: rgb(55 65 81);
-        color: rgb(252 191 73);
-    }
-    
-    /* Dark Mode Button Styling - Theme Toggle */
-    .dark #theme-toggle {
-        @apply text-stone-300;
-    }
-    
-    .dark #theme-toggle:hover {
-        background-color: rgb(55 65 81);
-        color: rgb(252 191 73);
-    }
-    
-    /* Dark Mode Button Styling - Mobile Search Toggle */
-    .dark #mobile-search-toggle {
-        @apply text-stone-300;
-    }
-    
-    .dark #mobile-search-toggle:hover {
-        background-color: rgb(55 65 81);
-        color: rgb(252 191 73);
-    }
-    
-    /* Dropdown */
-    .dropdown-menu {
-        @apply absolute z-50 bg-white rounded-xl shadow-xl border border-stone-200 
-               py-2 min-w-[160px] opacity-0 transform scale-95 
-               transition-all duration-200 origin-top-right;
-        @apply dark:bg-stone-900 dark:border-stone-700 dark:shadow-none;
-    }
-    
-    .dropdown-menu.open {
-        @apply opacity-100 scale-100;
-    }
-    
-    .dropdown-item {
-        @apply flex items-center gap-3 px-4 py-2.5 text-stone-700 
-               hover:bg-amber-50 hover:text-amber-700 transition-colors;
-        @apply dark:text-stone-200 dark:hover:bg-stone-800 dark:hover:text-amber-300;
-    }
-    
-    /* Modal */
-    .modal-overlay {
-        @apply fixed inset-0 bg-black/60 backdrop-blur-sm z-50;
-    }
-    
-    .modal-content {
-        @apply bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto;
-        @apply dark:bg-stone-900 dark:text-stone-100 dark:shadow-none;
-    }
-    
-    /* Quick View Modal */
-    .quick-view-modal {
-        @apply fixed inset-0 z-50 flex items-center justify-center p-4;
-    }
-    
-    .quick-view-content {
-        @apply bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] 
-               overflow-y-auto transform transition-all duration-300;
-        @apply dark:bg-stone-900 dark:text-stone-100 dark:shadow-none;
-    }
-    
-    /* Product Card Hover Actions */
-    /* Product Card Hover Actions - positioning should be controlled by markup (left/right/top/bottom) to avoid stretching */
-    .product-actions {
-        @apply absolute flex flex-col gap-2 
-               opacity-0 group-hover:opacity-100 
-               transition-all duration-300;
-    }
-    
-    .product-action-btn {
-        @apply p-2.5 bg-white rounded-full shadow-lg flex-none 
-               hover:bg-amber-50 hover:text-amber-600 
-               transition-all duration-200 hover:scale-110;
-        @apply dark:bg-stone-800 dark:hover:bg-stone-700 dark:text-stone-100;
-    }
+    /* ----- Toast Notifications (Compact) ----- */
+    .toast-container { gap: 0.375rem; }
+    .toast { padding: 0.375rem 0.5rem; gap: 0.375rem; }
+    .toast-icon { width: 0.875rem; height: 0.875rem; }
+    .toast-title { font-size: 0.75rem; line-height: 1; margin-bottom: 0.0625rem; }
+    .toast-message { font-size: 0.6875rem; line-height: 1; }
+}
 
-    /* Mobile friendly actions: larger touch targets and show mobile actions */
-    @media (max-width: 640px) {
-        .product-action-btn {
-            @apply p-3.5; /* increase hit area */
-            min-width: 44px;
-            min-height: 44px;
-        }
-        .product-card .mobile-actions {
-            display: flex;
-        }
-        /* Hide overlay actions on phone screens to avoid overlap */
-        .product-card .overlay-actions {
-            display: none;
-        }
-    }
-
-    /* Hero slider controls - ensure dark-mode friendly fallback */
-    .hero-prev,
-    .hero-next {
-        background-color: rgba(255,255,255,0.8);
-        color: #111827; /* stone-900 */
-    }
-
-    .hero-prev svg,
-    .hero-next svg {
-        stroke: currentColor;
-    }
-
-    .hero-prev:focus-visible,
-    .hero-next:focus-visible {
-        outline: 2px solid #fbbf24; /* amber-400 */
-        outline-offset: 2px;
-    }
-
-    /* Dark-mode overrides when Tailwind dark classes are not emitted */
-    .dark .hero-prev,
-    .dark .hero-next {
-        background-color: rgba(15,23,42,0.7); /* stone-800/70 */
-        color: #f5f5f4; /* stone-100 */
-    }
-
-    .hero-dots button {
-        background-color: rgba(255,255,255,1);
-    }
-
-    .dark .hero-dots button {
-        background-color: rgba(148,163,184,0.8); /* stone-400/approx */
+/* ============================================
+   5. UTILITY STYLES
+   ============================================ */
+@layer utilities {
+    /* Text Selection */
+    .selection-amber::selection {
+        @apply bg-amber-200 text-amber-900;
     }
     
-    /* Scrollbar Hide */
+    /* Aspect Ratios */
+    .aspect-product { aspect-ratio: 3/4; }
+    .aspect-banner { aspect-ratio: 21/9; }
+    
+    /* Safe Area Insets */
+    .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+    .pt-safe { padding-top: env(safe-area-inset-top); }
+    
+    /* Gradient Text */
+    .text-gradient {
+        @apply bg-clip-text text-transparent bg-gradient-to-r from-amber-600 to-orange-500;
+    }
+    
+    /* Theme-aware surface */
+    .surface {
+        background-color: rgb(var(--color-bg-primary));
+        color: rgb(var(--color-text-primary));
+    }
+    
+    .surface-elevated {
+        background-color: rgb(var(--color-card-elevated));
+        color: rgb(var(--color-text-primary));
+    }
+    
+    /* Scrollbar */
     .scrollbar-hide {
         -ms-overflow-style: none;
         scrollbar-width: none;
@@ -501,134 +510,30 @@
         display: none;
     }
     
-    /* Custom Scrollbar */
-    .custom-scrollbar::-webkit-scrollbar {
-        @apply w-2;
+    .custom-scrollbar::-webkit-scrollbar { @apply w-2; }
+    .custom-scrollbar::-webkit-scrollbar-track { 
+        background-color: rgb(var(--color-bg-tertiary));
+        @apply rounded-full;
     }
-    
-    .custom-scrollbar::-webkit-scrollbar-track {
-        @apply bg-stone-100 rounded-full;
-    }
-    
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-        @apply bg-stone-300 rounded-full hover:bg-stone-400;
-    }
-    
-    /* Page Transition */
-    .page-enter {
-        animation: fadeIn 0.3s ease-out;
+    .custom-scrollbar::-webkit-scrollbar-thumb { 
+        background-color: rgb(var(--color-border));
+        @apply rounded-full;
     }
     
     /* Line Clamp */
-    .line-clamp-1 {
+    .line-clamp-1, .line-clamp-2, .line-clamp-3 {
         display: -webkit-box;
-        -webkit-line-clamp: 1;
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
-    
-    .line-clamp-2 {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-    
-    .line-clamp-3 {
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
+    .line-clamp-1 { -webkit-line-clamp: 1; }
+    .line-clamp-2 { -webkit-line-clamp: 2; }
+    .line-clamp-3 { -webkit-line-clamp: 3; }
 }
 
-/* ===== UTILITIES ===== */
-@layer utilities {
-    /* Text Selection */
-    .selection-amber::selection {
-        @apply bg-amber-200 text-amber-900;
-    }
-    
-    /* Aspect Ratios */
-    .aspect-product {
-        aspect-ratio: 3/4;
-    }
-    
-    .aspect-banner {
-        aspect-ratio: 21/9;
-    }
-    
-    /* Safe Area Insets */
-    .pb-safe {
-        padding-bottom: env(safe-area-inset-bottom);
-    }
-    
-    .pt-safe {
-        padding-top: env(safe-area-inset-top);
-    }
-    
-    /* Gradient Text */
-    .text-gradient {
-        @apply bg-clip-text text-transparent bg-gradient-to-r from-amber-600 to-orange-500;
-    }
-
-
-/* ===== TOAST (COMPACT) ===== */
-@layer components {
-    .toast-container {
-        gap: 0.375rem; /* even tighter vertical spacing */
-    }
-    .toast {
-        padding: 0.375rem 0.5rem; /* further reduced padding */
-        gap: 0.375rem; /* tighter internal gap */
-    }
-    .toast-icon {
-        width: 0.875rem;
-        height: 0.875rem; /* smaller icon */
-    }
-    .toast-title {
-        font-size: 0.75rem; /* ~12px */
-        line-height: 1; /* compact line-height */
-        margin-bottom: 0.0625rem; /* minimal spacing */
-    }
-    .toast-message {
-        font-size: 0.6875rem; /* ~11px */
-        line-height: 1; /* compact line-height */
-    }
-}
-    /* Theme-aware surface helper */
-    .surface {
-        @apply bg-white text-stone-900 dark:bg-stone-900 dark:text-stone-100;
-    }
-}
-
-/* Dark-mode overrides for legacy light-only sections */
-@layer base {
-    .dark .bg-white,
-    .dark .bg-gray-50,
-    .dark .bg-stone-50 { background-color: #0f172a !important; color: #e5e7eb; }
-
-    .dark .bg-gray-100,
-    .dark .bg-stone-100,
-    .dark .bg-stone-200 { background-color: #1f2937 !important; color: #e5e7eb; }
-
-    .dark .text-gray-900,
-    .dark .text-stone-900,
-    .dark .text-stone-800,
-    .dark .text-stone-700 { color: #f8fafc !important; }
-
-    .dark .text-gray-700,
-    .dark .text-gray-600,
-    .dark .text-stone-600,
-    .dark .text-stone-500 { color: #e5e7eb !important; }
-
-    .dark .border-stone-200,
-    .dark .border-stone-100,
-    .dark .border-gray-200,
-    .dark .border-gray-100 { border-color: #374151 !important; }
-}
-
-/* ===== ANIMATIONS ===== */
+/* ============================================
+   6. ANIMATIONS
+   ============================================ */
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -664,9 +569,319 @@
     100% { background-position: 200% 0; }
 }
 
-/* Shimmer effect for loading */
 .shimmer {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background: linear-gradient(90deg, 
+        rgb(var(--color-bg-muted)) 25%, 
+        rgb(var(--color-bg-tertiary)) 50%, 
+        rgb(var(--color-bg-muted)) 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
+}
+
+.page-enter { animation: fadeIn 0.3s ease-out; }
+
+/* ============================================
+   7. MEGA MENU STYLES
+   ============================================ */
+@layer components {
+    .mega-panel {
+        @apply transform transition-all duration-300 ease-out;
+        animation: megaPanelOpen 0.25s ease-out forwards;
+        transform-origin: top center;
+    }
+    
+    .mega-panel.hidden {
+        animation: none;
+        opacity: 0;
+        transform: translateY(-10px) scale(0.98);
+    }
+    
+    @keyframes megaPanelOpen {
+        0% { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(0.98); }
+        100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+    }
+    
+    /* Header Category Links */
+    #header-categories li[data-cat-id] > a {
+        @apply relative overflow-hidden;
+    }
+    
+    #header-categories li[data-cat-id] > a::before {
+        content: '';
+        @apply absolute bottom-0 left-1/2 w-0 h-0.5 bg-amber-600 transition-all duration-300;
+        transform: translateX(-50%);
+    }
+    
+    #header-categories li[data-cat-id]:hover > a::before,
+    #header-categories li[data-cat-id]:focus-within > a::before {
+        @apply w-4/5;
+    }
+    
+    #header-categories li[data-cat-id].active > a {
+        @apply text-amber-700 bg-amber-50 dark:text-amber-300 dark:bg-amber-900/30;
+    }
+    
+    /* Subcategory Hover Effects */
+    .mega-panel a { @apply relative transition-all duration-200; }
+    .mega-panel a:hover { @apply -translate-y-0.5; }
+    .mega-panel .w-12.h-12 { @apply transition-transform duration-300; }
+    .mega-panel a:hover .w-12.h-12 { @apply scale-105 shadow-md; }
+    
+    /* Grandchildren Links */
+    .mega-panel ul a {
+        @apply relative pl-3 transition-all duration-200;
+    }
+    
+    .mega-panel ul a::before {
+        content: '';
+        @apply absolute left-0 top-1/2 w-1.5 h-1.5 rounded-full transition-colors duration-200;
+        background-color: rgb(var(--color-border));
+        transform: translateY(-50%);
+    }
+    
+    .mega-panel ul a:hover::before {
+        @apply bg-amber-500;
+    }
+    
+    .mega-panel .animate-spin {
+        @apply border-4;
+        border-color: rgb(var(--color-border));
+        border-top-color: #f59e0b;
+    }
+}
+
+/* ============================================
+   8. MOBILE MENU STYLES
+   ============================================ */
+@layer components {
+    [data-mobile-menu] {
+        @apply transition-opacity duration-300;
+    }
+    
+    [data-mobile-menu]:not(.hidden) {
+        animation: fadeIn 0.2s ease-out forwards;
+    }
+    
+    [data-mobile-menu] > div:nth-child(2) {
+        @apply transform transition-transform duration-300 ease-out;
+        animation: slideInLeft 0.3s ease-out forwards;
+    }
+    
+    @keyframes slideInLeft {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(0); }
+    }
+    
+    /* Mobile Category Accordion */
+    #mobile-nav details {
+        border-bottom: 1px solid rgb(var(--color-border));
+        @apply transition-colors duration-200;
+    }
+    
+    #mobile-nav details[open] {
+        @apply bg-amber-50/50 dark:bg-amber-900/10;
+    }
+    
+    #mobile-nav summary {
+        @apply cursor-pointer list-none py-3 px-2 flex items-center justify-between 
+               font-medium hover:text-amber-700 dark:hover:text-amber-400 
+               transition-colors duration-200 rounded-lg;
+        color: rgb(var(--color-text-secondary));
+    }
+    
+    #mobile-nav summary::-webkit-details-marker { display: none; }
+    
+    #mobile-nav summary::after {
+        content: '';
+        @apply w-4 h-4 transition-transform duration-300;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a8a29e' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+        background-size: contain;
+        background-repeat: no-repeat;
+    }
+    
+    #mobile-nav details[open] > summary::after {
+        transform: rotate(180deg);
+    }
+    
+    #mobile-nav details > div {
+        @apply pl-4 pb-2 space-y-1;
+        animation: expandDown 0.2s ease-out forwards;
+    }
+    
+    @keyframes expandDown {
+        0% { opacity: 0; max-height: 0; }
+        100% { opacity: 1; max-height: 1000px; }
+    }
+    
+    #mobile-nav details > div > a,
+    #mobile-nav details > div > button {
+        @apply block py-2 px-3 text-sm rounded-lg 
+               hover:bg-amber-50 dark:hover:bg-amber-900/20 
+               hover:text-amber-700 dark:hover:text-amber-400 
+               transition-all duration-200;
+        color: rgb(var(--color-text-muted));
+    }
+    
+    /* Mobile Quick Links */
+    [data-mobile-menu] .space-y-1 a {
+        @apply active:scale-[0.98] transition-transform duration-150;
+    }
+    
+    /* Mobile Account Section */
+    #mobile-account {
+        @apply bg-gradient-to-t from-stone-100 to-stone-50 
+               dark:from-stone-900 dark:to-stone-800;
+    }
+    
+    #mobile-account a {
+        @apply flex items-center gap-3 py-2.5 px-3 rounded-xl 
+               hover:bg-white dark:hover:bg-stone-700 
+               transition-all duration-200 font-medium;
+        color: rgb(var(--color-text-secondary));
+    }
+    
+    /* Mobile Badge */
+    [data-mobile-menu] .badge { @apply animate-pulse; }
+}
+
+/* ============================================
+   9. CHAT WIDGET STYLES
+   ============================================ */
+@layer components {
+    #chat-toggle {
+        @apply relative;
+    }
+    
+    #chat-toggle::before {
+        content: '';
+        @apply absolute inset-0 rounded-full bg-primary-500/30 animate-ping;
+        animation-duration: 2s;
+        animation-iteration-count: 3;
+    }
+    
+    #chat-toggle.has-unread::after {
+        content: '';
+        @apply absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2;
+        border-color: rgb(var(--color-bg-primary));
+        animation: bounce 1s infinite;
+    }
+    
+    #chat-window {
+        @apply transition-all duration-300 ease-out;
+    }
+    
+    #chat-window:not(.hidden) {
+        animation: chatWindowOpen 0.3s ease-out forwards;
+    }
+    
+    @keyframes chatWindowOpen {
+        0% { opacity: 0; transform: scale(0.9) translateY(10px); }
+        100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    
+    .chat-message {
+        animation: messageSlide 0.3s ease-out forwards;
+    }
+    
+    @keyframes messageSlide {
+        0% { opacity: 0; transform: translateY(10px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+    
+    .typing-indicator span {
+        @apply inline-block w-2 h-2 rounded-full mx-0.5;
+        background-color: rgb(var(--color-text-muted));
+        animation: typingBounce 1.4s infinite ease-in-out;
+    }
+    
+    .typing-indicator span:nth-child(1) { animation-delay: 0s; }
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+    
+    @keyframes typingBounce {
+        0%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-6px); }
+    }
+}
+
+/* ============================================
+   10. NOTIFICATION CENTER STYLES
+   ============================================ */
+@layer components {
+    .notification-bell { @apply relative; }
+    
+    .notification-bell.has-unread::before {
+        content: '';
+        @apply absolute inset-0 rounded-full;
+        animation: bellRing 0.5s ease-in-out;
+    }
+    
+    @keyframes bellRing {
+        0%, 100% { transform: rotate(0); }
+        20% { transform: rotate(15deg); }
+        40% { transform: rotate(-10deg); }
+        60% { transform: rotate(5deg); }
+        80% { transform: rotate(-5deg); }
+    }
+    
+    #notification-panel {
+        animation: dropdownOpen 0.2s ease-out forwards;
+    }
+    
+    @keyframes dropdownOpen {
+        0% { opacity: 0; transform: translateY(-10px) scale(0.95); }
+        100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    
+    .notification-item {
+        @apply transition-all duration-200;
+    }
+    
+    .notification-item:hover {
+        background-color: rgb(var(--color-bg-secondary));
+    }
+    
+    .notification-item.unread {
+        @apply bg-amber-50/50 dark:bg-amber-900/10 border-l-2 border-amber-500;
+    }
+    
+    .notification-item.unread:hover {
+        @apply bg-amber-50 dark:bg-amber-900/20;
+    }
+}
+
+/* ============================================
+   11. LOADING SCREEN STYLES
+   ============================================ */
+@layer components {
+    #loading-screen {
+        @apply transition-opacity duration-500;
+    }
+    
+    #loading-screen.fade-out {
+        @apply opacity-0 pointer-events-none;
+    }
+    
+    .loading-logo {
+        animation: logoFloat 2s ease-in-out infinite;
+    }
+    
+    @keyframes logoFloat {
+        0%, 100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-10px) scale(1.02); }
+    }
+    
+    .loading-dots span {
+        @apply inline-block w-3 h-3 bg-amber-500 rounded-full mx-1;
+        animation: loadingDot 1.4s infinite ease-in-out;
+    }
+    
+    .loading-dots span:nth-child(1) { animation-delay: 0s; }
+    .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+    
+    @keyframes loadingDot {
+        0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+        40% { transform: scale(1); opacity: 1; }
+    }
 }

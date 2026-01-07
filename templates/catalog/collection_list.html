@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_id %}collections{% endblock %}
+{% block title %}Collections - {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<section class="bg-white border-b border-gray-100">
+    <div class="container mx-auto px-4 py-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">Collections</h1>
+        <p class="text-lg text-gray-600">Discover our curated product collections, handpicked for you.</p>
+    </div>
+</section>
+
+<section class="bg-gray-50 py-12">
+    <div class="container mx-auto px-4">
+        {% if collections %}
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for collection in collections %}
+            <a href="{% url 'catalog:collection-detail' collection.slug %}" class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow">
+                <div class="h-56 bg-gradient-to-br from-gray-100 to-gray-200 relative overflow-hidden">
+                    {% if collection.image %}
+                    <img src="{{ collection.image.url }}" alt="{{ collection.name }}" loading="lazy" decoding="async" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    {% endif %}
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+                    <div class="absolute bottom-4 left-4 right-4 text-white">
+                        <h2 class="text-xl font-bold">{{ collection.name }}</h2>
+                        <p class="text-sm text-white/80 mt-1">{{ collection.products.count }} products</p>
+                    </div>
+                </div>
+                <div class="p-5">
+                    {% if collection.description %}
+                    <p class="text-gray-600 text-sm line-clamp-2">{{ collection.description }}</p>
+                    {% endif %}
+                    <div class="flex items-center justify-between mt-4">
+                        <span class="text-sm font-medium text-primary-600 group-hover:text-primary-700">View Collection</span>
+                        <svg class="w-5 h-5 text-primary-600 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-white rounded-2xl shadow-sm border border-dashed border-gray-200 p-12 text-center">
+            <p class="text-lg text-gray-500">No collections available yet.</p>
+            <a href="{% url 'catalog:product-list' %}" class="inline-flex items-center justify-center mt-5 px-5 py-2 rounded-full bg-primary-600 text-white text-sm font-medium hover:bg-primary-700">Browse Products</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

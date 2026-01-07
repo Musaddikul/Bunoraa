@@ -1,0 +1,105 @@
+<!-- Bundle Card Partial for Catalog App -->
+{% load currency_tags %}
+
+<div class="bundle-card group bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-700"
+     data-bundle-id="{{ bundle.id }}">
+    <!-- Bundle Image -->
+    <a href="{% url 'catalog:bundle-detail' bundle.slug %}" class="block relative overflow-hidden aspect-video">
+        {% if bundle.image %}
+        <img src="{{ bundle.image.url }}" 
+             alt="{{ bundle.name }}" 
+             loading="lazy" 
+             decoding="async"
+             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+        {% else %}
+        <div class="w-full h-full bg-gradient-to-br from-amber-100 to-amber-200 dark:from-amber-900/30 dark:to-amber-800/30 flex items-center justify-center">
+            <svg class="w-16 h-16 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+            </svg>
+        </div>
+        {% endif %}
+        
+        <!-- Bundle Badge -->
+        <div class="absolute top-3 left-3">
+            <span class="bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase">
+                Bundle
+            </span>
+        </div>
+        
+        <!-- Items Count -->
+        <div class="absolute top-3 right-3">
+            <span class="bg-white/90 dark:bg-gray-900/90 text-gray-700 dark:text-gray-300 text-xs font-medium px-2 py-1 rounded-full">
+                {{ bundle.bundle_items.count }} Items
+            </span>
+        </div>
+        
+        <!-- Savings Badge -->
+        {% if bundle.savings > 0 %}
+        <div class="absolute bottom-3 right-3">
+            <span class="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded">
+                Save {% format_price bundle.savings bundle.products.first.currency|default:'BDT' %}
+            </span>
+        </div>
+        {% endif %}
+    </a>
+    
+    <!-- Bundle Info -->
+    <div class="p-4">
+        <h3 class="font-bold text-gray-900 dark:text-white mb-2">
+            <a href="{% url 'catalog:bundle-detail' bundle.slug %}" 
+               class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                {{ bundle.name }}
+            </a>
+        </h3>
+        
+        {% if bundle.description %}
+        <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3">
+            {{ bundle.description|truncatewords:20 }}
+        </p>
+        {% endif %}
+        
+        <!-- Bundle Products Preview -->
+        <div class="flex -space-x-2 mb-3">
+            {% for item in bundle.bundle_items.all|slice:":5" %}
+            {% if item.product.images.first %}
+            <div class="w-8 h-8 rounded-full border-2 border-white dark:border-gray-800 overflow-hidden">
+                <img src="{{ item.product.images.first.image.url }}" 
+                     alt="{{ item.product.name }}" 
+                     class="w-full h-full object-cover">
+            </div>
+            {% else %}
+            <div class="w-8 h-8 rounded-full border-2 border-white dark:border-gray-800 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                <span class="text-xs text-gray-500">{{ item.product.name|slice:":1" }}</span>
+            </div>
+            {% endif %}
+            {% endfor %}
+            {% if bundle.bundle_items.count > 5 %}
+            <div class="w-8 h-8 rounded-full border-2 border-white dark:border-gray-800 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                <span class="text-xs text-gray-600">+{{ bundle.bundle_items.count|add:"-5" }}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Price -->
+        <div class="flex items-center justify-between">
+            <div>
+                <span class="text-xl font-bold text-gray-900 dark:text-white">
+                    {% format_price bundle.price bundle.products.first.currency|default:'BDT' %}
+                </span>
+                {% if bundle.original_price %}
+                <span class="text-sm text-gray-400 line-through ml-2">
+                    {% format_price bundle.original_price bundle.products.first.currency|default:'BDT' %}
+                </span>
+                {% endif %}
+            </div>
+            
+            <button class="add-bundle-to-cart bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    data-bundle-id="{{ bundle.id }}">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m1.6 8L5 3m2 10v6m0 0h10v-6M7 19a2 2 0 11-4 0 2 2 0 014 0zm10 0a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                Add Bundle
+            </button>
+        </div>
+    </div>
+</div>
