@@ -1,0 +1,170 @@
+<!-- Variant Selector Partial for Catalog App -->
+{% load currency_tags %}
+
+<div id="variant-selector" class="variant-selector mb-6" data-product-id="{{ product.id }}">
+    {% if has_variants and variant_options %}
+    
+    <!-- Variant Options -->
+    {% for option_name, option_values in variant_options.items %}
+    <div class="variant-option-group mb-4" data-option="{{ option_name }}">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            {{ option_name }}: <span class="selected-value text-gray-900 dark:text-white font-semibold"></span>
+        </label>
+        
+        <div class="flex flex-wrap gap-2">
+            {% for opt in option_values %}
+            <button type="button" 
+                    onclick="selectVariantOption('{{ option_name }}', '{{ opt.value }}', '{{ opt.variant_id }}')"
+                    class="variant-option-btn px-4 py-2 border-2 rounded-lg text-sm font-medium transition-all
+                           {% if opt.in_stock %}
+                           border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 
+                           hover:border-primary-500 dark:hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20
+                           {% else %}
+                           border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 cursor-not-allowed opacity-60
+                           {% endif %}"
+                    data-option="{{ option_name }}"
+                    data-value="{{ opt.value }}"
+                    data-variant-id="{{ opt.variant_id }}"
+                    data-price="{{ opt.price }}"
+                    data-in-stock="{{ opt.in_stock|yesno:'true,false' }}"
+                    {% if not opt.in_stock %}disabled{% endif %}>
+                
+                {% if option_name|lower == "color" %}
+                <!-- Color swatch -->
+                <span class="inline-flex items-center gap-2">
+                    <span class="w-4 h-4 rounded-full border border-gray-300" 
+                          style="background-color: {{ opt.color_code|default:'#gray' }};"></span>
+                    {{ opt.value }}
+                </span>
+                {% else %}
+                {{ opt.value }}
+                {% endif %}
+                
+                {% if not opt.in_stock %}
+                <span class="ml-1 text-xs text-gray-400">(Out of stock)</span>
+                {% endif %}
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+    
+    <!-- Selected Variant Info -->
+    <div id="selected-variant-info" class="hidden p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 mt-4">
+        <div class="flex items-center justify-between text-sm">
+            <span class="text-gray-600 dark:text-gray-400">Selected:</span>
+            <span id="variant-sku" class="font-mono text-gray-900 dark:text-white"></span>
+        </div>
+        <div class="flex items-center justify-between text-sm mt-1">
+            <span class="text-gray-600 dark:text-gray-400">Stock:</span>
+            <span id="variant-stock" class="font-medium"></span>
+        </div>
+    </div>
+    
+    <!-- Hidden input for form submission -->
+    <input type="hidden" id="selected-variant-id" name="variant_id" value="">
+    
+    {% else %}
+    <!-- No variants - single product -->
+    <div class="text-sm text-gray-500 dark:text-gray-400">
+        This product has no variants.
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Variant selection logic
+window.selectedOptions = {};
+window.variants = {{ variants_json|safe|default:'[]' }};
+
+function selectVariantOption(optionName, value, variantId) {
+    window.selectedOptions[optionName] = value;
+    
+    // Update button states
+    document.querySelectorAll(`[data-option="${optionName}"]`).forEach(btn => {
+        btn.classList.remove('border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20', 'text-primary-700', 'dark:text-primary-400');
+        if (btn.dataset.value === value) {
+            btn.classList.add('border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20', 'text-primary-700', 'dark:text-primary-400');
+        }
+    });
+    
+    // Update selected value display
+    const labelSpan = document.querySelector(`[data-option="${optionName}"] .selected-value`);
+    if (labelSpan) {
+        labelSpan.textContent = value;
+    }
+    
+    // Find matching variant
+    const matchingVariant = findMatchingVariant();
+    if (matchingVariant) {
+        updateVariantDisplay(matchingVariant);
+    }
+}
+
+function findMatchingVariant() {
+    const optionCount = Object.keys(window.selectedOptions).length;
+    const totalOptions = document.querySelectorAll('.variant-option-group').length;
+    
+    if (optionCount < totalOptions) return null;
+    
+    // Find variant that matches all selected options
+    for (const variant of window.variants) {
+        let matches = true;
+        for (const [option, value] of Object.entries(window.selectedOptions)) {
+            const variantOption = variant.options.find(o => o.name === option);
+            if (!variantOption || variantOption.value !== value) {
+                matches = false;
+                break;
+            }
+        }
+        if (matches) return variant;
+    }
+    return null;
+}
+
+function updateVariantDisplay(variant) {
+    // Update hidden input
+    document.getElementById('selected-variant-id').value = variant.id;
+    
+    // Show variant info
+    const infoDiv = document.getElementById('selected-variant-info');
+    if (infoDiv) {
+        infoDiv.classList.remove('hidden');
+        document.getElementById('variant-sku').textContent = variant.sku || 'N/A';
+        
+        const stockSpan = document.getElementById('variant-stock');
+        if (variant.stock > 0) {
+            stockSpan.textContent = `${variant.stock} available`;
+            stockSpan.className = 'font-medium text-green-600 dark:text-green-400';
+        } else {
+            stockSpan.textContent = 'Out of stock';
+            stockSpan.className = 'font-medium text-red-600 dark:text-red-400';
+        }
+    }
+    
+    // Update price display
+    const priceEl = document.getElementById('product-price');
+    if (priceEl && variant.price) {
+        priceEl.textContent = variant.formatted_price;
+    }
+    
+    // Update add to cart button
+    const addToCartBtn = document.getElementById('add-to-cart-btn');
+    if (addToCartBtn) {
+        if (variant.stock > 0) {
+            addToCartBtn.disabled = false;
+            addToCartBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
+            addToCartBtn.classList.add('bg-primary-600', 'hover:bg-primary-700');
+            addToCartBtn.textContent = 'Add to Cart';
+        } else {
+            addToCartBtn.disabled = true;
+            addToCartBtn.classList.add('bg-gray-300', 'cursor-not-allowed');
+            addToCartBtn.classList.remove('bg-primary-600', 'hover:bg-primary-700');
+            addToCartBtn.textContent = 'Out of Stock';
+        }
+    }
+    
+    // Trigger custom event for other scripts
+    document.dispatchEvent(new CustomEvent('variantChanged', { detail: variant }));
+}
+</script>

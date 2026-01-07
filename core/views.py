@@ -9,7 +9,7 @@ from django.db import connection
 
 class HomeView(TemplateView):
     """Home page view."""
-    template_name = 'pages/home.html'
+    template_name = 'home.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

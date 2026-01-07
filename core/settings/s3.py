@@ -79,3 +79,33 @@ else:
 # CORS allow all for development
 CORS_ALLOW_ALL_ORIGINS = True
 
+# Development logging tweaks: ensure errors and debug info are printed to the console
+# This file is used for S3-enabled local/testing environments so emit relevant logs here
+try:
+    # Ensure the console handler prints at DEBUG level so full tracebacks are visible
+    LOGGING['handlers']['console']['level'] = 'DEBUG'
+
+    # Ensure our app logger is verbose in this environment
+    LOGGING['loggers'].setdefault('bunoraa', {})
+    LOGGING['loggers']['bunoraa']['level'] = 'DEBUG'
+
+    # Ensure django.request errors go to console (prints 500 tracebacks)
+    LOGGING['loggers'].setdefault('django.request', {})
+    LOGGING['loggers']['django.request'].setdefault('handlers', [])
+    if 'console' not in LOGGING['loggers']['django.request']['handlers']:
+        LOGGING['loggers']['django.request']['handlers'].append('console')
+    LOGGING['loggers']['django.request']['level'] = 'ERROR'
+
+    # Raise root verbosity so all relevant logs appear while developing/debugging
+    LOGGING['root']['level'] = 'DEBUG'
+
+    # Enable verbose boto3/botocore logs for S3 troubleshooting when in DEBUG
+    import logging as _logging
+    if DEBUG:
+        for _name in ('boto3', 'botocore', 's3transfer', 'urllib3'):
+            _logging.getLogger(_name).setLevel(_logging.DEBUG)
+            # ensure those modules also propagate to console via root handlers
+except Exception:
+    # Non-fatal: don't break settings if LOGGING is not defined or structure differs
+    pass
+

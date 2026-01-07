@@ -1,0 +1,145 @@
+<!-- Product Card Partial for Catalog App -->
+{% load currency_tags %}
+<div class="product-card group bg-stone-50 dark:bg-stone-900 rounded-none shadow-sm overflow-hidden hover:shadow-md transition-shadow border border-stone-200 dark:border-stone-800 transition-colors duration-500" 
+     data-product-id="{{ product.id }}" 
+     data-product-slug="{{ product.slug }}">
+    <!-- Product Image -->
+    {% with aspect=product.get_effective_aspect %}
+    <a href="{% url 'catalog:product-detail' product.slug %}" class="block relative overflow-hidden" style="aspect-ratio: {{ aspect.width|default:'1' }}/{{ aspect.height|default:'1' }};">
+        {% if product.primary_image %}
+        <img src="{{ product.primary_image.image.url }}" alt="{{ product.primary_image.alt_text|default:product.name }}" loading="lazy" decoding="async"
+             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+        {% else %}
+        <div class="w-full h-full bg-gray-100 dark:bg-stone-800 flex items-center justify-center">
+            <svg class="w-16 h-16 text-gray-300 dark:text-stone-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+        </div>
+        {% endif %}
+        
+        <!-- Badges -->
+        <div class="absolute top-2 left-2 flex flex-col space-y-1">
+            {% if product.is_new %}
+            <span class="bg-blue-500 text-white text-xs px-2 py-1 rounded dark:bg-blue-700">New</span>
+            {% endif %}
+            {% if product.sale_price %}
+            <span class="bg-red-500 text-white text-xs px-2 py-1 rounded dark:bg-red-700">
+                -{{ product.discount_percentage }}%
+            </span>
+            {% endif %}
+            {% for badge in product.badges.all %}
+            <span class="text-white text-xs px-2 py-1 rounded" style="background-color: {{ badge.background_color|default:'#3b82f6' }}; color: {{ badge.text_color|default:'#ffffff' }};">
+                {{ badge.name }}
+            </span>
+            {% endfor %}
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="overlay-actions absolute top-1 right-1 z-20 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button type="button" class="wishlist-btn group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-md p-1 text-black dark:text-stone-300 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                    data-product-id="{{ product.id }}"
+                    title="Add to Wishlist" aria-label="Add to wishlist" aria-pressed="false">
+                <svg class="w-8 h-8 transition-colors" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path class="heart-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                    <path class="heart-fill opacity-0 hover:opacity-100 transition-opacity duration-150" fill="currentColor" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                </svg>
+            </button>
+            <button class="quick-view-btn product-action-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                    data-product-id="{{ product.id }}"
+                    data-product-slug="{{ product.slug }}"
+                    title="Quick View" aria-label="Quick view">
+                <svg class="w-5 h-5 text-gray-600 dark:text-stone-300" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+            </button>
+        </div>
+    </a>
+    {% endwith %}
+    
+    <!-- Mobile Quick Actions -->
+    <div class="mobile-actions mt-2 flex items-center gap-3 md:hidden px-3">
+        <button type="button" class="wishlist-btn group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-md p-1 text-black dark:text-stone-300 hover:text-red-500 dark:hover:text-red-400 transition-colors" data-product-id="{{ product.id }}" title="Add to Wishlist" aria-label="Add to wishlist" aria-pressed="false">
+            <svg class="w-7 h-7" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path class="heart-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                <path class="heart-fill opacity-0 hover:opacity-100 transition-opacity duration-150" fill="currentColor" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+            </svg>
+        </button>
+        <button class="quick-view-btn product-action-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400" data-product-id="{{ product.id }}" data-product-slug="{{ product.slug }}" title="Quick View" aria-label="Quick view">
+            <svg class="w-5 h-5 text-gray-600 dark:text-stone-300" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+            </svg>
+        </button>
+        <a href="{% url 'catalog:product-detail' product.slug %}" class="ml-auto text-sm font-medium text-primary-600 dark:text-amber-400 hover:underline">View</a>
+    </div>
+    
+    <!-- Product Info -->
+    <div class="py-3 md:py-4 px-1 md:px-4">
+        <!-- Category -->
+        {% if product.primary_category %}
+        <a href="{% url 'catalog:category-detail' product.primary_category.get_slug_path %}" 
+           class="text-xs text-stone-500 dark:text-stone-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors duration-500">
+            {{ product.primary_category.name }}
+        </a>
+        {% endif %}
+        
+        <!-- Title -->
+        <h3 class="mt-1">
+            <a href="{% url 'catalog:product-detail' product.slug %}" 
+               class="text-stone-900 dark:text-stone-100 font-bold hover:text-amber-600 dark:hover:text-amber-400 line-clamp-2 text-sm md:text-base transition-colors duration-500">
+                {{ product.name }}
+            </a>
+        </h3>
+        
+        <!-- Rating -->
+        {% if product.average_rating %}
+        <div class="flex items-center mt-2">
+            <div class="flex text-yellow-400">
+                {% for i in "12345" %}
+                {% if forloop.counter <= product.average_rating %}
+                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                </svg>
+                {% else %}
+                <svg class="w-4 h-4 fill-current text-stone-300 dark:text-stone-600" viewBox="0 0 20 20">
+                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                </svg>
+                {% endif %}
+                {% endfor %}
+            </div>
+            <span class="text-xs text-stone-500 dark:text-stone-400 ml-1">({{ product.reviews_count|default:0 }})</span>
+        </div>
+        {% endif %}
+        
+        {% load currency_tags %}
+        <!-- Price -->
+        <div class="mt-2 flex items-center space-x-2">
+            {% if product.sale_price %}
+            <span class="text-sm md:text-base font-normal text-red-600 dark:text-red-400">{% format_price product.sale_price product.currency %}</span>
+            <span class="text-xs md:text-sm text-stone-400 dark:text-stone-500 line-through">{% format_price product.price product.currency %}</span>
+            {% else %}
+            <span class="text-sm md:text-base font-normal text-stone-900 dark:text-stone-100">{% format_price product.price product.currency %}</span>
+            {% endif %}
+        </div>
+        
+        <!-- Stock Status -->
+        {% if product.stock_quantity <= 0 %}
+        <p class="text-red-500 dark:text-red-400 text-sm mt-2">Out of Stock</p>
+        {% elif product.stock_quantity <= 5 %}
+        <p class="text-orange-500 dark:text-orange-400 text-sm mt-2">Only {{ product.stock_quantity }} left</p>
+        {% endif %}
+        
+        <!-- Add to Cart Button -->
+        {% if product.stock_quantity > 0 %}
+        <button class="add-to-cart-btn mt-4 w-full bg-amber-600 hover:bg-amber-700 text-white py-2 px-3 rounded-lg font-medium text-sm transition-colors duration-500 dark:bg-amber-600 dark:hover:bg-amber-700"
+                data-product-id="{{ product.id }}">
+            Add to Cart
+        </button>
+        {% else %}
+        <button class="mt-4 w-full bg-stone-300 dark:bg-stone-800 text-stone-500 dark:text-stone-500 py-2 px-4 rounded-lg font-medium cursor-not-allowed transition-colors duration-500" disabled>
+            Out of Stock
+        </button>
+        {% endif %}
+    </div>
+</div>

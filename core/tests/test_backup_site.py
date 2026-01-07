@@ -4,7 +4,7 @@ from pathlib import Path
 from django.test import TestCase, override_settings
 from django.core.management import call_command
 from django.conf import settings
-from apps.categories.ml import Category
+from apps.catalog.models import Category
 
 
 class BackupSiteCommandTests(TestCase):

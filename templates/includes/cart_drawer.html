@@ -1,23 +1,100 @@
-<!-- Cart Drawer -->
-<div id="cart-drawer" class="fixed inset-0 z-50 hidden">
+<!-- Cart Drawer - Comprehensive Version -->
+ {% load static %}
+<div id="cart-drawer" class="fixed inset-0 z-50 hidden"
+     data-currency-symbol="{{ currency_symbol }}"
+     data-currency-code="{{ currency_code }}"
+     data-free-shipping-threshold="{{ free_shipping_threshold }}"
+     data-currency-position="{{ currency_symbol_position|default:'before' }}"
+     data-default-shipping="{{ default_shipping_cost }}"
+     data-cod-fee="{{ cod_fee }}"
+     data-tax-rate="{{ tax_rate|default:'0' }}"
+     data-user-authenticated="{% if user.is_authenticated %}true{% else %}false{% endif %}"
+     data-user-city="{{ user.profile.city|default:'Dhaka' }}"
+     data-user-postal="{{ user.profile.postal_code|default:'1200' }}">
     <div class="drawer-overlay absolute inset-0 bg-black/40 backdrop-blur-[1px]" data-cart-close></div>
     <div class="drawer-panel absolute right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl border-l border-stone-200 flex flex-col dark:bg-stone-900 dark:border-stone-700" data-cart-panel>
-        <div class="flex items-center justify-end px-4 py-4 border-b border-stone-200 dark:border-stone-700">
-            <button class="p-2 text-stone-500 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition-colors dark:text-stone-300 dark:hover:text-stone-100 dark:hover:bg-stone-800" data-cart-close aria-label="Close cart">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-4 py-4 border-b border-stone-200 dark:border-stone-700">
+            <div class="flex items-center">
+                <svg class="w-5 h-5 mr-2 text-stone-600 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                </svg>
+                <h2 class="text-lg font-semibold text-stone-900 dark:text-white">Shopping Bag</h2>
+                <span class="ml-2 px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-800 rounded-full dark:bg-amber-900/50 dark:text-amber-300" data-cart-count>0</span>
+            </div>
+            <button class="p-2 text-stone-500 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition-colors dark:text-stone-300 dark:hover:text-stone-100 dark:hover:bg-stone-800" data-cart-close aria-label="Close bag">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
         </div>
+        
+        <!-- Free Shipping Progress -->
+        <div class="px-4 py-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-b border-stone-200 dark:border-stone-700" data-free-shipping-banner>
+            <div class="flex items-center justify-between text-sm mb-1">
+                <span class="text-green-700 dark:text-green-400 font-medium" data-shipping-message>Add {{ currency_symbol }}{{ free_shipping_threshold|floatformat:0 }} for FREE shipping!</span>
+                <span class="text-green-600 dark:text-green-500 text-xs">{{ currency_symbol }}{{ free_shipping_threshold|floatformat:0 }} threshold</span>
+            </div>
+            <div class="w-full h-1.5 bg-green-200 dark:bg-green-900 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full transition-all duration-300" style="width: 75%;" data-shipping-progress></div>
+            </div>
+        </div>
+        
+        <!-- Cart Content -->
         <div class="flex-1 overflow-y-auto" data-cart-content>
             <div class="p-6 text-center text-stone-500 text-sm dark:text-stone-300">Loading cart...</div>
         </div>
-        <div class="border-t border-stone-200 p-4 space-y-2 bg-stone-50 dark:bg-stone-800 dark:border-stone-700" data-cart-summary>
-            <div class="flex items-center justify-between text-sm">
-                <span class="text-stone-600 dark:text-stone-300">Subtotal</span>
-                <span class="font-semibold text-stone-900 dark:text-white" data-cart-subtotal>$0.00</span>
+        
+        <!-- Saved for Later Section (collapsible) -->
+        <div class="border-t border-stone-200 dark:border-stone-700 hidden" data-saved-section>
+            <button class="w-full px-4 py-3 flex items-center justify-between text-sm font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors" data-toggle-saved>
+                <span class="flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                    </svg>
+                    Saved for Later (<span data-saved-count>0</span>)
+                </span>
+                <svg class="w-4 h-4 transform transition-transform" data-saved-chevron fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div class="hidden max-h-40 overflow-y-auto" data-saved-content>
+                <!-- Saved items will be injected here -->
             </div>
-            <a href="{% url 'cart:cart' %}" class="block w-full text-center py-3 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl transition-colors" data-cart-checkout>
-                Go to cart
-            </a>
+        </div>
+        
+        <!-- Cart Summary & Checkout -->
+        <div class="border-t border-stone-200 p-4 space-y-3 bg-stone-50 dark:bg-stone-800 dark:border-stone-700" data-cart-summary>
+            <!-- Pricing Breakdown -->
+            <div class="space-y-1.5 text-sm">
+                <div class="flex items-center justify-between">
+                    <span class="text-stone-600 dark:text-stone-400">Subtotal</span>
+                    <span class="font-medium text-stone-900 dark:text-white" data-cart-subtotal>{{ currency_symbol }}0</span>
+                </div>
+                <div class="flex items-center justify-between text-green-600 dark:text-green-400 hidden" data-cart-savings-row>
+                    <span>You Save</span>
+                    <span data-cart-savings>-{{ currency_symbol }}0</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-stone-600 dark:text-stone-400">Shipping</span>
+                    <span class="text-stone-900 dark:text-white" data-cart-shipping>Calculating...</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-stone-600 dark:text-stone-400">Tax</span>
+                    <span class="text-stone-900 dark:text-white" data-cart-tax>{{ currency_symbol }}0</span>
+                </div>
+            </div>
+            
+            <!-- Total -->
+            <div class="flex items-center justify-between pt-2 border-t border-stone-200 dark:border-stone-700">
+                <span class="text-stone-900 dark:text-white font-semibold">Total</span>
+                <span class="text-lg font-bold text-amber-600 dark:text-amber-500" data-cart-total>{{ currency_symbol }}0</span>
+            </div>
+            
+            <!-- Checkout Button -->
+            <div class="space-y-2">
+                <a href="{% url 'commerce:cart' %}" class="block w-full text-center py-3 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl transition-colors" data-cart-checkout>
+                    View Bag & Checkout
+                </a>
+            </div>
         </div>
     </div>
 </div>

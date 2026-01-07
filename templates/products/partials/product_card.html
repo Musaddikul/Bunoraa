@@ -1,11 +1,11 @@
 <!-- Product Card Partial -->
 {% load currency_tags %}
-<div class="product-card group bg-white dark:bg-stone-900 rounded-none shadow-sm overflow-hidden hover:shadow-md transition-shadow border border-stone-200 dark:border-stone-800" 
+<div class="product-card group bg-stone-50 dark:bg-stone-900 rounded-none shadow-sm overflow-hidden hover:shadow-md transition-shadow border border-stone-200 dark:border-stone-800 transition-colors duration-500" 
      data-product-id="{{ product.id }}" 
      data-product-slug="{{ product.slug }}">
     <!-- Product Image -->
     {% with aspect=product.get_effective_aspect %}
-    <a href="{% url 'products:detail' product.slug %}" class="block relative overflow-hidden" style="aspect-ratio: {{ aspect.width }}/{{ aspect.height }};">
+    <a href="{% url 'catalog:product-detail' product.slug %}" class="block relative overflow-hidden" style="aspect-ratio: {{ aspect.width }}/{{ aspect.height }}">
         {% if product.primary_image %}
         <img src="{{ product.primary_image.image.url }}" alt="{{ product.primary_image.alt_text|default:product.name }}" loading="lazy" decoding="async"
              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
@@ -67,7 +67,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
             </svg>
         </button>
-        <a href="{% url 'products:detail' product.slug %}" class="ml-auto text-sm font-medium text-primary-600 dark:text-amber-400 hover:underline">View</a>
+        <a href="{% url 'catalog:product-detail' product.slug %}" class="ml-auto text-sm font-medium text-primary-600 dark:text-amber-400 hover:underline">View</a>
     </div>
     
     <!-- Product Info -->
@@ -75,8 +75,8 @@
         <!-- Category -->
         <!-- Title -->
         <h3 class="mt-1">
-            <a href="{% url 'products:detail' product.slug %}" 
-               class="text-gray-900 dark:text-white font-bold hover:text-primary-600 dark:hover:text-amber-400 line-clamp-2 text-sm md:text-base">
+            <a href="{% url 'catalog:product-detail' product.slug %}" 
+               class="text-stone-900 dark:text-stone-100 font-bold hover:text-amber-600 dark:hover:text-amber-400 line-clamp-2 text-sm md:text-base transition-colors duration-500">
                 {{ product.name }}
             </a>
         </h3>
@@ -91,13 +91,13 @@
                     <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
                 </svg>
                 {% else %}
-                <svg class="w-4 h-4 fill-current text-gray-300 dark:text-stone-700" viewBox="0 0 20 20">
+                <svg class="w-4 h-4 fill-current text-stone-300 dark:text-stone-600" viewBox="0 0 20 20">
                     <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
                 </svg>
                 {% endif %}
                 {% endfor %}
             </div>
-            <span class="text-xs text-gray-500 dark:text-stone-400 ml-1">({{ product.review_count }})</span>
+            <span class="text-xs text-stone-500 dark:text-stone-400 ml-1">({{ product.review_count }})</span>
         </div>
         {% endif %}
         
@@ -106,9 +106,9 @@
         <div class="mt-2 flex items-center space-x-2">
             {% if product.sale_price %}
             <span class="text-sm md:text-base font-normal text-red-600 dark:text-red-400">{% format_price product.sale_price product.currency %}</span>
-            <span class="text-xs md:text-sm text-gray-400 dark:text-stone-500 line-through">{% format_price product.price product.currency %}</span>
+            <span class="text-xs md:text-sm text-stone-400 dark:text-stone-500 line-through">{% format_price product.price product.currency %}</span>
             {% else %}
-            <span class="text-sm md:text-base font-normal text-gray-900 dark:text-white">{% format_price product.price product.currency %}</span>
+            <span class="text-sm md:text-base font-normal text-stone-900 dark:text-stone-100">{% format_price product.price product.currency %}</span>
             {% endif %}
         </div>
         
@@ -121,12 +121,12 @@
         
         <!-- Add to Cart Button -->
         {% if product.stock_quantity > 0 %}
-        <button class="add-to-cart-btn mt-4 w-full bg-primary-600 hover:bg-primary-700 text-white py-2 px-3 rounded-lg font-medium text-sm transition-colors dark:bg-amber-700 dark:hover:bg-amber-800"
+        <button class="add-to-cart-btn mt-4 w-full bg-amber-600 hover:bg-amber-700 text-white py-2 px-3 rounded-lg font-medium text-sm transition-colors duration-500 dark:bg-amber-600 dark:hover:bg-amber-700"
                 data-product-id="{{ product.id }}">
             Add to Cart
         </button>
         {% else %}
-        <button class="mt-4 w-full bg-gray-300 dark:bg-stone-800 text-gray-500 dark:text-stone-500 py-2 px-4 rounded-lg font-medium cursor-not-allowed" disabled>
+        <button class="mt-4 w-full bg-stone-300 dark:bg-stone-800 text-stone-500 dark:text-stone-500 py-2 px-4 rounded-lg font-medium cursor-not-allowed transition-colors duration-500" disabled>
             Out of Stock
         </button>
         {% endif %}

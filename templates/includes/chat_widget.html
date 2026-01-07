@@ -1,0 +1,186 @@
+<!-- Live Chat Widget for Bunoraa -->
+{% load static %}
+
+<!-- Chat Widget Button -->
+<div id="chat-widget" class="fixed bottom-24 right-6 z-50">
+    <!-- Main Chat Button -->
+    <button 
+        id="chat-toggle-btn"
+        type="button"
+        class="relative w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-amber-500 to-amber-700 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center group"
+        aria-label="Open chat"
+        aria-expanded="false"
+        aria-controls="chat-window"
+    >
+        <!-- Chat Icon (default) -->
+        <svg id="chat-icon" class="w-7 h-7 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+        </svg>
+        <!-- Close Icon (when open) -->
+        <svg id="chat-close-icon" class="w-7 h-7 hidden transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+        <!-- Notification Badge -->
+        <span id="chat-badge" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">0</span>
+        <!-- Hover tooltip -->
+        <span class="absolute right-full mr-3 px-3 py-1 bg-stone-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+            Chat with us
+        </span>
+    </button>
+</div>
+
+<!-- Chat Window -->
+<div 
+    id="chat-window"
+    class="fixed bottom-44 right-6 w-[90vw] max-w-md h-[70vh] max-h-[600px] bg-white dark:bg-stone-900 rounded-2xl shadow-2xl border border-stone-200 dark:border-stone-700 flex flex-col z-50 transform transition-all duration-300 origin-bottom-right hidden"
+    role="dialog"
+    aria-label="Live chat"
+    aria-hidden="true"
+>
+    <!-- Chat Header -->
+    <div class="flex-shrink-0 bg-gradient-to-r from-amber-600 to-amber-700 text-white px-4 py-3 rounded-t-2xl flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="relative">
+                <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                    </svg>
+                </div>
+                <span id="chat-status-indicator" class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 border-2 border-white rounded-full"></span>
+            </div>
+            <div>
+                <h3 class="font-semibold text-sm">Bunoraa Support</h3>
+                <p id="chat-status-text" class="text-xs text-amber-100">We're online</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <!-- Minimize button -->
+            <button 
+                id="chat-minimize-btn"
+                type="button"
+                class="p-1.5 hover:bg-white/10 rounded-full transition-colors"
+                aria-label="Minimize chat"
+            >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <!-- Close button -->
+            <button 
+                id="chat-close-btn"
+                type="button"
+                class="p-1.5 hover:bg-white/10 rounded-full transition-colors"
+                aria-label="Close chat"
+            >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Quick Actions / Categories (shown when no conversation) -->
+    <div id="chat-quick-actions" class="flex-shrink-0 p-4 border-b border-stone-200 dark:border-stone-700">
+        <p class="text-sm text-stone-500 dark:text-stone-400 mb-2">What can we help you with?</p>
+        <div class="flex flex-wrap gap-2">
+            <button type="button" data-category="order" class="chat-category-btn px-3 py-1.5 text-xs bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 rounded-full hover:bg-amber-100 hover:text-amber-700 dark:hover:bg-amber-900/30 dark:hover:text-amber-400 transition-colors">
+                📦 Order Status
+            </button>
+            <button type="button" data-category="product" class="chat-category-btn px-3 py-1.5 text-xs bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 rounded-full hover:bg-amber-100 hover:text-amber-700 dark:hover:bg-amber-900/30 dark:hover:text-amber-400 transition-colors">
+                🛍️ Products
+            </button>
+            <button type="button" data-category="shipping" class="chat-category-btn px-3 py-1.5 text-xs bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 rounded-full hover:bg-amber-100 hover:text-amber-700 dark:hover:bg-amber-900/30 dark:hover:text-amber-400 transition-colors">
+                🚚 Shipping
+            </button>
+            <button type="button" data-category="returns" class="chat-category-btn px-3 py-1.5 text-xs bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 rounded-full hover:bg-amber-100 hover:text-amber-700 dark:hover:bg-amber-900/30 dark:hover:text-amber-400 transition-colors">
+                ↩️ Returns
+            </button>
+            <button type="button" data-category="general" class="chat-category-btn px-3 py-1.5 text-xs bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 rounded-full hover:bg-amber-100 hover:text-amber-700 dark:hover:bg-amber-900/30 dark:hover:text-amber-400 transition-colors">
+                💬 General
+            </button>
+        </div>
+    </div>
+    
+    <!-- Messages Container -->
+    <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
+        <!-- Welcome Message -->
+        <div class="flex gap-3 chat-message chat-message-bot">
+            <div class="flex-shrink-0 w-8 h-8 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center">
+                <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                </svg>
+            </div>
+            <div class="flex-1 max-w-[80%]">
+                <div class="bg-stone-100 dark:bg-stone-800 rounded-2xl rounded-tl-none px-4 py-3">
+                    <p class="text-sm text-stone-700 dark:text-stone-300">👋 Hello! Welcome to Bunoraa. How can I help you today?</p>
+                </div>
+                <span class="text-xs text-stone-400 dark:text-stone-500 mt-1 block">Just now</span>
+            </div>
+        </div>
+        <!-- Messages will be dynamically added here -->
+    </div>
+    
+    <!-- Typing Indicator -->
+    <div id="chat-typing-indicator" class="hidden px-4 pb-2">
+        <div class="flex gap-3 items-center">
+            <div class="flex-shrink-0 w-8 h-8 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center">
+                <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                </svg>
+            </div>
+            <div class="bg-stone-100 dark:bg-stone-800 rounded-2xl px-4 py-2 flex items-center gap-1">
+                <span class="w-2 h-2 bg-stone-400 rounded-full animate-bounce" style="animation-delay: 0ms"></span>
+                <span class="w-2 h-2 bg-stone-400 rounded-full animate-bounce" style="animation-delay: 150ms"></span>
+                <span class="w-2 h-2 bg-stone-400 rounded-full animate-bounce" style="animation-delay: 300ms"></span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chat Input -->
+    <div class="flex-shrink-0 p-4 border-t border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/50 rounded-b-2xl">
+        <form id="chat-form" class="flex items-end gap-2">
+            <div class="flex-1 relative">
+                <textarea 
+                    id="chat-input"
+                    name="message"
+                    placeholder="Type your message..."
+                    rows="1"
+                    class="w-full px-4 py-2.5 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm text-stone-700 dark:text-stone-200 placeholder-stone-400 dark:placeholder-stone-500 max-h-32"
+                    style="min-height: 44px;"
+                ></textarea>
+            </div>
+            <!-- Attachment button -->
+            <button 
+                type="button"
+                id="chat-attach-btn"
+                class="p-2.5 text-stone-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+                aria-label="Attach file"
+            >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                </svg>
+            </button>
+            <!-- Send button -->
+            <button 
+                type="submit"
+                id="chat-send-btn"
+                class="p-2.5 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Send message"
+            >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                </svg>
+            </button>
+        </form>
+        <!-- File input (hidden) -->
+        <input type="file" id="chat-file-input" class="hidden" accept="image/*,.pdf,.doc,.docx">
+    </div>
+</div>
+
+<!-- Chat Sound Effects -->
+<audio id="chat-sound-send" preload="none">
+    <source src="{% static 'audio/message-send.mp3' %}" type="audio/mpeg">
+</audio>
+<audio id="chat-sound-receive" preload="none">
+    <source src="{% static 'audio/message-receive.mp3' %}" type="audio/mpeg">
+</audio>

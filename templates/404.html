@@ -30,7 +30,7 @@
             </p>
 
             <!-- Search -->
-            <form action="{% url 'products:search' %}" method="get" class="mx-auto max-w-md mb-6">
+            <form action="{% url 'catalog:search' %}" method="get" class="mx-auto max-w-md mb-6">
                 <label for="q" class="sr-only">Search products</label>
                 <div class="flex rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                     <input id="q" name="q" type="search" placeholder="Search products, categories, or keywords" class="w-full px-4 py-3 focus:outline-none" />
@@ -44,7 +44,7 @@
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/></svg>
                     Go Home
                 </a>
-                <a href="{% url 'products:list' %}" class="inline-flex items-center justify-center px-5 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:border-gray-400 transition dark:border-stone-700 dark:text-stone-300 dark:hover:border-stone-600">
+                <a href="{% url 'catalog:product-list' %}" class="inline-flex items-center justify-center px-5 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:border-gray-400 transition dark:border-stone-700 dark:text-stone-300 dark:hover:border-stone-600">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                     Browse Products
                 </a>
@@ -54,9 +54,9 @@
             <div class="border-t pt-6">
                 <p class="text-sm text-gray-500 dark:text-stone-400 mb-3">Or try these helpful pages:</p>
                 <div class="flex flex-wrap justify-center gap-3">
-                    <a href="{% url 'products:list' %}" class="text-sm text-gray-600 dark:text-stone-300 hover:text-black dark:hover:text-white transition">Shop All</a>
+                    <a href="{% url 'catalog:product-list' %}" class="text-sm text-gray-600 dark:text-stone-300 hover:text-black dark:hover:text-white transition">Shop All</a>
                     <span class="text-gray-300">•</span>
-                    <a href="{% url 'cart:cart' %}" class="text-sm text-gray-600 dark:text-stone-300 hover:text-black dark:hover:text-white transition">Cart</a>
+                    <a href="{% url 'commerce:cart' %}" class="text-sm text-gray-600 dark:text-stone-300 hover:text-black dark:hover:text-white transition">Cart</a>
                     <span class="text-gray-300">•</span>
                     <a href="{% url 'accounts:profile' %}" class="text-sm text-gray-600 dark:text-stone-300 hover:text-black dark:hover:text-white transition">My Account</a>
                     <span class="text-gray-300">•</span>

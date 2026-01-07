@@ -85,7 +85,7 @@
                     {% for item in order.items.all %}
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
-                            <img src="{{ item.product_image|default:'/static/images/placeholder.jpg' }}" loading="lazy" decoding="async" 
+                            <img src="{{ item.product_image|default:'/static/images/placeholder.svg' }}" loading="lazy" decoding="async" 
                                  alt="{{ item.product_name }}"
                                  class="w-12 h-12 object-cover rounded bg-gray-100 dark:bg-gray-700">
                             <div class="ml-3">
@@ -203,7 +203,7 @@
                 Track Your Order
             </a>
             {% endif %}
-            <a href="{% url 'products:list' %}" 
+            <a href="{% url 'catalog:product-list' %}" 
                class="bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 border border-primary-600 dark:border-primary-400 px-6 py-3 rounded-lg font-medium hover:bg-primary-50 dark:hover:bg-gray-600 transition-colors flex items-center justify-center">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>

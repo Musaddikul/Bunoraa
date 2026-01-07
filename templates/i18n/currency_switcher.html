@@ -1,0 +1,35 @@
+{% comment %}
+Currency Switcher Template
+
+Include this template to display a currency switcher dropdown.
+Override this template to customize the appearance.
+{% endcomment %}
+
+<div class="currency-switcher dropdown">
+    <button class="dropdown-toggle btn btn-outline-secondary" 
+            type="button" 
+            id="currencySwitcher" 
+            data-bs-toggle="dropdown" 
+            aria-expanded="false">
+        {% if current %}
+            <span class="currency-symbol">{{ current.symbol }}</span>
+            <span class="currency-code">{{ current.code }}</span>
+        {% else %}
+            Select Currency
+        {% endif %}
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="currencySwitcher">
+        {% for currency in currencies %}
+        <li>
+            <a class="dropdown-item{% if current and current.id == currency.id %} active{% endif %}" 
+               href="{% url 'i18n:set_currency' code=currency.code %}?next={{ request.path }}">
+                <span class="currency-symbol">{{ currency.symbol }}</span>
+                <span class="currency-name">{{ currency.name }}</span>
+                <span class="currency-code text-muted">({{ currency.code }})</span>
+            </a>
+        </li>
+        {% empty %}
+        <li><span class="dropdown-item text-muted">No currencies available</span></li>
+        {% endfor %}
+    </ul>
+</div>

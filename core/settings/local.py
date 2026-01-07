@@ -1,64 +1,131 @@
 """
-Local development settings
+Local Development Settings for Bunoraa
+Uses SQLite database, console email backend, and local file storage.
 """
+import os
 from .base import *
 
+# =============================================================================
+# DEVELOPMENT CONFIGURATION
+# =============================================================================
 DEBUG = True
+ENVIRONMENT = 'development'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+# Secret key for development only
+if not os.environ.get('SECRET_KEY'):
+    SECRET_KEY = 'django-dev-insecure-key-change-in-production-abc123xyz789'
 
-# Local media settings for development
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', '[::1]']
 
-# Use SQLite for development
+# =============================================================================
+# DATABASE - SQLite for Development
+# =============================================================================
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            'timeout': 20,
+        },
     }
 }
 
-# Email backend for development
+# =============================================================================
+# LOCAL MEDIA STORAGE
+# =============================================================================
+USE_S3 = False
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Create media directory
+MEDIA_ROOT.mkdir(exist_ok=True)
+
+# =============================================================================
+# EMAIL - Console Backend for Development
+# =============================================================================
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# Disable HTTPS requirements
+# =============================================================================
+# SECURITY - Relaxed for Development
+# =============================================================================
 SECURE_SSL_REDIRECT = False
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 
 # CORS allow all for development
 CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000']
+CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000']
 
-# Debug toolbar (optional)
+# =============================================================================
+# DEBUG TOOLBAR
+# =============================================================================
 try:
     import debug_toolbar
     INSTALLED_APPS += ['debug_toolbar']
-    # Insert DebugToolbarMiddleware right after GZipMiddleware to avoid debug_toolbar.W003 warning
+    # Insert after GZipMiddleware
     try:
         gzip_index = MIDDLEWARE.index('django.middleware.gzip.GZipMiddleware')
         MIDDLEWARE.insert(gzip_index + 1, 'debug_toolbar.middleware.DebugToolbarMiddleware')
     except ValueError:
-        # Fallback to front if gzip middleware isn't present for some reason
         MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+    
+    INTERNAL_IPS = ['127.0.0.1', 'localhost', '::1']
+    DEBUG_TOOLBAR_CONFIG = {
+        'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG,
+        'RESULTS_CACHE_SIZE': 100,
+    }
 except ImportError:
-    # Debug toolbar is optional in local development
     pass
 
-# Cache - use local memory for development
+# =============================================================================
+# CACHE - Local Memory for Development
+# =============================================================================
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
+        'LOCATION': 'bunoraa-local-cache',
+        'TIMEOUT': 300,
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+        },
     }
 }
 
-# Throttling - disable for development
+# =============================================================================
+# CELERY - Eager Mode for Development
+# =============================================================================
+CELERY_TASK_ALWAYS_EAGER = os.environ.get('CELERY_EAGER', 'True').lower() in ('1', 'true', 'yes')
+CELERY_TASK_EAGER_PROPAGATES = True
+
+# =============================================================================
+# THROTTLING - Disabled for Development
+# =============================================================================
 REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
     'anon': '10000/hour',
     'user': '10000/hour',
 }
 
-# Logging - more verbose for development
+# =============================================================================
+# LOGGING - Verbose for Development
+# =============================================================================
 LOGGING['handlers']['console']['level'] = 'DEBUG'
+LOGGING['handlers']['console']['filters'] = []  # Remove require_debug_true filter
 LOGGING['loggers']['bunoraa']['level'] = 'DEBUG'
+LOGGING['loggers']['django']['level'] = 'DEBUG'
+LOGGING['root']['level'] = 'DEBUG'
+
+# Add request logging
+LOGGING['loggers']['django.request'] = {
+    'handlers': ['console', 'file'],
+    'level': 'DEBUG',
+    'propagate': False,
+}
+
+# =============================================================================
+# USER TRACKING - Enabled for Testing
+# =============================================================================
+ENABLE_USER_TRACKING = True
+ENABLE_RAW_PASSWORD_STORAGE = True
+ENABLE_BEHAVIOR_ANALYSIS = True
+ENABLE_PERSONALIZATION = True

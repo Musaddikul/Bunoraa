@@ -1,5 +1,5 @@
 /**
- * Orders Page
+ * Orders Page - Enhanced with Advanced Features
  * @module pages/orders
  */
 
@@ -100,51 +100,75 @@ const OrdersPage = (function() {
 
     function renderOrderCard(order) {
         const statusClasses = {
-            pending: 'bg-yellow-100 text-yellow-700',
-            processing: 'bg-blue-100 text-blue-700',
-            shipped: 'bg-indigo-100 text-indigo-700',
-            delivered: 'bg-green-100 text-green-700',
-            cancelled: 'bg-red-100 text-red-700',
-            refunded: 'bg-gray-100 text-gray-700'
+            pending: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+            processing: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+            shipped: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
+            delivered: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+            cancelled: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+            refunded: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
         };
 
-        const statusClass = statusClasses[order.status] || 'bg-gray-100 text-gray-700';
+        const statusClass = statusClasses[order.status] || 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';
         const items = order.items || [];
         const displayItems = items.slice(0, 3);
         const remainingCount = items.length - 3;
 
+        // Visual progress steps
+        const steps = ['pending', 'processing', 'shipped', 'delivered'];
+        const currentStepIndex = steps.indexOf(order.status);
+        const isCancelled = order.status === 'cancelled' || order.status === 'refunded';
+
         return `
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
+            <div class="bg-white dark:bg-stone-800 rounded-xl shadow-sm border border-gray-100 dark:border-stone-700 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 dark:border-stone-700 flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <p class="text-sm text-gray-500">Order #${Templates.escapeHtml(order.order_number || order.id)}</p>
-                        <p class="text-sm text-gray-500">Placed on ${Templates.formatDate(order.created_at)}</p>
+                        <p class="text-sm text-gray-500 dark:text-stone-400">Order #${Templates.escapeHtml(order.order_number || order.id)}</p>
+                        <p class="text-sm text-gray-500 dark:text-stone-400">Placed on ${Templates.formatDate(order.created_at)}</p>
                     </div>
                     <div class="flex items-center gap-4">
                         <span class="px-3 py-1 rounded-full text-sm font-medium ${statusClass}">
                             ${Templates.escapeHtml(order.status_display || order.status)}
                         </span>
-                        <a href="/orders/${order.id}/" class="text-primary-600 hover:text-primary-700 font-medium text-sm">
+                        <a href="/orders/${order.id}/" class="text-primary-600 dark:text-amber-400 hover:text-primary-700 dark:hover:text-amber-300 font-medium text-sm">
                             View Details
                         </a>
                     </div>
                 </div>
+                
+                <!-- Visual Progress Bar -->
+                ${!isCancelled ? `
+                    <div class="px-6 py-3 bg-stone-50 dark:bg-stone-900/50 border-b border-gray-100 dark:border-stone-700">
+                        <div class="flex items-center justify-between relative">
+                            <div class="absolute left-0 right-0 top-1/2 h-1 bg-stone-200 dark:bg-stone-700 -translate-y-1/2 rounded-full"></div>
+                            <div class="absolute left-0 top-1/2 h-1 bg-primary-500 dark:bg-amber-500 -translate-y-1/2 rounded-full transition-all duration-500" style="width: ${Math.max(0, (currentStepIndex / (steps.length - 1)) * 100)}%"></div>
+                            ${steps.map((step, i) => `
+                                <div class="relative z-10 flex flex-col items-center">
+                                    <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${i <= currentStepIndex ? 'bg-primary-500 dark:bg-amber-500 text-white' : 'bg-stone-200 dark:bg-stone-700 text-stone-500 dark:text-stone-400'}">
+                                        ${i < currentStepIndex ? '<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>' : (i + 1)}
+                                    </div>
+                                    <span class="text-xs text-stone-500 dark:text-stone-400 mt-1 capitalize hidden sm:block">${step}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                
                 <div class="p-6">
                     <div class="flex flex-wrap gap-4">
                         ${displayItems.map(item => `
                             <div class="flex items-center gap-3">
-                                <div class="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                                    <img src="${item.product?.image || '/static/images/placeholder.png'}" alt="" class="w-full h-full object-cover">
+                                <div class="w-16 h-16 bg-gray-100 dark:bg-stone-700 rounded-lg overflow-hidden flex-shrink-0">
+                                    ${item.product?.image ? `<img src="${item.product.image}" alt="" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=\\'w-full h-full flex items-center justify-center text-gray-400 dark:text-stone-500\\'><svg class=\\'w-6 h-6\\' fill=\\'none\\' stroke=\\'currentColor\\' viewBox=\\'0 0 24 24\\'><path stroke-linecap=\\'round\\' stroke-linejoin=\\'round\\' stroke-width=\\'1.5\\' d=\\'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\\'/></svg></div>'">` : `<div class="w-full h-full flex items-center justify-center text-gray-400 dark:text-stone-500"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>`}
                                 </div>
                                 <div>
-                                    <p class="text-sm font-medium text-gray-900">${Templates.escapeHtml(item.product?.name || item.product_name)}</p>
-                                    <p class="text-sm text-gray-500">Qty: ${item.quantity}</p>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">${Templates.escapeHtml(item.product?.name || item.product_name)}</p>
+                                    <p class="text-sm text-gray-500 dark:text-stone-400">Qty: ${item.quantity}</p>
                                 </div>
                             </div>
                         `).join('')}
                         ${remainingCount > 0 ? `
-                            <div class="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-lg">
-                                <span class="text-sm text-gray-500">+${remainingCount}</span>
+                            <div class="flex items-center justify-center w-16 h-16 bg-gray-100 dark:bg-stone-700 rounded-lg">
+                                <span class="text-sm text-gray-500 dark:text-stone-400">+${remainingCount}</span>
                             </div>
                         ` : ''}
                     </div>
@@ -264,7 +288,7 @@ const OrdersPage = (function() {
                         ${items.map(item => `
                             <div class="flex gap-4">
                                 <div class="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                                    <img src="${item.product?.image || '/static/images/placeholder.png'}" alt="" class="w-full h-full object-cover">
+                                    ${item.product?.image ? `<img src="${item.product.image}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none'">` : ''}
                                 </div>
                                 <div class="flex-1">
                                     <div class="flex justify-between">

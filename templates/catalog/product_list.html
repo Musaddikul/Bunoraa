@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load seo_tags %}
+
+{% block page_id %}products{% endblock %}
+{% block title %}{% if search_query %}Search: {{ search_query }}{% else %}All Products{% endif %} - {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}{% if search_query %}Search results for "{{ search_query }}"{% else %}{{ "Browse our premium collection of products. Find the best deals on fashion, electronics, home & living and more."|seo_desc }}{% endif %}{% endblock %}
+
+{% block extra_head %}
+{% if products.has_other_pages %}
+    {% if products.has_previous %}
+    <link rel="prev" href="{{ request.path }}?page={{ products.previous_page_number }}">
+    {% endif %}
+    {% if products.has_next %}
+    <link rel="next" href="{{ request.path }}?page={{ products.next_page_number }}">
+    {% endif %}
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="bg-stone-50 dark:bg-stone-950 border-b border-stone-200 dark:border-stone-800 transition-colors duration-500">
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div>
+                <h1 id="page-title" class="text-3xl lg:text-4xl font-display font-bold text-stone-900 dark:text-stone-100 mb-2 transition-colors duration-500">
+                    {% if search_query %}Search: "{{ search_query }}"{% else %}All Products{% endif %}
+                </h1>
+                <p id="product-count" class="text-stone-600 dark:text-stone-400 transition-colors duration-500">{{ page_obj.paginator.count }} products found</p>
+            </div>
+            
+            <!-- View Toggle & Sort (Desktop) -->
+            <div class="hidden lg:flex items-center gap-4">
+                <div class="flex items-center gap-2 border border-stone-200 dark:border-stone-700 rounded-lg p-1 bg-stone-100 dark:bg-stone-900 transition-colors duration-500">
+                    <button id="view-grid" class="p-2 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded-md transition-colors duration-500" title="Grid View">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    </button>
+                    <button id="view-list" class="p-2 text-stone-400 dark:text-stone-600 hover:text-stone-600 dark:hover:text-stone-400 rounded-md transition-colors duration-500" title="List View">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                    </button>
+                </div>
+                
+                <form method="GET">
+                    <input type="hidden" name="q" value="{{ search_query }}">
+                    <select name="sort" onchange="this.form.submit()" class="border border-stone-200 dark:border-stone-700 rounded-lg px-4 py-2 text-stone-700 dark:text-stone-200 bg-stone-100 dark:bg-stone-900 focus:ring-2 focus:ring-amber-500 dark:focus:ring-amber-900 focus:border-amber-500 dark:focus:border-amber-700 transition-colors duration-500">
+                        <option value="-created_at" {% if current_sort == '-created_at' %}selected{% endif %}>Newest First</option>
+                        <option value="price" {% if current_sort == 'price' %}selected{% endif %}>Price: Low to High</option>
+                        <option value="-price" {% if current_sort == '-price' %}selected{% endif %}>Price: High to Low</option>
+                        <option value="-average_rating" {% if current_sort == '-average_rating' %}selected{% endif %}>Highest Rated</option>
+                        <option value="-views_count" {% if current_sort == '-views_count' %}selected{% endif %}>Most Popular</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="bg-stone-100 dark:bg-stone-950 py-8 transition-colors duration-500">
+    <div class="container mx-auto px-4">
+        <div class="flex gap-8">
+            <!-- Sidebar Filters -->
+            <aside id="filters-sidebar" class="hidden lg:block w-72 flex-shrink-0">
+                <div class="sticky top-24 space-y-6">
+                    <!-- Product Search -->
+                    <div class="bg-stone-50 dark:bg-stone-900 rounded-xl p-4 shadow-soft border border-stone-200 dark:border-stone-800 transition-colors duration-500">
+                        <h3 class="font-semibold text-stone-900 dark:text-stone-100 mb-4 transition-colors duration-500">Search Products</h3>
+                        <form method="GET">
+                            <div class="relative">
+                                <input type="search" name="q" value="{{ search_query }}"
+                                       class="w-full pr-10 pl-3 py-2.5 border border-stone-200 dark:border-stone-700 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 dark:focus:ring-amber-900 focus:border-amber-500 dark:focus:border-amber-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 transition-colors duration-500" 
+                                       placeholder="Search products...">
+                                <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 dark:text-stone-500 transition-colors duration-500">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z"></path></svg>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Price Range -->
+                    <div class="bg-stone-50 dark:bg-stone-900 rounded-xl p-4 shadow-soft border border-stone-200 dark:border-stone-800 transition-colors duration-500">
+                        <h3 class="font-semibold text-stone-900 dark:text-stone-100 mb-4 transition-colors duration-500">Price Range</h3>
+                        <form method="GET">
+                            <input type="hidden" name="q" value="{{ search_query }}">
+                            <input type="hidden" name="sort" value="{{ current_sort }}">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="flex-1">
+                                    <input type="number" name="min_price" value="{{ request.GET.min_price }}" 
+                                           class="w-full px-3 py-2 border border-stone-200 dark:border-stone-700 rounded-lg text-sm bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 transition-colors duration-500" placeholder="Min">
+                                </div>
+                                <span class="text-stone-400 dark:text-stone-500 transition-colors duration-500">–</span>
+                                <div class="flex-1">
+                                    <input type="number" name="max_price" value="{{ request.GET.max_price }}"
+                                           class="w-full px-3 py-2 border border-stone-200 dark:border-stone-700 rounded-lg text-sm bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 transition-colors duration-500" placeholder="Max">
+                                </div>
+                            </div>
+                            <button type="submit" class="w-full bg-amber-600 dark:bg-amber-600 text-white py-2 rounded-lg hover:bg-amber-700 dark:hover:bg-amber-700 transition-colors duration-500 text-sm">Apply</button>
+                        </form>
+                    </div>
+                    
+                    <!-- Availability -->
+                    <div class="bg-stone-50 dark:bg-stone-900 rounded-xl p-4 shadow-soft border border-stone-200 dark:border-stone-800 transition-colors duration-500">
+                        <h3 class="font-semibold text-stone-900 dark:text-stone-100 mb-4 transition-colors duration-500">Availability</h3>
+                        <form method="GET">
+                            <input type="hidden" name="q" value="{{ search_query }}">
+                            <input type="hidden" name="sort" value="{{ current_sort }}">
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-2 cursor-pointer hover:bg-stone-100 dark:hover:bg-stone-800 p-1.5 rounded-lg transition-colors duration-500">
+                                    <input type="checkbox" name="in_stock" value="true" onchange="this.form.submit()"
+                                           {% if request.GET.in_stock == 'true' %}checked{% endif %}
+                                           class="w-4 h-4 text-amber-600 dark:text-amber-400 border-stone-300 dark:border-stone-700 rounded focus:ring-amber-500 dark:focus:ring-amber-900 transition-colors duration-500">
+                                    <span class="text-sm text-stone-700 dark:text-stone-200 transition-colors duration-500">In Stock Only</span>
+                                </label>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Popular Tags -->
+                    {% if popular_tags %}
+                    <div class="bg-stone-50 dark:bg-stone-900 rounded-xl p-4 shadow-soft border border-stone-200 dark:border-stone-800 transition-colors duration-500">
+                        <h3 class="font-semibold text-stone-900 dark:text-stone-100 mb-4 transition-colors duration-500">Popular Tags</h3>
+                        <div class="flex flex-wrap gap-2">
+                            {% for tag in popular_tags %}
+                            <a href="?tag={{ tag.slug }}" 
+                               class="px-3 py-1 text-xs rounded-full transition-colors duration-500 {% if tag.slug in request.GET.tag %}bg-amber-600 dark:bg-amber-600 text-white{% else %}bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-amber-100 dark:hover:bg-stone-700{% endif %}">
+                                {{ tag.name }} ({{ tag.product_count }})
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </aside>
+            
+            <!-- Main Content -->
+            <main class="flex-1 min-w-0">
+                <!-- Mobile Filter Bar -->
+                <div class="lg:hidden flex items-center gap-3 mb-6">
+                    <button id="open-filters" class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-stone-700 dark:text-stone-200 font-medium hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors duration-500">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                        Filters
+                    </button>
+                    <form method="GET" class="flex-1">
+                        <input type="hidden" name="q" value="{{ search_query }}">
+                        <select name="sort" onchange="this.form.submit()" class="w-full px-4 py-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-stone-700 dark:text-stone-200 font-medium focus:ring-2 focus:ring-amber-500 dark:focus:ring-amber-900 focus:border-amber-500 dark:focus:border-amber-700 transition-colors duration-500">
+                            <option value="-created_at" {% if current_sort == '-created_at' %}selected{% endif %}>Newest</option>
+                            <option value="price" {% if current_sort == 'price' %}selected{% endif %}>Price ↑</option>
+                            <option value="-price" {% if current_sort == '-price' %}selected{% endif %}>Price ↓</option>
+                            <option value="-average_rating" {% if current_sort == '-average_rating' %}selected{% endif %}>Top Rated</option>
+                        </select>
+                    </form>
+                </div>
+
+                <!-- Products Grid -->
+                {% if object_list %}
+                <div id="products-grid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+                    {% for product in object_list %}
+                    {% include 'catalog/partials/product_card.html' with product=product %}
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <div class="mt-8 flex items-center justify-center gap-2">
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}&q={{ search_query }}&sort={{ current_sort }}" 
+                       class="px-4 py-2 border border-gray-300 dark:border-stone-700 rounded-lg text-gray-700 dark:text-stone-300 hover:bg-gray-50 dark:hover:bg-stone-800 transition-colors duration-500">
+                        Previous
+                    </a>
+                    {% endif %}
+                    
+                    <span class="px-4 py-2 text-gray-600 dark:text-stone-400 transition-colors duration-500">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                    
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&q={{ search_query }}&sort={{ current_sort }}" 
+                       class="px-4 py-2 border border-gray-300 dark:border-stone-700 rounded-lg text-gray-700 dark:text-stone-300 hover:bg-gray-50 dark:hover:bg-stone-800 transition-colors duration-500">
+                        Next
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% else %}
+                <!-- Empty State -->
+                <div id="empty-state" class="text-center py-16">
+                    <div class="w-20 h-20 bg-gray-100 dark:bg-stone-800 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors duration-500">
+                        <svg class="w-10 h-10 text-gray-400 dark:text-stone-600 transition-colors duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2 transition-colors duration-500">No products found</h3>
+                    <p class="text-gray-600 dark:text-stone-400 mb-6 transition-colors duration-500">Try adjusting your filters or search terms</p>
+                    <a href="{% url 'catalog:product-list' %}" class="inline-flex items-center justify-center px-5 py-2 rounded-full bg-primary-600 dark:bg-amber-600 text-white text-sm font-medium hover:bg-primary-700 dark:hover:bg-amber-700 transition-colors duration-500">View All Products</a>
+                </div>
+                {% endif %}
+            </main>
+        </div>
+    </div>
+</section>
+{% endblock %}

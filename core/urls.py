@@ -9,6 +9,7 @@ from django.conf.urls.static import static
 from django.contrib.sitemaps.views import sitemap
 from .sitemaps import StaticViewSitemap, ProductSitemap, CategorySitemap
 from .views import HomeView, health_check
+from .views_health import health_check_detailed, readiness_check, liveness_check
 
 sitemaps = {
     'static': StaticViewSitemap,
@@ -24,26 +25,35 @@ urlpatterns = [
     # API v1
     path('api/v1/', include('core.urls_api')),
     
-    # Health check
+    # Health checks
     path('health/', health_check, name='health_check'),
+    path('health/detailed/', health_check_detailed, name='health_check_detailed'),
+    path('health/ready/', readiness_check, name='readiness_check'),
+    path('health/live/', liveness_check, name='liveness_check'),
     
     # Sitemap
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
     
     # Frontend specific paths (must come before catch-all)
     path('', HomeView.as_view(), name='home'),
-    path('products/', include('apps.products.urls')),
-    path('categories/', include('apps.categories.urls')),
-    path('cart/', include('apps.cart.urls')),
-    path('wishlist/', include('apps.wishlist.urls')),
-    path('checkout/', include('apps.checkout.urls')),
+    
+    # Catalog app replaces products and categories - unified catalog routes
+    path('catalog/', include('apps.catalog.urls', namespace='catalog')),
+    # Legacy product/category routes redirect to catalog
+    path('products/', include('apps.catalog.urls', namespace='catalog-products')),
+    path('categories/', include('apps.catalog.urls', namespace='catalog-categories')),
+    
+    # Shopping features - Cart, Wishlist, Checkout via commerce app
+    path('', include(('apps.commerce.urls', 'commerce'), namespace='commerce')),
     path('orders/', include('apps.orders.urls')),
     path('payments/', include('apps.payments.urls')),
+    
+    # Pre-orders and Subscriptions
     path('preorders/', include('apps.preorders.urls')),
-    path('support/', include('apps.support.urls')),
+    path('subscriptions/', include('apps.subscriptions.urls')),
+    
     path('notifications/', include('apps.notifications.urls')),
     path('account/', include('apps.accounts.urls')),
-    path('legal/', include('apps.legal.urls')),
 
     # Register pages URLs under the 'contacts' namespace for backward compatibility
     # so templates using {% url 'contacts:contact' %} continue to work.

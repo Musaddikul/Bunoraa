@@ -16,7 +16,7 @@
     <nav id="breadcrumbs" class="mb-8"></nav>
 
     <!-- Structured Data: Product + Breadcrumb -->
-    <script type="application/ld+json">
+    <script type="application/ld+json" data-ld="product">
     {
       "@context": "https://schema.org",
       "@type": "Product",
@@ -30,7 +30,7 @@
       "offers": {
         "@type": "Offer",
         "url": "{{ request.build_absolute_uri }}",
-        "priceCurrency": "{{ product.currency|default:'BDT' }}",
+        "priceCurrency": "{{ currency_code|default:'BDT' }}",
         "price": "{{ product.current_price }}",
         "availability": "https://schema.org/{% if product.stock_quantity > 0 %}InStock{% else %}OutOfStock{% endif %}"
       }{% if product.average_rating %},
@@ -39,13 +39,13 @@
     }
     </script>
 
-    <script type="application/ld+json">
+    <script type="application/ld+json" data-ld="breadcrumb">
     {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       "itemListElement": [
         { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ request.scheme }}://{{ request.get_host }}" }{% if product.category %},
-        { "@type": "ListItem", "position": 2, "name": "{{ product.category.name|escapejs }}", "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'categories:detail' product.category.slug %}" }{% endif %},
+        { "@type": "ListItem", "position": 2, "name": "{{ product.category.name|escapejs }}", "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'catalog:category-detail' product.category.slug %}" }{% endif %},
         { "@type": "ListItem", "position": 3, "name": "{{ product.name|escapejs }}", "item": "{{ request.build_absolute_uri }}" }
       ]
     }
@@ -55,9 +55,14 @@
         <!-- Product Images -->
         <div>
             <!-- Main Image -->
-            <div class="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
+            <div class="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4 shadow-sm hover:shadow-lg transition-shadow relative">
                 {% if product.images.all %}
-                <img id="main-image" src="{{ product.images.first.image.url }}" alt="{{ product.name }}" loading="eager" fetchpriority="high" decoding="async" class="w-full h-full object-cover">
+                <img id="main-image" src="{{ product.images.first.image.url }}" alt="{{ product.name }}" loading="lazy" decoding="async" class="w-full h-full object-cover">
+                <!-- zoom hint -->
+                <div class="absolute bottom-3 right-3 bg-black/40 text-white p-1 rounded-md text-xs flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
+                    <span>Zoom</span>
+                </div>
                 {% else %}
                 <div class="w-full h-full flex items-center justify-center">
                     <svg class="w-24 h-24 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -69,10 +74,11 @@
             
             <!-- Thumbnails -->
             {% if product.images.count > 1 %}
-            <div class="grid grid-cols-5 gap-2">
+            <div class="grid grid-cols-5 gap-2" role="list" aria-label="Product images">
                 {% for image in product.images.all %}
                 <button onclick="changeImage('{{ image.image.url }}')" 
-                        class="aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 border-transparent hover:border-primary-500 focus:border-primary-500 transition-colors">
+                        class="aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 border-transparent hover:border-primary-500 focus:border-primary-500 focus:outline-none transition-colors"
+                        role="listitem" aria-label="View image {{ forloop.counter }}">
                     <img src="{{ image.image.url }}" alt="{{ product.name }}" loading="lazy" decoding="async" class="w-full h-full object-cover">
                 </button>
                 {% endfor %}
@@ -85,20 +91,39 @@
             <!-- Category & Brand -->
             <div class="flex items-center space-x-2 text-sm text-gray-500 mb-2">
                 {% if product.category %}
-                <a href="{% url 'categories:detail' product.category.slug %}" class="hover:text-primary-600">
+                <a href="{% url 'catalog:category-detail' product.category.slug %}" class="hover:text-primary-600">
                     {{ product.category.name }}
                 </a>
                 {% endif %}
                 {% if product.brand %}
                 <span>•</span>
-                <a href="{% url 'products:by_brand' product.brand.slug %}" class="hover:text-primary-600">
+                <a href="{% url 'catalog:product-list' %}?brand={{ product.brand.slug }}" class="hover:text-primary-600">
                     {{ product.brand.name }}
                 </a>
                 {% endif %}
             </div>
             
             <!-- Title -->
-            <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ product.name }}</h1>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ product.name }}</h1>
+
+            <!-- Badges -->
+            <div class="flex items-center space-x-2 mb-4" aria-hidden="false">
+                {% if product.is_new %}
+                <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-semibold">New</span>
+                {% endif %}
+                {% if product.is_bestseller %}
+                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-semibold">Bestseller</span>
+                {% endif %}
+                {% if product.sale_price %}
+                <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold">On Sale</span>
+                {% endif %}
+                {% if product.is_featured %}
+                <span class="px-2 py-1 bg-primary-100 text-primary-700 rounded text-xs font-semibold">Featured</span>
+                {% endif %}
+                {% if product.is_eco_friendly %}
+                <span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-semibold">Eco-friendly</span>
+                {% endif %}
+            </div>
             
             <!-- Rating -->
             {% if product.average_rating %}
@@ -129,14 +154,16 @@
             <div class="mb-6">
                 {% if product.sale_price %}
                 <div class="flex items-center space-x-4">
-                    <span class="text-3xl font-bold text-red-600">{% format_price product.sale_price product.currency %}</span>
+                    <span id="product-price" class="text-3xl font-bold text-red-600">{% format_price product.sale_price product.currency %}</span>
                     <span class="text-xl text-gray-400 line-through">{% format_price product.price product.currency %}</span>
-                    <span class="bg-red-100 text-red-600 px-2 py-1 rounded text-sm font-medium">
-                        Save {{ product.discount_percentage }}%
+                    {% if product.discount_percentage %}
+                    <span class="bg-red-100 text-red-600 px-2 py-1 rounded text-sm font-semibold">
+                        {{ product.discount_percentage }}% off
                     </span>
+                    {% endif %}
                 </div>
                 {% else %}
-                <span class="text-3xl font-bold text-gray-900">{% format_price product.price product.currency %}</span>
+                <span id="product-price" class="text-3xl font-bold text-gray-900">{% format_price product.price product.currency %}</span>
                 {% endif %}
             </div>
             
@@ -158,11 +185,13 @@
                                 onclick="selectVariant('{{ variant.id }}', '{{ group.grouper }}', '{{ variant.attribute_value }}')"
                                 class="variant-btn px-4 py-2 border border-gray-300 rounded-lg hover:border-primary-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-colors"
                                 data-variant="{{ variant.id }}"
-                                data-type="{{ group.grouper }}">
+                                data-type="{{ group.grouper }}"
+                                data-price="{{ variant.price|default:'' }}"
+                                data-stock="{{ variant.stock_quantity|default:0 }}">
                             {{ variant.attribute_value }}
                         </button>
                         <!-- Hidden radio input for JS to check -->
-                        <input type="radio" name="variant" value="{{ variant.id }}" style="display:none;" autocomplete="off">
+                        <input type="radio" name="variant" value="{{ variant.id }}" data-price="{{ variant.price|default:'' }}" data-stock="{{ variant.stock_quantity|default:0 }}" style="display:none;" autocomplete="off">
                         {% endfor %}
                     </div>
                 </div>
@@ -173,15 +202,15 @@
             <!-- Quantity & Add to Cart -->
             <div class="flex items-center space-x-4 mb-6">
                 <div class="flex items-center border border-gray-300 rounded-lg">
-                    <button id="decrease-qty" class="px-4 py-2 text-gray-600 hover:text-primary-600">
+                    <button id="decrease-qty" class="px-2 py-2 text-gray-600 hover:text-primary-600">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
                         </svg>
                     </button>
                     <input type="number" id="quantity" value="1" min="1" max="{{ product.stock_quantity }}"
                            class="w-16 text-center border-0 focus:ring-0">
-                    <button id="increase-qty" class="px-4 py-2 text-gray-600 hover:text-primary-600">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button id="increase-qty" class="px-2 py-2 text-gray-600 hover:text-primary-600">
+                        <svg class="w-6 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"></path>
                         </svg>
                     </button>
@@ -197,20 +226,31 @@
                     Out of Stock
                 </button>
                 {% endif %}
-            </div>
-            <div class="mb-6">
-                <button id="add-to-wishlist-btn" 
-                        class="p-3 border border-gray-300 rounded-lg hover:border-primary-500 hover:text-red-500 transition-colors dark:hover:text-red-400"
-                        title="Add to Wishlist" aria-pressed="false">
-                    <svg class="w-8 h-8" stroke="currentColor" viewBox="0 0 24 24">
-                        <path class="heart-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-                        <path class="heart-fill opacity-0 hover:opacity-100 transition-opacity duration-150" fill="currentColor" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+
+                <button id="add-to-wishlist-btn"
+                    class="p-2 border border-gray-300 rounded-lg hover:border-primary-500 hover:text-red-500 transition-colors dark:hover:text-red-400"
+                    title="Add to Wishlist" aria-pressed="false">
+                    <svg class="w-7 h-7" stroke="currentColor" viewBox="0 0 24 24">
+                        <path class="heart-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z">
+                        </path>
+                        <path class="heart-fill opacity-0 hover:opacity-100 transition-opacity duration-150" fill="currentColor"
+                            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                </button>
+                
+                <button id="add-to-compare-btn"
+                    class="p-2 border border-gray-300 rounded-lg hover:border-primary-500 hover:text-primary-600 transition-colors"
+                    title="Compare product" aria-pressed="false">
+                    <svg class="w-7 h-7 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 6h9M10 12h9M10 18h9M4 6h.01M4 12h.01M4 18h.01" />
                     </svg>
                 </button>
             </div>
-            
-            <!-- Stock Status -->
-            <div class="mb-6">
+
+            <!-- Stock Status (updated dynamically via JS) -->
+            <div id="stock-status" class="mb-6" aria-live="polite">
                 {% if product.stock_quantity > 10 %}
                 <span class="text-green-600 flex items-center">
                     <svg class="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -265,6 +305,26 @@
         </div>
     </div>
     
+    <!-- Mobile Sticky Add-to-Cart -->
+    <div id="mobile-sticky-atc" class="fixed inset-x-4 bottom-4 z-40 lg:hidden">
+        <div class="bg-white shadow-lg rounded-xl p-3 flex items-center gap-3">
+            <div class="flex-1">
+                {% if product.sale_price %}
+                <div class="text-sm text-gray-500">Now</div>
+                <div class="font-semibold text-lg text-red-600">{% format_price product.sale_price product.currency %} <span class="text-sm line-through text-gray-400">{% format_price product.price product.currency %}</span></div>
+                {% else %}
+                <div class="font-semibold text-lg">{% format_price product.price product.currency %}</div>
+                {% endif %}
+                <div id="mobile-stock" class="text-xs text-gray-500">{% if product.stock_quantity > 0 %}In stock{% else %}Out of stock{% endif %}</div>
+            </div>
+            {% if product.stock_quantity > 0 %}
+            <button id="mobile-add-to-cart" class="bg-primary-600 text-white px-4 py-2 rounded-lg font-semibold">Add</button>
+            {% else %}
+            <button class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg font-semibold cursor-not-allowed" disabled>Out</button>
+            {% endif %}
+        </div>
+    </div>
+
     <!-- Product Details Tabs -->
     <div class="mt-16">
         <div id="product-tabs-component" class="mb-4"></div>
@@ -327,6 +387,13 @@
     function selectVariant(variantId, group, value) {
         // Find the corresponding input and check it
         var input = document.querySelector('input[name="variant"][value="' + variantId + '"]');
+        var btn = document.querySelector('button[data-variant="' + variantId + '"]');
+        if (btn) {
+            // update visual state
+            document.querySelectorAll('.variant-btn').forEach(function(b){ b.classList.remove('border-primary-500','bg-primary-50','text-primary-700'); b.setAttribute('aria-checked', 'false'); });
+            btn.classList.add('border-primary-500','bg-primary-50','text-primary-700');
+            btn.setAttribute('aria-checked', 'true');
+        }
         if (input) {
             input.checked = true;
             input.dispatchEvent(new Event('change', { bubbles: true }));
@@ -351,9 +418,18 @@
         price: "{{ product.price|default_if_none:'0'|escapejs }}",
         salePrice: "{{ product.sale_price|default_if_none:''|escapejs }}",
         stock: "{{ product.stock_quantity|default_if_none:'0'|escapejs }}",
-        categoryId: "{{ product.category.id|default_if_none:''|escapejs }}",
-        categorySlug: "{{ product.category.slug|default_if_none:''|escapejs }}",
+        sku: "{{ product.sku|default_if_none:''|escapejs }}",
+        currency: "{{ currency_code|default:'BDT' }}",
+        hasVariants: {{ product.variants.all|length|yesno:"true,false" }},
+
+        images: [{% for img in product.images.all %}"{{ img.image.url }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+        badges: {
+            is_new: {{ product.is_new|default_if_none:False|yesno:'true,false' }},
+            is_bestseller: {{ product.is_bestseller|default_if_none:False|yesno:'true,false' }},
+            is_on_sale: {{ product.sale_price|default_if_none:''|length|yesno:'true,false' }},
+            is_featured: {{ product.is_featured|default_if_none:False|yesno:'true,false' }},
+            is_eco_friendly: {{ product.is_eco_friendly|default_if_none:False|yesno:'true,false' }}
+        }
     };
 </script>
-<!-- Inline module removed; product page behavior handled by static/js/pages/product.js -->
 {% endblock %}

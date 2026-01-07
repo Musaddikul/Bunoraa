@@ -1,0 +1,278 @@
+<!-- Faceted Filtering Partial for Catalog App -->
+{% load static %}
+
+<div id="faceted-filters" class="faceted-filters bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+    <!-- Mobile Filter Toggle -->
+    <div class="lg:hidden mb-4">
+        <button onclick="toggleMobileFilters()" class="w-full flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
+            <span class="font-medium text-gray-900 dark:text-white">Filters</span>
+            <span class="flex items-center gap-2">
+                {% if active_filter_count %}
+                <span class="bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">{{ active_filter_count }}</span>
+                {% endif %}
+                <svg class="w-5 h-5 text-gray-500 transform transition-transform" id="filter-toggle-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </span>
+        </button>
+    </div>
+    
+    <div id="filter-content" class="hidden lg:block space-y-6">
+        <!-- Active Filters -->
+        {% if active_filters %}
+        <div class="pb-4 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Active Filters</span>
+                <a href="{% url 'catalog:category-detail' category.slug %}" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">Clear All</a>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                {% for filter in active_filters %}
+                <span class="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm">
+                    {{ filter.label }}: {{ filter.value }}
+                    <a href="{{ filter.remove_url }}" class="ml-1 hover:text-blue-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </a>
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Price Range Filter -->
+        <div class="filter-group">
+            <button onclick="toggleFilterGroup('price')" class="w-full flex items-center justify-between py-2">
+                <span class="font-medium text-gray-900 dark:text-white">Price</span>
+                <svg class="w-5 h-5 text-gray-500 transform transition-transform" id="price-toggle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div id="price-filter" class="mt-3 space-y-4">
+                <div class="flex items-center gap-3">
+                    <div class="flex-1">
+                        <label class="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Min</label>
+                        <input type="number" name="min_price" id="min-price" 
+                               value="{{ min_price|default:'' }}"
+                               placeholder="{{ price_range.min|default:'0' }}"
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm">
+                    </div>
+                    <span class="text-gray-400 mt-5">—</span>
+                    <div class="flex-1">
+                        <label class="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Max</label>
+                        <input type="number" name="max_price" id="max-price"
+                               value="{{ max_price|default:'' }}"
+                               placeholder="{{ price_range.max|default:'1000' }}"
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm">
+                    </div>
+                </div>
+                <!-- Price Range Slider -->
+                <div class="relative pt-1">
+                    <input type="range" id="price-slider" min="{{ price_range.min|default:0 }}" max="{{ price_range.max|default:1000 }}" 
+                           class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                </div>
+                <button onclick="applyPriceFilter()" class="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm rounded-lg transition-colors">
+                    Apply Price
+                </button>
+            </div>
+        </div>
+        
+        <!-- Dynamic Facets -->
+        {% for facet in facets %}
+        <div class="filter-group border-t border-gray-200 dark:border-gray-700 pt-4">
+            <button onclick="toggleFilterGroup('{{ facet.slug }}')" class="w-full flex items-center justify-between py-2">
+                <span class="font-medium text-gray-900 dark:text-white">{{ facet.name }}</span>
+                <svg class="w-5 h-5 text-gray-500 transform transition-transform" id="{{ facet.slug }}-toggle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div id="{{ facet.slug }}-filter" class="mt-3 space-y-2 max-h-64 overflow-y-auto">
+                {% if facet.filter_type == 'color' %}
+                <!-- Color Swatches -->
+                <div class="flex flex-wrap gap-2">
+                    {% for value in facet.values %}
+                    <label class="relative cursor-pointer group">
+                        <input type="checkbox" name="{{ facet.slug }}" value="{{ value.value }}" 
+                               {% if value.value in selected_values %}checked{% endif %}
+                               class="sr-only facet-checkbox" data-facet="{{ facet.slug }}">
+                        <span class="block w-8 h-8 rounded-full border-2 border-gray-300 dark:border-gray-600 group-hover:border-gray-400 transition-colors {% if value.value in selected_values %}ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-gray-800{% endif %}"
+                              style="background-color: {{ value.color_hex|default:value.value }};"
+                              title="{{ value.label }} ({{ value.count }})">
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% elif facet.filter_type == 'range' %}
+                <!-- Range Slider -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+                        <span id="{{ facet.slug }}-min">{{ facet.min_value }}</span>
+                        <span id="{{ facet.slug }}-max">{{ facet.max_value }}</span>
+                    </div>
+                    <input type="range" name="{{ facet.slug }}" 
+                           min="{{ facet.min_value }}" max="{{ facet.max_value }}"
+                           value="{{ facet.selected_value|default:facet.max_value }}"
+                           class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                           oninput="updateRangeLabel('{{ facet.slug }}', this.value)">
+                </div>
+                {% else %}
+                <!-- Checkbox List -->
+                {% for value in facet.values %}
+                <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" name="{{ facet.slug }}" value="{{ value.value }}"
+                           {% if value.value in selected_values %}checked{% endif %}
+                           class="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 facet-checkbox"
+                           data-facet="{{ facet.slug }}">
+                    <span class="flex-1 text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
+                        {{ value.label }}
+                    </span>
+                    <span class="text-xs text-gray-400 dark:text-gray-500">({{ value.count }})</span>
+                </label>
+                {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        
+        <!-- Availability Filter -->
+        <div class="filter-group border-t border-gray-200 dark:border-gray-700 pt-4">
+            <button onclick="toggleFilterGroup('availability')" class="w-full flex items-center justify-between py-2">
+                <span class="font-medium text-gray-900 dark:text-white">Availability</span>
+                <svg class="w-5 h-5 text-gray-500 transform transition-transform" id="availability-toggle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div id="availability-filter" class="mt-3 space-y-2">
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" name="in_stock" value="true"
+                           {% if in_stock_only %}checked{% endif %}
+                           class="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 facet-checkbox">
+                    <span class="flex-1 text-sm text-gray-700 dark:text-gray-300">In Stock Only</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" name="on_sale" value="true"
+                           {% if on_sale_only %}checked{% endif %}
+                           class="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 facet-checkbox">
+                    <span class="flex-1 text-sm text-gray-700 dark:text-gray-300">On Sale</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" name="free_shipping" value="true"
+                           {% if free_shipping_only %}checked{% endif %}
+                           class="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 facet-checkbox">
+                    <span class="flex-1 text-sm text-gray-700 dark:text-gray-300">Free Shipping</span>
+                </label>
+            </div>
+        </div>
+        
+        <!-- Rating Filter -->
+        <div class="filter-group border-t border-gray-200 dark:border-gray-700 pt-4">
+            <button onclick="toggleFilterGroup('rating')" class="w-full flex items-center justify-between py-2">
+                <span class="font-medium text-gray-900 dark:text-white">Rating</span>
+                <svg class="w-5 h-5 text-gray-500 transform transition-transform" id="rating-toggle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div id="rating-filter" class="mt-3 space-y-2">
+                {% for rating in '54321' %}
+                <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="radio" name="min_rating" value="{{ rating }}"
+                           {% if min_rating == rating %}checked{% endif %}
+                           class="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 focus:ring-blue-500 facet-checkbox">
+                    <span class="flex items-center gap-1">
+                        {% for i in '12345' %}
+                        {% if forloop.counter <= rating|add:0 %}
+                        <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        {% else %}
+                        <svg class="w-4 h-4 text-gray-300 dark:text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        {% endif %}
+                        {% endfor %}
+                    </span>
+                    <span class="text-sm text-gray-500 dark:text-gray-400">& up</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleMobileFilters() {
+    const content = document.getElementById('filter-content');
+    const icon = document.getElementById('filter-toggle-icon');
+    content.classList.toggle('hidden');
+    icon.classList.toggle('rotate-180');
+}
+
+function toggleFilterGroup(name) {
+    const filter = document.getElementById(`${name}-filter`);
+    const toggle = document.getElementById(`${name}-toggle`);
+    if (filter) {
+        filter.classList.toggle('hidden');
+        toggle?.classList.toggle('rotate-180');
+    }
+}
+
+function applyPriceFilter() {
+    const minPrice = document.getElementById('min-price').value;
+    const maxPrice = document.getElementById('max-price').value;
+    const params = new URLSearchParams(window.location.search);
+    
+    if (minPrice) params.set('min_price', minPrice);
+    else params.delete('min_price');
+    
+    if (maxPrice) params.set('max_price', maxPrice);
+    else params.delete('max_price');
+    
+    window.location.search = params.toString();
+}
+
+function updateRangeLabel(name, value) {
+    document.getElementById(`${name}-current`)?.textContent = value;
+}
+
+// Auto-apply facet filters on change
+document.querySelectorAll('.facet-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        applyFacetFilters();
+    });
+});
+
+function applyFacetFilters() {
+    const params = new URLSearchParams(window.location.search);
+    const facets = {};
+    
+    document.querySelectorAll('.facet-checkbox:checked').forEach(checkbox => {
+        const name = checkbox.name;
+        const value = checkbox.value;
+        
+        if (!facets[name]) facets[name] = [];
+        facets[name].push(value);
+    });
+    
+    // Clear existing facet params
+    for (const key of [...params.keys()]) {
+        if (!['page', 'sort', 'q'].includes(key)) {
+            params.delete(key);
+        }
+    }
+    
+    // Add new facet params
+    for (const [name, values] of Object.entries(facets)) {
+        params.set(name, values.join(','));
+    }
+    
+    window.location.search = params.toString();
+}
+
+// Sync price slider with inputs
+const priceSlider = document.getElementById('price-slider');
+if (priceSlider) {
+    priceSlider.addEventListener('input', function() {
+        document.getElementById('max-price').value = this.value;
+    });
+}
+</script>

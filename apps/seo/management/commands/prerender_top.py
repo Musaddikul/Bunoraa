@@ -27,7 +27,7 @@ class Command(BaseCommand):
 
         # Top categories by product_count
         try:
-            from apps.categories.models import Category
+            from apps.catalog.models import Category
             cats = Category.objects.filter(is_active=True, is_deleted=False)
             cats = sorted(list(cats), key=lambda c: c.product_count, reverse=True)[:categories_n]
             for c in cats:
@@ -35,10 +35,10 @@ class Command(BaseCommand):
         except Exception as exc:
             self.stdout.write(self.style.WARNING(f'Could not fetch categories: {exc}'))
 
-        # Top products by sold_count then view_count
+        # Top products by sales_count then views_count
         try:
-            from apps.products.models import Product
-            prods = Product.objects.filter(is_active=True, is_deleted=False).order_by('-sold_count', '-view_count')[:products_n]
+            from apps.catalog.models import Product
+            prods = Product.objects.filter(is_active=True, is_deleted=False).order_by('-sales_count', '-views_count')[:products_n]
             for p in prods:
                 paths.add(f"/products/{p.slug}/")
         except Exception as exc:

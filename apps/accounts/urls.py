@@ -29,6 +29,5 @@ urlpatterns = [
     # Placeholder URLs - implement views as needed
     # path('profile/change-password/', views.ChangePasswordView.as_view(), name='change_password'),
     # path('profile/delete-account/', views.DeleteAccountView.as_view(), name='delete_account'),
-    # path('payment-methods/', views.PaymentMethodsView.as_view(), name='payment_methods'),
     # path('notifications/', views.NotificationsView.as_view(), name='notifications'),
 ]

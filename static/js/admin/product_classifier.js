@@ -1,4 +1,4 @@
-// Admin helper: fetch category suggestions from /api/v1/categories/classify/
+// Admin helper: fetch category suggestions from /api/v1/catalog/categories/classify/
 // and let admin quickly add suggested categories to the Categories multi-select.
 
 (function () {
@@ -104,7 +104,7 @@
       const params = new URLSearchParams();
       if (name) params.append('name', name);
       if (desc) params.append('description', desc);
-      fetch('/api/v1/categories/classify/?' + params.toString(), { credentials: 'same-origin' })
+      fetch('/api/v1/catalog/categories/classify/?' + params.toString(), { credentials: 'same-origin' })
         .then(function (resp) {
           if (!resp.ok) throw new Error('Classification failed');
           return resp.json();

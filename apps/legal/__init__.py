@@ -1,4 +1,0 @@
-"""
-Legal App Configuration
-"""
-default_app_config = 'apps.legal.apps.LegalConfig'

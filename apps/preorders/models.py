@@ -275,7 +275,7 @@ class PreOrder(models.Model):
     
     # Linked product (optional - if based on existing product)
     base_product = models.ForeignKey(
-        'products.Product',
+        'catalog.Product',
         on_delete=models.SET_NULL,
         related_name='preorders',
         null=True,

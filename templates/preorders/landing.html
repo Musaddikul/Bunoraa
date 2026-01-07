@@ -218,6 +218,7 @@ import('/static/js/pages/preorders.js').then(mod => {
 }).catch(() => {});
 </script>
 
+<script>
 function useTemplate(templateId) {
     if (typeof PreordersApi !== 'undefined' && PreordersApi.useTemplate) {
         PreordersApi.useTemplate(templateId)

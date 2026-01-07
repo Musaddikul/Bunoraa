@@ -24,11 +24,11 @@ class OrderService:
         Returns:
             Order instance
         """
-        from apps.cart.services import CartService
+        from apps.commerce.services import CartService
         
         cart = checkout_session.cart
         # Determine checkout currency object (fallback to default)
-        from apps.currencies.services import CurrencyService, CurrencyConversionService
+        from apps.i18n.services import CurrencyService, CurrencyConversionService
         checkout_currency = None
         try:
             checkout_currency = CurrencyService.get_currency_by_code(checkout_session.currency) if getattr(checkout_session, 'currency', None) else CurrencyService.get_default_currency()

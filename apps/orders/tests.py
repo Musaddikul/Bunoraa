@@ -7,12 +7,9 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 
-from apps.products.models import Product
-from apps.categories.models import Category
-from apps.cart.models import Cart, CartItem
-from apps.cart.services import CartService
-from apps.checkout.models import CheckoutSession
-from apps.checkout.services import CheckoutService
+from apps.catalog.models import Product, Category
+from apps.commerce.models import Cart, CartItem, CheckoutSession
+from apps.commerce.services import CartService, CheckoutService
 from .models import Order, OrderItem, OrderStatusHistory
 from .services import OrderService
 

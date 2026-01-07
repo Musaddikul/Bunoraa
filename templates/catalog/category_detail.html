@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_id %}category{% endblock %}
+{% block title %}{{ category.meta_title|default:category.name }} - {{ SITE_NAME }}{% endblock %}
+
+{% block meta %}
+<meta name="description" content="{{ category.meta_description }}">
+{% if category.meta_keywords %}
+<meta name="keywords" content="{{ category.meta_keywords }}">
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div id="category-page" class="container mx-auto px-4 py-8" data-category-slug="{{ category.slug }}" data-category-id="{{ category.id }}">
+    <!-- Breadcrumb -->
+    <nav class="mb-8">
+        <ol class="flex items-center space-x-2 text-sm text-gray-500">
+            <li><a href="{% url 'home' %}" class="hover:text-primary-600">Home</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li><a href="{% url 'catalog:category-list' %}" class="hover:text-primary-600">Categories</a></li>
+            {% for ancestor in breadcrumbs %}
+            {% if ancestor.id != category.id %}
+            <li><span class="mx-2">/</span></li>
+            <li><a href="{{ ancestor.url }}" class="hover:text-primary-600">{{ ancestor.name }}</a></li>
+            {% endif %}
+            {% endfor %}
+            <li><span class="mx-2">/</span></li>
+            <li class="text-gray-900">{{ category.name }}</li>
+        </ol>
+    </nav>
+    
+    <!-- Category Header -->
+    <div class="mb-8">
+        {% if category.image %}
+        <div class="relative h-48 md:h-64 rounded-lg overflow-hidden mb-6" {% if category.aspect_ratio != 'free' %}style="aspect-ratio: {{ category.aspect_ratio|default:'1:1' }};"{% endif %}>
+            <img src="{{ category.image.url }}" alt="{{ category.name }}" loading="lazy" decoding="async" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                <div class="text-center text-white">
+                    <h1 class="text-4xl font-bold">{{ category.name }}</h1>
+                    {% if category.product_count %}
+                    <p class="mt-2 text-lg">{{ category.product_count }} Products</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <h1 class="text-3xl font-bold text-gray-900">{{ category.name }}</h1>
+        {% if category.meta_description %}
+        <p class="mt-2 text-gray-600">{{ category.meta_description }}</p>
+        {% endif %}
+        {% endif %}
+    </div>
+    
+    <!-- Subcategories -->
+    {% if subcategories %}
+    <div class="mb-8">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Browse Subcategories</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {% for subcat in subcategories %}
+            <a href="{% url 'catalog:category-detail' subcat.get_slug_path %}" class="group">
+                <div class="bg-white rounded-lg shadow-sm p-4 text-center hover:shadow-md transition-shadow">
+                    {% if subcat.image %}
+                    <img src="{{ subcat.image.url }}" alt="{{ subcat.name }}" loading="lazy" decoding="async" 
+                         class="w-16 h-16 mx-auto object-cover rounded-full mb-3">
+                    {% else %}
+                    <div class="w-16 h-16 mx-auto bg-gray-100 rounded-full mb-3 flex items-center justify-center">
+                        {% if subcat.icon %}
+                        <span class="text-2xl">{{ subcat.icon }}</span>
+                        {% else %}
+                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                        </svg>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    <h3 class="text-sm font-medium text-gray-900 group-hover:text-primary-600">{{ subcat.name }}</h3>
+                    <p class="text-xs text-gray-500 mt-1">{{ subcat.product_count }} items</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Sidebar Filters -->
+        <aside class="lg:w-64 flex-shrink-0">
+            <div class="bg-white rounded-lg shadow-sm p-6 sticky top-24">
+                <h2 class="font-semibold text-gray-900 mb-4">Filters</h2>
+                
+                <form id="filter-form" method="GET">
+                    <!-- Price Range -->
+                    <div class="mb-6">
+                        <h3 class="font-medium text-gray-900 mb-3">Price Range</h3>
+                        <div class="flex items-center space-x-2">
+                            <input type="number" name="min_price" placeholder="Min" 
+                                   value="{{ request.GET.min_price }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                            <span class="text-gray-400">-</span>
+                            <input type="number" name="max_price" placeholder="Max" 
+                                   value="{{ request.GET.max_price }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                        </div>
+                    </div>
+                    
+                    <!-- Availability -->
+                    <div class="mb-6">
+                        <h3 class="font-medium text-gray-900 mb-3">Availability</h3>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="in_stock" value="true" 
+                                   {% if request.GET.in_stock == 'true' %}checked{% endif %}
+                                   class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500">
+                            <span class="text-sm text-gray-700">In Stock Only</span>
+                        </label>
+                    </div>
+
+                    <!-- Dynamic Facets -->
+                    {% if facets %}
+                    {% for facet in facets %}
+                    <div class="mb-6">
+                        <h3 class="font-medium text-gray-900 mb-3">{{ facet.name }}</h3>
+                        <div class="space-y-2 max-h-48 overflow-y-auto">
+                            {% for value in facet.values %}
+                            <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                <input type="checkbox" name="attr_{{ facet.slug }}" value="{{ value.value }}"
+                                       {% if value.is_selected %}checked{% endif %}
+                                       class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500">
+                                <span class="text-sm text-gray-700">{{ value.display_value|default:value.value }}</span>
+                                {% if value.count %}
+                                <span class="text-xs text-gray-400">({{ value.count }})</span>
+                                {% endif %}
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                    
+                    <button type="submit" class="w-full bg-primary-600 text-white py-2 rounded-lg hover:bg-primary-700 transition-colors">
+                        Apply Filters
+                    </button>
+                </form>
+            </div>
+        </aside>
+        
+        <!-- Products Grid -->
+        <main class="flex-1">
+            <!-- Sort Bar -->
+            <div class="flex items-center justify-between mb-6">
+                <p class="text-sm text-gray-600">{{ total_products }} products found</p>
+                <select name="sort" onchange="this.form.submit()" form="filter-form"
+                        class="border border-gray-200 rounded-lg px-4 py-2 text-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    <option value="-created_at" {% if current_sort == '-created_at' %}selected{% endif %}>Newest First</option>
+                    <option value="price" {% if current_sort == 'price' %}selected{% endif %}>Price: Low to High</option>
+                    <option value="-price" {% if current_sort == '-price' %}selected{% endif %}>Price: High to Low</option>
+                    <option value="-average_rating" {% if current_sort == '-average_rating' %}selected{% endif %}>Highest Rated</option>
+                    <option value="-views_count" {% if current_sort == '-views_count' %}selected{% endif %}>Most Popular</option>
+                </select>
+            </div>
+            
+            {% if products %}
+            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
+                {% for product in products %}
+                {% include 'catalog/partials/product_card.html' with product=product %}
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if page_obj.num_pages > 1 %}
+            <div class="mt-8 flex items-center justify-center gap-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.number|add:'-1' }}&{{ request.GET.urlencode }}" 
+                   class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    Previous
+                </a>
+                {% endif %}
+                
+                <span class="px-4 py-2 text-gray-600">
+                    Page {{ page_obj.number }} of {{ page_obj.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.number|add:'1' }}&{{ request.GET.urlencode }}" 
+                   class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    Next
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="text-center py-16 bg-white rounded-lg">
+                <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
+                <p class="text-gray-600 mb-6">Try adjusting your filters or browse other categories</p>
+                <a href="{% url 'catalog:category-list' %}" class="inline-flex items-center justify-center px-5 py-2 rounded-full bg-primary-600 text-white text-sm font-medium hover:bg-primary-700">
+                    Browse All Categories
+                </a>
+            </div>
+            {% endif %}
+        </main>
+    </div>
+</div>
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "{{ category.name }}",
+  "description": "{{ category.meta_description|default:''|escapejs }}",
+  "url": "{{ request.build_absolute_uri }}",
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ request.scheme }}://{{ request.get_host }}"},
+      {"@type": "ListItem", "position": 2, "name": "Categories", "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'catalog:category-list' %}"},
+      {"@type": "ListItem", "position": 3, "name": "{{ category.name }}", "item": "{{ request.build_absolute_uri }}"}
+    ]
+  }
+}
+</script>
+{% endblock %}

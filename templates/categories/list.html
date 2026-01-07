@@ -28,7 +28,7 @@
         {% if categories %}
         <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
             {% for category in categories %}
-            <a href="{% url 'categories:detail' category.slug %}" class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition transform hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-primary-500/40">
+            <a href="{% url 'catalog:category-detail' category.slug %}" class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition transform hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-primary-500/40">
                 <div class="h-40 bg-gradient-to-br from-gray-100 to-gray-200 relative">
                     {% if category.image %}
                     <img src="{{ category.image.url }}" alt="{{ category.name }}" loading="lazy" decoding="async" class="absolute inset-0 w-full h-full object-cover">
@@ -73,7 +73,7 @@
         {% else %}
         <div class="bg-white rounded-2xl shadow-sm border border-dashed border-gray-200 p-12 text-center">
             <p class="text-lg text-gray-500">No categories available yet. Check back soon.</p>
-            <a href="{% url 'products:list' %}" class="inline-flex items-center justify-center mt-5 px-5 py-2 rounded-full bg-primary-600 text-white text-sm font-medium hover:bg-primary-700">Browse all products</a>
+            <a href="{% url 'catalog:product-list' %}" class="inline-flex items-center justify-center mt-5 px-5 py-2 rounded-full bg-primary-600 text-white text-sm font-medium hover:bg-primary-700">Browse all products</a>
         </div>
         {% endif %}
     </div>
@@ -85,14 +85,14 @@
             <div class="mt-4 space-y-4">
                 {% for branch in category_tree %}
                 <div>
-                    <a href="{% url 'categories:detail' branch.slug %}" class="flex items-center justify-between text-sm font-medium text-gray-800 hover:text-primary-600">
+                    <a href="{% url 'catalog:category-detail' branch.slug %}" class="flex items-center justify-between text-sm font-medium text-gray-800 hover:text-primary-600">
                         <span>{{ branch.name }}</span>
                         <span class="text-xs text-gray-400">{{ branch.product_count }} items</span>
                     </a>
                     {% if branch.children %}
                     <div class="mt-2 flex flex-wrap gap-2 text-xs text-gray-500">
                         {% for child in branch.children|slice:":4" %}
-                        <a href="{% url 'categories:detail' child.slug %}" class="px-2 py-1 rounded-full bg-gray-100 hover:bg-primary-50 hover:text-primary-600 transition">{{ child.name }}</a>
+                        <a href="{% url 'catalog:category-detail' child.slug %}" class="px-2 py-1 rounded-full bg-gray-100 hover:bg-primary-50 hover:text-primary-600 transition">{{ child.name }}</a>
                         {% endfor %}
                         {% if branch.children|length > 4 %}
                         <span class="px-2 py-1 rounded-full bg-gray-100">+{{ branch.children|length|add:"-4" }} more</span>

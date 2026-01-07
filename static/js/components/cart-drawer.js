@@ -1,15 +1,54 @@
 (function() {
   'use strict';
 
+  // Get configuration from DOM or window.BUNORAA_CURRENCY / window.BUNORAA_SHIPPING
+  function getConfig() {
+    const cartDrawer = document.getElementById('cart-drawer');
+    const currencyMeta = window.BUNORAA_CURRENCY || {};
+    const shippingMeta = window.BUNORAA_SHIPPING || {};
+    
+    return {
+      FREE_SHIPPING_THRESHOLD: parseFloat(cartDrawer?.dataset?.freeShippingThreshold) || shippingMeta.free_shipping_threshold || currencyMeta.free_shipping_threshold || 2000,
+      SHIPPING_COSTS: shippingMeta.costs || {
+        dhaka: parseFloat(cartDrawer?.dataset?.shippingDhaka) || 60,
+        chittagong: parseFloat(cartDrawer?.dataset?.shippingChittagong) || 80,
+        other: parseFloat(cartDrawer?.dataset?.shippingOther) || 120
+      },
+      DELIVERY_TIMES: shippingMeta.delivery_times || {
+        dhaka: '1-2 days',
+        chittagong: '2-3 days',
+        other: '3-5 days'
+      },
+      CURRENCY_SYMBOL: cartDrawer?.dataset?.currencySymbol || currencyMeta.symbol || '৳',
+      CURRENCY_CODE: cartDrawer?.dataset?.currencyCode || currencyMeta.code || 'BDT',
+      CURRENCY_POSITION: cartDrawer?.dataset?.currencyPosition || currencyMeta.symbol_position || 'before',
+      COD_FEE: parseFloat(cartDrawer?.dataset?.codFee) || shippingMeta.cod_fee || 0
+    };
+  }
+
+  // Lazy-initialized config
+  let CONFIG = null;
+  function cfg() {
+    if (!CONFIG) CONFIG = getConfig();
+    return CONFIG;
+  }
+
   function fmt(val, alreadyConverted = false) {
     try {
       if (window.Templates?.formatPrice) return window.Templates.formatPrice(val, null, alreadyConverted);
-      return `৳${Number(val || 0).toFixed(2)}`;
-    } catch { return `৳${Number(val || 0).toFixed(2)}`; }
+      const c = cfg();
+      const formatted = Number(val || 0).toLocaleString('en-BD');
+      return c.CURRENCY_POSITION === 'after' ? `${formatted}${c.CURRENCY_SYMBOL}` : `${c.CURRENCY_SYMBOL}${formatted}`;
+    } catch { 
+      const c = cfg();
+      return `${c.CURRENCY_SYMBOL}${Number(val || 0).toFixed(2)}`; 
+    }
   }
+  
   function esc(s) {
     try { return window.Templates?.escapeHtml ? window.Templates.escapeHtml(s || '') : (s || ''); } catch { return s || ''; }
   }
+  
   function getImageUrl(p) {
     if (!p) return '';
     // Prefer thumbnail for drawer performance
@@ -40,72 +79,173 @@
     return '';
   }
 
+  // Calculate shipping based on location
+  function calculateShipping(subtotal, location = 'dhaka') {
+    const c = cfg();
+    if (subtotal >= c.FREE_SHIPPING_THRESHOLD) {
+      return { cost: 0, isFree: true };
+    }
+    return { 
+      cost: c.SHIPPING_COSTS[location] || c.SHIPPING_COSTS.other, 
+      isFree: false 
+    };
+  }
+
+  // Update free shipping progress bar
+  function updateFreeShippingProgress(cartDrawer, subtotal) {
+    const banner = cartDrawer?.querySelector('[data-free-shipping-banner]');
+    const progressBar = cartDrawer?.querySelector('[data-shipping-progress]');
+    const message = cartDrawer?.querySelector('[data-shipping-message]');
+    
+    if (!banner || !progressBar || !message) return;
+    
+    const c = cfg();
+    const remaining = c.FREE_SHIPPING_THRESHOLD - subtotal;
+    const progress = Math.min((subtotal / c.FREE_SHIPPING_THRESHOLD) * 100, 100);
+    
+    progressBar.style.width = `${progress}%`;
+    
+    if (remaining <= 0) {
+      message.textContent = '🎉 You\'ve unlocked FREE shipping!';
+      message.classList.add('text-green-600');
+      banner.classList.add('bg-green-100', 'dark:bg-green-900/30');
+    } else {
+      message.textContent = `Add ${fmt(remaining)} more for FREE shipping!`;
+      message.classList.remove('text-green-600');
+      banner.classList.remove('bg-green-100', 'dark:bg-green-900/30');
+    }
+  }
+
+  // Update cart summary with shipping
+  function updateCartSummary(cartDrawer, cart, location = 'dhaka') {
+    const subtotalEl = cartDrawer?.querySelector('[data-cart-subtotal]');
+    const shippingEl = cartDrawer?.querySelector('[data-cart-shipping]');
+    const totalEl = cartDrawer?.querySelector('[data-cart-total]');
+    const savingsRow = cartDrawer?.querySelector('[data-cart-savings-row]');
+    const savingsEl = cartDrawer?.querySelector('[data-cart-savings]');
+    const countEl = cartDrawer?.querySelector('[data-cart-count]');
+    
+    const items = cart.items || [];
+    const subtotal = cart.summary?.subtotal ?? items.reduce((sum, it) => 
+      sum + Number(it.line_total || it.current_price || 0) * Number(it.quantity || 1), 0);
+    
+    // Calculate savings from original prices
+    const totalSavings = items.reduce((sum, it) => {
+      const original = Number(it.original_price || it.current_price || 0);
+      const current = Number(it.current_price || 0);
+      const qty = Number(it.quantity || 1);
+      return sum + Math.max(0, (original - current) * qty);
+    }, 0);
+    
+    const shipping = calculateShipping(subtotal, location);
+    const total = subtotal + shipping.cost;
+    
+    // Update elements
+    if (subtotalEl) subtotalEl.textContent = cart.summary?.formatted_subtotal || fmt(subtotal);
+    if (shippingEl) shippingEl.textContent = shipping.isFree ? 'FREE' : fmt(shipping.cost);
+    if (totalEl) totalEl.textContent = fmt(total);
+    if (countEl) countEl.textContent = items.reduce((sum, it) => sum + Number(it.quantity || 1), 0);
+    
+    // Show/hide savings
+    if (savingsRow && savingsEl) {
+      if (totalSavings > 0) {
+        savingsRow.classList.remove('hidden');
+        savingsEl.textContent = `-${fmt(totalSavings)}`;
+      } else {
+        savingsRow.classList.add('hidden');
+      }
+    }
+    
+    // Update free shipping progress
+    updateFreeShippingProgress(cartDrawer, subtotal);
+  }
+
   function render(cartDrawer, cart) {
     const cartContent = cartDrawer?.querySelector('[data-cart-content]');
-    const cartSubtotal = cartDrawer?.querySelector('[data-cart-subtotal]');
     if (!cartContent || !cart) return;
 
     const items = cart.items || [];
     cartDrawer?.classList.toggle('cart-empty', items.length === 0);
 
-    // Prefer server-formatted subtotal when available (already converted & formatted)
-    const subtotalFormatted = cart.summary?.formatted_subtotal;
-    const subtotalVal = cart.summary?.subtotal ?? items.reduce((sum, it) => sum + Number(it.line_total || it.current_price || 0) * Number(it.quantity || 1), 0);
-    if (cartSubtotal) cartSubtotal.textContent = subtotalFormatted ? subtotalFormatted : fmt(subtotalVal, true);
+    // Get current location selection
+    const locationSelect = cartDrawer?.querySelector('[data-cart-location]');
+    const location = locationSelect?.value || 'dhaka';
+
+    // Update summary
+    updateCartSummary(cartDrawer, cart, location);
 
     if (items.length === 0) {
       cartContent.innerHTML = `
         <div class="p-8 text-center">
-          <div class="mx-auto w-12 h-12 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center mb-3">
-            <svg class="w-6 h-6 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 8m12-8-2 8M9 21h6"/></svg>
+          <div class="mx-auto w-16 h-16 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center mb-4">
+            <svg class="w-8 h-8 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 8m12-8-2 8M9 21h6"/></svg>
           </div>
-          <p class="text-stone-600 dark:text-stone-300">Your cart is empty. Start exploring our products!</p>
-          <a href="/products/" class="mt-4 inline-flex items-center px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg">Browse Products</a>
+          <h3 class="text-lg font-semibold text-stone-900 dark:text-white mb-2">Your cart is empty</h3>
+          <p class="text-stone-600 dark:text-stone-300 mb-4">Looks like you haven't added anything yet</p>
+          <a href="/products/" class="inline-flex items-center px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-xl transition-colors">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+            Start Shopping
+          </a>
         </div>`;
       return;
     }
 
     // Map summary items (if present) for pre-formatted values
-    const summaryItemsMap = (cart.summary && Array.isArray(cart.summary.items)) ? (cart.summary.items.reduce((m, it) => { m[it.id] = it; return m; }, {})) : {};
+    const summaryItemsMap = (cart.summary && Array.isArray(cart.summary.items)) 
+      ? cart.summary.items.reduce((m, it) => { m[it.id] = it; return m; }, {}) 
+      : {};
 
     const itemHtml = items.map(item => {
       const product = item.product || {};
       const variant = item.variant;
       const href = product.slug ? `/products/${product.slug}/` : '#';
-      const img = getImageUrl(product) || '/static/images/placeholder.png';
+      const img = getImageUrl(product);
       const unit = Number(item.current_price ?? product.price ?? 0);
+      const originalPrice = Number(item.original_price ?? unit);
       const qty = Number(item.quantity || 1);
       const line = Number(item.line_total ?? unit * qty);
+      const hasDiscount = originalPrice > unit;
+      const discountPercent = hasDiscount ? Math.round((1 - unit / originalPrice) * 100) : 0;
+      const stockQuantity = item.stock_quantity || product.stock_quantity || 999;
+      const isLowStock = stockQuantity <= 5 && stockQuantity > 0;
 
       const summaryItem = summaryItemsMap[item.id];
-      const formattedUnit = summaryItem && summaryItem.formatted_unit_price ? summaryItem.formatted_unit_price : fmt(unit, true);
-      const formattedLine = summaryItem && summaryItem.formatted_total ? summaryItem.formatted_total : fmt(line, true);
+      const formattedUnit = summaryItem?.formatted_unit_price || fmt(unit, true);
+      const formattedOriginal = fmt(originalPrice, true);
+      const formattedLine = summaryItem?.formatted_total || fmt(line, true);
 
       return `
-        <div class="group relative p-4 border-b border-stone-100 dark:border-stone-800" data-cart-item-id="${item.id}">
+        <div class="group relative p-4 border-b border-stone-100 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors" data-cart-item-id="${item.id}">
           <div class="flex gap-4">
-            <a href="${href}" class="w-16 h-16 md:w-16 md:h-16 rounded-xl overflow-hidden bg-stone-100 dark:bg-stone-800 flex-shrink-0">
+            <a href="${href}" class="w-20 h-20 rounded-xl overflow-hidden bg-stone-100 dark:bg-stone-800 flex-shrink-0 relative">
               <img src="${img}" alt="${esc(product.name || 'Product')}" class="w-full h-full object-cover" loading="lazy">
+              ${hasDiscount ? `<span class="absolute top-1 left-1 px-1.5 py-0.5 text-[10px] font-bold bg-red-500 text-white rounded">-${discountPercent}%</span>` : ''}
             </a>
             <div class="flex-1 min-w-0">
-              <div class="flex items-start justify-between gap-3">
-                <div>
-                  <a href="${href}" class="font-semibold text-stone-900 dark:text-white line-clamp-2 hover:text-amber-700 dark:hover:text-amber-400">${esc(product.name || 'Product')}</a>
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex-1">
+                  <a href="${href}" class="font-semibold text-stone-900 dark:text-white line-clamp-2 hover:text-amber-700 dark:hover:text-amber-400 text-sm">${esc(product.name || 'Product')}</a>
                   ${variant ? `<p class="text-xs text-stone-500 dark:text-stone-400 mt-0.5">${esc(variant.name || variant.value || '')}</p>` : ''}
+                  ${isLowStock ? `<p class="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Only ${stockQuantity} left</p>` : ''}
                 </div>
-                <button class="text-stone-400 hover:text-red-500 transition-colors" data-cart-remove="${item.id}" aria-label="Remove">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+                <div class="flex flex-col gap-1">
+                  <button class="p-1 text-stone-400 hover:text-amber-600 transition-colors" data-cart-save="${item.id}" title="Save for later" aria-label="Save for later">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+                  </button>
+                  <button class="p-1 text-stone-400 hover:text-red-500 transition-colors" data-cart-remove="${item.id}" aria-label="Remove">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
               </div>
-              <div class="mt-3 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <button class="w-8 h-8 rounded-lg border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800" data-qty-minus="${item.id}">−</button>
-                  <span class="min-w-[2.5rem] text-center font-medium" data-qty-value="${item.id}">${qty}</span>
-                  <button class="w-8 h-8 rounded-lg border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800" data-qty-plus="${item.id}">+</button>
+              <div class="mt-2 flex items-end justify-between">
+                <div class="flex items-center gap-1">
+                  <button class="w-7 h-7 rounded-lg border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 text-sm font-medium disabled:opacity-50" data-qty-minus="${item.id}" ${qty <= 1 ? 'disabled' : ''}>−</button>
+                  <span class="min-w-[2rem] text-center font-medium text-sm" data-qty-value="${item.id}">${qty}</span>
+                  <button class="w-7 h-7 rounded-lg border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 text-sm font-medium disabled:opacity-50" data-qty-plus="${item.id}" ${qty >= stockQuantity ? 'disabled' : ''}>+</button>
                 </div>
                 <div class="text-right">
-                  <div class="text-sm text-stone-600 dark:text-stone-300">${formattedUnit} each</div>
-                  <div class="font-semibold text-stone-900 dark:text-white" data-line-total="${item.id}">${formattedLine}</div>
+                  ${hasDiscount ? `<div class="text-xs text-stone-400 line-through">${formattedOriginal}</div>` : ''}
+                  <div class="font-bold text-stone-900 dark:text-white" data-line-total="${item.id}">${formattedLine}</div>
                 </div>
               </div>
             </div>
@@ -115,6 +255,11 @@
 
     cartContent.innerHTML = itemHtml;
 
+    // Bind event handlers
+    bindItemEventHandlers(cartDrawer, cartContent);
+  }
+
+  function bindItemEventHandlers(cartDrawer, cartContent) {
     // Remove item
     cartContent.querySelectorAll('[data-cart-remove]').forEach(btn => {
       btn.addEventListener('click', async () => {
@@ -124,10 +269,37 @@
           const resp = await window.CartApi.removeItem(id);
           if (resp.success) {
             render(cartDrawer, resp.data?.cart);
+            window.Toast?.success('Item removed from cart');
           }
         } catch (err) {
           console.error(err);
           window.Toast?.error('Failed to remove item');
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    });
+
+    // Save for later
+    cartContent.querySelectorAll('[data-cart-save]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.cartSave;
+        btn.disabled = true;
+        try {
+          // If SaveForLaterApi exists, use it; otherwise fall back to removing
+          if (window.SaveForLaterApi?.saveItem) {
+            const resp = await window.SaveForLaterApi.saveItem(id);
+            if (resp.success) {
+              render(cartDrawer, resp.data?.cart);
+              window.Toast?.success('Item saved for later');
+              updateSavedSection(cartDrawer);
+            }
+          } else {
+            window.Toast?.info('Save for later coming soon!');
+          }
+        } catch (err) {
+          console.error(err);
+          window.Toast?.error('Failed to save item');
         } finally {
           btn.disabled = false;
         }
@@ -153,9 +325,10 @@
         const id = btn.dataset.qtyMinus;
         const valEl = cartContent.querySelector(`[data-qty-value="${id}"]`);
         const current = Number(valEl?.textContent || '1');
-        updateQty(id, current - 1);
+        if (current > 1) updateQty(id, current - 1);
       });
     });
+
     cartContent.querySelectorAll('[data-qty-plus]').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.dataset.qtyPlus;
@@ -166,24 +339,128 @@
     });
   }
 
+  // Update saved for later section
+  async function updateSavedSection(cartDrawer) {
+    const savedSection = cartDrawer?.querySelector('[data-saved-section]');
+    const savedContent = cartDrawer?.querySelector('[data-saved-content]');
+    const savedCount = cartDrawer?.querySelector('[data-saved-count]');
+    
+    if (!savedSection || !savedContent) return;
+    
+    try {
+      if (window.SaveForLaterApi?.getItems) {
+        const resp = await window.SaveForLaterApi.getItems();
+        if (resp.success && resp.data?.items?.length > 0) {
+          savedSection.classList.remove('hidden');
+          if (savedCount) savedCount.textContent = resp.data.items.length;
+          
+          savedContent.innerHTML = resp.data.items.map(item => `
+            <div class="flex items-center gap-3 p-3 hover:bg-stone-50 dark:hover:bg-stone-800">
+              <img src="${getImageUrl(item.product || {})}" alt="${esc(item.product?.name || '')}" class="w-10 h-10 rounded object-cover">
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-stone-900 dark:text-white truncate">${esc(item.product?.name || 'Product')}</p>
+                <p class="text-xs text-stone-500">${fmt(item.current_price || 0)}</p>
+              </div>
+              <button class="text-xs text-amber-600 hover:text-amber-700 font-medium" data-move-to-cart="${item.id}">Add to Cart</button>
+            </div>
+          `).join('');
+          
+          // Bind move to cart handlers
+          savedContent.querySelectorAll('[data-move-to-cart]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = btn.dataset.moveToCart;
+              try {
+                if (window.SaveForLaterApi?.moveToCart) {
+                  const resp = await window.SaveForLaterApi.moveToCart(id);
+                  if (resp.success) {
+                    render(cartDrawer, resp.data?.cart);
+                    updateSavedSection(cartDrawer);
+                    window.Toast?.success('Item moved to cart');
+                  }
+                }
+              } catch (err) {
+                console.error(err);
+              }
+            });
+          });
+        } else {
+          savedSection.classList.add('hidden');
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load saved items:', err);
+    }
+  }
+
+  // Toggle saved section visibility
+  function setupSavedToggle(cartDrawer) {
+    const toggleBtn = cartDrawer?.querySelector('[data-toggle-saved]');
+    const savedContent = cartDrawer?.querySelector('[data-saved-content]');
+    const chevron = cartDrawer?.querySelector('[data-saved-chevron]');
+    
+    if (toggleBtn && savedContent) {
+      toggleBtn.addEventListener('click', () => {
+        savedContent.classList.toggle('hidden');
+        chevron?.classList.toggle('rotate-180');
+      });
+    }
+  }
+
+  // Setup location change handler
+  function setupLocationHandler(cartDrawer) {
+    const locationSelect = cartDrawer?.querySelector('[data-cart-location]');
+    
+    if (locationSelect) {
+      locationSelect.addEventListener('change', async () => {
+        try {
+          const response = await window.CartApi.getCart();
+          if (response.success) {
+            render(cartDrawer, response.data);
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      });
+    }
+  }
+
+  // Setup quick pay buttons
+  function setupQuickPay(cartDrawer) {
+    cartDrawer?.querySelectorAll('[data-quick-pay]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const method = btn.dataset.quickPay;
+        // Redirect to checkout with payment method pre-selected
+        window.location.href = `/checkout/?payment_method=${method}`;
+      });
+    });
+  }
+
   async function open(cartDrawer) {
     if (!cartDrawer) return;
     const cartContent = cartDrawer.querySelector('[data-cart-content]');
     if (cartContent) {
-      cartContent.innerHTML = '<div class="p-6 text-center text-stone-500 text-sm">Loading cart...</div>';
+      cartContent.innerHTML = `
+        <div class="p-6 text-center">
+          <div class="inline-block animate-spin w-8 h-8 border-3 border-amber-600 border-t-transparent rounded-full"></div>
+          <p class="mt-2 text-stone-500 text-sm dark:text-stone-400">Loading your cart...</p>
+        </div>`;
     }
     try {
       const response = await window.CartApi.getCart();
       if (!response.success) throw new Error('Failed to load cart.');
       const cart = response.data;
       const items = cart?.items || [];
-      if (items.length === 0) {
-        window.Toast?.info('You have not added any products yet.', { duration: 3000 });
-        return;
-      }
+      
       cartDrawer.classList.remove('hidden');
       requestAnimationFrame(() => cartDrawer.classList.add('open'));
       render(cartDrawer, cart);
+      
+      // Also update saved section
+      updateSavedSection(cartDrawer);
+      
+      if (items.length === 0) {
+        window.Toast?.info('Your cart is empty. Start shopping!', { duration: 3000 });
+      }
     } catch (error) {
       window.Toast?.error(error.message || 'Unable to open cart right now.');
     }
@@ -201,6 +478,7 @@
     const cartDrawer = document.getElementById('cart-drawer');
     if (!cartDrawer) return;
 
+    // Open cart buttons
     document.querySelectorAll('[data-cart-open]').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -208,18 +486,50 @@
       });
     });
 
-    cartDrawer.querySelectorAll('[data-cart-close]').forEach(btn => btn.addEventListener('click', () => close(cartDrawer)));
-    cartDrawer.addEventListener('click', (e) => { if (e.target === cartDrawer) close(cartDrawer); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && cartDrawer.classList.contains('open')) close(cartDrawer); });
+    // Close handlers
+    cartDrawer.querySelectorAll('[data-cart-close]').forEach(btn => 
+      btn.addEventListener('click', () => close(cartDrawer))
+    );
+    cartDrawer.addEventListener('click', (e) => { 
+      if (e.target === cartDrawer) close(cartDrawer); 
+    });
+    document.addEventListener('keydown', (e) => { 
+      if (e.key === 'Escape' && cartDrawer.classList.contains('open')) close(cartDrawer); 
+    });
 
+    // Setup additional handlers
+    setupSavedToggle(cartDrawer);
+    setupLocationHandler(cartDrawer);
+    setupQuickPay(cartDrawer);
+
+    // Listen for cart updates
     document.addEventListener('cart:updated', async () => {
       if (cartDrawer.classList.contains('open')) {
         const response = await window.CartApi.getCart();
         if (response.success) render(cartDrawer, response.data);
       }
     });
+
+    // Listen for add to cart events (refresh cart)
+    document.addEventListener('cart:item-added', async () => {
+      const response = await window.CartApi.getCart();
+      if (response.success) {
+        // Update cart count in header if needed
+        const countBadges = document.querySelectorAll('[data-cart-count]');
+        const itemCount = (response.data?.items || []).reduce((sum, it) => sum + Number(it.quantity || 1), 0);
+        countBadges.forEach(badge => badge.textContent = itemCount);
+      }
+    });
   }
 
   document.addEventListener('DOMContentLoaded', init);
-  window.CartDrawer = { open: () => open(document.getElementById('cart-drawer')), close: () => close(document.getElementById('cart-drawer')), render, init };
+  
+  // Export for external use
+  window.CartDrawer = { 
+    open: () => open(document.getElementById('cart-drawer')), 
+    close: () => close(document.getElementById('cart-drawer')), 
+    render, 
+    init,
+    CONFIG
+  };
 })();

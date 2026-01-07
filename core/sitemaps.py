@@ -23,7 +23,7 @@ class ProductSitemap(Sitemap):
     priority = 0.8
     
     def items(self):
-        from apps.products.models import Product
+        from apps.catalog.models import Product
         return Product.objects.filter(is_active=True, is_deleted=False)
     
     def lastmod(self, obj):
@@ -50,7 +50,7 @@ class CategorySitemap(Sitemap):
     priority = 0.7
     
     def items(self):
-        from apps.categories.models import Category
+        from apps.catalog.models import Category
         return Category.objects.filter(is_active=True, is_deleted=False)
     
     def lastmod(self, obj):

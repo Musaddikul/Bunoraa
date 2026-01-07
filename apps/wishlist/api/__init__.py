@@ -1,3 +1,0 @@
-"""
-Wishlist API Package
-"""

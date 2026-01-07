@@ -1,1 +1,0 @@
-# Categories API module

@@ -44,7 +44,7 @@ class OrderListView(LoginRequiredMixin, ListView):
         # Compute formatted totals in the checkout/display currency when available.
         # Recompute totals from order items and convert shipping/tax using the CheckoutSession snapshot
         from apps.checkout.models import CheckoutSession
-        from apps.currencies.services import CurrencyService, CurrencyConversionService
+        from apps.i18n.services import CurrencyService, CurrencyConversionService
         from decimal import Decimal
 
         try:
@@ -130,7 +130,7 @@ class OrderDetailView(LoginRequiredMixin, DetailView):
         # Try to find associated checkout session so we can show amounts in the checkout currency
         from apps.checkout.models import CheckoutSession
         from decimal import Decimal
-        from apps.currencies.services import CurrencyService, CurrencyConversionService
+        from apps.i18n.services import CurrencyService, CurrencyConversionService
 
         checkout_session = CheckoutSession.objects.filter(order=self.object).select_related('cart', 'shipping_rate').first()
         currency_symbol_local = None
@@ -158,7 +158,7 @@ class OrderDetailView(LoginRequiredMixin, DetailView):
 
         # Resolve human-readable country names for display
         try:
-            from apps.localization.models import Country
+            from apps.i18n.models import Country
             shipping_country_obj = Country.objects.filter(code=self.object.shipping_country).first()
             billing_country_obj = Country.objects.filter(code=self.object.billing_country).first()
             context['shipping_country_name'] = shipping_country_obj.name if shipping_country_obj else self.object.shipping_country
@@ -279,7 +279,7 @@ class OrderInvoiceView(LoginRequiredMixin, TemplateView):
 
         # Compute formatted amounts using currencies service (reuse logic from success/order detail)
         try:
-            from apps.currencies.services import CurrencyService
+            from apps.i18n.services import CurrencyService
             from decimal import Decimal
             # Attempt to show amounts in order display currency if available
             checkout_session = None
@@ -305,7 +305,7 @@ class OrderInvoiceView(LoginRequiredMixin, TemplateView):
             try:
                 rate_currency_obj = getattr(checkout_session.shipping_rate, 'currency', None) if checkout_session else None
                 if rate_currency_obj and rate_currency_obj.code != currency_obj.code:
-                    from apps.currencies.services import CurrencyConversionService
+                    from apps.i18n.services import CurrencyConversionService
                     display_shipping = CurrencyConversionService.convert_by_code(self.order.shipping_cost, rate_currency_obj.code, currency_obj.code)
             except Exception:
                 display_shipping = self.order.shipping_cost
