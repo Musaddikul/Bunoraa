@@ -12,10 +12,15 @@ def site_settings(request):
     cache_key = 'site_settings_context'
     cached_settings = cache.get(cache_key)
     
+    tax_rate = 0  # Default tax rate - will be set from site settings if cached
+    
     if cached_settings is None:
         try:
             from apps.pages.models import SiteSettings, SocialLink
             site = SiteSettings.get_settings()
+            
+            # Get tax rate from site settings
+            tax_rate = float(site.tax_rate) if site.tax_rate else 0
 
             # Build social links list (name, url, icon-url) from the settings' related links
             social_links = []
@@ -59,6 +64,7 @@ def site_settings(request):
                 'CUSTOM_HEAD_SCRIPTS': site.custom_head_scripts or '',
                 'CUSTOM_BODY_SCRIPTS': site.custom_body_scripts or '',
                 'SOCIAL_LINKS': social_links,
+                'TAX_RATE': tax_rate,
             }
             # Cache for 5 minutes
             cache.set(cache_key, cached_settings, 300)
@@ -87,6 +93,7 @@ def site_settings(request):
                 'CUSTOM_HEAD_SCRIPTS': '',
                 'CUSTOM_BODY_SCRIPTS': '',
                 'SOCIAL_LINKS': [],
+                'TAX_RATE': 0,
             }
     
     # Determine per-request currency (do not cache - user/session based)
@@ -193,6 +200,7 @@ def site_settings(request):
         'free_shipping_threshold': free_shipping_threshold,
         'default_shipping_cost': default_shipping_cost,
         'cod_fee': cod_fee,
+        'tax_rate': cached_settings.get('TAX_RATE', 0),
         'canonical_url': build_canonical(request),
         'meta_robots': compute_meta_robots(request),
         'IS_CRAWLER': is_crawler,
