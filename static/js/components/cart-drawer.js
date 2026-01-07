@@ -22,7 +22,11 @@
       CURRENCY_SYMBOL: cartDrawer?.dataset?.currencySymbol || currencyMeta.symbol || '৳',
       CURRENCY_CODE: cartDrawer?.dataset?.currencyCode || currencyMeta.code || 'BDT',
       CURRENCY_POSITION: cartDrawer?.dataset?.currencyPosition || currencyMeta.symbol_position || 'before',
-      COD_FEE: parseFloat(cartDrawer?.dataset?.codFee) || shippingMeta.cod_fee || 0
+      COD_FEE: parseFloat(cartDrawer?.dataset?.codFee) || shippingMeta.cod_fee || 0,
+      TAX_RATE: parseFloat(cartDrawer?.dataset?.taxRate) || 10,
+      USER_AUTHENTICATED: cartDrawer?.dataset?.userAuthenticated === 'true',
+      USER_CITY: cartDrawer?.dataset?.userCity || 'Dhaka',
+      USER_POSTAL: cartDrawer?.dataset?.userPostal || '1200'
     };
   }
 
@@ -116,10 +120,68 @@
     }
   }
 
-  // Update cart summary with shipping
-  function updateCartSummary(cartDrawer, cart, location = 'dhaka') {
+  // Calculate tax based on subtotal and tax rate
+  function calculateTax(subtotal) {
+    const c = cfg();
+    if (!c.TAX_RATE || c.TAX_RATE <= 0) return 0;
+    return (subtotal * c.TAX_RATE / 100);
+  }
+
+  // Fetch dynamic shipping rate from API
+  let cachedShippingRate = null;
+  let shippingFetchPromise = null;
+  
+  async function fetchShippingRate(subtotal, itemCount, productIds = []) {
+    const c = cfg();
+    // Use user's address or default to Dhaka/1200 for guests
+    const city = c.USER_CITY || 'Dhaka';
+    const postalCode = c.USER_POSTAL || '1200';
+    
+    try {
+      const response = await fetch('/api/v1/shipping/calculate/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': window.CSRF_TOKEN || document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+        },
+        body: JSON.stringify({
+          country: 'BD',
+          state: city,
+          postal_code: postalCode,
+          subtotal: subtotal,
+          weight: 0,
+          item_count: itemCount,
+          product_ids: productIds
+        })
+      });
+      
+      if (!response.ok) throw new Error('Shipping API error');
+      
+      const data = await response.json();
+      if (data.success && data.data?.methods?.length > 0) {
+        // Use the first/cheapest shipping method
+        const cheapest = data.data.methods.reduce((min, m) => 
+          parseFloat(m.rate) < parseFloat(min.rate) ? m : min, data.data.methods[0]);
+        cachedShippingRate = {
+          cost: parseFloat(cheapest.rate),
+          isFree: cheapest.is_free || false,
+          name: cheapest.name
+        };
+        return cachedShippingRate;
+      }
+    } catch (e) {
+      console.warn('[Cart] Shipping API error, using fallback:', e);
+    }
+    
+    // Fallback to static calculation
+    return calculateShipping(subtotal);
+  }
+
+  // Update cart summary with shipping and tax
+  async function updateCartSummary(cartDrawer, cart) {
     const subtotalEl = cartDrawer?.querySelector('[data-cart-subtotal]');
     const shippingEl = cartDrawer?.querySelector('[data-cart-shipping]');
+    const taxEl = cartDrawer?.querySelector('[data-cart-tax]');
     const totalEl = cartDrawer?.querySelector('[data-cart-total]');
     const savingsRow = cartDrawer?.querySelector('[data-cart-savings-row]');
     const savingsEl = cartDrawer?.querySelector('[data-cart-savings]');
@@ -137,14 +199,34 @@
       return sum + Math.max(0, (original - current) * qty);
     }, 0);
     
-    const shipping = calculateShipping(subtotal, location);
-    const total = subtotal + shipping.cost;
+    // Calculate tax
+    const tax = calculateTax(subtotal);
+    
+    // Get product IDs for shipping calculation
+    const productIds = items.map(it => it.product?.id || it.product_id).filter(Boolean);
+    const itemCount = items.reduce((sum, it) => sum + Number(it.quantity || 1), 0);
+    
+    // Show loading state for shipping
+    if (shippingEl) shippingEl.textContent = 'Calculating...';
+    
+    // Fetch dynamic shipping (or use cached)
+    let shipping;
+    if (items.length === 0) {
+      shipping = { cost: 0, isFree: true };
+    } else if (cachedShippingRate) {
+      shipping = cachedShippingRate;
+    } else {
+      shipping = await fetchShippingRate(subtotal, itemCount, productIds);
+    }
+    
+    const total = subtotal + shipping.cost + tax;
     
     // Update elements
     if (subtotalEl) subtotalEl.textContent = cart.summary?.formatted_subtotal || fmt(subtotal);
     if (shippingEl) shippingEl.textContent = shipping.isFree ? 'FREE' : fmt(shipping.cost);
+    if (taxEl) taxEl.textContent = fmt(tax);
     if (totalEl) totalEl.textContent = fmt(total);
-    if (countEl) countEl.textContent = items.reduce((sum, it) => sum + Number(it.quantity || 1), 0);
+    if (countEl) countEl.textContent = itemCount;
     
     // Show/hide savings
     if (savingsRow && savingsEl) {
@@ -167,20 +249,16 @@
     const items = cart.items || [];
     cartDrawer?.classList.toggle('cart-empty', items.length === 0);
 
-    // Get current location selection
-    const locationSelect = cartDrawer?.querySelector('[data-cart-location]');
-    const location = locationSelect?.value || 'dhaka';
-
-    // Update summary
-    updateCartSummary(cartDrawer, cart, location);
+    // Update summary (uses user's location from config or defaults to Dhaka for guests)
+    updateCartSummary(cartDrawer, cart);
 
     if (items.length === 0) {
       cartContent.innerHTML = `
         <div class="p-8 text-center">
           <div class="mx-auto w-16 h-16 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center mb-4">
-            <svg class="w-8 h-8 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 8m12-8-2 8M9 21h6"/></svg>
+            <svg class="w-8 h-8 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
           </div>
-          <h3 class="text-lg font-semibold text-stone-900 dark:text-white mb-2">Your cart is empty</h3>
+          <h3 class="text-lg font-semibold text-stone-900 dark:text-white mb-2">Your bag is empty</h3>
           <p class="text-stone-600 dark:text-stone-300 mb-4">Looks like you haven't added anything yet</p>
           <a href="/products/" class="inline-flex items-center px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-xl transition-colors">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
@@ -406,35 +484,6 @@
     }
   }
 
-  // Setup location change handler
-  function setupLocationHandler(cartDrawer) {
-    const locationSelect = cartDrawer?.querySelector('[data-cart-location]');
-    
-    if (locationSelect) {
-      locationSelect.addEventListener('change', async () => {
-        try {
-          const response = await window.CartApi.getCart();
-          if (response.success) {
-            render(cartDrawer, response.data);
-          }
-        } catch (err) {
-          console.error(err);
-        }
-      });
-    }
-  }
-
-  // Setup quick pay buttons
-  function setupQuickPay(cartDrawer) {
-    cartDrawer?.querySelectorAll('[data-quick-pay]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const method = btn.dataset.quickPay;
-        // Redirect to checkout with payment method pre-selected
-        window.location.href = `/checkout/?payment_method=${method}`;
-      });
-    });
-  }
-
   async function open(cartDrawer) {
     if (!cartDrawer) return;
     const cartContent = cartDrawer.querySelector('[data-cart-content]');
@@ -499,8 +548,6 @@
 
     // Setup additional handlers
     setupSavedToggle(cartDrawer);
-    setupLocationHandler(cartDrawer);
-    setupQuickPay(cartDrawer);
 
     // Listen for cart updates
     document.addEventListener('cart:updated', async () => {

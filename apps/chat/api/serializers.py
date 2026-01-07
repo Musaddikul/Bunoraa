@@ -159,13 +159,15 @@ class ConversationSerializer(serializers.ModelSerializer):
     agent = ChatAgentPublicSerializer(read_only=True)
     last_message = serializers.SerializerMethodField()
     unread_count = serializers.SerializerMethodField()
+    message_count = serializers.SerializerMethodField()
+    feedback = serializers.CharField(source='rating_comment', read_only=True)
     
     class Meta:
         model = Conversation
         fields = [
             'id', 'customer', 'customer_name', 'customer_email', 'customer_phone',
             'agent', 'category', 'subject', 'status', 'priority',
-            'is_bot_handling', 'is_vip_customer', 'source', 'order_reference',
+            'is_bot_handling', 'source', 'order_reference',
             'rating', 'feedback', 'message_count', 'last_message', 'unread_count',
             'created_at', 'started_at', 'first_response_at', 'resolved_at', 'last_message_at'
         ]
@@ -173,6 +175,9 @@ class ConversationSerializer(serializers.ModelSerializer):
             'id', 'customer', 'agent', 'message_count',
             'created_at', 'started_at', 'first_response_at', 'resolved_at', 'last_message_at'
         ]
+    
+    def get_message_count(self, obj):
+        return obj.messages.filter(is_deleted=False).count()
     
     def get_last_message(self, obj):
         last = obj.messages.order_by('-created_at').first()
@@ -204,7 +209,8 @@ class ConversationDetailSerializer(ConversationSerializer):
     messages = serializers.SerializerMethodField()
     
     class Meta(ConversationSerializer.Meta):
-        fields = ConversationSerializer.Meta.fields + ['messages', 'initial_message', 'resolution', 'metadata']
+        # Only include fields that exist on the model
+        fields = ConversationSerializer.Meta.fields + ['messages', 'initial_message']
     
     def get_messages(self, obj):
         """Get last 50 messages (oldest first for display)."""
@@ -253,8 +259,8 @@ class ConversationRatingSerializer(serializers.Serializer):
     
     def update(self, instance, validated_data):
         instance.rating = validated_data['rating']
-        instance.feedback = validated_data.get('feedback', '')
-        instance.save(update_fields=['rating', 'feedback'])
+        instance.rating_comment = validated_data.get('feedback', '')
+        instance.save(update_fields=['rating', 'rating_comment'])
         return instance
 
 

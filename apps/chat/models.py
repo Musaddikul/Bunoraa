@@ -58,6 +58,9 @@ class ChatAgent(models.Model):
         related_name='chat_agent_profile'
     )
     
+    # Active status
+    is_active = models.BooleanField(default=True, db_index=True)
+    
     # Availability
     is_online = models.BooleanField(default=False, db_index=True)
     is_accepting_chats = models.BooleanField(default=True)
