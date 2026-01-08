@@ -177,10 +177,6 @@
     </div>
 </div>
 
-<!-- Chat Sound Effects -->
-<audio id="chat-sound-send" preload="none">
-    <source src="{% static 'audio/message-send.mp3' %}" type="audio/mpeg">
-</audio>
-<audio id="chat-sound-receive" preload="none">
-    <source src="{% static 'audio/message-receive.mp3' %}" type="audio/mpeg">
-</audio>
+<!-- Chat Sound Effects (optional - silently fails if files don't exist) -->
+<audio id="chat-sound-send" preload="none" style="display:none"></audio>
+<audio id="chat-sound-receive" preload="none" style="display:none"></audio>

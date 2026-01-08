@@ -7,19 +7,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("accounts", "0001_initial"),
+        ("reviews", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name="user",
-            name="avatar",
+            model_name="reviewimage",
+            name="image",
             field=models.ImageField(
-                blank=True,
-                null=True,
-                storage=storages.backends.s3.S3Storage(),
-                upload_to="avatars/",
-                verbose_name="avatar",
+                storage=storages.backends.s3.S3Storage(), upload_to="reviews/"
             ),
         ),
     ]

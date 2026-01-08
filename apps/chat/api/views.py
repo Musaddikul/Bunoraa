@@ -281,13 +281,35 @@ class ConversationViewSet(viewsets.ModelViewSet):
         
         conversation.status = ConversationStatus.CLOSED
         conversation.resolved_at = timezone.now()
-        conversation.resolution = request.data.get('resolution', 'Closed by user')
-        conversation.save()
+        # Store resolution note in internal_notes
+        resolution_note = request.data.get('resolution', 'Closed by user')
+        if resolution_note:
+            conversation.internal_notes = f"{conversation.internal_notes}\n[Closed] {resolution_note}".strip()
+        conversation.save(update_fields=['status', 'resolved_at', 'internal_notes'])
         
         # Send rating request
         send_chat_rating_request.delay(str(conversation.id))
         
         return Response(ConversationSerializer(conversation, context={'request': request}).data)
+    
+    @action(detail=True, methods=['get'])
+    def messages(self, request, id=None):
+        """Get messages for a conversation."""
+        conversation = self.get_object()
+        
+        # Get messages with pagination
+        messages = conversation.messages.filter(is_deleted=False).order_by('created_at')
+        
+        # Apply pagination
+        paginator = MessagePagination()
+        page = paginator.paginate_queryset(messages, request)
+        
+        if page is not None:
+            serializer = MessageSerializer(page, many=True, context={'request': request})
+            return paginator.get_paginated_response(serializer.data)
+        
+        serializer = MessageSerializer(messages, many=True, context={'request': request})
+        return Response(serializer.data)
     
     @action(detail=True, methods=['post'])
     def request_agent(self, request, id=None):
@@ -426,8 +448,7 @@ class MessageViewSet(viewsets.ModelViewSet):
         
         conversation = message.conversation
         conversation.last_message_at = timezone.now()
-        conversation.message_count += 1
-        conversation.save()
+        conversation.save(update_fields=['last_message_at'])
         
         # Trigger AI response if bot handling
         if conversation.is_bot_handling and message.is_from_customer:

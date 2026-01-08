@@ -7,19 +7,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("accounts", "0001_initial"),
+        ("payments", "0002_paymentgateway"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name="user",
-            name="avatar",
+            model_name="paymentgateway",
+            name="icon",
             field=models.ImageField(
                 blank=True,
                 null=True,
                 storage=storages.backends.s3.S3Storage(),
-                upload_to="avatars/",
-                verbose_name="avatar",
+                upload_to="payment-icons/",
             ),
         ),
     ]
