@@ -132,6 +132,62 @@ app.conf.beat_schedule = {
         'schedule': crontab(hour=5, minute=0),
     },
     
+    # Train recommendation models weekly on Sunday at 2 AM
+    'train-recommendation-models': {
+        'task': 'ml_models.training.tasks.train_recommendation_model',
+        'schedule': crontab(hour=2, minute=0, day_of_week=0),
+        'args': ('ncf',),
+        'options': {'queue': 'ml_training'},
+    },
+    
+    # Train embedding models weekly on Sunday at 3 AM
+    'train-embedding-models': {
+        'task': 'ml_models.training.tasks.train_embedding_models',
+        'schedule': crontab(hour=3, minute=0, day_of_week=0),
+        'options': {'queue': 'ml_training'},
+    },
+    
+    # Train demand forecaster weekly on Monday at 1 AM
+    'train-demand-forecaster': {
+        'task': 'ml_models.training.tasks.train_demand_forecaster',
+        'schedule': crontab(hour=1, minute=0, day_of_week=1),
+        'options': {'queue': 'ml_training'},
+    },
+    
+    # Train fraud detector daily at 4 AM
+    'train-fraud-detector': {
+        'task': 'ml_models.training.tasks.train_fraud_detector',
+        'schedule': crontab(hour=4, minute=0),
+        'options': {'queue': 'ml_training'},
+    },
+    
+    # Train churn predictor weekly on Tuesday at 1 AM
+    'train-churn-predictor': {
+        'task': 'ml_models.training.tasks.train_churn_predictor',
+        'schedule': crontab(hour=1, minute=0, day_of_week=2),
+        'options': {'queue': 'ml_training'},
+    },
+    
+    # Train search model weekly on Wednesday at 1 AM
+    'train-search-model': {
+        'task': 'ml_models.training.tasks.train_search_model',
+        'schedule': crontab(hour=1, minute=0, day_of_week=3),
+        'options': {'queue': 'ml_training'},
+    },
+    
+    # ML model health check hourly
+    'ml-health-check': {
+        'task': 'ml_models.training.tasks.model_health_check',
+        'schedule': crontab(minute=0),
+    },
+    
+    # Batch inference for recommendations every 6 hours
+    'batch-recommendations': {
+        'task': 'ml_models.training.tasks.batch_generate_recommendations',
+        'schedule': crontab(hour='*/6', minute=30),
+        'options': {'queue': 'ml_inference'},
+    },
+    
     # ==========================================================================
     # CLEANUP TASKS
     # ==========================================================================

@@ -190,9 +190,31 @@
                     <p class="text-gray-600 dark:text-stone-400 mb-6 transition-colors duration-500">Try adjusting your filters or search terms</p>
                     <a href="{% url 'catalog:product-list' %}" class="inline-flex items-center justify-center px-5 py-2 rounded-full bg-primary-600 dark:bg-amber-600 text-white text-sm font-medium hover:bg-primary-700 dark:hover:bg-amber-700 transition-colors duration-500">View All Products</a>
                 </div>
+                
+                <!-- ML-Powered: Popular Products (when no results) -->
+                <section id="ml-popular-fallback" class="mt-12" data-ml-recommendations="popular" data-limit="8" data-show-header="true" data-title="Popular Products" data-subtitle="You might be interested in these">
+                    <div id="ml-popular-products" class="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6 mt-6">
+                        {% for i in "1234" %}
+                        <div class="skeleton h-64 rounded-2xl"></div>
+                        {% endfor %}
+                    </div>
+                </section>
                 {% endif %}
             </main>
         </div>
     </div>
 </section>
+
+<!-- ML-Powered: Personalized Recommendations -->
+{% if request.user.is_authenticated %}
+<section id="ml-personalized-search" class="bg-gradient-to-br from-amber-50/50 to-stone-50 dark:from-stone-900 dark:to-stone-950 py-12" data-ml-recommendations="personalized" data-limit="8" data-show-header="true" data-title="Recommended For You" data-subtitle="Based on your browsing history">
+    <div class="container mx-auto px-4">
+        <div id="ml-personalized-products" class="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6 mt-6">
+            {% for i in "1234" %}
+            <div class="skeleton h-64 rounded-2xl"></div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
 {% endblock %}

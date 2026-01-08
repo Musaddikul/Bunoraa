@@ -392,7 +392,27 @@
         </div>
     </div>
     
-    <!-- Related Products -->
+    <!-- ML-Powered: Frequently Bought Together -->
+    <section id="ml-fbt" class="mt-16" data-ml-recommendations="fbt" data-product-id="{{ product.id }}" data-limit="5" data-layout="carousel" data-show-header="true" data-title="Frequently Bought Together">
+        <!-- ML recommendations loaded by JavaScript -->
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {% for i in "12345" %}
+            <div class="skeleton h-64 rounded-2xl"></div>
+            {% endfor %}
+        </div>
+    </section>
+    
+    <!-- ML-Powered: Similar Products -->
+    <section id="ml-similar-products" class="mt-16" data-ml-recommendations="similar" data-product-id="{{ product.id }}" data-limit="8" data-show-header="true" data-title="You May Also Like" data-subtitle="Based on this product">
+        <!-- ML recommendations loaded by JavaScript -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {% for i in "12345678" %}
+            <div class="skeleton h-72 rounded-2xl"></div>
+            {% endfor %}
+        </div>
+    </section>
+    
+    <!-- Related Products (Fallback) -->
     {% if related_products %}
     <section id="related-products" class="mt-16">
         <h2 class="text-2xl font-bold mb-8">Related Products</h2>
@@ -407,6 +427,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/ml-recommendations.js' %}"></script>
 <script>
     function changeImage(imageUrl) {
         var mainImage = document.getElementById('main-image');

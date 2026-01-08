@@ -79,6 +79,28 @@ else:
 # CORS allow all for development
 CORS_ALLOW_ALL_ORIGINS = True
 
+# =============================================================================
+# DEBUG TOOLBAR (for development with S3)
+# =============================================================================
+if DEBUG:
+    try:
+        import debug_toolbar
+        INSTALLED_APPS += ['debug_toolbar']
+        # Insert after GZipMiddleware
+        try:
+            gzip_index = MIDDLEWARE.index('django.middleware.gzip.GZipMiddleware')
+            MIDDLEWARE.insert(gzip_index + 1, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+        except ValueError:
+            MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+        
+        INTERNAL_IPS = ['127.0.0.1', 'localhost', '::1']
+        DEBUG_TOOLBAR_CONFIG = {
+            'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG,
+            'RESULTS_CACHE_SIZE': 100,
+        }
+    except ImportError:
+        pass
+
 # Development logging tweaks: ensure errors and debug info are printed to the console
 # This file is used for S3-enabled local/testing environments so emit relevant logs here
 try:
