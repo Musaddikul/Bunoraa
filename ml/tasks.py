@@ -216,7 +216,7 @@ def export_training_data_task(output_dir: str = None):
     """
     from pathlib import Path
     
-    output_dir = output_dir or str(Path(settings.BASE_DIR) / 'ml_training_data')
+    output_dir = output_dir or str(Path(settings.BASE_DIR) / 'ml' / 'training_data')
     
     logger.info(f"Exporting training data to {output_dir}")
     

@@ -51,7 +51,7 @@ class CategorySitemap(Sitemap):
     
     def items(self):
         from apps.catalog.models import Category
-        return Category.objects.filter(is_active=True, is_deleted=False)
+        return Category.objects.filter(is_visible=True, is_deleted=False)
     
     def lastmod(self, obj):
         return obj.updated_at

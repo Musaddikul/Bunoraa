@@ -62,7 +62,9 @@ Add to your `settings.py`:
 
 ```python
 # ML Configuration
-ML_MODELS_DIR = BASE_DIR / "ml_models_data"
+ML_MODELS_DIR = BASE_DIR / "ml"
+ML_MODELS_DATA_DIR = BASE_DIR / "ml" / "models_data"
+ML_TRAINING_DATA_DIR = BASE_DIR / "ml" / "training_data"
 ML_CACHE_BACKEND = "redis"
 ML_REDIS_URL = "redis://localhost:6379/1"
 

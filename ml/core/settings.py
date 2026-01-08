@@ -196,7 +196,7 @@ ML_MODEL_STORAGE = {
     'model_dir': os.path.join(BASE_DIR, 'ml', 'saved_models'),
     
     # Directory for training data
-    'training_data_dir': os.path.join(BASE_DIR, 'ml_training_data'),
+    'training_data_dir': os.path.join(BASE_DIR, 'ml', 'training_data'),
     
     # Keep N versions of each model
     'max_model_versions': 5,
