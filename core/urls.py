@@ -25,6 +25,9 @@ urlpatterns = [
     # API v1
     path('api/v1/', include('core.urls_api')),
     
+    # ML API (direct path for frontend JS library compatibility)
+    path('api/ml/', include('ml.api.urls')),
+    
     # Health checks
     path('health/', health_check, name='health_check'),
     path('health/detailed/', health_check_detailed, name='health_check_detailed'),
