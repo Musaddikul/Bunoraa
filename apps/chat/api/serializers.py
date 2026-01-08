@@ -95,12 +95,12 @@ class MessageSerializer(serializers.ModelSerializer):
             'message_type', 'content', 'attachments',
             'is_read', 'read_at', 'is_edited', 'edited_at', 'is_deleted',
             'reactions', 'reply_to', 'reply_to_preview',
-            'created_at', 'updated_at'
+            'created_at'
         ]
         read_only_fields = [
             'id', 'sender', 'is_from_customer', 'is_from_bot',
             'is_read', 'read_at', 'is_edited', 'edited_at',
-            'reactions', 'created_at', 'updated_at'
+            'reactions', 'created_at'
         ]
     
     def get_reply_to_preview(self, obj):
