@@ -21,6 +21,9 @@ urlpatterns = [
     path('catalog/', include('apps.catalog.api.urls')),
     path('recommendations/', include('apps.recommendations.urls')),
     
+    # ML/AI APIs (comprehensive ML services)
+    path('ml/', include('ml.api.urls')),
+    
     # Commerce API (cart, wishlist, checkout)
     path('commerce/', include('apps.commerce.api.urls')),
     

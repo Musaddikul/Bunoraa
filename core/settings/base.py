@@ -88,6 +88,7 @@ LOCAL_APPS = [
     'apps.subscriptions',
     'apps.commerce',
     'apps.chat',
+    'ml',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -112,6 +113,7 @@ MIDDLEWARE = [
     'core.middleware.request_logging.RequestLoggingMiddleware',
     'core.middleware.cache_control_html.CacheControlHTMLMiddleware',
     'core.middleware.api_response.APIResponseMiddleware',
+    'ml.middleware.MLTrackingMiddleware',
 ]
 
 # Return JSON on CSRF failures and set a fresh cookie for SPA-friendly recovery
@@ -497,13 +499,48 @@ CREDENTIAL_ENCRYPTION_KEY = os.environ.get('CREDENTIAL_ENCRYPTION_KEY', '')
 # =============================================================================
 # ML/AI CONFIGURATION
 # =============================================================================
-ML_MODELS_DIR = BASE_DIR / 'ml_models'
+ML_MODELS_DIR = BASE_DIR / 'ml'
 ML_TRAINING_DATA_DIR = BASE_DIR / 'ml_training_data'
+ML_MODELS_DATA_DIR = BASE_DIR / 'ml_models_data'
 ML_MODELS_DIR.mkdir(exist_ok=True)
 ML_TRAINING_DATA_DIR.mkdir(exist_ok=True)
+ML_MODELS_DATA_DIR.mkdir(exist_ok=True)
 
 # Model update schedule (in hours)
 ML_MODEL_UPDATE_INTERVAL = int(os.environ.get('ML_MODEL_UPDATE_INTERVAL', 24))
+
+# ML Feature flags
+ML_FEATURES = {
+    'recommendations': os.environ.get('ML_RECOMMENDATIONS', 'True').lower() in ('1', 'true', 'yes'),
+    'semantic_search': os.environ.get('ML_SEMANTIC_SEARCH', 'True').lower() in ('1', 'true', 'yes'),
+    'fraud_detection': os.environ.get('ML_FRAUD_DETECTION', 'True').lower() in ('1', 'true', 'yes'),
+    'demand_forecasting': os.environ.get('ML_DEMAND_FORECASTING', 'True').lower() in ('1', 'true', 'yes'),
+    'personalization': os.environ.get('ML_PERSONALIZATION', 'True').lower() in ('1', 'true', 'yes'),
+    'churn_prediction': os.environ.get('ML_CHURN_PREDICTION', 'True').lower() in ('1', 'true', 'yes'),
+    'image_classification': os.environ.get('ML_IMAGE_CLASSIFICATION', 'True').lower() in ('1', 'true', 'yes'),
+}
+
+# ML Cache & Feature Store
+ML_REDIS_URL = os.environ.get('ML_REDIS_URL', 'redis://localhost:6379/1')
+ML_CACHE_BACKEND = os.environ.get('ML_CACHE_BACKEND', 'redis')  # redis, memory
+
+# ML Inference settings
+ML_INFERENCE = {
+    'cache_ttl': int(os.environ.get('ML_CACHE_TTL', 3600)),
+    'batch_size': int(os.environ.get('ML_BATCH_SIZE', 32)),
+    'timeout': float(os.environ.get('ML_TIMEOUT', 5.0)),
+    'max_retries': int(os.environ.get('ML_MAX_RETRIES', 3)),
+}
+
+# ML Training settings
+ML_TRAINING = {
+    'embedding_dim': int(os.environ.get('ML_EMBEDDING_DIM', 128)),
+    'hidden_dim': int(os.environ.get('ML_HIDDEN_DIM', 256)),
+    'num_epochs': int(os.environ.get('ML_NUM_EPOCHS', 50)),
+    'batch_size': int(os.environ.get('ML_TRAINING_BATCH_SIZE', 256)),
+    'learning_rate': float(os.environ.get('ML_LEARNING_RATE', 0.001)),
+    'use_gpu': os.environ.get('ML_USE_GPU', 'True').lower() in ('1', 'true', 'yes'),
+}
 
 # =============================================================================
 # BACKUP CONFIGURATION

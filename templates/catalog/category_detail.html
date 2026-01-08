@@ -204,6 +204,16 @@
             {% endif %}
         </main>
     </div>
+    
+    <!-- ML-Powered: Popular in Category -->
+    <section id="ml-category-popular" class="mt-12 bg-stone-50 dark:bg-stone-900 rounded-2xl p-6" data-ml-recommendations="popular" data-category-id="{{ category.id }}" data-limit="8" data-show-header="true" data-title="Popular in {{ category.name }}" data-subtitle="Trending products in this category">
+        <div id="ml-popular-products" class="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6 mt-6">
+            <!-- ML recommendations loaded by JavaScript -->
+            {% for i in "1234" %}
+            <div class="skeleton h-64 rounded-2xl"></div>
+            {% endfor %}
+        </div>
+    </section>
 </div>
 
 <!-- Structured Data -->

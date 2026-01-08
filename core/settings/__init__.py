@@ -1,16 +1,14 @@
-from .base import *
+"""
+Settings module for Bunoraa.
 
-try:
-    from .local import *
-except ImportError:
-    pass
+DO NOT import all settings here. Use DJANGO_SETTINGS_MODULE to select the appropriate settings:
+- core.settings.local      - Local development with SQLite
+- core.settings.s3         - Development with S3/PostgreSQL  
+- core.settings.production - Production deployment
 
-try:
-    from .production import *
-except ImportError:
-    pass
+Example:
+    export DJANGO_SETTINGS_MODULE=core.settings.local
+    python manage.py runserver
+"""
 
-try:
-    from .s3 import *
-except ImportError:
-    pass
+# Import nothing by default - let DJANGO_SETTINGS_MODULE pick the right file
