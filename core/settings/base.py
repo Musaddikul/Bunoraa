@@ -500,11 +500,11 @@ CREDENTIAL_ENCRYPTION_KEY = os.environ.get('CREDENTIAL_ENCRYPTION_KEY', '')
 # ML/AI CONFIGURATION
 # =============================================================================
 ML_MODELS_DIR = BASE_DIR / 'ml'
-ML_TRAINING_DATA_DIR = BASE_DIR / 'ml_training_data'
-ML_MODELS_DATA_DIR = BASE_DIR / 'ml_models_data'
+ML_TRAINING_DATA_DIR = BASE_DIR / 'ml' / 'training_data'
+ML_MODELS_DATA_DIR = BASE_DIR / 'ml' / 'models_data'
 ML_MODELS_DIR.mkdir(exist_ok=True)
-ML_TRAINING_DATA_DIR.mkdir(exist_ok=True)
-ML_MODELS_DATA_DIR.mkdir(exist_ok=True)
+ML_TRAINING_DATA_DIR.mkdir(parents=True, exist_ok=True)
+ML_MODELS_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 # Model update schedule (in hours)
 ML_MODEL_UPDATE_INTERVAL = int(os.environ.get('ML_MODEL_UPDATE_INTERVAL', 24))

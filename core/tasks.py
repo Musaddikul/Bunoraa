@@ -459,7 +459,7 @@ def warm_cache():
         cache.set('popular_products', list(popular.values_list('id', flat=True)), timeout=3600)
         
         # Cache category tree
-        categories = Category.objects.filter(is_active=True).values('id', 'name', 'slug', 'parent_id')
+        categories = Category.objects.filter(is_visible=True, is_deleted=False).values('id', 'name', 'slug', 'parent_id')
         cache.set('category_tree', list(categories), timeout=3600)
         
         # Cache featured products

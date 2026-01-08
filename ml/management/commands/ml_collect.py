@@ -49,7 +49,7 @@ class Command(BaseCommand):
             '--output-dir',
             type=str,
             default=None,
-            help='Output directory for exports (default: ml_training_data)',
+            help='Output directory for exports (default: ml/training_data)',
         )
         parser.add_argument(
             '--batch-size',

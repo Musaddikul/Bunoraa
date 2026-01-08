@@ -135,7 +135,7 @@ class Command(BaseCommand):
             data_status['total_users'] = UserProfile.objects.count()
             
             # Check training data directory
-            training_data_path = Path(settings.BASE_DIR) / 'ml_training_data'
+            training_data_path = Path(settings.BASE_DIR) / 'ml' / 'training_data'
             
             if training_data_path.exists():
                 csv_files = list(training_data_path.glob('*.csv'))
