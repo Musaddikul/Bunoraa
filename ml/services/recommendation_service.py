@@ -60,7 +60,14 @@ class RecommendationService:
     
     def _cache_key(self, prefix: str, **kwargs) -> str:
         """Generate cache key."""
-        key_data = json.dumps(kwargs, sort_keys=True)
+        # Convert UUIDs and other non-serializable types to strings
+        def serialize_value(v):
+            if hasattr(v, 'hex'):  # UUID
+                return str(v)
+            return v
+        
+        serializable_kwargs = {k: serialize_value(v) for k, v in kwargs.items()}
+        key_data = json.dumps(serializable_kwargs, sort_keys=True, default=str)
         key_hash = hashlib.md5(key_data.encode()).hexdigest()[:8]
         return f"rec:{prefix}:{key_hash}"
     
@@ -399,15 +406,20 @@ class RecommendationService:
     
     def _get_user_features(self, user_id: int) -> Dict[str, Any]:
         """Get user features from feature store."""
-        feature_store = self._get_feature_store()
-        
-        features = feature_store.get_features(f"user:{user_id}")
-        
-        if not features:
-            # Compute basic features
-            features = self._compute_user_features(user_id)
-        
-        return features
+        try:
+            feature_store = self._get_feature_store()
+            
+            # Try to get user feature group, fall back to computing features
+            features = feature_store.get_feature_group("user_features", f"user:{user_id}")
+            
+            if not features:
+                # Compute basic features
+                features = self._compute_user_features(user_id)
+            
+            return features
+        except Exception as e:
+            logger.warning(f"Failed to get user features: {e}")
+            return self._compute_user_features(user_id)
     
     def _compute_user_features(self, user_id: int) -> Dict[str, Any]:
         """Compute user features from database."""

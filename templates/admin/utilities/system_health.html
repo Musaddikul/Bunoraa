@@ -1,0 +1,177 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | {{ site_title }}{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --util-bg: #ffffff;
+        --util-border: #e5e7eb;
+        --util-text: #374151;
+        --util-text-muted: #6b7280;
+        --util-success: #10b981;
+        --util-warning: #f59e0b;
+        --util-danger: #ef4444;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --util-bg: #1f2937;
+            --util-border: #374151;
+            --util-text: #f3f4f6;
+            --util-text-muted: #9ca3af;
+        }
+    }
+    
+    html[data-theme="dark"] {
+        --util-bg: #1f2937;
+        --util-border: #374151;
+        --util-text: #f3f4f6;
+        --util-text-muted: #9ca3af;
+    }
+    
+    .util-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+    
+    .util-header h1 {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--util-text);
+        margin: 0 0 24px 0;
+    }
+    
+    .health-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+    }
+    
+    .health-card {
+        background: var(--util-bg);
+        border: 1px solid var(--util-border);
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .health-card.healthy {
+        border-color: var(--util-success);
+    }
+    
+    .health-card.degraded {
+        border-color: var(--util-warning);
+    }
+    
+    .health-card.unhealthy {
+        border-color: var(--util-danger);
+    }
+    
+    .health-icon {
+        font-size: 36px;
+        margin-bottom: 12px;
+    }
+    
+    .health-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--util-text);
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .health-status {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    
+    .health-status.healthy { color: var(--util-success); }
+    .health-status.degraded { color: var(--util-warning); }
+    .health-status.unhealthy { color: var(--util-danger); }
+    
+    .health-latency {
+        font-size: 12px;
+        color: var(--util-text-muted);
+    }
+    
+    .overall-status {
+        background: var(--util-bg);
+        border: 2px solid var(--util-border);
+        border-radius: 8px;
+        padding: 24px;
+        margin-bottom: 24px;
+        text-align: center;
+    }
+    
+    .overall-status.healthy {
+        border-color: var(--util-success);
+        background: rgba(16, 185, 129, 0.1);
+    }
+    
+    .overall-status.degraded {
+        border-color: var(--util-warning);
+        background: rgba(245, 158, 11, 0.1);
+    }
+    
+    .overall-badge {
+        font-size: 48px;
+        display: block;
+        margin-bottom: 12px;
+    }
+    
+    .overall-text {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--util-text);
+    }
+</style>
+
+<div class="util-container">
+    <div class="util-header">
+        <h1>💓 {{ title }}</h1>
+    </div>
+    
+    <div class="overall-status {{ overall_status }}">
+        <span class="overall-badge">{% if overall_status == 'healthy' %}✅{% else %}⚠️{% endif %}</span>
+        <span class="overall-text">
+            {% if overall_status == 'healthy' %}
+                {% trans "All Systems Operational" %}
+            {% else %}
+                {% trans "Some Services Degraded" %}
+            {% endif %}
+        </span>
+    </div>
+    
+    <div class="health-grid">
+        {% for service_name, service_data in health.items %}
+        <div class="health-card {{ service_data.status }}">
+            <div class="health-icon">
+                {% if service_name == 'database' %}🗄️
+                {% elif service_name == 'cache' %}⚡
+                {% elif service_name == 'storage' %}📁
+                {% elif service_name == 'celery' %}🔄
+                {% elif service_name == 'email' %}📧
+                {% else %}🔌{% endif %}
+            </div>
+            <div class="health-title">{{ service_name|title }}</div>
+            <div class="health-status {{ service_data.status }}">
+                {% if service_data.status == 'healthy' %}{% trans "Healthy" %}
+                {% elif service_data.status == 'degraded' %}{% trans "Degraded" %}
+                {% else %}{% trans "Unhealthy" %}{% endif %}
+            </div>
+            {% if service_data.latency %}
+            <div class="health-latency">{{ service_data.latency }} ms</div>
+            {% endif %}
+            {% if service_data.message %}
+            <div class="health-latency">{{ service_data.message }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

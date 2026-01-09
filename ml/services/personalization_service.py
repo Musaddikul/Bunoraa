@@ -11,6 +11,8 @@ import hashlib
 import json
 from collections import defaultdict
 
+from django.utils import timezone
+
 try:
     from django.core.cache import cache
     from django.conf import settings
@@ -528,15 +530,15 @@ class PersonalizationService:
     def _get_user_preferences(self, user_id: int) -> Dict[str, Any]:
         """Get user's preferences."""
         try:
-            from apps.accounts.models import UserBehaviorProfile
+            from apps.accounts.behavior_models import UserBehaviorProfile
             
             profile = UserBehaviorProfile.objects.filter(user_id=user_id).first()
             
             if profile:
                 return {
-                    "categories": profile.preferred_categories or [],
-                    "brands": profile.preferred_brands or [],
-                    "price_range": profile.price_preferences or {},
+                    "categories": list(profile.category_preferences.keys()) if profile.category_preferences else [],
+                    "tags": list(profile.tag_preferences.keys()) if profile.tag_preferences else [],
+                    "price_range": profile.price_range_preference or {},
                 }
             
             return {}
@@ -566,7 +568,7 @@ class PersonalizationService:
             
             days_since_visit = 0
             if last_view:
-                days_since_visit = (datetime.now() - last_view.created_at).days
+                days_since_visit = (timezone.now() - last_view.created_at).days
             
             return {
                 "total_orders": order_stats["total_orders"] or 0,
@@ -621,9 +623,11 @@ class PersonalizationService:
         """Get user embedding from feature store."""
         try:
             feature_store = self._get_feature_store()
-            features = feature_store.get_features(f"user:{user_id}")
-            return features.get("embedding")
-        except Exception:
+            # Use get_feature_group to get user features including embedding
+            features = feature_store.get_feature_group("user_features", f"user:{user_id}")
+            return features.get("embedding") if features else None
+        except Exception as e:
+            logger.debug(f"Could not get user embedding for user {user_id}: {e}")
             return None
     
     def _compute_product_score(
@@ -683,7 +687,7 @@ class PersonalizationService:
             
             products = Product.objects.filter(
                 is_active=True,
-                created_at__gte=datetime.now() - timedelta(days=14)
+                created_at__gte=timezone.now() - timedelta(days=14)
             ).order_by("-created_at").values(
                 "id", "name", "price", "image", "category_id"
             )[:num]
@@ -727,7 +731,7 @@ class PersonalizationService:
             
             cart = Cart.objects.filter(user_id=user_id).first()
             if cart:
-                age = datetime.now() - cart.updated_at
+                age = timezone.now() - cart.updated_at
                 return age.total_seconds() / 3600
             return 0
         except Exception:

@@ -90,8 +90,8 @@ class CurrencyAdmin(admin.ModelAdmin):
             'fields': ('number_system',),
             'classes': ('collapse',)
         }),
-        (_('Exchange Rate'), {
-            'fields': ('exchange_rate', 'last_rate_update')
+        (_('Base Currency'), {
+            'fields': ('is_base_currency',)
         }),
         (_('Status'), {
             'fields': ('is_active', 'is_default', 'sort_order')

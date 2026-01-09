@@ -9,6 +9,8 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from django.utils import timezone
+
 try:
     from celery import shared_task
     CELERY_AVAILABLE = True
@@ -587,7 +589,7 @@ def _load_interaction_data() -> List[Dict[str, Any]]:
         from apps.recommendations.models import Interaction
         
         interactions = Interaction.objects.filter(
-            created_at__gte=datetime.now() - timedelta(days=90)
+            created_at__gte=timezone.now() - timedelta(days=90)
         ).values("user_id", "product_id", "interaction_type", "created_at")
         
         return [
@@ -622,7 +624,7 @@ def _load_user_sequences() -> Dict[int, List[int]]:
         from apps.recommendations.models import Interaction
         
         interactions = Interaction.objects.filter(
-            created_at__gte=datetime.now() - timedelta(days=90)
+            created_at__gte=timezone.now() - timedelta(days=90)
         ).order_by("user_id", "created_at").values("user_id", "product_id")
         
         sequences = {}
@@ -751,7 +753,7 @@ def _get_active_user_ids() -> List[str]:
         
         users = User.objects.filter(
             is_active=True,
-            last_login__gte=datetime.now() - timedelta(days=30)
+            last_login__gte=timezone.now() - timedelta(days=30)
         ).values_list("id", flat=True)
         
         return list(users)
@@ -922,7 +924,7 @@ def cleanup_old_data():
         r = redis.from_url(redis_url)
         
         # Clean old interactions (older than 90 days)
-        cutoff = datetime.now() - timedelta(days=90)
+        cutoff = timezone.now() - timedelta(days=90)
         cutoff_ts = cutoff.timestamp()
         
         # Clean interaction logs

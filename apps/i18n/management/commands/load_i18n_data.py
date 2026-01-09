@@ -60,17 +60,17 @@ class Command(BaseCommand):
     def _load_languages(self):
         """Load common languages."""
         languages = [
-            # code, name, native_name, flag_emoji, locale_code, is_rtl, is_default
-            ('en', 'English', 'English', '🇬🇧', 'en_US', False, False),
-            ('bn', 'Bengali', 'বাংলা', '🇧🇩', 'bn_BD', False, True),  # Default for Bangladesh
-            ('hi', 'Hindi', 'हिन्दी', '🇮🇳', 'hi_IN', False, False),
-            ('ar', 'Arabic', 'العربية', '🇸🇦', 'ar_SA', True, False),
-            ('ur', 'Urdu', 'اردو', '🇵🇰', 'ur_PK', True, False),
-            ('es', 'Spanish', 'Español', '🇪🇸', 'es_ES', False, False),
-            ('fr', 'French', 'Français', '🇫🇷', 'fr_FR', False, False),
-            ('de', 'German', 'Deutsch', '🇩🇪', 'de_DE', False, False),
-            ('zh', 'Chinese', '中文', '🇨🇳', 'zh_CN', False, False),
-            ('ja', 'Japanese', '日本語', '🇯🇵', 'ja_JP', False, False),
+            # code, name, native_name, flag_code, locale_code, is_rtl, is_default
+            ('en', 'English', 'English', 'GB', 'en_US', False, False),
+            ('bn', 'Bengali', 'বাংলা', 'BD', 'bn_BD', False, True),  # Default for Bangladesh
+            ('hi', 'Hindi', 'हिन्दी', 'IN', 'hi_IN', False, False),
+            ('ar', 'Arabic', 'العربية', 'SA', 'ar_SA', True, False),
+            ('ur', 'Urdu', 'اردو', 'PK', 'ur_PK', True, False),
+            ('es', 'Spanish', 'Español', 'ES', 'es_ES', False, False),
+            ('fr', 'French', 'Français', 'FR', 'fr_FR', False, False),
+            ('de', 'German', 'Deutsch', 'DE', 'de_DE', False, False),
+            ('zh', 'Chinese', '中文', 'CN', 'zh_CN', False, False),
+            ('ja', 'Japanese', '日本語', 'JP', 'ja_JP', False, False),
         ]
         
         for i, data in enumerate(languages):
@@ -80,7 +80,7 @@ class Command(BaseCommand):
                 defaults={
                     'name': name,
                     'native_name': native,
-                    'flag_emoji': flag,
+                    'flag_code': flag,
                     'locale_code': locale,
                     'is_rtl': rtl,
                     'is_default': default,
@@ -132,29 +132,30 @@ class Command(BaseCommand):
     def _load_timezones(self):
         """Load common timezones."""
         timezones = [
-            # name, display_name, offset, is_common, has_dst
-            ('Asia/Dhaka', 'Bangladesh Time (BST)', 360, True, False),
-            ('Asia/Kolkata', 'India Time (IST)', 330, True, False),
-            ('Asia/Karachi', 'Pakistan Time (PKT)', 300, True, False),
-            ('UTC', 'Coordinated Universal Time (UTC)', 0, True, False),
-            ('Europe/London', 'British Time (GMT/BST)', 0, True, True),
-            ('Europe/Paris', 'Central European Time (CET)', 60, True, True),
-            ('America/New_York', 'Eastern Time (ET)', -300, True, True),
-            ('America/Los_Angeles', 'Pacific Time (PT)', -480, True, True),
-            ('Asia/Dubai', 'Gulf Time (GST)', 240, True, False),
-            ('Asia/Singapore', 'Singapore Time (SGT)', 480, True, False),
-            ('Asia/Tokyo', 'Japan Time (JST)', 540, True, False),
-            ('Asia/Shanghai', 'China Time (CST)', 480, True, False),
-            ('Australia/Sydney', 'Australian Eastern Time (AEST)', 600, True, True),
+            # name, display_name, offset_str, offset_minutes, is_common, has_dst
+            ('Asia/Dhaka', 'Bangladesh Time (BST)', '+06:00', 360, True, False),
+            ('Asia/Kolkata', 'India Time (IST)', '+05:30', 330, True, False),
+            ('Asia/Karachi', 'Pakistan Time (PKT)', '+05:00', 300, True, False),
+            ('UTC', 'Coordinated Universal Time (UTC)', '+00:00', 0, True, False),
+            ('Europe/London', 'British Time (GMT/BST)', '+00:00', 0, True, True),
+            ('Europe/Paris', 'Central European Time (CET)', '+01:00', 60, True, True),
+            ('America/New_York', 'Eastern Time (ET)', '-05:00', -300, True, True),
+            ('America/Los_Angeles', 'Pacific Time (PT)', '-08:00', -480, True, True),
+            ('Asia/Dubai', 'Gulf Time (GST)', '+04:00', 240, True, False),
+            ('Asia/Singapore', 'Singapore Time (SGT)', '+08:00', 480, True, False),
+            ('Asia/Tokyo', 'Japan Time (JST)', '+09:00', 540, True, False),
+            ('Asia/Shanghai', 'China Time (CST)', '+08:00', 480, True, False),
+            ('Australia/Sydney', 'Australian Eastern Time (AEST)', '+10:00', 600, True, True),
         ]
         
         for data in timezones:
-            name, display, offset, common, dst = data
+            name, display, offset_str, offset_min, common, dst = data
             Timezone.objects.update_or_create(
                 name=name,
                 defaults={
                     'display_name': display,
-                    'utc_offset': offset,
+                    'offset': offset_str,
+                    'offset_minutes': offset_min,
                     'is_common': common,
                     'has_dst': dst,
                     'is_active': True
@@ -166,34 +167,33 @@ class Command(BaseCommand):
     def _load_countries(self):
         """Load common countries."""
         countries = [
-            # code, code3, name, native_name, flag, phone_code, continent, shipping
-            ('BD', 'BGD', 'Bangladesh', 'বাংলাদেশ', '🇧🇩', '880', 'AS', True),
-            ('IN', 'IND', 'India', 'भारत', '🇮🇳', '91', 'AS', True),
-            ('US', 'USA', 'United States', 'United States', '🇺🇸', '1', 'NA', False),
-            ('GB', 'GBR', 'United Kingdom', 'United Kingdom', '🇬🇧', '44', 'EU', False),
-            ('AE', 'ARE', 'United Arab Emirates', 'الإمارات', '🇦🇪', '971', 'AS', True),
-            ('SA', 'SAU', 'Saudi Arabia', 'السعودية', '🇸🇦', '966', 'AS', True),
-            ('SG', 'SGP', 'Singapore', 'Singapore', '🇸🇬', '65', 'AS', True),
-            ('MY', 'MYS', 'Malaysia', 'Malaysia', '🇲🇾', '60', 'AS', True),
-            ('PK', 'PAK', 'Pakistan', 'پاکستان', '🇵🇰', '92', 'AS', True),
-            ('NP', 'NPL', 'Nepal', 'नेपाल', '🇳🇵', '977', 'AS', True),
-            ('JP', 'JPN', 'Japan', '日本', '🇯🇵', '81', 'AS', False),
-            ('CN', 'CHN', 'China', '中国', '🇨🇳', '86', 'AS', False),
-            ('DE', 'DEU', 'Germany', 'Deutschland', '🇩🇪', '49', 'EU', False),
-            ('FR', 'FRA', 'France', 'France', '🇫🇷', '33', 'EU', False),
-            ('AU', 'AUS', 'Australia', 'Australia', '🇦🇺', '61', 'OC', False),
-            ('CA', 'CAN', 'Canada', 'Canada', '🇨🇦', '1', 'NA', False),
+            # code, code_alpha3, name, native_name, phone_code, continent, shipping
+            ('BD', 'BGD', 'Bangladesh', 'বাংলাদেশ', '880', 'asia', True),
+            ('IN', 'IND', 'India', 'भारत', '91', 'asia', True),
+            ('US', 'USA', 'United States', 'United States', '1', 'north_america', False),
+            ('GB', 'GBR', 'United Kingdom', 'United Kingdom', '44', 'europe', False),
+            ('AE', 'ARE', 'United Arab Emirates', 'الإمارات', '971', 'asia', True),
+            ('SA', 'SAU', 'Saudi Arabia', 'السعودية', '966', 'asia', True),
+            ('SG', 'SGP', 'Singapore', 'Singapore', '65', 'asia', True),
+            ('MY', 'MYS', 'Malaysia', 'Malaysia', '60', 'asia', True),
+            ('PK', 'PAK', 'Pakistan', 'پاکستان', '92', 'asia', True),
+            ('NP', 'NPL', 'Nepal', 'नेपाल', '977', 'asia', True),
+            ('JP', 'JPN', 'Japan', '日本', '81', 'asia', False),
+            ('CN', 'CHN', 'China', '中国', '86', 'asia', False),
+            ('DE', 'DEU', 'Germany', 'Deutschland', '49', 'europe', False),
+            ('FR', 'FRA', 'France', 'France', '33', 'europe', False),
+            ('AU', 'AUS', 'Australia', 'Australia', '61', 'oceania', False),
+            ('CA', 'CAN', 'Canada', 'Canada', '1', 'north_america', False),
         ]
         
         for data in countries:
-            code, code3, name, native, flag, phone, continent, shipping = data
+            code, code3, name, native, phone, continent, shipping = data
             Country.objects.update_or_create(
                 code=code,
                 defaults={
-                    'code3': code3,
+                    'code_alpha3': code3,
                     'name': name,
                     'native_name': native,
-                    'flag_emoji': flag,
                     'phone_code': phone,
                     'continent': continent,
                     'is_shipping_available': shipping,

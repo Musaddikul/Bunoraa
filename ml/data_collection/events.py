@@ -98,6 +98,21 @@ class EventType(Enum):
     NEWSLETTER_SUBSCRIBE = "newsletter_subscribe"
     NOTIFICATION_CLICK = "notification_click"
     CHAT_START = "chat_start"
+    
+    # Session Events
+    SESSION_HEARTBEAT = "session_heartbeat"
+    PAGE_EXIT = "page_exit"
+    PAGE_VISIBLE = "page_visible"
+    PAGE_HIDDEN = "page_hidden"
+    
+    # Interaction Events
+    CLICK = "click"
+    
+    # Transaction Events
+    PURCHASE = "purchase"
+    
+    # Fallback
+    CUSTOM = "custom"
 
 
 @dataclass
@@ -426,7 +441,8 @@ class EventTracker:
             self.redis_client.expire(ts_key, 86400 * 7)  # 7 days
             
         except Exception as e:
-            logger.error(f"Failed to store event: {e}")
+            # Use warning level - Redis unavailable is not critical for tracking
+            logger.warning(f"Failed to store event (Redis unavailable): {e}")
     
     def _update_realtime_metrics(self, event: TrackedEvent):
         """Update real-time metrics for dashboards."""
@@ -459,7 +475,8 @@ class EventTracker:
                 self.redis_client.expire(trending_key, 86400 * 7)
             
         except Exception as e:
-            logger.error(f"Failed to update realtime metrics: {e}")
+            # Use warning level - Redis unavailable is not critical for metrics
+            logger.warning(f"Failed to update realtime metrics (Redis unavailable): {e}")
     
     def get_realtime_stats(self) -> Dict[str, Any]:
         """Get real-time event statistics."""

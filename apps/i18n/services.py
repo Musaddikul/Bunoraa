@@ -258,22 +258,30 @@ class CurrencyService:
     @staticmethod
     def get_user_currency(user=None, request=None) -> Optional[Currency]:
         """Get currency for user or request."""
+        import logging
+        logger = logging.getLogger('bunoraa.i18n')
+        
         # Check force default setting
         if getattr(django_settings, 'FORCE_DEFAULT_CURRENCY', False):
+            logger.debug("[Currency] FORCE_DEFAULT_CURRENCY is set, returning default")
             return CurrencyService.get_default_currency()
         
         # Check user preference
         if user and user.is_authenticated:
             try:
                 pref = UserLocalePreference.objects.filter(user=user).select_related('currency').first()
+                logger.debug(f"[Currency] User {user.id} preference: currency={pref.currency if pref else None}, auto_detect={pref.auto_detect_currency if pref else None}")
                 if pref and pref.currency and not pref.auto_detect_currency:
+                    logger.debug(f"[Currency] Returning user preference: {pref.currency.code}")
                     return pref.currency
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"[Currency] Error getting user preference: {e}")
         
         # Detect from request
         if request:
-            return CurrencyService.detect_currency(request)
+            detected = CurrencyService.detect_currency(request)
+            logger.debug(f"[Currency] Detected from request: {detected.code if detected else None}")
+            return detected
         
         return CurrencyService.get_default_currency()
     
@@ -570,6 +578,9 @@ class CurrencyConversionService:
 class ExchangeRateUpdateService:
     """Service for updating exchange rates from external APIs."""
     
+    # Provider order for fallback
+    PROVIDERS = ['exchangerate_api', 'openexchange', 'exchangeratesapi', 'fixer', 'ecb']
+    
     @staticmethod
     def update_rates() -> int:
         """Update exchange rates from configured provider."""
@@ -594,6 +605,8 @@ class ExchangeRateUpdateService:
             count = ExchangeRateUpdateService._update_from_ecb()
         elif provider == 'exchangerate_api':
             count = ExchangeRateUpdateService._update_from_exchangerate_api(api_key)
+        elif provider == 'exchangeratesapi':
+            count = ExchangeRateUpdateService._update_from_exchangeratesapi(api_key)
         
         if count > 0:
             settings.last_exchange_rate_update = timezone.now()
@@ -602,8 +615,59 @@ class ExchangeRateUpdateService:
         return count
     
     @staticmethod
+    def update_rates_with_fallback(api_keys: dict = None) -> tuple[int, str]:
+        """
+        Update rates trying providers in order until one succeeds.
+        
+        Args:
+            api_keys: Dict mapping provider to API key, e.g. 
+                     {'exchangerate_api': 'xxx', 'openexchange': 'yyy', 'fixer': 'zzz'}
+        
+        Returns:
+            Tuple of (count, provider_used)
+        """
+        if api_keys is None:
+            api_keys = {
+                'exchangerate_api': getattr(django_settings, 'EXCHANGERATE_API_KEY', ''),
+                'openexchange': getattr(django_settings, 'OPENEXCHANGE_RATES_API_KEY', ''),
+                'exchangeratesapi': getattr(django_settings, 'EXCHANGERATESAPI_KEY', ''),
+                'fixer': getattr(django_settings, 'FIXER_API_KEY', ''),
+            }
+        
+        for provider in ExchangeRateUpdateService.PROVIDERS:
+            api_key = api_keys.get(provider, '')
+            
+            # ECB doesn't need API key
+            if provider == 'ecb':
+                count = ExchangeRateUpdateService._update_from_ecb()
+                if count > 0:
+                    return count, 'ecb'
+                continue
+            
+            if not api_key:
+                continue
+            
+            try:
+                if provider == 'exchangerate_api':
+                    count = ExchangeRateUpdateService._update_from_exchangerate_api(api_key)
+                elif provider == 'openexchange':
+                    count = ExchangeRateUpdateService._update_from_openexchange(api_key)
+                elif provider == 'exchangeratesapi':
+                    count = ExchangeRateUpdateService._update_from_exchangeratesapi(api_key)
+                elif provider == 'fixer':
+                    count = ExchangeRateUpdateService._update_from_fixer(api_key)
+                
+                if count > 0:
+                    return count, provider
+            except Exception as e:
+                logger.warning(f"Provider {provider} failed: {e}")
+                continue
+        
+        return 0, None
+    
+    @staticmethod
     def _update_from_openexchange(api_key: str) -> int:
-        """Update from Open Exchange Rates."""
+        """Update from Open Exchange Rates (openexchangerates.org)."""
         import requests
         
         if not api_key:
@@ -637,6 +701,48 @@ class ExchangeRateUpdateService:
             return 0
     
     @staticmethod
+    def _update_from_exchangeratesapi(api_key: str) -> int:
+        """Update from ExchangeRatesAPI.io."""
+        import requests
+        
+        if not api_key:
+            return 0
+        
+        try:
+            # exchangeratesapi.io uses EUR as base on free tier
+            response = requests.get(
+                f'http://api.exchangeratesapi.io/v1/latest?access_key={api_key}',
+                timeout=30
+            )
+            response.raise_for_status()
+            data = response.json()
+            
+            if not data.get('success', True):
+                error = data.get('error', {})
+                logger.error(f"ExchangeRatesAPI error: {error.get('info', 'Unknown')}")
+                return 0
+            
+            rates = data.get('rates', {})
+            base_code = data.get('base', 'EUR')
+            base = Currency.objects.filter(code=base_code, is_active=True).first()
+            
+            if not base:
+                return 0
+            
+            count = 0
+            for code, rate in rates.items():
+                target = Currency.objects.filter(code=code, is_active=True).first()
+                if target and target.id != base.id:
+                    ExchangeRateService.set_exchange_rate(base, target, rate, 'exchangeratesapi')
+                    count += 1
+            
+            return count
+            
+        except Exception as e:
+            logger.error(f"Error updating from ExchangeRatesAPI: {e}")
+            return 0
+    
+    @staticmethod
     def _update_from_fixer(api_key: str) -> int:
         """Update from Fixer.io."""
         import requests
@@ -653,6 +759,8 @@ class ExchangeRateUpdateService:
             data = response.json()
             
             if not data.get('success'):
+                error = data.get('error', {})
+                logger.error(f"Fixer error: {error.get('info', 'Unknown')}")
                 return 0
             
             rates = data.get('rates', {})
@@ -677,7 +785,7 @@ class ExchangeRateUpdateService:
     
     @staticmethod
     def _update_from_ecb() -> int:
-        """Update from European Central Bank."""
+        """Update from European Central Bank (free, no API key needed)."""
         import requests
         import xml.etree.ElementTree as ET
         
@@ -716,7 +824,7 @@ class ExchangeRateUpdateService:
     
     @staticmethod
     def _update_from_exchangerate_api(api_key: str) -> int:
-        """Update from ExchangeRate-API."""
+        """Update from ExchangeRate-API (exchangerate-api.com)."""
         import requests
         
         if not api_key:
@@ -731,6 +839,7 @@ class ExchangeRateUpdateService:
             data = response.json()
             
             if data.get('result') != 'success':
+                logger.error(f"ExchangeRate-API error: {data.get('error-type', 'Unknown')}")
                 return 0
             
             rates = data.get('conversion_rates', {})
@@ -1037,13 +1146,19 @@ class UserPreferenceService:
     @staticmethod
     def update_preference(user, **kwargs) -> UserLocalePreference:
         """Update user's locale preference."""
+        import logging
+        logger = logging.getLogger('bunoraa.i18n')
+        
         pref = UserPreferenceService.get_or_create_preference(user)
+        logger.debug(f"[Preference] Updating for user {user.id} with: {kwargs}")
         
         if 'language_code' in kwargs:
             pref.language = LanguageService.get_language_by_code(kwargs['language_code'])
         
         if 'currency_code' in kwargs:
-            pref.currency = CurrencyService.get_currency_by_code(kwargs['currency_code'])
+            currency = CurrencyService.get_currency_by_code(kwargs['currency_code'])
+            logger.debug(f"[Preference] Setting currency to: {currency.code if currency else None}")
+            pref.currency = currency
         
         if 'timezone_name' in kwargs:
             pref.timezone = TimezoneService.get_timezone_by_name(kwargs['timezone_name'])
@@ -1056,8 +1171,11 @@ class UserPreferenceService:
                       'auto_detect_language', 'auto_detect_currency', 'auto_detect_timezone']:
             if field in kwargs:
                 setattr(pref, field, kwargs[field])
+                if field == 'auto_detect_currency':
+                    logger.debug(f"[Preference] Setting auto_detect_currency to: {kwargs[field]}")
         
         pref.save()
+        logger.debug(f"[Preference] Saved: currency={pref.currency.code if pref.currency else None}, auto_detect={pref.auto_detect_currency}")
         return pref
     
     @staticmethod

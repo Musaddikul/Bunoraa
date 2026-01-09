@@ -30,10 +30,10 @@ class MLConfig(AppConfig):
         # Initialize model registry (lazy loading)
         self._init_model_registry()
         
-        # Log startup
+        # Log startup (debug level to avoid noise)
         import logging
         logger = logging.getLogger("bunoraa.ml")
-        logger.info("ML app initialized")
+        logger.debug("ML app initialized")
     
     def _init_model_registry(self):
         """Initialize the model registry for lazy loading."""

@@ -171,89 +171,125 @@ class MLTrackingAPIView(View):
     
     def _handle_page_view(self, event, tracker):
         from ..data_collection.events import EventType
-        tracker.track_page_view(
-            session_id=event.get('session_id'),
+        tracker.track(
+            event_type=EventType.PAGE_VIEW,
             user_id=event.get('user_id') or event.get('server_meta', {}).get('user_id'),
-            page_url=event.get('page_url'),
-            page_type=event.get('page_data', {}).get('type', 'other'),
-            referrer=event.get('referrer'),
-            utm_params=event.get('utm'),
+            session_id=event.get('session_id'),
+            data={
+                'page_url': event.get('page_url'),
+                'page_type': event.get('page_data', {}).get('type', 'other'),
+                'referrer': event.get('referrer'),
+                'utm': event.get('utm'),
+            }
         )
     
     def _handle_product_view(self, event, tracker):
-        tracker.track_product_view(
-            session_id=event.get('session_id'),
+        from ..data_collection.events import EventType
+        tracker.track(
+            event_type=EventType.PRODUCT_VIEW,
             user_id=event.get('user_id') or event.get('server_meta', {}).get('user_id'),
-            product_id=event.get('product_id'),
-            product_name=event.get('product_name'),
-            category=event.get('product_category'),
-            price=event.get('product_price'),
-            source_page=event.get('source_page'),
-            position=event.get('position'),
+            session_id=event.get('session_id'),
+            data={
+                'product_id': event.get('product_id'),
+                'product_name': event.get('product_name'),
+                'category': event.get('product_category'),
+                'price': event.get('product_price'),
+                'source_page': event.get('source_page'),
+                'position': event.get('position'),
+            }
         )
     
     def _handle_product_click(self, event, tracker):
-        tracker.track_product_interaction(
-            session_id=event.get('session_id'),
+        from ..data_collection.events import EventType
+        tracker.track(
+            event_type=EventType.PRODUCT_CLICK,
             user_id=event.get('user_id') or event.get('server_meta', {}).get('user_id'),
-            product_id=event.get('product_id'),
-            interaction_type='click',
-            details={'element_type': event.get('element_type'), 'position': event.get('position')},
+            session_id=event.get('session_id'),
+            data={
+                'product_id': event.get('product_id'),
+                'interaction_type': 'click',
+                'element_type': event.get('element_type'),
+                'position': event.get('position'),
+            }
         )
     
     def _handle_add_to_cart(self, event, tracker):
-        tracker.track_cart_action(
-            session_id=event.get('session_id'),
+        from ..data_collection.events import EventType
+        tracker.track(
+            event_type=EventType.ADD_TO_CART,
             user_id=event.get('user_id') or event.get('server_meta', {}).get('user_id'),
-            product_id=event.get('product_id'),
-            action='add',
-            quantity=event.get('quantity', 1),
-            variant=event.get('variant'),
-            cart_value=event.get('cart_value'),
+            session_id=event.get('session_id'),
+            data={
+                'product_id': event.get('product_id'),
+                'action': 'add',
+                'quantity': event.get('quantity', 1),
+                'variant': event.get('variant'),
+                'cart_value': event.get('cart_value'),
+            }
         )
     
     def _handle_remove_from_cart(self, event, tracker):
-        tracker.track_cart_action(
-            session_id=event.get('session_id'),
+        from ..data_collection.events import EventType
+        tracker.track(
+            event_type=EventType.REMOVE_FROM_CART,
             user_id=event.get('user_id') or event.get('server_meta', {}).get('user_id'),
-            product_id=event.get('product_id'),
-            action='remove',
-            quantity=event.get('quantity', 1),
+            session_id=event.get('session_id'),
+            data={
+                'product_id': event.get('product_id'),
+                'action': 'remove',
+                'quantity': event.get('quantity', 1),
+            }
         )
     
     def _handle_wishlist(self, event, tracker):
-        tracker.track_wishlist(
-            session_id=event.get('session_id'),
+        from ..data_collection.events import EventType
+        tracker.track(
+            event_type=EventType.ADD_TO_WISHLIST,
             user_id=event.get('user_id') or event.get('server_meta', {}).get('user_id'),
-            product_id=event.get('product_id'),
-            action='add',
+            session_id=event.get('session_id'),
+            data={
+                'product_id': event.get('product_id'),
+                'action': 'add',
+            }
         )
     
     def _handle_search(self, event, tracker):
-        tracker.track_search(
-            session_id=event.get('session_id'),
+        from ..data_collection.events import EventType
+        results_count = event.get('results_count', 0)
+        event_type = EventType.SEARCH if results_count > 0 else EventType.SEARCH_NO_RESULTS
+        tracker.track(
+            event_type=event_type,
             user_id=event.get('user_id') or event.get('server_meta', {}).get('user_id'),
-            query=event.get('query', ''),
-            results_count=event.get('results_count', 0),
-            filters=event.get('filters'),
+            session_id=event.get('session_id'),
+            data={
+                'query': event.get('query', ''),
+                'results_count': results_count,
+                'filters': event.get('filters'),
+            }
         )
     
     def _handle_checkout(self, event, tracker):
-        tracker.track_checkout(
-            session_id=event.get('session_id'),
+        from ..data_collection.events import EventType
+        step = event.get('step', 1)
+        event_type = EventType.START_CHECKOUT if step == 1 else EventType.CHECKOUT_STEP
+        tracker.track(
+            event_type=event_type,
             user_id=event.get('user_id') or event.get('server_meta', {}).get('user_id'),
-            step=event.get('step', 1),
-            step_name=event.get('step_name'),
-            cart_value=event.get('cart_value'),
-            items_count=event.get('items_count'),
+            session_id=event.get('session_id'),
+            data={
+                'step': step,
+                'step_name': event.get('step_name'),
+                'cart_value': event.get('cart_value'),
+                'items_count': event.get('items_count'),
+            }
         )
     
     def _handle_purchase(self, event, tracker):
         from ..data_collection.events import EventType
-        tracker.track_event(
-            session_id=event.get('session_id'),
-            user_id=event.get('user_id') or event.get('server_meta', {}).get('user_id'),
+        tracker.track(
             event_type=EventType.PURCHASE,
+            user_id=event.get('user_id') or event.get('server_meta', {}).get('user_id'),
+            session_id=event.get('session_id'),
             data={'order_id': event.get('order_id'), 'order_value': event.get('order_value'),
                   'items_count': event.get('items_count'), 'coupon': event.get('coupon')},
         )
@@ -261,10 +297,10 @@ class MLTrackingAPIView(View):
     def _handle_page_exit(self, event, tracker):
         from ..data_collection.events import EventType
         page_context = event.get('page_context', {})
-        tracker.track_event(
-            session_id=event.get('session_id'),
-            user_id=event.get('user_id') or event.get('server_meta', {}).get('user_id'),
+        tracker.track(
             event_type=EventType.PAGE_EXIT,
+            user_id=event.get('user_id') or event.get('server_meta', {}).get('user_id'),
+            session_id=event.get('session_id'),
             data={'time_on_page': event.get('time_on_page', page_context.get('time_on_page', 0)),
                   'active_time': event.get('active_time', page_context.get('active_time', 0)),
                   'scroll_depth': event.get('scroll_depth', page_context.get('scroll_depth', 0)),
@@ -274,35 +310,35 @@ class MLTrackingAPIView(View):
     
     def _handle_heartbeat(self, event, tracker):
         from ..data_collection.events import EventType
-        tracker.track_event(
-            session_id=event.get('session_id'),
-            user_id=event.get('user_id') or event.get('server_meta', {}).get('user_id'),
+        tracker.track(
             event_type=EventType.SESSION_HEARTBEAT,
+            user_id=event.get('user_id') or event.get('server_meta', {}).get('user_id'),
+            session_id=event.get('session_id'),
             data={'time_on_page': event.get('time_on_page', 0), 'active_time': event.get('active_time', 0),
                   'scroll_depth': event.get('scroll_depth', 0), 'is_idle': event.get('is_idle', False)},
         )
     
     def _handle_click(self, event, tracker):
         from ..data_collection.events import EventType
-        tracker.track_event(
-            session_id=event.get('session_id'),
-            user_id=event.get('user_id') or event.get('server_meta', {}).get('user_id'),
+        tracker.track(
             event_type=EventType.CLICK,
+            user_id=event.get('user_id') or event.get('server_meta', {}).get('user_id'),
+            session_id=event.get('session_id'),
             data={'element_type': event.get('element_type'), 'element_id': event.get('element_id'),
                   'href': event.get('href'), 'position': event.get('position')},
         )
     
     def _handle_generic_event(self, event, tracker):
         from ..data_collection.events import EventType
-        event_type_str = event.get('event_type', 'unknown').upper()
+        event_type_str = event.get('event_type', 'unknown').upper().replace('-', '_').replace(' ', '_')
         try:
             event_type = EventType[event_type_str]
         except KeyError:
             event_type = EventType.CUSTOM
-        tracker.track_event(
-            session_id=event.get('session_id'),
-            user_id=event.get('user_id') or event.get('server_meta', {}).get('user_id'),
+        tracker.track(
             event_type=event_type,
+            user_id=event.get('user_id') or event.get('server_meta', {}).get('user_id'),
+            session_id=event.get('session_id'),
             data=event,
         )
 
@@ -354,31 +390,42 @@ class PersonalizedRecommendationsView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        from ..services.recommendation_service import RecommendationService
-        
-        user_id = request.user.id
-        num_items = int(request.query_params.get("limit", 20))
-        category_id = request.query_params.get("category_id")
-        
-        if category_id:
-            category_id = int(category_id)
-        
-        service = RecommendationService()
-        recommendations = service.get_personalized_recommendations(
-            user_id=user_id,
-            num_items=num_items,
-            category_id=category_id,
-            context={
-                "device": request.headers.get("User-Agent"),
-                "platform": request.query_params.get("platform", "web"),
-            }
-        )
-        
-        return Response({
-            "success": True,
-            "recommendations": recommendations,
-            "count": len(recommendations),
-        })
+        try:
+            from ..services.recommendation_service import RecommendationService
+            
+            user_id = request.user.id
+            num_items = int(request.query_params.get("limit", 20))
+            category_id = request.query_params.get("category_id")
+            
+            if category_id:
+                category_id = int(category_id)
+            
+            service = RecommendationService()
+            recommendations = service.get_personalized_recommendations(
+                user_id=user_id,
+                num_items=num_items,
+                category_id=category_id,
+                context={
+                    "device": request.headers.get("User-Agent"),
+                    "platform": request.query_params.get("platform", "web"),
+                }
+            )
+            
+            return Response({
+                "success": True,
+                "recommendations": recommendations,
+                "count": len(recommendations),
+            })
+        except Exception as e:
+            logger.exception("Error getting personalized recommendations")
+            # Return empty recommendations with success=True to avoid frontend errors
+            return Response({
+                "success": True,
+                "recommendations": [],
+                "count": 0,
+                "fallback": True,
+                "message": "Personalized recommendations temporarily unavailable"
+            })
 
 
 class SimilarProductsView(APIView):

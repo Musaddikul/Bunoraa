@@ -513,8 +513,22 @@ class UserLocalePreferenceView(APIView):
         serializer = UserLocalePreferenceUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
+        validated_data = serializer.validated_data.copy()
+        
+        # Handle auto_detect alias -> auto_detect_currency
+        if 'auto_detect' in validated_data:
+            auto_detect_value = validated_data.pop('auto_detect')
+            # Only set auto_detect_currency if not explicitly provided
+            if 'auto_detect_currency' not in validated_data:
+                validated_data['auto_detect_currency'] = auto_detect_value
+        
+        # When setting currency_code manually, disable auto-detect by default
+        if 'currency_code' in validated_data and validated_data['currency_code']:
+            if 'auto_detect_currency' not in validated_data:
+                validated_data['auto_detect_currency'] = False
+        
         pref = UserPreferenceService.update_preference(
-            request.user, **serializer.validated_data
+            request.user, **validated_data
         )
         
         # Update session
@@ -529,7 +543,20 @@ class UserLocalePreferenceView(APIView):
         # Return success with preference data
         response_data = UserLocalePreferenceSerializer(pref).data
         response_data['success'] = True
-        return Response(response_data)
+        
+        response = Response(response_data)
+        
+        # Also set cookie for currency (persists across sessions)
+        if pref.currency:
+            response.set_cookie(
+                'currency',
+                pref.currency.code,
+                max_age=365 * 24 * 60 * 60,  # 1 year
+                httponly=False,
+                samesite='Lax'
+            )
+        
+        return response
     
     def patch(self, request):
         """Partial update of user's locale preferences."""

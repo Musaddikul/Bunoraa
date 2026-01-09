@@ -33,7 +33,6 @@ const HomePage = (function() {
         initArtisanSpotlight();
         initScrollAnimations();
         initQuickViewModal();
-        initBackToTop();
     }
 
     // ============================================
@@ -259,71 +258,71 @@ const HomePage = (function() {
         countdownInterval = setInterval(updateCountdown, 1000);
     }
 
-    // ============================================
-    // ENHANCED FEATURE: Artisan Spotlight
-    // ============================================
-    async function initArtisanSpotlight() {
-        const container = document.getElementById('artisan-spotlight');
-        if (!container) return;
-        try {
-            // In production, fetch from API
-            const artisans = [
-                {
-                    name: 'Sarah Chen',
-                    specialty: 'Ceramic Art',
-                    image: '/static/images/artisans/sarah.jpg',
-                    story: 'Third-generation potter from the mountain villages, crafting unique pieces for over 15 years.',
-                    products: 45,
-                    rating: 4.9
-                },
-                {
-                    name: 'Ahmed Hassan',
-                    specialty: 'Leatherwork',
-                    image: '/static/images/artisans/ahmed.jpg',
-                    story: 'Master craftsman preserving traditional techniques passed down through generations.',
-                    products: 32,
-                    rating: 4.8
-                },
-                {
-                    name: 'Maria Santos',
-                    specialty: 'Textile Weaving',
-                    image: '/static/images/artisans/maria.jpg',
-                    story: 'Creating vibrant handwoven textiles using natural dyes and ancestral patterns.',
-                    products: 28,
-                    rating: 4.9
-                }
-            ];
+    // // ============================================
+    // // ENHANCED FEATURE: Artisan Spotlight
+    // // ============================================
+    // async function initArtisanSpotlight() {
+    //     const container = document.getElementById('artisan-spotlight');
+    //     if (!container) return;
+    //     try {
+    //         // In production, fetch from API
+    //         const artisans = [
+    //             {
+    //                 name: 'Sarah Chen',
+    //                 specialty: 'Ceramic Art',
+    //                 image: '/static/images/artisans/sarah.jpg',
+    //                 story: 'Third-generation potter from the mountain villages, crafting unique pieces for over 15 years.',
+    //                 products: 45,
+    //                 rating: 4.9
+    //             },
+    //             {
+    //                 name: 'Ahmed Hassan',
+    //                 specialty: 'Leatherwork',
+    //                 image: '/static/images/artisans/ahmed.jpg',
+    //                 story: 'Master craftsman preserving traditional techniques passed down through generations.',
+    //                 products: 32,
+    //                 rating: 4.8
+    //             },
+    //             {
+    //                 name: 'Maria Santos',
+    //                 specialty: 'Textile Weaving',
+    //                 image: '/static/images/artisans/maria.jpg',
+    //                 story: 'Creating vibrant handwoven textiles using natural dyes and ancestral patterns.',
+    //                 products: 28,
+    //                 rating: 4.9
+    //             }
+    //         ];
 
-            container.innerHTML = `
-                <div class="grid md:grid-cols-3 gap-6">
-                    ${artisans.map(artisan => `
-                        <div class="group relative bg-white dark:bg-stone-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
-                            <div class="aspect-[4/3] overflow-hidden bg-stone-100 dark:bg-stone-700">
-                                <img src="${artisan.image}" alt="${Templates.escapeHtml(artisan.name)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" decoding="async">
-                            </div>
-                            <div class="p-6">
-                                <div class="flex items-center justify-between mb-2">
-                                    <h3 class="text-lg font-semibold text-stone-900 dark:text-white">${Templates.escapeHtml(artisan.name)}</h3>
-                                    <div class="flex items-center gap-1 text-amber-500">
-                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.178c.969 0 1.371 1.24.588 1.81l-3.385 2.46a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.54 1.118l-3.385-2.46a1 1 0 00-1.175 0l-3.385 2.46c-.784.57-1.838-.196-1.54-1.118l1.287-3.966a1 1 0 00-.364-1.118l-3.385-2.46c-.783-.57-.38-1.81.588-1.81h4.178a1 1 0 00.95-.69l1.286-3.967z"/></svg>
-                                        <span class="text-sm font-medium">${artisan.rating}</span>
-                                    </div>
-                                </div>
-                                <p class="text-sm text-primary-600 dark:text-amber-400 font-medium mb-3">${Templates.escapeHtml(artisan.specialty)}</p>
-                                <p class="text-sm text-stone-600 dark:text-stone-400 mb-4 line-clamp-2">${Templates.escapeHtml(artisan.story)}</p>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs text-stone-500 dark:text-stone-500">${artisan.products} products</span>
-                                    <a href="/artisans/${artisan.name.toLowerCase().replace(/\s+/g, '-')}/" class="text-sm font-medium text-primary-600 dark:text-amber-400 hover:underline">View Profile →</a>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        } catch (error) {
-            console.warn('Artisan spotlight unavailable:', error);
-        }
-    }
+    //         container.innerHTML = `
+    //             <div class="grid md:grid-cols-3 gap-6">
+    //                 ${artisans.map(artisan => `
+    //                     <div class="group relative bg-white dark:bg-stone-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
+    //                         <div class="aspect-[4/3] overflow-hidden bg-stone-100 dark:bg-stone-700">
+    //                             <img src="${artisan.image}" alt="${Templates.escapeHtml(artisan.name)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" decoding="async">
+    //                         </div>
+    //                         <div class="p-6">
+    //                             <div class="flex items-center justify-between mb-2">
+    //                                 <h3 class="text-lg font-semibold text-stone-900 dark:text-white">${Templates.escapeHtml(artisan.name)}</h3>
+    //                                 <div class="flex items-center gap-1 text-amber-500">
+    //                                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.178c.969 0 1.371 1.24.588 1.81l-3.385 2.46a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.54 1.118l-3.385-2.46a1 1 0 00-1.175 0l-3.385 2.46c-.784.57-1.838-.196-1.54-1.118l1.287-3.966a1 1 0 00-.364-1.118l-3.385-2.46c-.783-.57-.38-1.81.588-1.81h4.178a1 1 0 00.95-.69l1.286-3.967z"/></svg>
+    //                                     <span class="text-sm font-medium">${artisan.rating}</span>
+    //                                 </div>
+    //                             </div>
+    //                             <p class="text-sm text-primary-600 dark:text-amber-400 font-medium mb-3">${Templates.escapeHtml(artisan.specialty)}</p>
+    //                             <p class="text-sm text-stone-600 dark:text-stone-400 mb-4 line-clamp-2">${Templates.escapeHtml(artisan.story)}</p>
+    //                             <div class="flex items-center justify-between">
+    //                                 <span class="text-xs text-stone-500 dark:text-stone-500">${artisan.products} products</span>
+    //                                 <a href="/artisans/${artisan.name.toLowerCase().replace(/\s+/g, '-')}/" class="text-sm font-medium text-primary-600 dark:text-amber-400 hover:underline">View Profile →</a>
+    //                             </div>
+    //                         </div>
+    //                     </div>
+    //                 `).join('')}
+    //             </div>
+    //         `;
+    //     } catch (error) {
+    //         console.warn('Artisan spotlight unavailable:', error);
+    //     }
+    // }
 
     // ============================================
     // ENHANCED FEATURE: Scroll Animations
@@ -1037,8 +1036,6 @@ const HomePage = (function() {
             clearInterval(countdownInterval);
             countdownInterval = null;
         }
-        // Remove back to top button
-        document.getElementById('back-to-top')?.remove();
         // Remove quick view modal
         document.getElementById('quick-view-modal')?.remove();
         // Remove social proof popups

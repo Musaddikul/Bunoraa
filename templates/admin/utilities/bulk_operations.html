@@ -1,0 +1,195 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | {{ site_title }}{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --util-bg: #ffffff;
+        --util-border: #e5e7eb;
+        --util-text: #374151;
+        --util-text-muted: #6b7280;
+        --util-primary: #3b82f6;
+        --util-warning: #f59e0b;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --util-bg: #1f2937;
+            --util-border: #374151;
+            --util-text: #f3f4f6;
+            --util-text-muted: #9ca3af;
+        }
+    }
+    
+    html[data-theme="dark"] {
+        --util-bg: #1f2937;
+        --util-border: #374151;
+        --util-text: #f3f4f6;
+        --util-text-muted: #9ca3af;
+    }
+    
+    .util-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+    
+    .util-header h1 {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--util-text);
+        margin: 0 0 24px 0;
+    }
+    
+    .util-card {
+        background: var(--util-bg);
+        border: 1px solid var(--util-border);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .util-card h2 {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--util-text);
+        margin: 0 0 16px 0;
+    }
+    
+    .bulk-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    
+    .bulk-action {
+        background: var(--util-bg);
+        border: 1px solid var(--util-border);
+        border-radius: 8px;
+        padding: 20px;
+    }
+    
+    .bulk-action h3 {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--util-text);
+        margin: 0 0 8px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .bulk-action p {
+        font-size: 13px;
+        color: var(--util-text-muted);
+        margin: 0 0 16px 0;
+    }
+    
+    .util-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s;
+        background: var(--util-primary);
+        color: white;
+    }
+    
+    .util-btn:hover {
+        opacity: 0.9;
+    }
+    
+    .util-btn-warning {
+        background: var(--util-warning);
+    }
+    
+    .util-alert {
+        padding: 12px 16px;
+        border-radius: 6px;
+        margin-bottom: 16px;
+        font-size: 14px;
+        background: #dbeafe;
+        color: #1e40af;
+        border: 1px solid #93c5fd;
+    }
+</style>
+
+<div class="util-container">
+    <div class="util-header">
+        <h1>🔄 {{ title }}</h1>
+    </div>
+    
+    {% if messages %}
+        {% for message in messages %}
+        <div class="util-alert">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+    
+    {% if has_permission %}
+    <div class="bulk-grid">
+        <div class="bulk-action">
+            <h3>📊 {% trans "Recalculate Product Stats" %}</h3>
+            <p>{% trans "Update views, sales, and wishlist counts for all products based on actual data." %}</p>
+            <form method="post" action="{% url 'admin_recalculate_product_stats' %}">
+                {% csrf_token %}
+                <button type="submit" class="util-btn" onclick="return confirm('{% trans "This may take a while for large catalogs. Continue?" %}')">
+                    {% trans "Run Recalculation" %}
+                </button>
+            </form>
+        </div>
+        
+        <div class="bulk-action">
+            <h3>📁 {% trans "Update Category Counts" %}</h3>
+            <p>{% trans "Recalculate product counts for all categories in the tree." %}</p>
+            <form method="post" action="{% url 'admin_recalculate_category_counts' %}">
+                {% csrf_token %}
+                <button type="submit" class="util-btn">
+                    {% trans "Update Counts" %}
+                </button>
+            </form>
+        </div>
+        
+        <div class="bulk-action">
+            <h3>🖼️ {% trans "Cleanup Orphaned Images" %}</h3>
+            <p>{% trans "Find and remove product images that are no longer attached to any product." %}</p>
+            <form method="post" action="{% url 'admin_cleanup_orphaned_images' %}">
+                {% csrf_token %}
+                <input type="hidden" name="delete" value="false">
+                <button type="submit" class="util-btn" formaction="{% url 'admin_cleanup_orphaned_images' %}?scan=true">
+                    {% trans "Scan for Orphans" %}
+                </button>
+                <button type="submit" class="util-btn util-btn-warning" onclick="return confirm('{% trans "This will permanently delete orphaned images. Continue?" %}')" name="delete" value="true">
+                    {% trans "Delete Orphans" %}
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="util-card">
+        <h2>📤 {% trans "Export Data" %}</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+            <a href="{% url 'admin_export_users_csv' %}" class="util-btn">
+                👤 {% trans "Export All Users" %}
+            </a>
+            <a href="{% url 'admin_export_orders_csv' %}" class="util-btn">
+                📦 {% trans "Export All Orders" %}
+            </a>
+            <a href="{% url 'admin_export_products_csv' %}" class="util-btn">
+                🛍️ {% trans "Export All Products" %}
+            </a>
+        </div>
+    </div>
+    {% else %}
+    <div class="util-card">
+        <p style="color: var(--util-text-muted);">{% trans "Superuser access required for bulk operations." %}</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

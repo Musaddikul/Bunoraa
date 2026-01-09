@@ -382,14 +382,14 @@ class UserInteraction(models.Model):
     
     # Target objects
     product = models.ForeignKey(
-        'products.Product',
+        'catalog.Product',
         on_delete=models.SET_NULL,
         related_name='user_interactions',
         null=True,
         blank=True
     )
     category = models.ForeignKey(
-        'categories.Category',
+        'catalog.Category',
         on_delete=models.SET_NULL,
         related_name='user_interactions',
         null=True,

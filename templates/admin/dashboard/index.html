@@ -1,0 +1,878 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Dashboard" %} | {{ block.super }}{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+    :root {
+        --dashboard-bg: #f8fafc;
+        --card-bg: #ffffff;
+        --card-border: #e2e8f0;
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --text-muted: #94a3b8;
+        --success: #10b981;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+        --info: #3b82f6;
+        --primary: #0ea5e9;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --dashboard-bg: #0f172a;
+            --card-bg: #1e293b;
+            --card-border: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+        }
+    }
+    
+    html[data-theme="dark"] {
+        --dashboard-bg: #0f172a;
+        --card-bg: #1e293b;
+        --card-border: #334155;
+        --text-primary: #f1f5f9;
+        --text-secondary: #94a3b8;
+        --text-muted: #64748b;
+    }
+    
+    .dashboard-container {
+        background: var(--dashboard-bg);
+        min-height: 100vh;
+        padding: 1.5rem;
+    }
+    
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .dashboard-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+    }
+    
+    .period-selector {
+        display: flex;
+        gap: 0.5rem;
+        background: var(--card-bg);
+        padding: 0.25rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--card-border);
+    }
+    
+    .period-btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        background: transparent;
+        color: var(--text-secondary);
+        border-radius: 0.375rem;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    
+    .period-btn:hover {
+        background: var(--card-border);
+    }
+    
+    .period-btn.active {
+        background: var(--primary);
+        color: #fff;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .stat-card {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .stat-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+    
+    .stat-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .stat-icon svg {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+    
+    .stat-icon.revenue { background: #dbeafe; color: #2563eb; }
+    .stat-icon.orders { background: #dcfce7; color: #16a34a; }
+    .stat-icon.users { background: #fef3c7; color: #d97706; }
+    .stat-icon.products { background: #f3e8ff; color: #9333ea; }
+    .stat-icon.views { background: #fce7f3; color: #db2777; }
+    
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1.2;
+    }
+    
+    .stat-change {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        margin-top: 0.5rem;
+    }
+    
+    .stat-change.positive {
+        background: #dcfce7;
+        color: #16a34a;
+    }
+    
+    .stat-change.negative {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+    
+    .stat-change svg {
+        width: 0.75rem;
+        height: 0.75rem;
+    }
+    
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .chart-card {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+    }
+    
+    .chart-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0 0 1rem 0;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+    
+    .tables-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .table-card {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 0.75rem;
+        overflow: hidden;
+    }
+    
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--card-border);
+    }
+    
+    .table-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+    }
+    
+    .table-link {
+        font-size: 0.875rem;
+        color: var(--primary);
+        text-decoration: none;
+    }
+    
+    .table-link:hover {
+        text-decoration: underline;
+    }
+    
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: 0.75rem 1.5rem;
+        text-align: left;
+        font-size: 0.875rem;
+    }
+    
+    .data-table th {
+        background: var(--dashboard-bg);
+        color: var(--text-secondary);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+    }
+    
+    .data-table td {
+        color: var(--text-primary);
+        border-bottom: 1px solid var(--card-border);
+    }
+    
+    .data-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .data-table tbody tr:hover {
+        background: var(--dashboard-bg);
+    }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+    
+    .status-pending { background: #fef3c7; color: #92400e; }
+    .status-confirmed { background: #dbeafe; color: #1e40af; }
+    .status-processing { background: #e0e7ff; color: #3730a3; }
+    .status-shipped { background: #cffafe; color: #0e7490; }
+    .status-delivered { background: #dcfce7; color: #166534; }
+    .status-cancelled { background: #fee2e2; color: #991b1b; }
+    .status-refunded { background: #f3e8ff; color: #7c3aed; }
+    
+    .stock-warning {
+        color: var(--warning);
+        font-weight: 600;
+    }
+    
+    .stock-critical {
+        color: var(--danger);
+        font-weight: 600;
+    }
+    
+    .health-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+    
+    .health-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 0.5rem;
+    }
+    
+    .health-indicator {
+        width: 0.75rem;
+        height: 0.75rem;
+        border-radius: 50%;
+    }
+    
+    .health-indicator.healthy { background: var(--success); }
+    .health-indicator.unhealthy { background: var(--danger); }
+    
+    .health-label {
+        font-size: 0.875rem;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+    
+    .quick-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .quick-action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1rem;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 0.5rem;
+        color: var(--text-primary);
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    
+    .quick-action-btn:hover {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: #fff;
+    }
+    
+    .quick-action-btn svg {
+        width: 1rem;
+        height: 1rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .charts-grid,
+        .tables-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .chart-container {
+            height: 250px;
+        }
+    }
+    
+    /* Loading state */
+    .loading {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+    
+    .skeleton {
+        background: linear-gradient(90deg, var(--card-border) 25%, var(--dashboard-bg) 50%, var(--card-border) 75%);
+        background-size: 200% 100%;
+        animation: skeleton 1.5s infinite;
+        border-radius: 0.25rem;
+    }
+    
+    @keyframes skeleton {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">{% trans "Dashboard" %}</h1>
+        
+        <div class="period-selector">
+            <button class="period-btn {% if period == 'today' %}active{% endif %}" data-period="today">{% trans "Today" %}</button>
+            <button class="period-btn {% if period == '7d' %}active{% endif %}" data-period="7d">{% trans "7 Days" %}</button>
+            <button class="period-btn {% if period == '30d' %}active{% endif %}" data-period="30d">{% trans "30 Days" %}</button>
+            <button class="period-btn {% if period == '90d' %}active{% endif %}" data-period="90d">{% trans "90 Days" %}</button>
+            <button class="period-btn {% if period == '1y' %}active{% endif %}" data-period="1y">{% trans "1 Year" %}</button>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <a href="{% url 'admin:catalog_product_add' %}" class="quick-action-btn">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+            {% trans "Add Product" %}
+        </a>
+        <a href="{% url 'admin:orders_order_changelist' %}" class="quick-action-btn">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            {% trans "View Orders" %}
+        </a>
+        <a href="{% url 'admin:accounts_user_changelist' %}" class="quick-action-btn">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            {% trans "Manage Users" %}
+        </a>
+        <a href="{% url 'admin:catalog_category_changelist' %}" class="quick-action-btn">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            {% trans "Categories" %}
+        </a>
+        <a href="{% url 'admin:notifications_notification_changelist' %}" class="quick-action-btn">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            {% trans "Notifications" %}
+        </a>
+    </div>
+    
+    <!-- Admin Utilities -->
+    <div class="quick-actions" style="margin-top: 0.5rem;">
+        <a href="{% url 'admin_cache_management' %}" class="quick-action-btn" style="background: var(--info);">
+            ⚡ {% trans "Cache" %}
+        </a>
+        <a href="{% url 'admin_maintenance_mode' %}" class="quick-action-btn" style="background: var(--warning);">
+            🚧 {% trans "Maintenance" %}
+        </a>
+        <a href="{% url 'admin_system_health' %}" class="quick-action-btn" style="background: var(--success);">
+            💓 {% trans "Health" %}
+        </a>
+        <a href="{% url 'admin_bulk_operations' %}" class="quick-action-btn" style="background: #8b5cf6;">
+            🔄 {% trans "Bulk Ops" %}
+        </a>
+        <a href="{% url 'admin_audit_log' %}" class="quick-action-btn" style="background: #6366f1;">
+            📋 {% trans "Audit Log" %}
+        </a>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <!-- Revenue -->
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <span class="stat-label">{% trans "Total Revenue" %}</span>
+                <div class="stat-icon revenue">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+            </div>
+            <div class="stat-value" id="stat-revenue">৳{{ total_revenue|floatformat:0|default:"0" }}</div>
+            <span class="stat-change {% if revenue_growth >= 0 %}positive{% else %}negative{% endif %}">
+                {% if revenue_growth >= 0 %}
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+                {% else %}
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+                {% endif %}
+                {{ revenue_growth }}% {% trans "vs prev period" %}
+            </span>
+        </div>
+        
+        <!-- Orders -->
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <span class="stat-label">{% trans "Total Orders" %}</span>
+                <div class="stat-icon orders">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                </div>
+            </div>
+            <div class="stat-value" id="stat-orders">{{ total_orders|default:"0" }}</div>
+            <span class="stat-change {% if orders_growth >= 0 %}positive{% else %}negative{% endif %}">
+                {% if orders_growth >= 0 %}
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+                {% else %}
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+                {% endif %}
+                {{ orders_growth }}% {% trans "vs prev period" %}
+            </span>
+        </div>
+        
+        <!-- New Users -->
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <span class="stat-label">{% trans "New Users" %}</span>
+                <div class="stat-icon users">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                </div>
+            </div>
+            <div class="stat-value" id="stat-users">{{ new_users|default:"0" }}</div>
+            <span class="stat-change {% if users_growth >= 0 %}positive{% else %}negative{% endif %}">
+                {% if users_growth >= 0 %}
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+                {% else %}
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+                {% endif %}
+                {{ users_growth }}% {% trans "vs prev period" %}
+            </span>
+        </div>
+        
+        <!-- Page Views -->
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <span class="stat-label">{% trans "Page Views" %}</span>
+                <div class="stat-icon views">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                </div>
+            </div>
+            <div class="stat-value" id="stat-views">{{ page_views|default:"0" }}</div>
+            <span class="stat-change {% if views_growth >= 0 %}positive{% else %}negative{% endif %}">
+                {% if views_growth >= 0 %}
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+                {% else %}
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+                {% endif %}
+                {{ views_growth }}% {% trans "vs prev period" %}
+            </span>
+        </div>
+        
+        <!-- Inventory Alerts -->
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <span class="stat-label">{% trans "Low Stock Items" %}</span>
+                <div class="stat-icon products">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                </div>
+            </div>
+            <div class="stat-value {% if low_stock_products > 0 %}stock-warning{% endif %}">{{ low_stock_products|default:"0" }}</div>
+            <span class="stat-label" style="margin-top: 0.5rem; display: block;">
+                {{ out_of_stock }} {% trans "out of stock" %}
+            </span>
+        </div>
+    </div>
+    
+    <!-- Charts -->
+    <div class="charts-grid">
+        <div class="chart-card">
+            <h3 class="chart-title">{% trans "Revenue & Orders" %}</h3>
+            <div class="chart-container">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="chart-card">
+            <h3 class="chart-title">{% trans "Order Status Distribution" %}</h3>
+            <div class="chart-container">
+                <canvas id="orderStatusChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tables -->
+    <div class="tables-grid">
+        <!-- Recent Orders -->
+        <div class="table-card">
+            <div class="table-header">
+                <h3 class="table-title">{% trans "Recent Orders" %}</h3>
+                <a href="{% url 'admin:orders_order_changelist' %}" class="table-link">{% trans "View all" %} →</a>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>{% trans "Order" %}</th>
+                        <th>{% trans "Customer" %}</th>
+                        <th>{% trans "Amount" %}</th>
+                        <th>{% trans "Status" %}</th>
+                    </tr>
+                </thead>
+                <tbody id="recent-orders">
+                    <tr><td colspan="4" class="skeleton" style="height: 40px;"></td></tr>
+                    <tr><td colspan="4" class="skeleton" style="height: 40px;"></td></tr>
+                    <tr><td colspan="4" class="skeleton" style="height: 40px;"></td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Low Stock Products -->
+        <div class="table-card">
+            <div class="table-header">
+                <h3 class="table-title">{% trans "Low Stock Products" %}</h3>
+                <a href="{% url 'admin:catalog_product_changelist' %}?stock_quantity__lte=10" class="table-link">{% trans "View all" %} →</a>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>{% trans "Product" %}</th>
+                        <th>{% trans "SKU" %}</th>
+                        <th>{% trans "Stock" %}</th>
+                    </tr>
+                </thead>
+                <tbody id="low-stock">
+                    <tr><td colspan="3" class="skeleton" style="height: 40px;"></td></tr>
+                    <tr><td colspan="3" class="skeleton" style="height: 40px;"></td></tr>
+                    <tr><td colspan="3" class="skeleton" style="height: 40px;"></td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Top Products -->
+        <div class="table-card">
+            <div class="table-header">
+                <h3 class="table-title">{% trans "Top Selling Products" %}</h3>
+                <a href="{% url 'admin:catalog_product_changelist' %}" class="table-link">{% trans "View all" %} →</a>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>{% trans "Product" %}</th>
+                        <th>{% trans "Sold" %}</th>
+                        <th>{% trans "Revenue" %}</th>
+                    </tr>
+                </thead>
+                <tbody id="top-products">
+                    <tr><td colspan="3" class="skeleton" style="height: 40px;"></td></tr>
+                    <tr><td colspan="3" class="skeleton" style="height: 40px;"></td></tr>
+                    <tr><td colspan="3" class="skeleton" style="height: 40px;"></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- System Health -->
+    <div class="chart-card" style="margin-top: 1.5rem;">
+        <h3 class="chart-title">{% trans "System Health" %}</h3>
+        <div class="health-grid" id="system-health">
+            <div class="health-item">
+                <div class="health-indicator skeleton" style="width: 0.75rem; height: 0.75rem; border-radius: 50%;"></div>
+                <span class="health-label">{% trans "Database" %}</span>
+            </div>
+            <div class="health-item">
+                <div class="health-indicator skeleton" style="width: 0.75rem; height: 0.75rem; border-radius: 50%;"></div>
+                <span class="health-label">{% trans "Cache" %}</span>
+            </div>
+            <div class="health-item">
+                <div class="health-indicator skeleton" style="width: 0.75rem; height: 0.75rem; border-radius: 50%;"></div>
+                <span class="health-label">{% trans "Storage" %}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const period = '{{ period }}';
+    let revenueChart, orderStatusChart;
+    
+    // Period selector
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const newPeriod = this.dataset.period;
+            window.location.href = `?period=${newPeriod}`;
+        });
+    });
+    
+    // Initialize charts
+    initCharts();
+    
+    // Load data
+    loadRecentOrders();
+    loadLowStock();
+    loadTopProducts();
+    loadSystemHealth();
+    loadRevenueChart();
+    
+    function initCharts() {
+        // Order Status Chart
+        const orderStatusData = {{ order_status_breakdown|safe }};
+        const statusCtx = document.getElementById('orderStatusChart').getContext('2d');
+        orderStatusChart = new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(orderStatusData).map(s => s.charAt(0).toUpperCase() + s.slice(1)),
+                datasets: [{
+                    data: Object.values(orderStatusData),
+                    backgroundColor: [
+                        '#fef3c7', '#dbeafe', '#e0e7ff', '#cffafe', '#dcfce7', '#fee2e2', '#f3e8ff'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim() || '#1e293b'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    async function loadRevenueChart() {
+        try {
+            const response = await fetch(`/admin/dashboard/api/revenue/?period=${period}`);
+            const data = await response.json();
+            
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            revenueChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: '{% trans "Revenue" %}',
+                        data: data.revenue,
+                        borderColor: '#0ea5e9',
+                        backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        yAxisID: 'y'
+                    }, {
+                        label: '{% trans "Orders" %}',
+                        data: data.orders,
+                        borderColor: '#10b981',
+                        backgroundColor: 'transparent',
+                        tension: 0.4,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: { drawOnChartArea: false }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim() || '#1e293b'
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (e) {
+            console.error('Failed to load revenue chart:', e);
+        }
+    }
+    
+    async function loadRecentOrders() {
+        try {
+            const response = await fetch('/admin/dashboard/api/recent-orders/?limit=5');
+            const data = await response.json();
+            
+            const tbody = document.getElementById('recent-orders');
+            if (data.orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">{% trans "No orders yet" %}</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = data.orders.map(order => `
+                <tr>
+                    <td><a href="/admin/orders/order/${order.id}/change/">#${order.order_number}</a></td>
+                    <td>${order.customer}</td>
+                    <td>৳${order.total.toLocaleString()}</td>
+                    <td><span class="status-badge status-${order.status}">${order.status}</span></td>
+                </tr>
+            `).join('');
+        } catch (e) {
+            console.error('Failed to load recent orders:', e);
+        }
+    }
+    
+    async function loadLowStock() {
+        try {
+            const response = await fetch('/admin/dashboard/api/low-stock/?limit=5');
+            const data = await response.json();
+            
+            const tbody = document.getElementById('low-stock');
+            if (data.products.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">{% trans "All products in stock" %}</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = data.products.map(product => `
+                <tr>
+                    <td><a href="/admin/catalog/product/${product.id}/change/">${product.name}</a></td>
+                    <td>${product.sku || '-'}</td>
+                    <td class="${product.stock === 0 ? 'stock-critical' : 'stock-warning'}">${product.stock}</td>
+                </tr>
+            `).join('');
+        } catch (e) {
+            console.error('Failed to load low stock:', e);
+        }
+    }
+    
+    async function loadTopProducts() {
+        try {
+            const response = await fetch(`/admin/dashboard/api/top-products/?period=${period}&limit=5`);
+            const data = await response.json();
+            
+            const tbody = document.getElementById('top-products');
+            if (data.products.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">{% trans "No sales yet" %}</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = data.products.map(product => `
+                <tr>
+                    <td>${product.name}</td>
+                    <td>${product.quantity}</td>
+                    <td>৳${product.revenue.toLocaleString()}</td>
+                </tr>
+            `).join('');
+        } catch (e) {
+            console.error('Failed to load top products:', e);
+        }
+    }
+    
+    async function loadSystemHealth() {
+        try {
+            const response = await fetch('/admin/dashboard/api/system-health/');
+            const data = await response.json();
+            
+            const container = document.getElementById('system-health');
+            container.innerHTML = `
+                <div class="health-item">
+                    <div class="health-indicator ${data.database ? 'healthy' : 'unhealthy'}"></div>
+                    <span class="health-label">{% trans "Database" %}</span>
+                </div>
+                <div class="health-item">
+                    <div class="health-indicator ${data.cache ? 'healthy' : 'unhealthy'}"></div>
+                    <span class="health-label">{% trans "Cache" %}</span>
+                </div>
+                <div class="health-item">
+                    <div class="health-indicator ${data.storage ? 'healthy' : 'unhealthy'}"></div>
+                    <span class="health-label">{% trans "Storage" %}</span>
+                </div>
+            `;
+        } catch (e) {
+            console.error('Failed to load system health:', e);
+        }
+    }
+});
+</script>
+{% endblock %}

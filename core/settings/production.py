@@ -158,6 +158,22 @@ CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', REDIS_URL)
 CELERY_TASK_ALWAYS_EAGER = False
 
 # =============================================================================
+# CHANNEL LAYERS - WebSockets with Redis
+# =============================================================================
+if REDIS_URL:
+    # Use Redis for channel layers in production (required for WebSocket support)
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                'hosts': [os.environ.get('CHANNEL_LAYERS_REDIS_URL', REDIS_URL)],
+                'capacity': 1500,  # Max messages per channel
+                'expiry': 10,  # Message expiry in seconds
+            },
+        },
+    }
+
+# =============================================================================
 # LOGGING - Production Level
 # =============================================================================
 LOGGING['handlers']['console']['level'] = 'INFO'

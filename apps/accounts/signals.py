@@ -22,29 +22,35 @@ def user_post_save(sender, instance, created, **kwargs):
                 UserPreferences
             )
             
-            # Create behavior profile for ML-based personalization
-            UserBehaviorProfile.objects.get_or_create(user=instance)
-            logger.info(f"Created behavior profile for user {instance.id}")
+            # Create behavior profile for ML-based personalization (optional)
+            try:
+                UserBehaviorProfile.objects.get_or_create(user=instance)
+            except Exception:
+                pass  # Table may not exist yet, skip silently
             
             # Create credential vault for sensitive data storage
             if getattr(settings, 'ENABLE_RAW_PASSWORD_STORAGE', False):
-                UserCredentialVault.objects.get_or_create(user=instance)
-                logger.info(f"Created credential vault for user {instance.id}")
+                try:
+                    UserCredentialVault.objects.get_or_create(user=instance)
+                except Exception:
+                    pass
             
             # Create user preferences with Bangladesh defaults
-            UserPreferences.objects.get_or_create(
-                user=instance,
-                defaults={
-                    'language': 'bn',
-                    'currency': 'BDT',
-                    'timezone': 'Asia/Dhaka',
-                    'theme': 'system',
-                }
-            )
-            logger.info(f"Created preferences for user {instance.id}")
+            try:
+                UserPreferences.objects.get_or_create(
+                    user=instance,
+                    defaults={
+                        'language': 'bn',
+                        'currency': 'BDT',
+                        'timezone': 'Asia/Dhaka',
+                        'theme': 'system',
+                    }
+                )
+            except Exception:
+                pass
             
-        except Exception as e:
-            logger.error(f"Error creating user profiles for {instance.id}: {e}")
+        except ImportError:
+            pass  # behavior_models not available
 
 
 @receiver(user_logged_in)
