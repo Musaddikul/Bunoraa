@@ -1,33 +1,35 @@
+const isProduction = process.env.NODE_ENV === 'production';
+const isDevelopment = !isProduction;
+
+// Minimal plugins for development, full pipeline for production
 module.exports = {
   plugins: {
+    // Always needed
     'postcss-import': {},
     'tailwindcss/nesting': {},
     tailwindcss: {},
-    'postcss-preset-env': {
-      features: {
-        'nesting-rules': false,
-        'custom-media-queries': true,
-        'media-query-ranges': true,
-        'custom-selectors': true,
-      },
+    
+    // Only in production - autoprefixer handles browser compatibility
+    ...(isProduction && {
       autoprefixer: {
         flexbox: 'no-2009',
         grid: 'autoplace',
       },
-      browsers: 'last 4 versions',
-    },
-    'postcss-flexbugs-fixes': {},
-    'postcss-reporter': {
-      clearReportedMessages: true,
-    },
-    'postcss-normalize': {},
-    cssnano: process.env.NODE_ENV === 'production' ? {
-      preset: ['default', {
-        discardComments: {
-          removeAll: true,
-        },
-        normalizeWhitespace: true,
-      }],
-    } : false,
+    }),
+    
+    // Only in production - minification
+    ...(isProduction && {
+      cssnano: {
+        preset: ['default', {
+          discardComments: { removeAll: true },
+          normalizeWhitespace: true,
+          // Skip expensive optimizations
+          calc: false,
+          colormin: false,
+          convertValues: false,
+          reduceTransforms: false,
+        }],
+      },
+    }),
   },
 }

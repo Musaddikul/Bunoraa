@@ -30,7 +30,6 @@ const HomePage = (function() {
         initSocialProofPopups();
         initRecentlyViewed();
         initFlashSaleCountdown();
-        initArtisanSpotlight();
         initScrollAnimations();
         initQuickViewModal();
     }
@@ -487,7 +486,7 @@ const HomePage = (function() {
                 });
             } catch (error) {
                 console.error('Failed to load testimonials:', error);
-                container.innerHTML = '<p class="text-red-500 text-center py-8">Failed to load testimonials. Please try again later.</p>';
+                container.innerHTML = '<p class="text-red-500 text-center py-8">Failed to load reviews. Please try again later.</p>';
             }
     }
     async function loadBestSellers() {

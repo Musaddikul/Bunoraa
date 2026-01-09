@@ -5,6 +5,7 @@ Uses PostgreSQL, Redis, Cloudflare R2 storage.
 """
 import os
 import dj_database_url
+import psycopg2.extensions
 from .base import *
 
 # =============================================================================
@@ -37,17 +38,18 @@ if not DATABASE_URL:
 DATABASES = {
     'default': dj_database_url.config(
         default=DATABASE_URL,
-        conn_max_age=600,
+        conn_max_age=300,
         conn_health_checks=True,
         ssl_require=True,
     )
 }
 
-# Connection pooling
-DATABASES['default']['CONN_MAX_AGE'] = 600
+# Connection pooling - Memory optimized
+DATABASES['default']['CONN_MAX_AGE'] = 300  # Close connections after 5 mins inactivity
 DATABASES['default']['OPTIONS'] = {
     'connect_timeout': 10,
     'options': '-c statement_timeout=30000',
+    'isolation_level': psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED,  # Reduces lock memory
 }
 
 # =============================================================================

@@ -1,8 +1,47 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-    content: [
-        './templates/**/*.html',
-        './static/js/**/*.js',
+    // Performance optimizations
+    future: {
+        hoverOnlyWhenSupported: true,
+    },
+    content: {
+        files: [
+            './templates/**/*.html',
+            './static/js/**/*.js',
+        ],
+        // Relative paths improve file watching performance
+        relative: true,
+    },
+    // Safelist commonly used dynamic classes to avoid rescanning
+    safelist: [
+        // Grid columns
+        { pattern: /grid-cols-(1|2|3|4|5|6|12)/ },
+        { pattern: /col-span-(1|2|3|4|6|12)/ },
+        // Gaps
+        { pattern: /gap-(0|1|2|3|4|5|6|8)/ },
+        // Margins and paddings
+        { pattern: /[mp][xy]?-(0|1|2|3|4|5|6|8|10|12|16|20)/ },
+        // Text sizes
+        { pattern: /text-(xs|sm|base|lg|xl|2xl|3xl|4xl)/ },
+        // Font weights
+        { pattern: /font-(normal|medium|semibold|bold)/ },
+        // Colors (primary, secondary, accent - common shades)
+        { pattern: /bg-(primary|secondary|accent)-(50|100|500|600|700)/ },
+        { pattern: /text-(primary|secondary|accent)-(50|100|500|600|700|800|900)/ },
+        { pattern: /border-(primary|secondary|accent)-(200|300|500)/ },
+        // Flex
+        { pattern: /flex-(row|col)/ },
+        { pattern: /justify-(start|center|end|between)/ },
+        { pattern: /items-(start|center|end)/ },
+        // Widths
+        { pattern: /w-(full|auto|1\/2|1\/3|1\/4|2\/3|3\/4)/ },
+        // Opacity
+        { pattern: /opacity-(0|50|75|100)/ },
+        // Animations
+        'animate-fade-in',
+        'animate-slide-in-up',
+        'animate-pulse-soft',
+        'skeleton',
     ],
     darkMode: 'class',
     theme: {
