@@ -76,12 +76,13 @@ class RegistrationForm(forms.Form):
 
     def save(self):
         data = self.cleaned_data
-        user = User(
+        # Use UserService to create the user so verification email is sent
+        from .services import UserService
+        user = UserService.create_user(
+            email=data['email'],
+            password=data['password1'],
             first_name=data.get('first_name', '').strip(),
             last_name=data.get('last_name', '').strip(),
-            email=data['email'],
             newsletter_subscribed=data.get('newsletter', False)
         )
-        user.set_password(data['password1'])
-        user.save()
         return user

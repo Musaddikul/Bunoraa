@@ -65,7 +65,8 @@ THIRD_PARTY_APPS = [
     'django_filters',
     'storages',
     'django_hugeicons_stroke',
-    'django_celery_beat'
+    'django_celery_beat',
+    'social_django'
 ]
 
 LOCAL_APPS = [
@@ -88,6 +89,7 @@ LOCAL_APPS = [
     'apps.subscriptions',
     'apps.commerce',
     'apps.chat',
+    'apps.email_service',
     'ml',
 ]
 
@@ -134,6 +136,8 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'core.context_processors.site_settings',
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
             ],
         },
     },
@@ -240,6 +244,23 @@ FORCE_DEFAULT_CURRENCY = False  # Set to True for single-currency deployments
 LOGIN_URL = '/account/login/'
 LOGIN_REDIRECT_URL = '/account/dashboard/'
 
+# Social Auth (Google) - using python-social-auth (social-auth-app-django)
+# Install: pip install social-auth-app-django
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.google.GoogleOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('GOOGLE_CLIENT_ID', '')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
+SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = os.environ.get('GOOGLE_REDIRECT_URI', '')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = ['email', 'profile']
+SOCIAL_AUTH_URL_NAMESPACE = 'social'
+# Use the same redirect as LOGIN_REDIRECT_URL by default
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = os.environ.get('SOCIAL_AUTH_LOGIN_REDIRECT_URL', LOGIN_REDIRECT_URL)
+# Ensure HTTPS for redirect URIs when using reverse proxies (set in production)
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = os.environ.get('SOCIAL_AUTH_REDIRECT_IS_HTTPS', 'False').lower() in ('1', 'true', 'yes')
+
 # REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -311,14 +332,62 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
-# Email Configuration
-EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.sendgrid.net')
+# =============================================================================
+# EMAIL CONFIGURATION
+# =============================================================================
+# Use custom HTTP-based email service (alternative to SMTP)
+# Set EMAIL_PROVIDER env var to: sendgrid, mailgun, resend, postmark, amazon_ses, console, gmail
+
+# Legacy SMTP settings (for fallback/compatibility)
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() == 'true'
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.environ.get('SENDGRID_API_KEY', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+
+# Default email settings
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@bunoraa.com')
+DEFAULT_FROM_NAME = os.environ.get('DEFAULT_FROM_NAME', 'Bunoraa')
+DEFAULT_REPLY_TO = os.environ.get('DEFAULT_REPLY_TO', 'support@bunoraa.com')
+
+# =============================================================================
+# EMAIL SERVICE PROVIDER SETTINGS
+# =============================================================================
+# Custom email service provider (like SendGrid) - Self-hosted
+EMAIL_SERVICE_SETTINGS = {
+    # SMTP Server Configuration for sending
+    'SMTP_HOST': os.environ.get('EMAIL_SERVICE_SMTP_HOST', 'localhost'),
+    'SMTP_PORT': int(os.environ.get('EMAIL_SERVICE_SMTP_PORT', '25')),
+    'SMTP_USE_TLS': os.environ.get('EMAIL_SERVICE_SMTP_TLS', 'True').lower() == 'true',
+    'SMTP_USERNAME': os.environ.get('EMAIL_SERVICE_SMTP_USER', ''),
+    'SMTP_PASSWORD': os.environ.get('EMAIL_SERVICE_SMTP_PASS', ''),
+    
+    # Connection Pool Settings
+    'CONNECTION_POOL_SIZE': int(os.environ.get('EMAIL_SERVICE_POOL_SIZE', '10')),
+    'CONNECTION_TIMEOUT': int(os.environ.get('EMAIL_SERVICE_TIMEOUT', '30')),
+    
+    # Queue Settings
+    'QUEUE_BATCH_SIZE': int(os.environ.get('EMAIL_SERVICE_BATCH_SIZE', '100')),
+    'MAX_RETRIES': int(os.environ.get('EMAIL_SERVICE_MAX_RETRIES', '3')),
+    'RETRY_DELAY_MINUTES': int(os.environ.get('EMAIL_SERVICE_RETRY_DELAY', '5')),
+    
+    # Tracking Settings
+    'ENABLE_OPEN_TRACKING': os.environ.get('EMAIL_SERVICE_TRACK_OPENS', 'True').lower() == 'true',
+    'ENABLE_CLICK_TRACKING': os.environ.get('EMAIL_SERVICE_TRACK_CLICKS', 'True').lower() == 'true',
+    'TRACKING_DOMAIN': os.environ.get('EMAIL_SERVICE_TRACKING_DOMAIN', 'track.bunoraa.com'),
+    
+    # Rate Limiting
+    'DEFAULT_RATE_LIMIT': int(os.environ.get('EMAIL_SERVICE_RATE_LIMIT', '100')),
+    'DEFAULT_DAILY_LIMIT': int(os.environ.get('EMAIL_SERVICE_DAILY_LIMIT', '10000')),
+    
+    # Webhook Settings
+    'WEBHOOK_TIMEOUT': int(os.environ.get('EMAIL_SERVICE_WEBHOOK_TIMEOUT', '30')),
+    'WEBHOOK_MAX_RETRIES': int(os.environ.get('EMAIL_SERVICE_WEBHOOK_RETRIES', '5')),
+    
+    # Cleanup Settings
+    'MESSAGE_RETENTION_DAYS': int(os.environ.get('EMAIL_SERVICE_RETENTION_DAYS', '90')),
+}
 
 # Celery Configuration
 CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')

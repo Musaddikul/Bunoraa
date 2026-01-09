@@ -63,6 +63,10 @@ urlpatterns = [
     
     path('notifications/', include('apps.notifications.urls')),
     path('account/', include('apps.accounts.urls')),
+    path('oauth/', include('social_django.urls', namespace='social')),
+    
+    # Email Service API
+    path('email/', include('apps.email_service.urls', namespace='email_service')),
 
     # Register pages URLs under the 'contacts' namespace for backward compatibility
     # so templates using {% url 'contacts:contact' %} continue to work.

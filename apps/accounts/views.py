@@ -291,6 +291,23 @@ class ForgotPasswordView(TemplateView):
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'Forgot Password'
         return context
+    
+    def post(self, request, *args, **kwargs):
+        """Handle password reset request form submission."""
+        email = request.POST.get('email', '').strip()
+        
+        if not email:
+            messages.error(request, 'Please enter your email address.')
+            return self.get(request, *args, **kwargs)
+        
+        try:
+            # Request password reset
+            UserService.request_password_reset(email)
+            messages.success(request, 'If an account exists with this email, a password reset link will be sent.')
+            return redirect('accounts:login')
+        except Exception as e:
+            messages.error(request, 'An error occurred. Please try again.')
+            return self.get(request, *args, **kwargs)
 
 
 class ResetPasswordView(TemplateView):

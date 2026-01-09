@@ -204,4 +204,7 @@ def site_settings(request):
         'canonical_url': build_canonical(request),
         'meta_robots': compute_meta_robots(request),
         'IS_CRAWLER': is_crawler,
+        'SOCIAL_AUTH_GOOGLE_OAUTH2_KEY': getattr(settings, 'SOCIAL_AUTH_GOOGLE_OAUTH2_KEY', ''),
+        'SOCIAL_AUTH_GOOGLE_ENABLED': bool(getattr(settings, 'SOCIAL_AUTH_GOOGLE_OAUTH2_KEY', '')),
+        'SOCIAL_AUTH_GOOGLE_REDIRECT_URI': getattr(settings, 'SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI', ''),
     }

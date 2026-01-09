@@ -275,9 +275,9 @@
                                    class="mt-1 w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500">
                             <span class="ml-3 text-sm text-gray-600 dark:text-gray-400">
                                 I have read and agree to the 
-                                <a href="{% url 'legal:terms' %}" class="text-primary-600 hover:underline" target="_blank">Terms & Conditions</a> 
+                                <a href="{% url 'pages:detail' slug='terms-of-service' %}" class="text-primary-600 hover:underline" target="_blank">Terms & Conditions</a> 
                                 and 
-                                <a href="{% url 'legal:privacy' %}" class="text-primary-600 hover:underline" target="_blank">Privacy Policy</a>.
+                                <a href="{% url 'pages:detail' slug='privacy-policy' %}" class="text-primary-600 hover:underline" target="_blank">Privacy Policy</a>.
                                 I understand that my order is subject to these terms.
                             </span>
                         </label>

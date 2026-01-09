@@ -168,7 +168,7 @@ class TrackingViewSet(viewsets.ViewSet):
             elif event_type == 'product_view':
                 product_id = serializer.validated_data.get('product_id')
                 if product_id:
-                    from apps.products.models import Product
+                    from apps.catalog.models import Product
                     product = Product.objects.filter(id=product_id).first()
                     if product:
                         source = serializer.validated_data.get('source')
@@ -184,7 +184,7 @@ class TrackingViewSet(viewsets.ViewSet):
             elif event_type == 'cart_add':
                 product_id = serializer.validated_data.get('product_id')
                 metadata = serializer.validated_data.get('metadata', {})
-                from apps.products.models import Product
+                from apps.catalog.models import Product
                 product = Product.objects.filter(id=product_id).first() if product_id else None
                 from ..models import CartEvent
                 AnalyticsService.track_cart_event(
@@ -197,7 +197,7 @@ class TrackingViewSet(viewsets.ViewSet):
             
             elif event_type == 'cart_remove':
                 product_id = serializer.validated_data.get('product_id')
-                from apps.products.models import Product
+                from apps.catalog.models import Product
                 product = Product.objects.filter(id=product_id).first() if product_id else None
                 from ..models import CartEvent
                 AnalyticsService.track_cart_event(CartEvent.EVENT_REMOVE, request, product=product)
@@ -225,3 +225,139 @@ class TrackingViewSet(viewsets.ViewSet):
                 'data': {'error': str(e)},
                 'meta': {}
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PublicAnalyticsViewSet(viewsets.ViewSet):
+    """
+    ViewSet for public analytics endpoints (no authentication required).
+    
+    GET /api/v1/analytics/active-visitors/ - Get active visitor count
+    GET /api/v1/analytics/recent-purchases/ - Get recent purchase notifications
+    """
+    permission_classes = [AllowAny]
+    
+    @action(detail=False, methods=['get'])
+    def active_visitors(self, request):
+        """
+        Get count of active visitors in the last 5 minutes.
+        
+        Returns:
+            {
+                'active_visitors': 28,
+                'count': 28
+            }
+        """
+        from django.utils import timezone
+        from datetime import timedelta
+        from ..models import PageView
+        
+        try:
+            # Get active sessions from last 5 minutes
+            five_minutes_ago = timezone.now() - timedelta(minutes=5)
+            active_sessions = PageView.objects.filter(
+                created_at__gte=five_minutes_ago
+            ).values('session_key').distinct().count()
+            
+            return Response({
+                'success': True,
+                'message': 'Active visitors retrieved successfully',
+                'data': {
+                    'active_visitors': active_sessions,
+                    'count': active_sessions
+                },
+                'meta': {}
+            })
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': 'Failed to retrieve active visitors',
+                'data': {'error': str(e)},
+                'meta': {}
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['get'], url_path='active-visitors')
+    def get_active_visitors(self, request):
+        """Alias for active_visitors endpoint"""
+        return self.active_visitors(request)
+    
+    @action(detail=False, methods=['get'])
+    def recent_purchases(self, request):
+        """
+        Get recent purchase notifications for social proof popups.
+        
+        Returns:
+            {
+                'purchases': [
+                    {
+                        'message': 'Someone in Dhaka purchased Handcrafted Leather Bag',
+                        'time_ago': '2 min ago'
+                    },
+                    ...
+                ]
+            }
+        """
+        from django.utils import timezone
+        from datetime import timedelta, datetime
+        from apps.orders.models import Order
+        from apps.catalog.models import Product
+        
+        try:
+            # Get recent completed orders from last 2 hours
+            two_hours_ago = timezone.now() - timedelta(hours=2)
+            
+            recent_orders = Order.objects.filter(
+                created_at__gte=two_hours_ago,
+                status__in=['completed', 'shipped', 'delivered']
+            ).select_related('user').prefetch_related('items__product').order_by('-created_at')[:10]
+            
+            purchases = []
+            for order in recent_orders:
+                try:
+                    # Get first product name from order
+                    product_name = "an item"
+                    if order.items.exists():
+                        product_name = order.items.first().product.name
+                    
+                    # Get user's city if available
+                    city = "a location"
+                    if order.user and order.user.profile:
+                        if hasattr(order.user.profile, 'city') and order.user.profile.city:
+                            city = order.user.profile.city
+                    elif order.shipping_address and isinstance(order.shipping_address, dict):
+                        city = order.shipping_address.get('city', city)
+                    
+                    # Calculate time ago
+                    time_diff = timezone.now() - order.created_at
+                    if time_diff.total_seconds() < 60:
+                        time_ago = "just now"
+                    elif time_diff.total_seconds() < 3600:
+                        minutes = int(time_diff.total_seconds() / 60)
+                        time_ago = f"{minutes} min ago" if minutes > 1 else "1 min ago"
+                    else:
+                        hours = int(time_diff.total_seconds() / 3600)
+                        time_ago = f"{hours} hour{'s' if hours > 1 else ''} ago"
+                    
+                    purchases.append({
+                        'message': f"Someone in {city} purchased {product_name}",
+                        'time_ago': time_ago
+                    })
+                except Exception as e:
+                    continue
+            
+            return Response({
+                'success': True,
+                'message': 'Recent purchases retrieved successfully',
+                'data': {
+                    'purchases': purchases
+                },
+                'meta': {}
+            })
+        
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': 'Failed to retrieve recent purchases',
+                'data': {'error': str(e)},
+                'meta': {}
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

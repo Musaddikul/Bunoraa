@@ -1,0 +1,274 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>{% block title %}{{ subject|default:"Bunoraa" }}{% endblock %}</title>
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
+    <style>
+        /* Reset */
+        body, html {
+            margin: 0 !important;
+            padding: 0 !important;
+            height: 100% !important;
+            width: 100% !important;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+        
+        * {
+            -ms-text-size-adjust: 100%;
+            -webkit-text-size-adjust: 100%;
+        }
+        
+        div[style*="margin: 16px 0"] {
+            margin: 0 !important;
+        }
+        
+        table, td {
+            mso-table-lspace: 0 !important;
+            mso-table-rspace: 0 !important;
+        }
+        
+        table {
+            border-spacing: 0 !important;
+            border-collapse: collapse !important;
+            table-layout: fixed !important;
+            margin: 0 auto !important;
+        }
+        
+        img {
+            -ms-interpolation-mode: bicubic;
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        a {
+            text-decoration: none;
+        }
+        
+        /* iOS Blue Links */
+        a[x-apple-data-detectors],
+        .unstyle-auto-detected-links a,
+        .aBn {
+            border-bottom: 0 !important;
+            cursor: default !important;
+            color: inherit !important;
+            text-decoration: none !important;
+            font-size: inherit !important;
+            font-family: inherit !important;
+            font-weight: inherit !important;
+            line-height: inherit !important;
+        }
+        
+        /* Gmail Blue Links */
+        u + #body a {
+            color: inherit;
+            text-decoration: none;
+            font-size: inherit;
+            font-family: inherit;
+            font-weight: inherit;
+            line-height: inherit;
+        }
+        
+        /* Samsung Blue Links */
+        #MessageViewBody a {
+            color: inherit;
+            text-decoration: none;
+            font-size: inherit;
+            font-family: inherit;
+            font-weight: inherit;
+            line-height: inherit;
+        }
+        
+        /* Custom Styles */
+        .email-container {
+            max-width: 600px !important;
+            margin: 0 auto !important;
+        }
+        
+        .button {
+            display: inline-block !important;
+            padding: 14px 28px !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            text-decoration: none !important;
+            border-radius: 6px !important;
+            text-align: center !important;
+        }
+        
+        .button-primary {
+            background-color: #C9A068 !important;
+            color: #FFFFFF !important;
+        }
+        
+        .button-secondary {
+            background-color: #f3f4f6 !important;
+            color: #374151 !important;
+        }
+        
+        @media screen and (max-width: 600px) {
+            .email-container {
+                width: 100% !important;
+                margin: auto !important;
+            }
+            
+            .fluid {
+                max-width: 100% !important;
+                height: auto !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+            }
+            
+            .stack-column,
+            .stack-column-center {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                direction: ltr !important;
+            }
+            
+            .stack-column-center {
+                text-align: center !important;
+            }
+            
+            .center-on-narrow {
+                text-align: center !important;
+                display: block !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+                float: none !important;
+            }
+            
+            table.center-on-narrow {
+                display: inline-block !important;
+            }
+            
+            .mobile-padding {
+                padding-left: 20px !important;
+                padding-right: 20px !important;
+            }
+        }
+    </style>
+</head>
+<body id="body" style="margin: 0; padding: 0; background-color: #f7f7f7;">
+    <center style="width: 100%; background-color: #f7f7f7;">
+        <!--[if mso | IE]>
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f7f7f7;">
+        <tr>
+        <td>
+        <![endif]-->
+        
+        <!-- Preheader Text -->
+        <div style="display: none; font-size: 1px; line-height: 1px; max-height: 0; max-width: 0; opacity: 0; overflow: hidden; mso-hide: all;">
+            {% block preheader %}{% endblock %}
+            &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847;
+        </div>
+        
+        <!-- Email Container -->
+        <div class="email-container" style="max-width: 600px; margin: 0 auto;">
+            
+            <!-- Email Header -->
+            <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: auto;">
+                <tr>
+                    <td style="padding: 30px 0; text-align: center; background-color: #ffffff;">
+                        <a href="{{ site_url|default:'https://bunoraa.com' }}" style="display: inline-block;">
+                            {% if logo_url %}
+                            <img src="{{ logo_url }}" alt="Bunoraa" width="150" height="auto" style="height: auto; display: block; margin: 0 auto;">
+                            {% else %}
+                            <span style="font-size: 28px; font-weight: 700; color: #1f2937; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Bunoraa</span>
+                            {% endif %}
+                        </a>
+                    </td>
+                </tr>
+            </table>
+            
+            <!-- Email Body -->
+            <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: auto; background-color: #ffffff;">
+                <tr>
+                    <td class="mobile-padding" style="padding: 40px 40px;">
+                        {% block content %}
+                        <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #374151; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                            {% trans "Hello" %},
+                        </p>
+                        <p style="margin: 20px 0 0 0; font-size: 16px; line-height: 1.6; color: #374151; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                            {% trans "This is your email content." %}
+                        </p>
+                        {% endblock %}
+                    </td>
+                </tr>
+            </table>
+            
+            <!-- Email Footer -->
+            <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: auto; background-color: #f9fafb;">
+                <tr>
+                    <td style="padding: 30px 40px; text-align: center;">
+                        <!-- Social Links -->
+                        <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0">
+                            <tr>
+                                {% if social_facebook %}
+                                <td style="padding: 0 8px;">
+                                    <a href="{{ social_facebook }}">
+                                        <img src="https://bunoraa.com/static/images/email/facebook.png" alt="Facebook" width="24" height="24">
+                                    </a>
+                                </td>
+                                {% endif %}
+                                {% if social_instagram %}
+                                <td style="padding: 0 8px;">
+                                    <a href="{{ social_instagram }}">
+                                        <img src="https://bunoraa.com/static/images/email/instagram.png" alt="Instagram" width="24" height="24">
+                                    </a>
+                                </td>
+                                {% endif %}
+                                {% if social_twitter %}
+                                <td style="padding: 0 8px;">
+                                    <a href="{{ social_twitter }}">
+                                        <img src="https://bunoraa.com/static/images/email/twitter.png" alt="Twitter" width="24" height="24">
+                                    </a>
+                                </td>
+                                {% endif %}
+                            </tr>
+                        </table>
+                        
+                        <p style="margin: 20px 0 0 0; font-size: 14px; line-height: 1.5; color: #6b7280; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                            {% block footer_text %}
+                            {% trans "Thank you for being part of Bunoraa!" %}
+                            {% endblock %}
+                        </p>
+                        
+                        <p style="margin: 16px 0 0 0; font-size: 12px; line-height: 1.5; color: #9ca3af; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                            &copy; {{ year|default:"2024" }} Bunoraa. {% trans "All rights reserved." %}
+                        </p>
+                        
+                        <p style="margin: 12px 0 0 0; font-size: 12px; line-height: 1.5; color: #9ca3af; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                            {% if unsubscribe_url %}
+                            <a href="{{ unsubscribe_url }}" style="color: #9ca3af; text-decoration: underline;">{% trans "Unsubscribe" %}</a>
+                            &nbsp;|&nbsp;
+                            {% endif %}
+                            <a href="{{ site_url|default:'https://bunoraa.com' }}/privacy/" style="color: #9ca3af; text-decoration: underline;">{% trans "Privacy Policy" %}</a>
+                        </p>
+                    </td>
+                </tr>
+            </table>
+            
+        </div>
+        
+        <!--[if mso | IE]>
+        </td>
+        </tr>
+        </table>
+        <![endif]-->
+    </center>
+</body>
+</html>

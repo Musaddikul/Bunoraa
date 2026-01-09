@@ -149,7 +149,7 @@
     </div>
     {% endblock %}
 
-    <header id="main-header" class="sticky top-0 inset-x-0 z-40 border-b border-stone-200 dark:border-stone-800 bg-white dark:bg-black shadow-md transition-colors">
+    <header id="main-header" class="sticky top-0 inset-x-0 z-40 border-b border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 shadow-md transition-colors">
         <div class="container mx-auto px-2 md:px-4">
             <div class="main-header-row flex flex-wrap items-center gap-2 py-2 relative">
                 <div class="flex items-center gap-1 z-10">
@@ -1790,26 +1790,21 @@
                 const handleScroll = () => {
                     const currentScroll = window.scrollY;
                     
-                    // Add background/border/blur and shadow when scrolled; restore transparent header at top
+                    // Ensure header uses a solid background and shadow (no transparency or blur)
                     if (currentScroll > 10) {
                         header.classList.add(
                             'shadow-lg', 'shadow-stone-200/50',
-                            'bg-white/95', 'dark:bg-stone-900/95',
-                            'border-b', 'border-stone-200/70', 'dark:border-stone-700/70',
-                            'supports-[backdrop-filter]:bg-white/70', 'dark:supports-[backdrop-filter]:bg-stone-900/70',
-                            'backdrop-blur-xl'
+                            'bg-white', 'dark:bg-stone-900',
+                            'border-b', 'border-stone-200/70', 'dark:border-stone-700/70'
                         );
-                        header.classList.remove('bg-transparent', 'border-transparent', 'backdrop-blur-none', 'shadow-none');
+                        header.classList.remove('bg-transparent', 'border-transparent', 'backdrop-blur-none', 'shadow-none', 'bg-white/95', 'dark:bg-stone-900/95', 'backdrop-blur-xl', 'supports-[backdrop-filter]:bg-white/70', 'dark:supports-[backdrop-filter]:bg-stone-900/70');
                     } else {
                         header.classList.remove(
                             'shadow-lg', 'shadow-stone-200/50',
-                            'bg-white/95', 'dark:bg-stone-900/95',
-                            'border-b', 'border-stone-200/70', 'dark:border-stone-700/70',
-                            'supports-[backdrop-filter]:bg-white/70', 'dark:supports-[backdrop-filter]:bg-stone-900/70',
-                            'backdrop-blur-xl'
+                            'border-b', 'border-stone-200/70', 'dark:border-stone-700/70'
                         );
-                        // Restore frosted glass look at top instead of transparent
-                        header.classList.add('bg-white/30', 'dark:bg-stone-900/40', 'backdrop-blur-[12px]', 'border-transparent', 'shadow-sm');
+                        // Keep header solid at top as well
+                        header.classList.add('bg-white', 'dark:bg-stone-900', 'border-transparent', 'shadow-sm');
                     }
 
                     if (!isCollapsed && currentScroll > collapseThreshold) {

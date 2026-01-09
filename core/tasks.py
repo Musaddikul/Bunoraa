@@ -850,3 +850,230 @@ def backup_configuration():
     except Exception as e:
         logger.error(f"Configuration backup failed: {e}")
         return {'status': 'error', 'message': str(e)}
+
+
+# =============================================================================
+# EMAIL TASKS
+# =============================================================================
+
+@shared_task(
+    bind=True,
+    name='core.send_email',
+    max_retries=3,
+    default_retry_delay=60,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_backoff_max=300,
+    retry_jitter=True,
+)
+def send_email_task(
+    self,
+    to,
+    subject,
+    template=None,
+    context=None,
+    html_body=None,
+    text_body=None,
+    from_email=None,
+    from_name=None,
+    reply_to=None,
+    cc=None,
+    bcc=None,
+    attachments=None,
+    tags=None,
+    **kwargs
+):
+    """
+    Send email asynchronously via Celery.
+    
+    Args:
+        to: Email recipient(s)
+        subject: Email subject
+        template: Path to email template (optional)
+        context: Template context dict (optional)
+        html_body: HTML email body (optional)
+        text_body: Plain text body (optional)
+        from_email: Sender email
+        from_name: Sender name
+        reply_to: Reply-to address
+        cc: CC recipients
+        bcc: BCC recipients
+        attachments: List of attachments
+        tags: Email tags for categorization
+        
+    Returns:
+        dict with success status and message_id
+    """
+    from core.utils.email_service import EmailService, Email
+    
+    try:
+        # Normalize to list
+        if isinstance(to, str):
+            to = [to]
+        
+        # Create email object
+        email = Email(
+            to=to,
+            subject=subject,
+            template=template,
+            context=context or {},
+            html_body=html_body or '',
+            text_body=text_body or '',
+            from_email=from_email,
+            from_name=from_name,
+            reply_to=reply_to,
+            cc=cc or [],
+            bcc=bcc or [],
+            attachments=attachments or [],
+            tags=tags or [],
+        )
+        
+        result = EmailService.send_email(email)
+        
+        if not result.success:
+            logger.error(
+                f"Email send failed: to={to}, subject={subject[:50]}, "
+                f"error={result.error}, attempts={result.attempts}"
+            )
+            raise Exception(result.error)
+        
+        logger.info(
+            f"Email sent successfully: to={to}, subject={subject[:50]}, "
+            f"message_id={result.message_id}, provider={result.provider.value}"
+        )
+        
+        return {
+            'success': True,
+            'message_id': result.message_id,
+            'provider': result.provider.value,
+            'attempts': result.attempts,
+        }
+        
+    except Exception as e:
+        logger.exception(f"Email task failed: {e}")
+        raise self.retry(exc=e)
+
+
+@shared_task(
+    bind=True,
+    name='core.send_bulk_emails',
+    max_retries=2,
+    default_retry_delay=120,
+)
+def send_bulk_emails_task(
+    self,
+    emails_data: list,
+    batch_size: int = 50,
+    delay_between_batches: float = 1.0,
+):
+    """
+    Send multiple emails in batches asynchronously.
+    
+    Args:
+        emails_data: List of dicts with email data
+        batch_size: Emails per batch
+        delay_between_batches: Delay between batches (seconds)
+    
+    Returns:
+        Summary of sent/failed emails
+    """
+    import time
+    from core.utils.email_service import EmailService, Email
+    
+    results = {
+        'total': len(emails_data),
+        'sent': 0,
+        'failed': 0,
+        'errors': [],
+    }
+    
+    for i, email_data in enumerate(emails_data):
+        try:
+            email = Email(**email_data)
+            result = EmailService.send_email(email)
+            
+            if result.success:
+                results['sent'] += 1
+            else:
+                results['failed'] += 1
+                results['errors'].append({
+                    'to': email_data.get('to'),
+                    'error': result.error,
+                })
+        except Exception as e:
+            results['failed'] += 1
+            results['errors'].append({
+                'to': email_data.get('to'),
+                'error': str(e),
+            })
+        
+        # Add delay between batches
+        if (i + 1) % batch_size == 0 and i + 1 < len(emails_data):
+            time.sleep(delay_between_batches)
+    
+    logger.info(
+        f"Bulk email complete: sent={results['sent']}, "
+        f"failed={results['failed']}, total={results['total']}"
+    )
+    
+    return results
+
+
+@shared_task(name='core.send_templated_email')
+def send_templated_email_task(
+    to,
+    template_name: str,
+    context: dict = None,
+    **kwargs
+):
+    """
+    Send a templated email (convenience task).
+    
+    Template names are mapped to actual template paths.
+    
+    Args:
+        to: Recipient(s)
+        template_name: Template identifier (e.g., 'welcome', 'order_confirmation')
+        context: Template context
+        **kwargs: Additional email parameters
+    """
+    from core.utils.email_service import EmailService
+    
+    # Template mapping
+    TEMPLATE_MAP = {
+        'welcome': ('Welcome to Bunoraa!', 'emails/welcome.html'),
+        'order_confirmation': ('Order Confirmation', 'emails/order_confirmation.html'),
+        'order_shipped': ('Your Order Has Shipped!', 'emails/order_shipped.html'),
+        'password_reset': ('Reset Your Password', 'emails/password_reset.html'),
+        'account_verified': ('Account Verified', 'emails/account_verified.html'),
+        'newsletter': ('Bunoraa Newsletter', 'emails/newsletter.html'),
+        'contact_reply': ('Re: Your Inquiry', 'emails/contact_reply.html'),
+        'review_request': ('Share Your Feedback', 'emails/review_request.html'),
+        'abandoned_cart': ('You Left Something Behind', 'emails/abandoned_cart.html'),
+        'price_drop': ('Price Drop Alert!', 'emails/price_drop.html'),
+        'back_in_stock': ('Back in Stock!', 'emails/back_in_stock.html'),
+    }
+    
+    if template_name not in TEMPLATE_MAP:
+        raise ValueError(f"Unknown template: {template_name}")
+    
+    subject, template = TEMPLATE_MAP[template_name]
+    
+    # Allow subject override
+    if 'subject' in kwargs:
+        subject = kwargs.pop('subject')
+    
+    result = EmailService.send(
+        to=to,
+        subject=subject,
+        template=template,
+        context=context or {},
+        tags=[template_name],
+        **kwargs
+    )
+    
+    return {
+        'success': result.success,
+        'message_id': result.message_id,
+        'error': result.error,
+    }

@@ -248,31 +248,14 @@ class UserService:
             expires_at=expires_at
         )
         
-        # Build verification URL
-        site_url = getattr(settings, 'SITE_URL', 'https://bunoraa.com')
-        verification_url = f"{site_url}/account/verify-email/{token}/"
-        
-        # Send email
+        # Send email via email service
         try:
-            context = {
-                'user': user,
-                'verification_url': verification_url,
-                'site_name': 'Bunoraa',
-            }
-            
-            html_message = render_to_string('emails/verify_email.html', context)
-            plain_message = f'Click here to verify your email: {verification_url}'
-            
-            send_mail(
-                subject='Verify your email - Bunoraa',
-                message=plain_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                html_message=html_message,
-                fail_silently=True,
-            )
-            logger.info(f"Verification email sent to {user.email}")
-            
+            from .email_integration import EmailServiceIntegration
+            success = EmailServiceIntegration.send_verification_email(user, token)
+            if success:
+                logger.info(f"Verification email queued for {user.email}")
+            else:
+                logger.error(f"Failed to queue verification email for {user.email}")
         except Exception as e:
             logger.error(f"Failed to send verification email to {user.email}: {e}")
         
@@ -320,31 +303,14 @@ class UserService:
             expires_at=expires_at
         )
         
-        # Build reset URL
-        site_url = getattr(settings, 'SITE_URL', 'https://bunoraa.com')
-        reset_url = f"{site_url}/account/reset-password/{token}/"
-        
-        # Send email
+        # Send email via email service
         try:
-            context = {
-                'user': user,
-                'reset_url': reset_url,
-                'site_name': 'Bunoraa',
-            }
-            
-            html_message = render_to_string('emails/reset_password.html', context)
-            plain_message = f'Click here to reset your password: {reset_url}'
-            
-            send_mail(
-                subject='Reset your password - Bunoraa',
-                message=plain_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                html_message=html_message,
-                fail_silently=True,
-            )
-            logger.info(f"Password reset email sent to {user.email}")
-            
+            from .email_integration import EmailServiceIntegration
+            success = EmailServiceIntegration.send_password_reset_email(user, token)
+            if success:
+                logger.info(f"Password reset email queued for {user.email}")
+            else:
+                logger.error(f"Failed to queue password reset email for {user.email}")
         except Exception as e:
             logger.error(f"Failed to send reset email to {user.email}: {e}")
         
