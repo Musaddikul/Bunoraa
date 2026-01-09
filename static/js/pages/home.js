@@ -12,26 +12,46 @@ const HomePage = (function() {
     let countdownInterval = null;
 
     async function init() {
-        // Initialize core features in parallel
+        // OPTIMIZED: Load critical sections first, then non-critical sections in background
+        
+        // Ensure page starts at the top
+        window.scrollTo(0, 0);
+        
+        // Critical sections (above the fold) - load with Promise.all
         await Promise.all([
             loadHeroBanners(),
             loadFeaturedProducts(),
-            loadCategoriesShowcase(),
             loadNewArrivals(),
-            loadPromotions(),
-            loadCustomOrderCTA(),
-            loadBestSellers(),
-            loadTestimonials()
         ]);
         
-        // Initialize enhanced features
+        // Initialize interactive features immediately
         initNewsletterForm();
-        initLiveVisitorCounter();
-        initSocialProofPopups();
-        initRecentlyViewed();
-        initFlashSaleCountdown();
         initScrollAnimations();
         initQuickViewModal();
+        
+        // Non-critical sections (below the fold) - load in background without blocking
+        // These will load while user is viewing the top sections
+        Promise.all([
+            loadCategoriesShowcase(),
+            loadBestSellers(),
+            loadTestimonials()
+        ]).catch(err => console.error('Failed to load secondary sections:', err));
+        
+        // Delayed features (don't impact initial load)
+        setTimeout(() => {
+            initLiveVisitorCounter();
+            initSocialProofPopups();
+            initRecentlyViewed();
+            initFlashSaleCountdown();
+        }, 2000);
+        
+        // Non-blocking enhancements
+        try {
+            loadPromotions();
+            loadCustomOrderCTA();
+        } catch (e) {
+            console.warn('Failed to load promotions/CTA:', e);
+        }
     }
 
     // ============================================
@@ -40,26 +60,41 @@ const HomePage = (function() {
     function initLiveVisitorCounter() {
         const container = document.getElementById('live-visitors');
         if (!container) return;
-
-        // Simulate live visitor count (in production, use WebSocket or API)
-        liveVisitorCount = Math.floor(Math.random() * 50) + 25;
         
-        function updateCount() {
-            const change = Math.random() > 0.5 ? 1 : -1;
-            liveVisitorCount = Math.max(15, Math.min(100, liveVisitorCount + change));
-            container.innerHTML = `
-                <div class="flex items-center gap-2 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
-                    <span class="relative flex h-2 w-2">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
-                    <span class="text-xs font-medium text-emerald-700 dark:text-emerald-300">${liveVisitorCount} browsing now</span>
-                </div>
-            `;
+        async function fetchAndUpdateCount() {
+            try {
+                // Fetch active sessions from analytics
+                const response = await window.ApiClient.get('/analytics/active-visitors/', {});
+                const data = response.data || response;
+                
+                // Get real active visitor count
+                liveVisitorCount = data.active_visitors || data.count || 0;
+                
+                // If no real data, don't show anything (don't use fallback)
+                if (liveVisitorCount === 0) {
+                    container.innerHTML = '';
+                    return;
+                }
+                
+                container.innerHTML = `
+                    <div class="flex items-center gap-2 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        <span class="text-xs font-medium text-emerald-700 dark:text-emerald-300">${liveVisitorCount} browsing now</span>
+                    </div>
+                `;
+            } catch (error) {
+                console.warn('Failed to fetch active visitors:', error);
+                // Don't show fallback, just log error
+                container.innerHTML = '';
+            }
         }
         
-        updateCount();
-        setInterval(updateCount, 8000);
+        // Fetch immediately and then every 8 seconds
+        fetchAndUpdateCount();
+        setInterval(fetchAndUpdateCount, 8000);
     }
 
     // ============================================
@@ -67,65 +102,55 @@ const HomePage = (function() {
     // ============================================
     function initSocialProofPopups() {
         
-        const proofMessages = [
-            { type: 'purchase', location: 'Dhaka', time: '2 min ago', product: 'Handcrafted Leather Bag' },
-            { type: 'purchase', location: 'Sylhet', time: '5 min ago', product: 'Artisan Ceramic Vase' },
-            { type: 'review', location: 'Dhaka', time: '8 min ago', rating: 5, product: 'Woven Basket Set' },
-            { type: 'signup', location: 'Rangpur', time: '12 min ago' },
-            { type: 'purchase', location: 'Chattogram', time: '15 min ago', product: 'Custom Jewelry Box' },
-        ];
-
+        let recentPurchases = [];
         let index = 0;
         let proofCount = 0;
         const maxProofs = 10; // Limit to 10 popups per session
 
+        async function fetchRecentPurchases() {
+            try {
+                // Fetch real recent purchases from analytics API
+                const response = await window.ApiClient.get('/analytics/recent-purchases/', {});
+                recentPurchases = response.data || response.purchases || [];
+                
+                // If no real purchases, don't start the popup rotation
+                if (recentPurchases.length === 0) {
+                    return;
+                }
+                
+                // Start showing popups after 10 seconds
+                setTimeout(() => {
+                    showProof();
+                    socialProofInterval = setInterval(() => {
+                        if (proofCount < maxProofs) showProof();
+                        else clearInterval(socialProofInterval);
+                    }, 30000);
+                }, 10000);
+            } catch (error) {
+                console.warn('Failed to fetch recent purchases:', error);
+                // Don't show any fallback data
+            }
+        }
+
         function showProof() {
-            if (proofCount >= maxProofs) return; // Stop showing after max count
-            const proof = proofMessages[index];
+            if (recentPurchases.length === 0 || proofCount >= maxProofs) return;
+            
+            const proof = recentPurchases[index];
             const popup = document.createElement('div');
             popup.className = 'social-proof-popup fixed bottom-4 left-4 z-50 max-w-xs bg-white dark:bg-stone-800 rounded-xl shadow-2xl border border-stone-200 dark:border-stone-700 p-4 transform translate-y-full opacity-0 transition-all duration-500';
             
-            let content = '';
-            if (proof.type === 'purchase') {
-                content = `
-                    <div class="flex items-start gap-3">
-                        <div class="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center flex-shrink-0">
-                            <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-stone-900 dark:text-white">Someone in ${proof.location} purchased</p>
-                            <p class="text-sm text-stone-600 dark:text-stone-400">${proof.product}</p>
-                            <p class="text-xs text-stone-400 dark:text-stone-500 mt-1">${proof.time}</p>
-                        </div>
+            // Using real data structure from API
+            let content = `
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                     </div>
-                `;
-            } else if (proof.type === 'review') {
-                content = `
-                    <div class="flex items-start gap-3">
-                        <div class="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center flex-shrink-0">
-                            <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.178c.969 0 1.371 1.24.588 1.81l-3.385 2.46a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.54 1.118l-3.385-2.46a1 1 0 00-1.175 0l-3.385 2.46c-.784.57-1.838-.196-1.54-1.118l1.287-3.966a1 1 0 00-.364-1.118l-3.385-2.46c-.783-.57-.38-1.81.588-1.81h4.178a1 1 0 00.95-.69l1.286-3.967z"/></svg>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-stone-900 dark:text-white">New 5-star review from ${proof.location}</p>
-                            <p class="text-sm text-stone-600 dark:text-stone-400">"${proof.product}"</p>
-                            <p class="text-xs text-stone-400 dark:text-stone-500 mt-1">${proof.time}</p>
-                        </div>
+                    <div>
+                        <p class="text-sm font-medium text-stone-900 dark:text-white">${proof.message}</p>
+                        <p class="text-xs text-stone-400 dark:text-stone-500 mt-1">${proof.time_ago}</p>
                     </div>
-                `;
-            } else if (proof.type === 'signup') {
-                content = `
-                    <div class="flex items-start gap-3">
-                        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center flex-shrink-0">
-                            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-stone-900 dark:text-white">New member joined</p>
-                            <p class="text-sm text-stone-600 dark:text-stone-400">Someone in ${proof.location} signed up</p>
-                            <p class="text-xs text-stone-400 dark:text-stone-500 mt-1">${proof.time}</p>
-                        </div>
-                    </div>
-                `;
-            }
+                </div>
+            `;
 
             popup.innerHTML = `
                 ${content}
@@ -148,22 +173,15 @@ const HomePage = (function() {
                 setTimeout(() => popup.remove(), 500);
             }, 5000);
 
-            index = (index + 1) % proofMessages.length;
+            index = (index + 1) % recentPurchases.length;
             
             // Stop showing if we've reached max count
             if (proofCount >= maxProofs && socialProofInterval) {
                 clearInterval(socialProofInterval);
             }
         }
-
-        // Show first popup after 10 seconds, then every 30 seconds
-        setTimeout(() => {
-            showProof();
-            socialProofInterval = setInterval(() => {
-                if (proofCount < maxProofs) showProof();
-                else clearInterval(socialProofInterval);
-            }, 30000);
-        }, 10000);
+        // Fetch real purchases and start popup rotation
+        fetchRecentPurchases();
     }
 
     // ============================================
@@ -436,31 +454,18 @@ const HomePage = (function() {
             if (!container) return;
             Loader.show(container, 'skeleton');
             try {
-                // Fetch featured categories
-                let categoriesResponse = await CategoriesApi.getCategories({ pageSize: 6, featured: true });
-                let categories = categoriesResponse?.data?.results || categoriesResponse?.data || categoriesResponse?.results || [];
-                let allReviews = [];
-                // For each category, fetch featured products and their reviews
-                for (const category of categories) {
-                    let productsResponse = await ProductsApi.getProducts({ category: category.id, featured: true, pageSize: 3 });
-                    let products = productsResponse?.data?.results || productsResponse?.data || productsResponse?.results || [];
-                    for (const product of products) {
-                        let reviewsResponse = await ProductsApi.getReviews(product.id, { pageSize: 2 });
-                        let reviews = reviewsResponse?.data?.results || reviewsResponse?.data || reviewsResponse?.results || [];
-                        // Attach product/category info to review
-                        reviews.forEach(r => {
-                            r._product = product;
-                            r._category = category;
-                        });
-                        allReviews.push(...reviews);
-                    }
-                }
+                // OPTIMIZED: Fetch reviews directly instead of looping through categories->products->reviews
+                // This reduces API calls from 50+ to just 1
+                let reviewsResponse = await ProductsApi.getReviews(null, { pageSize: 6, orderBy: '-rating' });
+                let allReviews = reviewsResponse?.data?.results || reviewsResponse?.data || reviewsResponse?.results || [];
+                
                 container.innerHTML = '';
                 if (!allReviews.length) {
                     container.innerHTML = '<p class="text-gray-500 text-center py-8">No user reviews available.</p>';
                     return;
                 }
-                // Optionally, limit to 6 user reviews
+                
+                // Limit to 6 reviews
                 allReviews = allReviews.slice(0, 6);
                 allReviews.forEach(review => {
                     const card = document.createElement('div');
@@ -480,7 +485,6 @@ const HomePage = (function() {
                         </div>
                         <div class="text-gray-800 dark:text-stone-200 text-base mb-2">${Templates.escapeHtml(review.title || '')}</div>
                         <div class="text-gray-600 dark:text-stone-400 text-sm">${Templates.escapeHtml(review.content || '')}</div>
-                        <div class="mt-2 text-xs text-primary-700 dark:text-amber-400 font-semibold">${review._category ? Templates.escapeHtml(review._category.name) : ''}${review._product ? ' - ' + Templates.escapeHtml(review._product.name) : ''}</div>
                     `;
                     container.appendChild(card);
                 });
@@ -990,7 +994,8 @@ const HomePage = (function() {
     }
 
     function initNewsletterForm() {
-        const form = document.getElementById('newsletter-form');
+        // Support both IDs for compatibility
+        const form = document.getElementById('newsletter-form') || document.getElementById('newsletter-form-home');
         if (!form) return;
 
         form.addEventListener('submit', async (e) => {

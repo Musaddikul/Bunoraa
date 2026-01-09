@@ -41,7 +41,7 @@
             </svg>
             My Orders
             {% if pending_orders_count %}
-            <span class="ml-auto bg-primary-100 text-primary-700 text-xs px-2 py-0.5 rounded-full">{{ pending_orders_count }}</span>
+            <span class="ml-auto bg-primary-100 text-primary-700 text-xs px-2 py-0.5 rounded-full dark:bg-primary-900 dark:text-primary-200">{{ pending_orders_count }}</span>
             {% endif %}
         </a>
           <a href="{% url 'accounts:addresses' %}" 
@@ -66,7 +66,7 @@
             </svg>
             Wishlist
             {% if wishlist_count %}
-            <span class="ml-auto bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">{{ wishlist_count }}</span>
+            <span class="ml-auto bg-gray-100 dark:bg-stone-700 text-gray-600 dark:text-stone-300 text-xs px-2 py-0.5 rounded-full">{{ wishlist_count }}</span>
             {% endif %}
         </a>
           <a href="{% url 'notifications:list' %}" 
@@ -76,7 +76,7 @@
             </svg>
             Notifications
             {% if unread_notifications_count %}
-            <span class="ml-auto bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">{{ unread_notifications_count }}</span>
+            <span class="ml-auto bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full dark:bg-red-900 dark:text-red-200">{{ unread_notifications_count }}</span>
             {% endif %}
         </a>
     </nav>
