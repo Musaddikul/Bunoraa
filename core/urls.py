@@ -18,6 +18,12 @@ sitemaps = {
 }
 
 urlpatterns = [
+    # Internationalization (language switcher)
+    path('i18n/', include('django.conf.urls.i18n')),
+    
+    # Admin Dashboard (custom)
+    path('admin/dashboard/', include('core.admin_urls')),
+    
     # Admin
     path('admin', RedirectView.as_view(url='/admin/', permanent=True)),
     path('admin/', admin.site.urls),

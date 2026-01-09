@@ -362,6 +362,8 @@ class UserLocalePreferenceUpdateSerializer(serializers.Serializer):
     auto_detect_language = serializers.BooleanField(required=False)
     auto_detect_currency = serializers.BooleanField(required=False)
     auto_detect_timezone = serializers.BooleanField(required=False)
+    # Alias for frontend compatibility - auto_detect maps to auto_detect_currency
+    auto_detect = serializers.BooleanField(required=False, write_only=True)
     
     date_format = serializers.CharField(required=False)
     time_format = serializers.CharField(required=False)

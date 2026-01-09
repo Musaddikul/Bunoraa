@@ -107,13 +107,14 @@ REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
 }
 
 # =============================================================================
-# LOGGING - Verbose for Development
+# LOGGING - Reasonable verbosity for Development
 # =============================================================================
-LOGGING['handlers']['console']['level'] = 'DEBUG'
+LOGGING['handlers']['console']['level'] = 'INFO'
 LOGGING['handlers']['console']['filters'] = []  # Remove require_debug_true filter
-LOGGING['loggers']['bunoraa']['level'] = 'DEBUG'
-LOGGING['loggers']['django']['level'] = 'DEBUG'
-LOGGING['root']['level'] = 'DEBUG'
+LOGGING['loggers']['bunoraa']['level'] = 'INFO'
+LOGGING['loggers']['django']['level'] = 'INFO'
+LOGGING['loggers']['django.db.backends'] = {'level': 'WARNING', 'handlers': ['console'], 'propagate': False}  # Suppress SQL logging
+LOGGING['root']['level'] = 'INFO'
 
 # Add request logging
 LOGGING['loggers']['django.request'] = {

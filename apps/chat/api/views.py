@@ -311,6 +311,95 @@ class ConversationViewSet(viewsets.ModelViewSet):
         serializer = MessageSerializer(messages, many=True, context={'request': request})
         return Response(serializer.data)
     
+    @action(detail=True, methods=['post'], parser_classes=[MultiPartParser, FormParser])
+    def attachments(self, request, id=None):
+        """
+        Upload attachment to a conversation.
+        
+        POST /api/v1/chat/conversations/{id}/attachments/
+        
+        Accepts multipart/form-data with 'file' field.
+        Returns the created attachment details.
+        """
+        import logging
+        logger = logging.getLogger('bunoraa.chat')
+        
+        try:
+            conversation = self.get_object()
+            
+            # Verify permission - must be customer or assigned agent
+            is_agent = ChatAgent.objects.filter(user=request.user, is_active=True).exists()
+            if not is_agent and conversation.customer != request.user:
+                return Response(
+                    {'detail': 'Not authorized'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            file = request.FILES.get('file')
+            if not file:
+                return Response(
+                    {'detail': 'No file provided'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Check file size and type against settings
+            chat_settings = ChatSettings.get_settings()
+            max_size = chat_settings.max_file_size_mb * 1024 * 1024  # Convert to bytes
+            
+            if file.size > max_size:
+                return Response(
+                    {'detail': f'File too large. Maximum size is {chat_settings.max_file_size_mb}MB'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Check file type
+            file_ext = file.name.split('.')[-1].lower() if '.' in file.name else ''
+            allowed_types = [t.strip().lower().lstrip('.') for t in (chat_settings.allowed_file_types or 'jpg,jpeg,png,gif,pdf,doc,docx').split(',')]
+            
+            if file_ext and file_ext not in allowed_types:
+                return Response(
+                    {'detail': f'File type not allowed. Allowed types: {chat_settings.allowed_file_types}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Create a message with the attachment
+            message = Message.objects.create(
+                conversation=conversation,
+                sender=request.user,
+                content=f"[Attachment: {file.name}]",
+                is_from_customer=(conversation.customer == request.user)
+            )
+            
+            # Create attachment
+            attachment = MessageAttachment.objects.create(
+                message=message,
+                file=file,
+                file_name=file.name,
+                file_size=file.size,
+                file_type=file.content_type or 'application/octet-stream'
+            )
+            
+            # Update conversation last activity
+            conversation.last_message_at = timezone.now()
+            conversation.save(update_fields=['last_message_at'])
+            
+            return Response({
+                'id': str(attachment.id),
+                'message_id': str(message.id),
+                'file_name': attachment.file_name,
+                'file_size': attachment.file_size,
+                'file_type': attachment.file_type,
+                'file_url': attachment.file.url if attachment.file else None,
+                'created_at': message.created_at.isoformat()
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            logger.exception(f"[Chat] Error uploading attachment: {e}")
+            return Response(
+                {'detail': f'Failed to upload attachment: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
     @action(detail=True, methods=['post'])
     def request_agent(self, request, id=None):
         """Request a human agent for bot-handled conversation."""

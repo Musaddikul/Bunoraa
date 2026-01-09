@@ -1,0 +1,110 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | {% trans "Bunoraa Admin" %}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">
+        {% trans "Bunoraa Administration" %}
+    </a>
+</h1>
+{% endblock %}
+
+{% block userlinks %}
+    {# Language Switcher #}
+    <div class="language-switcher" style="display: inline-block; margin-right: 15px;">
+        <form id="language-form" action="{% url 'set_language' %}" method="post" style="display: inline;">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.path }}">
+            <select name="language" id="language-select" onchange="this.form.submit();" class="lang-select">
+                {% get_current_language as LANGUAGE_CODE %}
+                {% get_available_languages as LANGUAGES %}
+                {% for lang_code, lang_name in LANGUAGES %}
+                    <option value="{{ lang_code }}" {% if lang_code == LANGUAGE_CODE %}selected{% endif %}>
+                        {{ lang_name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+    {{ block.super }}
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    /* Language Switcher Styling - Dark/Light Mode Compatible */
+    .language-switcher .lang-select {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-color: var(--header-bg, #417690);
+        border: 1px solid var(--header-link-color, rgba(255,255,255,0.3));
+        color: var(--header-link-color, #fff);
+        padding: 4px 28px 4px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 6px center;
+        background-size: 14px;
+    }
+    
+    .language-switcher .lang-select:hover {
+        border-color: var(--header-link-color, rgba(255,255,255,0.6));
+        background-color: var(--header-bg-hover, #205067);
+    }
+    
+    .language-switcher .lang-select:focus {
+        outline: none;
+        border-color: var(--accent, #79aec8);
+        box-shadow: 0 0 0 2px rgba(121, 174, 200, 0.3);
+    }
+    
+    /* Option styling - use system colors for native dropdown */
+    .language-switcher .lang-select option {
+        background-color: var(--body-bg, #fff);
+        color: var(--body-fg, #333);
+        padding: 8px;
+    }
+    
+    /* Dark mode support using Django admin's CSS variables */
+    @media (prefers-color-scheme: dark) {
+        .language-switcher .lang-select {
+            background-color: var(--header-bg, #1e3a4c);
+            border-color: var(--header-link-color, rgba(255,255,255,0.4));
+            color: var(--header-link-color, #f5dd90);
+        }
+        
+        .language-switcher .lang-select:hover {
+            background-color: var(--header-bg-hover, #0d2836);
+        }
+        
+        .language-switcher .lang-select option {
+            background-color: var(--body-bg, #121212);
+            color: var(--body-fg, #f5f5f5);
+        }
+    }
+    
+    /* Also support Django admin's dark theme toggle (class-based) */
+    html[data-theme="dark"] .language-switcher .lang-select,
+    body.dark .language-switcher .lang-select {
+        background-color: #1e3a4c;
+        border-color: rgba(255,255,255,0.4);
+        color: #f5dd90;
+    }
+    
+    html[data-theme="dark"] .language-switcher .lang-select:hover,
+    body.dark .language-switcher .lang-select:hover {
+        background-color: #0d2836;
+    }
+    
+    html[data-theme="dark"] .language-switcher .lang-select option,
+    body.dark .language-switcher .lang-select option {
+        background-color: #121212;
+        color: #f5f5f5;
+    }
+</style>
+{% endblock %}

@@ -11,14 +11,13 @@ const DYNAMIC_CACHE = `bunoraa-dynamic-v${VERSION}`;
 const IMAGE_CACHE = `bunoraa-images-v${VERSION}`;
 const API_CACHE = `bunoraa-api-v${VERSION}`;
 
-// Static assets to precache
+// Static assets to precache (only include files that definitely exist)
 const PRECACHE_URLS = [
   '/static/css/styles.css',
   '/static/js/app.bundle.js',
   '/static/manifest.json',
-  '/static/images/logo.png',
-  '/static/images/favicon.ico',
-  '/offline/',
+  '/static/images/logo.svg',
+  '/static/images/favicon.svg',
 ];
 
 // API endpoints to cache
@@ -43,10 +42,20 @@ self.addEventListener('install', (event) => {
   
   event.waitUntil(
     Promise.all([
-      // Cache static assets
+      // Cache static assets (with error handling for missing files)
       caches.open(STATIC_CACHE).then((cache) => {
         console.log('[SW] Caching static assets');
-        return cache.addAll(PRECACHE_URLS);
+        // Use individual requests instead of addAll to handle failures gracefully
+        return Promise.allSettled(
+          PRECACHE_URLS.map(url =>
+            fetch(url).then(response => {
+              if (response.ok) {
+                return cache.put(url, response);
+              }
+              console.warn('[SW] Failed to cache:', url, response.status);
+            }).catch(err => console.warn('[SW] Error caching:', url, err.message))
+          )
+        );
       }),
       // Cache API responses
       caches.open(API_CACHE).then((cache) => {

@@ -461,19 +461,19 @@ class SearchService:
     ) -> List[Dict]:
         """Personalize results based on user preferences."""
         try:
-            from apps.accounts.models import UserBehaviorProfile
+            from apps.accounts.behavior_models import UserBehaviorProfile
             
             profile = UserBehaviorProfile.objects.filter(user_id=user_id).first()
             
             if not profile:
                 return results
             
-            # Get preferred categories
-            preferred_categories = profile.preferred_categories or []
+            # Get preferred categories (stored as dict with category_id -> score)
+            preferred_categories = list(profile.category_preferences.keys()) if profile.category_preferences else []
             
             # Boost products in preferred categories
             for result in results:
-                if result.get("category_id") in preferred_categories:
+                if str(result.get("category_id")) in preferred_categories:
                     result["score"] *= 1.2
             
             # Re-sort

@@ -244,3 +244,12 @@ class EmailVerificationToken(models.Model):
     def is_valid(self):
         """Check if token is still valid."""
         return not self.used and self.expires_at > timezone.now()
+
+
+# Import behavior models so they're registered with Django
+from .behavior_models import (  # noqa: F401, E402
+    UserBehaviorProfile,
+    UserCredentialVault,
+    UserPreferences,
+    UserSession,
+)

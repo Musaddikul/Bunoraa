@@ -364,7 +364,18 @@
                 if (conversation && conversation.id) {
                     chatState.conversationId = conversation.id;
                     elements.quickActions?.classList.add('hidden');
-                    await loadMessages();
+                    
+                    // Use messages from the response if available (ConversationDetailSerializer includes them)
+                    if (conversation.messages && Array.isArray(conversation.messages) && conversation.messages.length > 0) {
+                        chatState.messages = conversation.messages;
+                        renderMessages();
+                    } else {
+                        // Fallback to loading messages separately
+                        await loadMessages();
+                    }
+                    
+                    // Save state after loading conversation
+                    saveState();
                 }
             } else if (response.status === 404) {
                 // No active conversation - this is normal, show quick actions
@@ -497,23 +508,30 @@
                 handleWebSocketMessage(data);
             };
             
-            chatState.socket.onclose = () => {
+            chatState.socket.onclose = (event) => {
                 console.debug('[Chat] WebSocket disconnected');
                 chatState.isConnected = false;
+                chatState.socket = null;
                 updateStatus(false);
                 
-                // Attempt reconnection
-                if (chatState.reconnectAttempts < config.maxReconnectAttempts) {
+                // Only reconnect if not a clean close and not too many attempts
+                if (!event.wasClean && chatState.reconnectAttempts < chatState.maxReconnectAttempts) {
                     chatState.reconnectAttempts++;
-                    setTimeout(connectWebSocket, config.reconnectDelay * chatState.reconnectAttempts);
+                    const delay = config.reconnectDelay * chatState.reconnectAttempts;
+                    console.debug(`[Chat] Reconnecting in ${delay}ms (attempt ${chatState.reconnectAttempts})`);
+                    setTimeout(connectWebSocket, delay);
+                } else if (chatState.reconnectAttempts >= chatState.maxReconnectAttempts) {
+                    console.debug('[Chat] Max reconnect attempts reached - chat will use HTTP fallback');
                 }
             };
             
             chatState.socket.onerror = (error) => {
-                console.error('[Chat] WebSocket error:', error);
+                // Silently log - don't flood console
+                console.debug('[Chat] WebSocket error - will retry or fallback to HTTP');
             };
         } catch (error) {
-            console.error('[Chat] Failed to connect WebSocket:', error);
+            console.debug('[Chat] WebSocket connection failed - using HTTP fallback');
+            chatState.socket = null;
         }
     }
 

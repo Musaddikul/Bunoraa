@@ -354,8 +354,6 @@ class DataCollector:
     
     def _parse_user_agent(self, user_agent: str) -> Dict[str, str]:
         """Parse user agent string."""
-        from user_agents import parse
-        
         result = {
             "device_type": "desktop",
             "browser": "",
@@ -365,6 +363,7 @@ class DataCollector:
         }
         
         try:
+            from user_agents import parse
             ua = parse(user_agent)
             
             if ua.is_mobile:
@@ -377,6 +376,14 @@ class DataCollector:
             result["os"] = ua.os.family
             result["os_version"] = ua.os.version_string
             
+        except ImportError:
+            # user_agents package not installed - use basic parsing
+            if user_agent:
+                ua_lower = user_agent.lower()
+                if 'mobile' in ua_lower or 'android' in ua_lower or 'iphone' in ua_lower:
+                    result["device_type"] = "mobile"
+                elif 'tablet' in ua_lower or 'ipad' in ua_lower:
+                    result["device_type"] = "tablet"
         except Exception as e:
             logger.debug(f"User agent parsing failed: {e}")
         

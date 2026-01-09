@@ -1,0 +1,258 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | {{ site_title }}{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --util-bg: #ffffff;
+        --util-border: #e5e7eb;
+        --util-text: #374151;
+        --util-text-muted: #6b7280;
+        --util-success: #10b981;
+        --util-warning: #f59e0b;
+        --util-danger: #ef4444;
+        --util-primary: #3b82f6;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --util-bg: #1f2937;
+            --util-border: #374151;
+            --util-text: #f3f4f6;
+            --util-text-muted: #9ca3af;
+        }
+    }
+    
+    html[data-theme="dark"] {
+        --util-bg: #1f2937;
+        --util-border: #374151;
+        --util-text: #f3f4f6;
+        --util-text-muted: #9ca3af;
+    }
+    
+    .util-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+    
+    .util-header {
+        margin-bottom: 24px;
+    }
+    
+    .util-header h1 {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--util-text);
+        margin: 0 0 8px 0;
+    }
+    
+    .util-header p {
+        color: var(--util-text-muted);
+        margin: 0;
+    }
+    
+    .util-card {
+        background: var(--util-bg);
+        border: 1px solid var(--util-border);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .util-card h2 {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--util-text);
+        margin: 0 0 16px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .util-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+    }
+    
+    .util-stat {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--util-border);
+    }
+    
+    .util-stat:last-child {
+        border-bottom: none;
+    }
+    
+    .util-stat-label {
+        color: var(--util-text-muted);
+        font-size: 14px;
+    }
+    
+    .util-stat-value {
+        font-weight: 600;
+        color: var(--util-text);
+    }
+    
+    .util-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s;
+    }
+    
+    .util-btn-primary {
+        background: var(--util-primary);
+        color: white;
+    }
+    
+    .util-btn-primary:hover {
+        background: #2563eb;
+    }
+    
+    .util-btn-danger {
+        background: var(--util-danger);
+        color: white;
+    }
+    
+    .util-btn-danger:hover {
+        background: #dc2626;
+    }
+    
+    .util-btn-warning {
+        background: var(--util-warning);
+        color: white;
+    }
+    
+    .util-btn-warning:hover {
+        background: #d97706;
+    }
+    
+    .util-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 16px;
+    }
+    
+    .util-alert {
+        padding: 12px 16px;
+        border-radius: 6px;
+        margin-bottom: 16px;
+        font-size: 14px;
+    }
+    
+    .util-alert-info {
+        background: #dbeafe;
+        color: #1e40af;
+        border: 1px solid #93c5fd;
+    }
+    
+    .util-alert-warning {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fcd34d;
+    }
+</style>
+
+<div class="util-container">
+    <div class="util-header">
+        <h1>🔧 {{ title }}</h1>
+        <p>{% trans "Manage server cache and improve application performance." %}</p>
+    </div>
+    
+    {% if messages %}
+        {% for message in messages %}
+        <div class="util-alert util-alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    {% endif %}
+    
+    <div class="util-grid">
+        <div class="util-card">
+            <h2>📊 {% trans "Cache Statistics" %}</h2>
+            {% if cache_stats.error %}
+                <p style="color: var(--util-text-muted);">{% trans "Cache stats unavailable" %}: {{ cache_stats.error }}</p>
+            {% else %}
+                <div class="util-stat">
+                    <span class="util-stat-label">{% trans "Memory Used" %}</span>
+                    <span class="util-stat-value">{{ cache_stats.used_memory|default:"N/A" }}</span>
+                </div>
+                <div class="util-stat">
+                    <span class="util-stat-label">{% trans "Total Keys" %}</span>
+                    <span class="util-stat-value">{{ cache_stats.total_keys|default:"N/A" }}</span>
+                </div>
+                <div class="util-stat">
+                    <span class="util-stat-label">{% trans "Connected Clients" %}</span>
+                    <span class="util-stat-value">{{ cache_stats.connected_clients|default:"N/A" }}</span>
+                </div>
+                <div class="util-stat">
+                    <span class="util-stat-label">{% trans "Hit Rate" %}</span>
+                    <span class="util-stat-value">{{ cache_stats.hit_rate|default:"N/A" }}</span>
+                </div>
+                <div class="util-stat">
+                    <span class="util-stat-label">{% trans "Uptime" %}</span>
+                    <span class="util-stat-value">{{ cache_stats.uptime_days|default:"N/A" }} {% trans "days" %}</span>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="util-card">
+            <h2>⚡ {% trans "Actions" %}</h2>
+            <p style="color: var(--util-text-muted); margin-bottom: 16px;">
+                {% trans "Warning: Clearing cache may temporarily slow down the site." %}
+            </p>
+            
+            <div class="util-actions">
+                {% if has_permission %}
+                <form method="post" action="{% url 'admin_clear_all_cache' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="util-btn util-btn-danger" onclick="return confirm('{% trans "Clear all cached data?" %}')">
+                        🗑️ {% trans "Clear All Cache" %}
+                    </button>
+                </form>
+                
+                <form method="post" action="{% url 'admin_clear_view_cache' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="util-btn util-btn-warning">
+                        📄 {% trans "Clear View Cache" %}
+                    </button>
+                </form>
+                
+                <form method="post" action="{% url 'admin_clear_session_cache' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="util-btn util-btn-warning" onclick="return confirm('{% trans "This will log out all other users. Continue?" %}')">
+                        👤 {% trans "Clear Sessions" %}
+                    </button>
+                </form>
+                {% else %}
+                <p style="color: var(--util-text-muted);">{% trans "Superuser access required for these actions." %}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="util-card">
+        <h2>📝 {% trans "Cache Usage Tips" %}</h2>
+        <ul style="color: var(--util-text-muted); margin: 0; padding-left: 20px;">
+            <li>{% trans "Clear cache after major content updates to ensure visitors see fresh content" %}</li>
+            <li>{% trans "Session clearing will log out all users except you" %}</li>
+            <li>{% trans "High hit rate indicates effective caching strategy" %}</li>
+            <li>{% trans "Monitor memory usage to prevent cache overflow" %}</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

@@ -95,39 +95,27 @@ if DEBUG:
         
         INTERNAL_IPS = ['127.0.0.1', 'localhost', '::1']
         DEBUG_TOOLBAR_CONFIG = {
-            'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG,
+            # is_ajax() was removed in Django 4.x, use X-Requested-With header check instead
+            'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG and request.META.get('HTTP_X_REQUESTED_WITH') != 'XMLHttpRequest' and 'text/html' in request.META.get('HTTP_ACCEPT', ''),
             'RESULTS_CACHE_SIZE': 100,
+            'IS_RUNNING_TESTS': False,
+            # Disable toolbar from intercepting responses that can cause ASGI issues
+            'RENDER_PANELS': True,
         }
     except ImportError:
         pass
 
-# Development logging tweaks: ensure errors and debug info are printed to the console
-# This file is used for S3-enabled local/testing environments so emit relevant logs here
-try:
-    # Ensure the console handler prints at DEBUG level so full tracebacks are visible
-    LOGGING['handlers']['console']['level'] = 'DEBUG'
+# =============================================================================
+# LOGGING - Reasonable verbosity for S3 development
+# =============================================================================
+LOGGING['handlers']['console']['level'] = 'DEBUG'
+LOGGING['handlers']['console']['filters'] = []  # Remove require_debug_true filter
+LOGGING['loggers']['bunoraa']['level'] = 'INFO'
+LOGGING['loggers']['bunoraa.i18n'] = {'level': 'DEBUG', 'handlers': ['console'], 'propagate': False}  # Debug currency issues
+LOGGING['loggers']['django']['level'] = 'INFO'
+LOGGING['loggers']['django.db.backends'] = {'level': 'WARNING', 'handlers': ['console'], 'propagate': False}  # Suppress SQL logging
+LOGGING['root']['level'] = 'INFO'
 
-    # Ensure our app logger is verbose in this environment
-    LOGGING['loggers'].setdefault('bunoraa', {})
-    LOGGING['loggers']['bunoraa']['level'] = 'DEBUG'
-
-    # Ensure django.request errors go to console (prints 500 tracebacks)
-    LOGGING['loggers'].setdefault('django.request', {})
-    LOGGING['loggers']['django.request'].setdefault('handlers', [])
-    if 'console' not in LOGGING['loggers']['django.request']['handlers']:
-        LOGGING['loggers']['django.request']['handlers'].append('console')
-    LOGGING['loggers']['django.request']['level'] = 'ERROR'
-
-    # Raise root verbosity so all relevant logs appear while developing/debugging
-    LOGGING['root']['level'] = 'DEBUG'
-
-    # Enable verbose boto3/botocore logs for S3 troubleshooting when in DEBUG
-    import logging as _logging
-    if DEBUG:
-        for _name in ('boto3', 'botocore', 's3transfer', 'urllib3'):
-            _logging.getLogger(_name).setLevel(_logging.DEBUG)
-            # ensure those modules also propagate to console via root handlers
-except Exception:
-    # Non-fatal: don't break settings if LOGGING is not defined or structure differs
-    pass
+# django.request errors go to console
+LOGGING['loggers'].setdefault('django.request', {'handlers': ['console'], 'level': 'ERROR', 'propagate': False})
 

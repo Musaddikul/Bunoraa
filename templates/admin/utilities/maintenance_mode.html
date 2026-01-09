@@ -1,0 +1,223 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | {{ site_title }}{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --util-bg: #ffffff;
+        --util-border: #e5e7eb;
+        --util-text: #374151;
+        --util-text-muted: #6b7280;
+        --util-success: #10b981;
+        --util-warning: #f59e0b;
+        --util-danger: #ef4444;
+        --util-primary: #3b82f6;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --util-bg: #1f2937;
+            --util-border: #374151;
+            --util-text: #f3f4f6;
+            --util-text-muted: #9ca3af;
+        }
+    }
+    
+    html[data-theme="dark"] {
+        --util-bg: #1f2937;
+        --util-border: #374151;
+        --util-text: #f3f4f6;
+        --util-text-muted: #9ca3af;
+    }
+    
+    .util-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+    
+    .util-header {
+        margin-bottom: 24px;
+    }
+    
+    .util-header h1 {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--util-text);
+        margin: 0 0 8px 0;
+    }
+    
+    .util-card {
+        background: var(--util-bg);
+        border: 1px solid var(--util-border);
+        border-radius: 8px;
+        padding: 24px;
+        margin-bottom: 20px;
+    }
+    
+    .maintenance-status {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .maintenance-status.active {
+        background: #fef3c7;
+        border: 1px solid #fcd34d;
+    }
+    
+    .maintenance-status.inactive {
+        background: #dcfce7;
+        border: 1px solid #86efac;
+    }
+    
+    .status-icon {
+        font-size: 32px;
+    }
+    
+    .status-info h3 {
+        margin: 0 0 4px 0;
+        font-size: 16px;
+        font-weight: 600;
+    }
+    
+    .status-info p {
+        margin: 0;
+        font-size: 14px;
+        color: var(--util-text-muted);
+    }
+    
+    .form-group {
+        margin-bottom: 16px;
+    }
+    
+    .form-group label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 6px;
+        color: var(--util-text);
+    }
+    
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--util-border);
+        border-radius: 6px;
+        font-size: 14px;
+        background: var(--util-bg);
+        color: var(--util-text);
+    }
+    
+    .form-group textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+    
+    .util-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s;
+    }
+    
+    .util-btn-danger {
+        background: var(--util-danger);
+        color: white;
+    }
+    
+    .util-btn-success {
+        background: var(--util-success);
+        color: white;
+    }
+    
+    .util-btn:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+</style>
+
+<div class="util-container">
+    <div class="util-header">
+        <h1>🚧 {{ title }}</h1>
+    </div>
+    
+    {% if messages %}
+        {% for message in messages %}
+        <div class="util-alert" style="padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd;">
+            {{ message }}
+        </div>
+        {% endfor %}
+    {% endif %}
+    
+    <div class="maintenance-status {% if maintenance_enabled %}active{% else %}inactive{% endif %}">
+        <span class="status-icon">{% if maintenance_enabled %}⚠️{% else %}✅{% endif %}</span>
+        <div class="status-info">
+            <h3>{% if maintenance_enabled %}{% trans "Maintenance Mode Active" %}{% else %}{% trans "Site is Live" %}{% endif %}</h3>
+            <p>
+                {% if maintenance_enabled %}
+                    {% if maintenance_end %}{% trans "Ends:" %} {{ maintenance_end }}{% endif %}
+                {% else %}
+                    {% trans "All visitors can access the site normally." %}
+                {% endif %}
+            </p>
+        </div>
+    </div>
+    
+    {% if has_permission %}
+    <div class="util-card">
+        {% if maintenance_enabled %}
+            <h2 style="margin: 0 0 16px 0; color: var(--util-text);">{% trans "Disable Maintenance Mode" %}</h2>
+            <p style="color: var(--util-text-muted); margin-bottom: 16px;">
+                {% trans "Current message:" %} "{{ maintenance_message }}"
+            </p>
+            <form method="post" action="{% url 'admin_disable_maintenance' %}">
+                {% csrf_token %}
+                <button type="submit" class="util-btn util-btn-success">
+                    ✅ {% trans "Disable Maintenance Mode" %}
+                </button>
+            </form>
+        {% else %}
+            <h2 style="margin: 0 0 16px 0; color: var(--util-text);">{% trans "Enable Maintenance Mode" %}</h2>
+            <form method="post" action="{% url 'admin_enable_maintenance' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="message">{% trans "Maintenance Message" %}</label>
+                    <textarea name="message" id="message" placeholder="{% trans 'We are currently performing maintenance. Please check back soon.' %}"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="duration">{% trans "Duration (hours)" %}</label>
+                    <select name="duration" id="duration">
+                        <option value="1">1 {% trans "hour" %}</option>
+                        <option value="2">2 {% trans "hours" %}</option>
+                        <option value="4">4 {% trans "hours" %}</option>
+                        <option value="8">8 {% trans "hours" %}</option>
+                        <option value="24">24 {% trans "hours" %}</option>
+                        <option value="48">48 {% trans "hours" %}</option>
+                    </select>
+                </div>
+                <button type="submit" class="util-btn util-btn-danger" onclick="return confirm('{% trans "This will prevent visitors from accessing the site. Continue?" %}')">
+                    🚧 {% trans "Enable Maintenance Mode" %}
+                </button>
+            </form>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="util-card">
+        <p style="color: var(--util-text-muted);">{% trans "Superuser access required to change maintenance mode." %}</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

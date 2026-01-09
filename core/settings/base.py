@@ -103,6 +103,7 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',  # Must be after SessionMiddleware for language switching
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -191,6 +192,12 @@ LOCALE_PATHS = [
 DEFAULT_CURRENCY = 'BDT'
 SUPPORTED_CURRENCIES = ['BDT', 'USD', 'EUR', 'GBP', 'INR']
 
+# Exchange Rate API Keys
+EXCHANGERATE_API_KEY = os.environ.get('EXCHANGERATE_API_KEY', '')
+OPENEXCHANGE_RATES_API_KEY = os.environ.get('OPENEXCHANGE_RATES_API_KEY', '')
+EXCHANGERATESAPI_KEY = os.environ.get('EXCHANGERATESAPI_KEY', '')
+FIXER_API_KEY = os.environ.get('FIXER_API_KEY', '')
+
 # Default country
 DEFAULT_COUNTRY = 'BD'
 DEFAULT_PHONE_REGION = 'BD'
@@ -227,7 +234,7 @@ SITE_ID = 1
 # Force site to always use default currency when True. This disables per-user
 # currency detection and forces server-side formatted amounts to use the
 # configured default currency. Useful for single-currency deployments.
-FORCE_DEFAULT_CURRENCY = True
+FORCE_DEFAULT_CURRENCY = False  # Set to True for single-currency deployments
 
 # Authentication redirects
 LOGIN_URL = '/account/login/'
@@ -328,6 +335,27 @@ CACHES = {
         'LOCATION': 'unique-snowflake',
     }
 }
+
+# Channel Layers Configuration (for WebSockets)
+# Uses in-memory channel layer for local development (no Redis required)
+# Production should set CHANNEL_LAYERS_REDIS_URL environment variable
+_channel_layer_redis_url = os.environ.get('CHANNEL_LAYERS_REDIS_URL', '')
+if _channel_layer_redis_url:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                'hosts': [_channel_layer_redis_url],
+            },
+        },
+    }
+else:
+    # In-memory channel layer for development (limited - single process only)
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        },
+    }
 
 
 # Session Configuration
@@ -435,7 +463,7 @@ LOGGING = {
         },
         'bunoraa': {
             'handlers': ['console', 'file'],
-            'level': 'DEBUG',
+            'level': 'INFO',
             'propagate': False,
         },
         'bunoraa.security': {
