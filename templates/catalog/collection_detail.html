@@ -9,12 +9,12 @@
 <div class="container mx-auto px-4 py-8">
     <!-- Breadcrumb -->
     <nav class="mb-8">
-        <ol class="flex items-center space-x-2 text-sm text-gray-500">
-            <li><a href="{% url 'home' %}" class="hover:text-primary-600">Home</a></li>
+        <ol class="flex items-center space-x-2 text-sm text-gray-500 dark:text-stone-400 transition-colors duration-500">
+            <li><a href="{% url 'home' %}" class="hover:text-primary-600 dark:hover:text-amber-400 transition-colors duration-500">Home</a></li>
             <li><span class="mx-2">/</span></li>
-            <li><a href="{% url 'catalog:collection-list' %}" class="hover:text-primary-600">Collections</a></li>
+            <li><a href="{% url 'catalog:collection-list' %}" class="hover:text-primary-600 dark:hover:text-amber-400 transition-colors duration-500">Collections</a></li>
             <li><span class="mx-2">/</span></li>
-            <li class="text-gray-900">{{ collection.name }}</li>
+            <li class="text-gray-900 dark:text-stone-100 transition-colors duration-500">{{ collection.name }}</li>
         </ol>
     </nav>
     
@@ -33,10 +33,9 @@
             </div>
         </div>
         {% else %}
-        <h1 class="text-4xl font-bold text-gray-900">{{ collection.name }}</h1>
-        {% if collection.description %}
-        <p class="text-lg text-gray-600 mt-2">{{ collection.description }}</p>
-        {% endif %}
+    <h1 class="text-4xl font-bold text-gray-900 dark:text-stone-100 transition-colors duration-500">{{ collection.name }}</h1>
+    {% if collection.description %}
+    <p class="text-lg text-gray-600 dark:text-stone-400 mt-2 transition-colors duration-500">{{ collection.description }}</p>
         {% endif %}
     </div>
     
@@ -48,8 +47,8 @@
         {% endfor %}
     </div>
     {% else %}
-    <div class="text-center py-16 bg-white rounded-lg">
-        <p class="text-gray-500">No products in this collection yet.</p>
+    <div class="text-center py-16 bg-white dark:bg-stone-800 rounded-lg transition-colors duration-500">
+        <p class="text-gray-500 dark:text-stone-400">No products in this collection yet.</p>
     </div>
     {% endif %}
 </div>

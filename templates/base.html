@@ -210,8 +210,8 @@
                 </button>
 
 
-                <!-- Currency Selector (inlined) -->
-                <div id="currency-selector" class="relative currency-selector">
+                <!-- Currency Selector (desktop only - hidden on mobile to declutter header) -->
+                <div id="currency-selector" class="relative currency-selector hidden lg:inline-flex">
                     <button id="currency-selector-toggle" aria-haspopup="listbox" aria-expanded="false" class="p-2 rounded-xl text-stone-700 hover:text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:text-stone-300 dark:hover:text-amber-300 text-sm font-medium">
                         <span id="currency-current">{{ currency_code }}</span>
                     </button>
@@ -220,8 +220,8 @@
                     </div>
                 </div>
 
-                <!-- Theme toggle -->
-                <button id="theme-toggle" class="p-2 rounded-xl text-stone-700 hover:text-amber-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:text-stone-300 dark:hover:text-amber-400" aria-label="Toggle theme">
+                <!-- Theme toggle (desktop only; moved to mobile quick links) -->
+                <button id="theme-toggle" class="p-2 rounded-xl text-stone-700 hover:text-amber-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:text-stone-300 dark:hover:text-amber-400 hidden lg:inline-flex" aria-label="Toggle theme">
                     <svg id="theme-toggle-light-icon" width="20" height="20" style="width:20px;height:20px;" class="w-5 h-5 block text-amber-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-label="Light theme" aria-hidden="false" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none" />
                         <g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
@@ -266,8 +266,8 @@
                 {% include 'includes/notification_dropdown.html' %}
                 {% endif %}
                 
-                <!-- Wishlist -->
-                <a href="{% url 'commerce:wishlist' %}" class="relative p-2 text-stone-700 hover:text-rose-600 rounded-xl transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-stone-300 dark:hover:text-rose-400 dark:focus-visible:ring-rose-400" aria-label="Wishlist">
+                <!-- Wishlist (hidden on mobile; available via mobile quick links) -->
+                <a href="{% url 'commerce:wishlist' %}" class="relative p-2 text-stone-700 hover:text-rose-600 rounded-xl transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-stone-300 dark:hover:text-rose-400 dark:focus-visible:ring-rose-400 hidden lg:inline-flex" aria-label="Wishlist">
                     <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
                     <span data-wishlist-count class="hidden absolute -top-1 -right-1 bg-rose-600 text-white dark:text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-1">0</span>
                 </a> 
@@ -287,29 +287,29 @@
 
     <!-- Mobile Menu -->
     <div data-mobile-menu class="hidden fixed inset-0 z-50 lg:hidden" aria-hidden="true">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" data-mobile-menu-close></div>
+        <div class="absolute inset-0 bg-black/60 dark:bg-black/60 backdrop-blur-sm" data-mobile-menu-close></div>
         <div class="absolute left-0 top-0 bottom-0 w-80 max-w-[85vw] bg-stone-100 shadow-2xl overflow-y-auto dark:bg-stone-900">
             <div class="p-5 bg-gradient-to-r from-amber-600 to-amber-700 text-white flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     {% if SITE_LOGO_DARK or SITE_LOGO %}
                     <img src="{{ SITE_LOGO_DARK|default:SITE_LOGO }}" alt="{{ SITE_NAME }}" class="h-5 w-auto" loading="eager" decoding="async" fetchpriority="high" width="160" height="40" style="height:32px;width:auto;min-width:100px;">
                     {% else %}
-                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                    <div class="w-10 h-10 bg-white/20 dark:bg-white/10 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
                     </div>
                     <span class="text-xl font-display font-bold">{{ SITE_NAME }}</span>
                     {% endif %}
                 </div>
-                <button data-mobile-menu-close class="p-2 hover:bg-white/10 rounded-lg transition-colors" aria-label="Close menu">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <button data-mobile-menu-close class="p-2 hover:bg-white/10 dark:hover:bg-white/20 rounded-lg transition-colors" aria-label="Close menu">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
             
             <!-- Mobile Search -->
             <div class="p-4 bg-stone-100 dark:bg-stone-900 border-b border-stone-300 dark:border-stone-700">
                 <form action="{% url 'catalog:search' %}" method="GET" class="relative">
-                    <input type="search" name="q" placeholder="Search handcrafted items..." class="w-full px-4 py-3 pl-11 border-0 border-stone-200 rounded-xl focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition-all bg-stone-100 text-stone-800 placeholder-stone-400 dark:bg-stone-900 dark:text-stone-00 dark:placeholder-stone-500 dark:focus:border-amber-500 dark:focus:ring-amber-900/30">
-                    <svg class="w-5 h-5 text-stone-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <input type="search" name="q" placeholder="Search handcrafted items..." class="w-full px-4 py-3 pl-11 border-0 border-stone-200 rounded-xl focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition-all bg-stone-100 text-stone-800 placeholder-stone-400 dark:bg-stone-900 dark:text-stone-100 dark:placeholder-stone-500 dark:focus:border-amber-500 dark:focus:ring-amber-900/30">
+                    <svg class="w-5 h-5 text-stone-400 dark:text-stone-500 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </form>
             </div>
             
@@ -319,49 +319,56 @@
             </nav>
             
             <!-- Mobile Quick Links -->
-            <div class="px-4 py-3 border-t border-stone-100">
-                <p class="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3">Quick Links</p>
+            <div class="px-4 py-3 border-t border-stone-100 dark:border-stone-700">
+                <p class="text-xs font-semibold text-stone-400 dark:text-stone-300 uppercase tracking-wider mb-3">Quick Links</p>
                 <div class="space-y-1">
                     <a href="{% url 'preorders:landing' %}" class="flex items-center gap-3 py-2.5 px-3 text-purple-600 dark:text-purple-300 hover:bg-purple-50 active:bg-purple-50 dark:hover:bg-purple-900/60 dark:active:bg-purple-900/60 hover:text-purple-700 active:text-purple-700 dark:hover:text-white dark:active:text-white rounded-xl transition-colors font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        <svg class="w-5 h-5 text-purple-600 dark:text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                         Custom Orders
                     </a>
                     <a href="{% url 'orders:track' %}" class="flex items-center gap-3 py-2.5 px-3 text-stone-700 dark:text-stone-200 hover:bg-amber-50 active:bg-amber-50 dark:hover:bg-amber-900/40 dark:active:bg-amber-900/40 hover:text-amber-700 active:text-amber-700 dark:hover:text-white dark:active:text-white rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                        <svg class="w-5 h-5 text-stone-700 dark:text-stone-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
                         Track Order
                     </a>
                     <a href="{% url 'pages:faq' %}" class="flex items-center gap-3 py-2.5 px-3 text-stone-700 dark:text-stone-200 hover:bg-amber-50 active:bg-amber-50 dark:hover:bg-amber-900/40 dark:active:bg-amber-900/40 hover:text-amber-700 active:text-amber-700 dark:hover:text-white dark:active:text-white rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <svg class="w-5 h-5 text-stone-700 dark:text-stone-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         Help & FAQ
                     </a>
                     <a href="{% url 'pages:contact' %}" class="flex items-center gap-3 py-2.5 px-3 text-stone-700 dark:text-stone-200 hover:bg-amber-50 active:bg-amber-50 dark:hover:bg-amber-900/40 dark:active:bg-amber-900/40 hover:text-amber-700 active:text-amber-700 dark:hover:text-white dark:active:text-white rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                         Contact Us
+                    </a>                   <a href="{% url 'commerce:wishlist' %}" class="flex items-center gap-3 py-2.5 px-3 text-rose-600 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-900/40 transition-colors rounded-xl">
+                        <svg class="w-5 h-5 text-rose-600 dark:text-rose-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                        Wishlist
                     </a>
+                    <button id="mobile-theme-toggle" class="w-full text-left flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-900/40 transition-colors" aria-label="Toggle theme (mobile)" aria-pressed="false">
+                        <!-- Light icon -->
+                        <svg id="mobile-theme-toggle-light-icon" class="w-5 h-5 block text-amber-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-label="Light theme" aria-hidden="false" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none" />
+                            <g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+                                <line x1="12" y1="1.5" x2="12" y2="4" />
+                                <line x1="12" y1="20" x2="12" y2="22.5" />
+                                <line x1="1.5" y1="12" x2="4" y2="12" />
+                                <line x1="20" y1="12" x2="22.5" y2="12" />
+                                <line x1="4.2" y1="4.2" x2="6.3" y2="6.3" />
+                                <line x1="17.7" y1="17.7" x2="19.8" y2="19.8" />
+                                <line x1="4.2" y1="19.8" x2="6.3" y2="17.7" />
+                                <line x1="17.7" y1="6.3" x2="19.8" y2="4.2" />
+                            </g>
+                        </svg>
+                        <!-- Dark icon -->
+                        <svg id="mobile-theme-toggle-dark-icon" class="w-5 h-5 hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+                        <span>Toggle theme</span>
+                    </button>
                 </div>
-            </div>
-            
-            <!-- Mobile Currency Selector (inlined) -->
-            <div id="currency-selector" class="relative currency-selector">
-                <button id="currency-selector-toggle" aria-haspopup="listbox" aria-expanded="false" class="p-2 lg:p-2.5 rounded-xl text-stone-700 hover:text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:text-stone-300 dark:hover:text-amber-300">
-                    <span id="currency-current">{{ currency_code }}</span>
-                </button>
-                <div id="currency-dropdown" role="listbox" aria-label="Choose currency" class="hidden fixed left-3 right-3 bottom-16 max-h-[60vh] overflow-auto rounded-xl py-2 bg-stone-200 border-0 border-stone-200 z-50 dark:bg-stone-800 dark:border-stone-700 lg:absolute lg:right-0 lg:mt-2 lg:left-auto lg:w-56 lg:max-h-56 lg:overflow-auto lg:rounded-2xl lg:shadow-2xl">
-                    <div id="currency-list" class="max-h-56 overflow-auto scrollbar-thin"></div>
-                </div>
-            </div>
-            <!-- Mobile Account -->
-            <div id="mobile-account" class="p-4 border-t border-stone-300 bg-stone-100 dark:border-stone-700 dark:bg-stone-900">
-                <!-- Account links loaded via JS -->
             </div>
         </div>
     </div>
-
     <!-- Search Drawer (used for all breakpoints) -->
     <div id="mobile-search-overlay" class="hidden fixed inset-0 z-50 bg-white text-stone-800 dark:bg-black dark:text-stone-100 overflow-y-auto" aria-hidden="true">
         <div class="p-4">
             <div class="flex items-center gap-4 mb-4">
-                <button id="mobile-search-close" class="p-2 text-stone-500 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition-colors" aria-label="Close search">
+                <button id="mobile-search-close" class="p-2 text-stone-500 hover:text-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800 dark:hover:text-stone-100 rounded-lg transition-colors" aria-label="Close search">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                 </button>
                 <form action="{% url 'catalog:search' %}" method="GET" class="flex-1">
@@ -385,7 +392,7 @@
     {% include 'includes/chat_widget.html' %}
 
     <!-- Mobile Bottom Navigation -->
-    <nav id="mobile-bottom-nav" class="fixed bottom-0 left-0 right-0 bg-white dark:bg-black border-t border-stone-200 dark:border-stone-800 z-40 lg:hidden safe-area-bottom transform transition-transform duration-300" role="navigation" aria-label="Mobile navigation">
+    <nav id="mobile-bottom-nav" class="fixed bottom-0 left-0 right-0 bg-white dark:bg-stone-900 border-t border-stone-200 dark:border-stone-800 z-40 lg:hidden safe-area-bottom transform transition-transform duration-300" role="navigation" aria-label="Mobile navigation">
         <div class="grid grid-cols-5 h-16">
             <!-- Home -->
             <a href="{% url 'home' %}" class="mobile-nav-item flex flex-col items-center justify-center gap-1 text-stone-500 dark:text-stone-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors {% if request.path == '/' %}text-amber-600 dark:text-amber-400{% endif %}" data-nav="home">
@@ -657,18 +664,29 @@
             }
 
             function updateThemeIcons(isDark) {
+                // Desktop icons
                 const lightIcon = document.getElementById('theme-toggle-light-icon');
                 const darkIcon = document.getElementById('theme-toggle-dark-icon');
-                if (!lightIcon || !darkIcon) return;
+                // Mobile icons (mirror desktop)
+                const mobileLight = document.getElementById('mobile-theme-toggle-light-icon');
+                const mobileDark = document.getElementById('mobile-theme-toggle-dark-icon');
 
-                // Show icon that represents current theme for clarity
-                lightIcon.classList.toggle('hidden', isDark);
-                lightIcon.classList.toggle('block', !isDark);
-                lightIcon.setAttribute('aria-hidden', isDark ? 'true' : 'false');
+                // Helper to toggle an icon element safely
+                const setIcon = (el, show) => {
+                    if (!el) return;
+                    el.classList.toggle('hidden', !show);
+                    el.classList.toggle('block', show);
+                    el.setAttribute('aria-hidden', show ? 'false' : 'true');
+                };
 
-                darkIcon.classList.toggle('hidden', !isDark);
-                darkIcon.classList.toggle('block', isDark);
-                darkIcon.setAttribute('aria-hidden', isDark ? 'false' : 'true');
+                setIcon(lightIcon, !isDark);
+                setIcon(darkIcon, isDark);
+                setIcon(mobileLight, !isDark);
+                setIcon(mobileDark, isDark);
+
+                // Keep mobile toggle aria-pressed in sync
+                const mobileToggle = document.getElementById('mobile-theme-toggle');
+                if (mobileToggle) mobileToggle.setAttribute('aria-pressed', isDark ? 'true' : 'false');
             }
 
             function applyTheme(theme, { persist = true } = {}) {
@@ -1389,12 +1407,12 @@
                             </div>
                         </div>
                         <a href="${buildRoute('accountsDashboard')}" class="block w-full text-center py-3 px-4 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl transition-colors mb-2">My Account</a>
-                        <a href="${buildRoute('accountsLogout')}" class="block w-full text-center py-3 px-4 bg-stone-200 hover:bg-stone-300 text-stone-700 font-medium rounded-xl transition-colors">Sign Out</a>
+                        <a href="${buildRoute('accountsLogout')}" class="block w-full text-center py-3 px-4 bg-rose-400 dark:bg-rose-600 hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-700 font-medium rounded-xl transition-colors">Sign Out</a>
                     `;
                 } else {
                     mobileAccount.innerHTML = `
                         <a href="${buildRoute('accountsLogin')}" class="block w-full text-center py-3 px-4 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl transition-colors mb-2">Sign In</a>
-                        <a href="${buildRoute('accountsRegister')}" class="block w-full text-center py-3 px-4 bg-stone-200 hover:bg-stone-300 text-stone-700 font-medium rounded-xl transition-colors">Create Account</a>
+                        <a href="${buildRoute('accountsRegister')}" class="block w-full text-center py-3 px-4 bg-green-600 dark:bg-green-700 hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-700 font-medium rounded-xl transition-colors">Create Account</a>
                     `;
                 }
             }
@@ -1409,15 +1427,17 @@
                     function renderLevel(items){
                         return `<ul class="space-y-1">${items.map(it => {
                             const hasChildren = Array.isArray(it.children) ? it.children.length > 0 : !!it.has_children;
-                            const icon = hasChildren ? `<svg class="ml-auto w-4 h-4 text-stone-400 chevron transform transition-transform duration-150" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 6l6 6-6 6"/></svg>` : '';
+                            const chevron = hasChildren ? `<button type="button" data-toggle-cat data-cat-id="${it.id}" data-lazy="${lazy && !Array.isArray(it.children)}" aria-expanded="false" class="ml-2 p-2 rounded-md hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"><svg class="w-4 h-4 text-stone-400 dark:text-stone-500 chevron transform transition-transform duration-150" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 6l6 6-6 6"/></svg></button>` : '';
                             const childRendered = (hasChildren && Array.isArray(it.children) && it.children.length) ? renderLevel(it.children) : '';
                             const childrenHtml = `<div data-children-for="${it.id}" class="hidden pl-4 transition-all duration-150">${childRendered}</div>`;
+                            const linkHref = it.slug ? buildRoute('categoryDetail', it.slug) : '#';
+                            const link = `<a href="${linkHref}" class="truncate text-stone-800 dark:text-stone-100 hover:bg-stone-200 dark:hover:bg-stone-700 flex-1">${it.name}</a>`;
                             return `
                                 <li>
-                                    <button type="button" data-toggle-cat data-cat-id="${it.id}" data-lazy="${lazy && !Array.isArray(it.children)}" aria-expanded="false" class="w-full text-left flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors">
-                                        <span class="truncate text-stone-800 dark:text-stone-100">${it.name}</span>
-                                        ${icon}
-                                    </button>
+                                    <div class="flex items-center gap-3 py-2 px-2 rounded-lg">
+                                        ${link}
+                                        ${chevron}
+                                    </div>
                                     ${childrenHtml}
                                 </li>
                             `;
@@ -1476,10 +1496,10 @@
                         }
                         const html = subs.map(s => `
                             <li>
-                                <button type="button" data-toggle-cat data-cat-id="${s.id}" data-lazy="true" aria-expanded="false" class="w-full text-left flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors">
-                                    <span class="truncate text-stone-800 dark:text-stone-100">${s.name}</span>
-                                    ${s.has_children ? '<svg class="ml-auto w-4 h-4 text-stone-400 chevron" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 6l6 6-6 6"/></svg>' : ''}
-                                </button>
+                                <div class="flex items-center gap-3 py-2 px-2 rounded-lg">
+                                    <a href="${s.slug ? buildRoute('categoryDetail', s.slug) : '#'}" class="truncate text-stone-800 dark:text-stone-100 flex-1">${s.name}</a>
+                                    ${s.has_children ? `<button type="button" data-toggle-cat data-cat-id="${s.id}" data-lazy="true" aria-expanded="false" class="ml-2 p-2 rounded-md hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"><svg class="w-4 h-4 text-stone-400 dark:text-stone-500 chevron" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 6l6 6-6 6"/></svg></button>` : ''}
+                                </div>
                                 <div data-children-for="${s.id}" class="hidden pl-4 transition-all duration-150"></div>
                             </li>
                         `).join('');
@@ -1525,14 +1545,15 @@
                         return;
                     }
 
-                    // category toggles
-                    const catBtn = e.target.closest('[data-toggle-cat]');
-                    if (catBtn && document.getElementById('mobile-nav')) {
+                    // category toggles (chevron controls expansion; names are links)
+                    const toggleEl = e.target.closest('[data-toggle-cat]');
+                    if (toggleEl && document.getElementById('mobile-nav')) {
                         e.preventDefault();
-                        const catId = catBtn.dataset.catId;
-                        const lazy = catBtn.dataset.lazy === 'true';
-                        const childrenList = catBtn.nextElementSibling;
-                        const chevron = catBtn.querySelector('.chevron');
+                        const catId = toggleEl.dataset.catId;
+                        const lazy = toggleEl.dataset.lazy === 'true';
+                        const li = toggleEl.closest('li');
+                        const childrenList = li ? li.querySelector(`[data-children-for="${catId}"]`) : null;
+                        const chevron = toggleEl.querySelector('.chevron') || toggleEl.querySelector('svg.chevron');
                         if (lazy && childrenList && childrenList.dataset.loaded !== 'true') {
                             // load children then toggle
                             await ensureChildrenLoaded(catId, childrenList);
@@ -1540,10 +1561,15 @@
                         if (childrenList) {
                             const isHidden = childrenList.classList.toggle('hidden');
                             // Update aria and chevron rotation
-                            catBtn.setAttribute('aria-expanded', (!isHidden).toString());
-                            if (chevron) chevron.classList.toggle('rotate-90', !isHidden);
-                            // Visual state on button
-                            catBtn.classList.toggle('bg-stone-100', !isHidden);
+                            const isExpanded = !isHidden;
+                            toggleEl.setAttribute('aria-expanded', isExpanded.toString());
+                            if (chevron) chevron.classList.toggle('rotate-90', isExpanded);
+                            // Visual state on parent container (light + dark)
+                            const parentDiv = toggleEl.closest('div');
+                            if (parentDiv) {
+                                parentDiv.classList.toggle('bg-stone-100', isExpanded);
+                                parentDiv.classList.toggle('dark:bg-stone-800', isExpanded);
+                            }
                         }
                     }
                 });
@@ -2237,6 +2263,17 @@
         else window.addEventListener('load', function(){ setTimeout(loadDeferred, 300); }, {passive:true});
       })();
     </script>
-    {% block extra_js %}{% endblock %}
+    <script>
+    // Wire mobile theme toggle to desktop theme toggle for consistent behavior
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('mobile-theme-toggle')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            const desktopToggle = document.getElementById('theme-toggle');
+            if (desktopToggle) desktopToggle.click();
+        });
+    });
+</script>
+
+{% block extra_js %}{% endblock %}
 </body>
 </html>

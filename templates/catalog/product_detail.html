@@ -130,13 +130,13 @@
                             <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
                         </svg>
                         {% else %}
-                        <svg class="w-5 h-5 fill-current text-gray-300" viewBox="0 0 20 20">
+                        <svg class="w-5 h-5 fill-current text-gray-300 dark:text-stone-600" viewBox="0 0 20 20">
                             <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
                         </svg>
                         {% endif %}
                         {% endfor %}
                     </div>
-                    <span class="ml-2 text-gray-600">{{ review_summary.average_rating }}</span>
+                    <span class="ml-2 text-gray-600 dark:text-stone-400">{{ review_summary.average_rating }}</span>
                 </div>
                 <a href="#reviews" class="text-primary-600 hover:text-primary-700">
                     {{ review_summary.total_reviews }} reviews
@@ -157,13 +157,13 @@
                     {% endif %}
                 </div>
                 {% else %}
-                <span id="product-price" class="text-3xl font-bold text-gray-900">{% format_price product.price product.currency %}</span>
+                <span id="product-price" class="text-3xl font-bold text-gray-900 dark:text-stone-100">{% format_price product.price product.currency %}</span>
                 {% endif %}
             </div>
             
             <!-- Short Description -->
             {% if product.short_description %}
-            <p class="text-gray-600 mb-6">{{ product.short_description }}</p>
+            <p class="text-gray-600 dark:text-stone-400 mb-6">{{ product.short_description }}</p>
             {% endif %}
             
             <!-- Variant Options -->
@@ -191,15 +191,15 @@
             
             <!-- Quantity & Add to Cart -->
             <div class="flex items-center space-x-4 mb-6">
-                <div class="flex items-center border border-gray-300 rounded-lg">
-                    <button id="decrease-qty" class="px-2 py-2 text-gray-600 hover:text-primary-600">
+                <div class="flex items-center border border-gray-300 dark:border-stone-700 rounded-lg">
+                    <button id="decrease-qty" class="px-2 py-2 text-gray-600 dark:text-stone-300 hover:text-primary-600 dark:hover:text-amber-400">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
                         </svg>
                     </button>
                     <input type="number" id="quantity" value="1" min="1" max="{{ product.stock_quantity }}"
                            class="w-16 text-center border-0 focus:ring-0">
-                    <button id="increase-qty" class="px-2 py-2 text-gray-600 hover:text-primary-600">
+                    <button id="increase-qty" class="px-2 py-2 text-gray-600 dark:text-stone-300 hover:text-primary-600 dark:hover:text-amber-400">
                         <svg class="w-6 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"></path>
                         </svg>
@@ -283,9 +283,9 @@
             
             <!-- Share -->
             <div class="flex items-center space-x-4 border-t pt-6">
-                <span class="text-gray-600">Share:</span>
+                <span class="text-gray-600 dark:text-stone-400">Share:</span>
                 <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" 
-                   target="_blank" class="text-gray-400 hover:text-blue-600">
+                   target="_blank" class="text-gray-400 dark:text-stone-400 hover:text-blue-600">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/>
                     </svg>

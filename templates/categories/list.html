@@ -5,7 +5,7 @@
 {% block title %}All Categories - {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
-<section class="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white">
+<section class="relative overflow-hidden bg-gradient-to-br from-amber-50 via-amber-100 to-white text-stone-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 dark:text-white">
     <div class="absolute inset-0 opacity-60" aria-hidden="true">
         <div class="w-64 h-64 rounded-full bg-primary-500 blur-3xl absolute -top-16 -left-8"></div>
         <div class="w-72 h-72 rounded-full bg-emerald-500 blur-3xl absolute bottom-0 right-0"></div>
@@ -16,8 +16,8 @@
             <h1 class="text-4xl md:text-5xl font-semibold leading-tight mt-4">Find the perfect category to start your shopping journey.</h1>
             <p class="text-base md:text-lg text-white/80 mt-4">Browse curated collections organized by lifestyle, room, and trend. Select any category to explore featured products and stories.</p>
             <div class="flex flex-wrap gap-3 mt-8 text-sm">
-                <span class="px-4 py-2 rounded-full border border-white/20 bg-white/10">Top-level categories: {{ categories|length }}</span>
-                <span class="px-4 py-2 rounded-full border border-white/20 bg-white/10">Updated weekly</span>
+                <span class="px-4 py-2 rounded-full border border-stone-200 bg-white/95 text-stone-900 dark:border-white/20 dark:bg-white/10 dark:text-white">Top-level categories: {{ categories|length }}</span>
+                <span class="px-4 py-2 rounded-full border border-stone-200 bg-white/95 text-stone-900 dark:border-white/20 dark:bg-white/10 dark:text-white">Updated weekly</span>
             </div>
         </div>
     </div>
@@ -28,41 +28,41 @@
         {% if categories %}
         <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
             {% for category in categories %}
-            <a href="{% url 'catalog:category-detail' category.slug %}" class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition transform hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-primary-500/40">
-                <div class="h-40 bg-gradient-to-br from-gray-100 to-gray-200 relative">
+            <a href="{% url 'catalog:category-detail' category.slug %}" class="group bg-white dark:bg-stone-900 rounded-2xl shadow-sm border border-gray-100 dark:border-stone-800 overflow-hidden transition transform hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-primary-500/40 dark:focus:ring-amber-400/30">
+                <div class="h-40 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-stone-800 dark:to-stone-900 relative">
                     {% if category.image %}
                     <img src="{{ category.image.url }}" alt="{{ category.name }}" loading="lazy" decoding="async" class="absolute inset-0 w-full h-full object-cover">
                     {% else %}
                     <div class="absolute inset-0 flex items-center justify-center text-gray-400 text-sm tracking-[0.4em] uppercase">{{ category.name|slice:":3" }}</div>
                     {% endif %}
                     <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent"></div>
-                    <span class="absolute top-4 left-4 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/90 text-gray-900">{{ category.product_count }} products</span>
+                    <span class="absolute top-4 left-4 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/90 text-gray-900 dark:bg-black/60 dark:text-stone-100">{{ category.product_count }} products</span>
                 </div>
                 <div class="p-5 space-y-3">
                     <div class="flex items-center justify-between">
-                        <h2 class="text-xl font-semibold text-gray-900 group-hover:text-primary-600">{{ category.name }}</h2>
+                        <h2 class="text-xl font-semibold text-gray-900 dark:text-stone-100 group-hover:text-primary-600 group-hover:dark:text-amber-400">{{ category.name }}</h2>
                         {% if category.is_featured %}
-                        <span class="text-xs uppercase tracking-wider text-primary-600">Featured</span>
+                        <span class="text-xs uppercase tracking-wider text-primary-600 dark:text-amber-400">Featured</span>
                         {% endif %}
                     </div>
                     {% if category.description %}
-                    <p class="text-sm text-gray-600 line-clamp-2">{{ category.description }}</p>
+                    <p class="text-sm text-gray-600 dark:text-stone-400 line-clamp-2">{{ category.description }}</p>
                     {% endif %}
                     {% with children=category.children.all|slice:":3" %}
                     {% if children %}
-                    <div class="flex flex-wrap gap-2 text-xs text-gray-500">
+                    <div class="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-stone-300">
                         {% for child in children %}
-                        <span class="px-2 py-1 rounded-full bg-gray-100">{{ child.name }}</span>
+                        <span class="px-2 py-1 rounded-full bg-gray-100 dark:bg-stone-800 dark:text-stone-200">{{ child.name }}</span>
                         {% endfor %}
                         {% if category.children.count > 3 %}
-                        <span class="px-2 py-1 rounded-full bg-gray-100">+{{ category.children.count|add:"-3" }} more</span>
+                        <span class="px-2 py-1 rounded-full bg-gray-100 dark:bg-stone-800 dark:text-stone-200">+{{ category.children.count|add:"-3" }} more</span>
                         {% endif %}
                     </div>
                     {% endif %}
                     {% endwith %}
                     <div class="flex items-center justify-between pt-2">
-                        <span class="text-sm font-medium text-gray-900">Explore collection</span>
-                        <svg class="w-5 h-5 text-primary-600 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <span class="text-sm font-medium text-gray-900 dark:text-stone-100">Explore collection</span>
+                        <svg class="w-5 h-5 text-primary-600 dark:text-amber-400 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                         </svg>
                     </div>
@@ -71,44 +71,44 @@
             {% endfor %}
         </div>
         {% else %}
-        <div class="bg-white rounded-2xl shadow-sm border border-dashed border-gray-200 p-12 text-center">
-            <p class="text-lg text-gray-500">No categories available yet. Check back soon.</p>
-            <a href="{% url 'catalog:product-list' %}" class="inline-flex items-center justify-center mt-5 px-5 py-2 rounded-full bg-primary-600 text-white text-sm font-medium hover:bg-primary-700">Browse all products</a>
+        <div class="bg-white dark:bg-stone-900 rounded-2xl shadow-sm border border-dashed border-gray-200 dark:border-stone-700 p-12 text-center">
+            <p class="text-lg text-gray-500 dark:text-stone-400">No categories available yet. Check back soon.</p>
+            <a href="{% url 'catalog:product-list' %}" class="inline-flex items-center justify-center mt-5 px-5 py-2 rounded-full bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 dark:bg-amber-600 dark:hover:bg-amber-700">Browse all products</a>
         </div>
         {% endif %}
     </div>
 
     <aside class="space-y-6">
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h3 class="text-base font-semibold text-gray-900">Browse by Department</h3>
-            <p class="text-sm text-gray-500 mt-1">Jump to any root category and quickly scan featured child collections.</p>
+        <div class="bg-white dark:bg-stone-900 rounded-2xl shadow-sm border border-gray-100 dark:border-stone-800 p-6">
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white">Browse by Department</h3>
+            <p class="text-sm text-gray-500 dark:text-stone-400 mt-1">Jump to any root category and quickly scan featured child collections.</p>
             <div class="mt-4 space-y-4">
                 {% for branch in category_tree %}
                 <div>
-                    <a href="{% url 'catalog:category-detail' branch.slug %}" class="flex items-center justify-between text-sm font-medium text-gray-800 hover:text-primary-600">
+                    <a href="{% url 'catalog:category-detail' branch.slug %}" class="flex items-center justify-between text-sm font-medium text-gray-800 dark:text-stone-200 hover:text-primary-600 dark:hover:text-amber-400">
                         <span>{{ branch.name }}</span>
-                        <span class="text-xs text-gray-400">{{ branch.product_count }} items</span>
+                        <span class="text-xs text-gray-400 dark:text-stone-400">{{ branch.product_count }} items</span>
                     </a>
                     {% if branch.children %}
-                    <div class="mt-2 flex flex-wrap gap-2 text-xs text-gray-500">
+                    <div class="mt-2 flex flex-wrap gap-2 text-xs text-gray-500 dark:text-stone-300">
                         {% for child in branch.children|slice:":4" %}
-                        <a href="{% url 'catalog:category-detail' child.slug %}" class="px-2 py-1 rounded-full bg-gray-100 hover:bg-primary-50 hover:text-primary-600 transition">{{ child.name }}</a>
+                        <a href="{% url 'catalog:category-detail' child.slug %}" class="px-2 py-1 rounded-full bg-gray-100 dark:bg-stone-800 dark:text-stone-200 hover:bg-primary-50 dark:hover:bg-amber-900/20 dark:hover:text-amber-300 transition">{{ child.name }}</a>
                         {% endfor %}
                         {% if branch.children|length > 4 %}
-                        <span class="px-2 py-1 rounded-full bg-gray-100">+{{ branch.children|length|add:"-4" }} more</span>
+                        <span class="px-2 py-1 rounded-full bg-gray-100 dark:bg-stone-800 dark:text-stone-200">+{{ branch.children|length|add:"-4" }} more</span>
                         {% endif %}
                     </div>
                     {% endif %}
                 </div>
                 {% empty %}
-                <p class="text-sm text-gray-500">No departments available.</p>
+                <p class="text-sm text-gray-500 dark:text-stone-400">No departments available.</p>
                 {% endfor %}
             </div>
         </div>
-        <div class="bg-slate-900 text-white rounded-2xl p-6">
+        <div class="bg-white text-slate-900 rounded-2xl p-6 dark:bg-slate-900 dark:text-white border border-gray-100 dark:border-stone-800">
             <h3 class="text-lg font-semibold">Need personalized guidance?</h3>
-            <p class="text-sm text-white/80 mt-2">Our stylists can help you build a shopping list by category, mood, or room.</p>
-            <a href="{% url 'pages:contact' %}" class="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-full bg-white text-slate-900 font-medium text-sm hover:bg-gray-100">
+            <p class="text-sm text-gray-700 dark:text-white/80 mt-2">Our stylists can help you build a shopping list by category, mood, or room.</p>
+            <a href="{% url 'pages:contact' %}" class="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-full bg-white text-slate-900 font-medium text-sm hover:bg-gray-100 dark:bg-amber-600 dark:text-white dark:hover:bg-amber-700">
                 Talk to support
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
