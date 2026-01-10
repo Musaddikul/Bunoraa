@@ -6,19 +6,19 @@
 {% block title %}Product Bundles - {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
-<section class="bg-white border-b border-gray-100">
+<section class="bg-white dark:bg-stone-950 border-b border-gray-100 dark:border-stone-800 transition-colors duration-500">
     <div class="container mx-auto px-4 py-12">
-        <h1 class="text-4xl font-bold text-gray-900 mb-4">Product Bundles</h1>
-        <p class="text-lg text-gray-600">Save more with our specially priced product bundles.</p>
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-stone-100 mb-4 transition-colors duration-500">Product Bundles</h1>
+        <p class="text-lg text-gray-600 dark:text-stone-400">Save more with our specially priced product bundles.</p>
     </div>
 </section>
 
-<section class="bg-gray-50 py-12">
+<section class="bg-gray-50 dark:bg-stone-900 py-12 transition-colors duration-500">
     <div class="container mx-auto px-4">
         {% if bundles %}
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {% for bundle in bundles %}
-            <a href="{% url 'catalog:bundle-detail' bundle.slug %}" class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow">
+            <a href="{% url 'catalog:bundle-detail' bundle.slug %}" class="group bg-white dark:bg-stone-800 rounded-2xl shadow-sm border border-gray-100 dark:border-stone-700 overflow-hidden hover:shadow-xl transition-shadow">
                 <div class="h-48 bg-gradient-to-br from-gray-100 to-gray-200 relative overflow-hidden">
                     {% if bundle.image %}
                     <img src="{{ bundle.image.url }}" alt="{{ bundle.name }}" loading="lazy" decoding="async" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
@@ -27,7 +27,7 @@
                         <div class="grid grid-cols-2 gap-2 p-4">
                             {% for item in bundle.items.all|slice:":4" %}
                             {% if item.product.primary_image %}
-                            <div class="w-16 h-16 rounded-lg overflow-hidden bg-white shadow-sm">
+                            <div class="w-16 h-16 rounded-lg overflow-hidden bg-white dark:bg-stone-700 shadow-sm transition-colors duration-500">
                                 <img src="{{ item.product.primary_image.image.url }}" alt="{{ item.product.name }}" class="w-full h-full object-cover">
                             </div>
                             {% endif %}
@@ -42,29 +42,29 @@
                     {% endif %}
                 </div>
                 <div class="p-5">
-                    <h2 class="text-xl font-bold text-gray-900 group-hover:text-primary-600">{{ bundle.name }}</h2>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-stone-100 group-hover:text-primary-600">{{ bundle.name }}</h2>
                     {% if bundle.description %}
-                    <p class="text-gray-600 text-sm mt-2 line-clamp-2">{{ bundle.description }}</p>
+                    <p class="text-gray-600 dark:text-stone-400 text-sm mt-2 line-clamp-2">{{ bundle.description }}</p>
                     {% endif %}
                     <div class="flex items-center justify-between mt-4">
                         <div>
                             {% if bundle.bundle_price %}
                             <span class="text-lg font-bold text-primary-600">{% format_price bundle.bundle_price bundle.currency %}</span>
                             {% if bundle.original_price %}
-                            <span class="text-sm text-gray-400 line-through ml-2">{% format_price bundle.original_price bundle.currency %}</span>
+                            <span class="text-sm text-gray-400 dark:text-stone-400 line-through ml-2">{% format_price bundle.original_price bundle.currency %}</span>
                             {% endif %}
                             {% endif %}
                         </div>
-                        <span class="text-sm text-gray-500">{{ bundle.items.count }} items</span>
+                        <span class="text-sm text-gray-500 dark:text-stone-400">{{ bundle.items.count }} items</span>
                     </div>
                 </div>
             </a>
             {% endfor %}
         </div>
         {% else %}
-        <div class="bg-white rounded-2xl shadow-sm border border-dashed border-gray-200 p-12 text-center">
-            <p class="text-lg text-gray-500">No bundles available yet.</p>
-            <a href="{% url 'catalog:product-list' %}" class="inline-flex items-center justify-center mt-5 px-5 py-2 rounded-full bg-primary-600 text-white text-sm font-medium hover:bg-primary-700">Browse Products</a>
+        <div class="bg-white dark:bg-stone-800 rounded-2xl shadow-sm border border-dashed border-gray-200 dark:border-stone-700 p-12 text-center transition-colors duration-500">
+            <p class="text-lg text-gray-500 dark:text-stone-400">No bundles available yet.</p>
+            <a href="{% url 'catalog:product-list' %}" class="inline-flex items-center justify-center mt-5 px-5 py-2 rounded-full bg-primary-600 dark:bg-amber-600 text-white text-sm font-medium hover:bg-primary-700 dark:hover:bg-amber-700">Browse Products</a>
         </div>
         {% endif %}
     </div>

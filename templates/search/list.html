@@ -19,26 +19,26 @@
 
 {% block content %}
 <!-- Page Header -->
-<section class="bg-white border-b border-gray-100">
+<section class="bg-white dark:bg-stone-900 border-b border-gray-100 dark:border-stone-800">
     <div class="container mx-auto px-4 py-8">
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
-                <h1 id="page-title" class="text-3xl lg:text-4xl font-display font-bold text-gray-900 mb-2">All Products</h1>
-                <p id="product-count" class="text-gray-600">Loading products...</p>
+                <h1 id="page-title" class="text-3xl lg:text-4xl font-display font-bold text-gray-900 dark:text-white mb-2">All Products</h1>
+                <p id="product-count" class="text-gray-600 dark:text-stone-400">Loading products...</p>
             </div>
             
             <!-- View Toggle & Sort (Desktop) -->
             <div class="hidden lg:flex items-center gap-4">
-                <div class="flex items-center gap-2 border border-gray-200 rounded-lg p-1">
-                    <button id="view-grid" class="p-2 bg-primary-100 text-primary-700 rounded-md" title="Grid View">
+                <div class="flex items-center gap-2 border border-gray-200 dark:border-stone-700 rounded-lg p-1 dark:bg-stone-900">
+                    <button id="view-grid" class="p-2 bg-primary-100 dark:bg-stone-800 text-primary-700 dark:text-stone-200 rounded-md" title="Grid View">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                     </button>
-                    <button id="view-list" class="p-2 text-gray-400 hover:text-gray-600 rounded-md" title="List View">
+                    <button id="view-list" class="p-2 text-gray-400 dark:text-stone-400 dark:hover:text-stone-300 rounded-md" title="List View">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
                     </button>
                 </div>
                 
-                <select id="sort-select" class="border border-gray-200 rounded-lg px-4 py-2 text-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                <select id="sort-select" class="border border-gray-200 dark:border-stone-700 rounded-lg px-4 py-2 text-gray-700 dark:text-stone-200 bg-white dark:bg-stone-800 focus:ring-2 focus:ring-primary-500 dark:focus:ring-amber-900 focus:border-primary-500 dark:focus:border-amber-700">
                     <option value="popular">Most Popular</option>
                     <option value="newest">Newest First</option>
                     <option value="price_low">Price: Low to High</option>
@@ -51,7 +51,7 @@
     </div>
 </section>
 
-<section class="bg-gray-50 py-8">
+<section class="bg-gray-50 dark:bg-stone-900 py-8">
     <div class="container mx-auto px-4">
         <div class="flex gap-8">
             <!-- Sidebar Filters (Desktop) -->
@@ -192,11 +192,11 @@
                 
                 <!-- Empty State -->
                 <div id="empty-state" class="hidden text-center py-16">
-                    <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <div class="w-20 h-20 bg-gray-100 dark:bg-stone-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-10 h-10 text-gray-400 dark:text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
-                    <p class="text-gray-600 mb-6">Try adjusting your filters or search terms</p>
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">No products found</h3>
+                    <p class="text-gray-600 dark:text-stone-400 mb-6">Try adjusting your filters or search terms</p>
                     <button id="reset-filters" class="btn-primary">Reset Filters</button>
                 </div>
                 
@@ -229,10 +229,10 @@
             <!-- Mobile filters will be cloned from sidebar -->
             <div id="mobile-filters-content"></div>
         </div>
-        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 bg-white">
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 dark:border-stone-700 bg-white dark:bg-stone-900">
             <div class="flex gap-3">
-                <button id="mobile-clear-filters" class="flex-1 py-3 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors">Clear</button>
-                <button id="mobile-apply-filters" class="flex-1 py-3 bg-primary-700 text-white font-medium rounded-xl hover:bg-primary-800 transition-colors">Apply</button>
+                <button id="mobile-clear-filters" class="flex-1 py-3 border border-gray-200 dark:border-stone-700 text-gray-700 dark:text-stone-200 font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-stone-800 transition-colors">Clear</button>
+                <button id="mobile-apply-filters" class="flex-1 py-3 bg-primary-700 dark:bg-amber-600 text-white font-medium rounded-xl hover:bg-primary-800 transition-colors">Apply</button>
             </div>
         </div>
     </div>
@@ -378,7 +378,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     function renderCategoryTree(items) {
         if (!Array.isArray(items) || !items.length) {
-            return '<p class="text-sm text-gray-500">No categories available right now.</p>';
+            return '<p class="text-sm text-gray-500 dark:text-stone-400">No categories available right now.</p>'; 
         }
 
         const buildNodes = (nodes, depth = 0) => {

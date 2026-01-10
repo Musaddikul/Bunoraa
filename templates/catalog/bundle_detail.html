@@ -9,19 +9,19 @@
 <div class="container mx-auto px-4 py-8">
     <!-- Breadcrumb -->
     <nav class="mb-8">
-        <ol class="flex items-center space-x-2 text-sm text-gray-500">
-            <li><a href="{% url 'home' %}" class="hover:text-primary-600">Home</a></li>
+        <ol class="flex items-center space-x-2 text-sm text-gray-500 dark:text-stone-400 transition-colors duration-500">
+            <li><a href="{% url 'home' %}" class="hover:text-primary-600 dark:hover:text-amber-400 transition-colors duration-500">Home</a></li>
             <li><span class="mx-2">/</span></li>
-            <li><a href="{% url 'catalog:bundle-list' %}" class="hover:text-primary-600">Bundles</a></li>
+            <li><a href="{% url 'catalog:bundle-list' %}" class="hover:text-primary-600 dark:hover:text-amber-400 transition-colors duration-500">Bundles</a></li>
             <li><span class="mx-2">/</span></li>
-            <li class="text-gray-900">{{ bundle.name }}</li>
+            <li class="text-gray-900 dark:text-stone-100 transition-colors duration-500">{{ bundle.name }}</li>
         </ol>
     </nav>
     
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
         <!-- Bundle Image -->
         <div>
-            <div class="aspect-square bg-gray-100 rounded-2xl overflow-hidden">
+            <div class="aspect-square bg-gray-100 dark:bg-stone-800 rounded-2xl overflow-hidden transition-colors duration-500">
                 {% if bundle.image %}
                 <img src="{{ bundle.image.url }}" alt="{{ bundle.name }}" loading="lazy" decoding="async" class="w-full h-full object-cover">
                 {% else %}
@@ -29,7 +29,7 @@
                     <div class="grid grid-cols-2 gap-4 p-8">
                         {% for item in bundle.items.all|slice:":4" %}
                         {% if item.product.primary_image %}
-                        <div class="aspect-square rounded-xl overflow-hidden bg-white shadow-sm">
+                        <div class="aspect-square rounded-xl overflow-hidden bg-white dark:bg-stone-700 shadow-sm">
                             <img src="{{ item.product.primary_image.image.url }}" alt="{{ item.product.name }}" class="w-full h-full object-cover">
                         </div>
                         {% endif %}
@@ -42,27 +42,27 @@
         
         <!-- Bundle Info -->
         <div>
-            <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ bundle.name }}</h1>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-stone-100 mb-4 transition-colors duration-500">{{ bundle.name }}</h1>
             
             {% if bundle.description %}
-            <p class="text-gray-600 mb-6">{{ bundle.description }}</p>
+            <p class="text-gray-600 dark:text-stone-400 mb-6 transition-colors duration-500">{{ bundle.description }}</p>
             {% endif %}
             
             <!-- Pricing -->
-            <div class="bg-green-50 rounded-xl p-6 mb-6">
+            <div class="bg-green-50 dark:bg-stone-900 rounded-xl p-6 mb-6 transition-colors duration-500">
                 <div class="flex items-center justify-between mb-2">
-                    <span class="text-gray-600">Bundle Price:</span>
+                    <span class="text-gray-600 dark:text-stone-300">Bundle Price:</span>
                     <span class="text-2xl font-bold text-green-600">{% format_price bundle.bundle_price bundle.currency %}</span>
                 </div>
                 {% if bundle.original_price %}
                 <div class="flex items-center justify-between mb-2">
-                    <span class="text-gray-600">Original Price:</span>
+                    <span class="text-gray-600 dark:text-stone-300">Original Price:</span>
                     <span class="text-lg text-gray-400 line-through">{% format_price bundle.original_price bundle.currency %}</span>
                 </div>
                 {% endif %}
                 {% if bundle.savings %}
                 <div class="flex items-center justify-between pt-4 border-t border-green-200">
-                    <span class="text-gray-600 font-medium">You Save:</span>
+                    <span class="text-gray-600 dark:text-stone-300 font-medium">You Save:</span>
                     <span class="text-xl font-bold text-green-600">{% format_price bundle.savings bundle.currency %}</span>
                 </div>
                 {% endif %}
@@ -85,24 +85,24 @@
     
     <!-- Bundle Items -->
     <section class="mt-16">
-        <h2 class="text-2xl font-bold text-gray-900 mb-8">What's Included</h2>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-stone-100 mb-8 transition-colors duration-500">What's Included</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for item in bundle.items.all %}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-white dark:bg-stone-800 rounded-xl shadow-sm border border-gray-100 dark:border-stone-700 overflow-hidden transition-colors duration-500">
                 <a href="{% url 'catalog:product-detail' item.product.slug %}" class="block">
-                    <div class="h-40 bg-gray-100">
+                    <div class="h-40 bg-gray-100 dark:bg-stone-700 transition-colors duration-500">
                         {% if item.product.primary_image %}
                         <img src="{{ item.product.primary_image.image.url }}" alt="{{ item.product.name }}" loading="lazy" decoding="async" class="w-full h-full object-cover">
                         {% endif %}
                     </div>
                 </a>
                 <div class="p-4">
-                    <a href="{% url 'catalog:product-detail' item.product.slug %}" class="font-medium text-gray-900 hover:text-primary-600 line-clamp-2">
+                    <a href="{% url 'catalog:product-detail' item.product.slug %}" class="font-medium text-gray-900 dark:text-stone-100 hover:text-primary-600 line-clamp-2">
                         {{ item.product.name }}
                     </a>
                     <div class="flex items-center justify-between mt-2">
-                        <span class="text-sm text-gray-500">Qty: {{ item.quantity }}</span>
-                        <span class="font-medium text-gray-900">{% format_price item.product.price item.product.currency %}</span>
+                        <span class="text-sm text-gray-500 dark:text-stone-400">Qty: {{ item.quantity }}</span>
+                        <span class="font-medium text-gray-900 dark:text-stone-100">{% format_price item.product.price item.product.currency %}</span>
                     </div>
                 </div>
             </div>
