@@ -301,7 +301,6 @@ app.conf.task_routes = {
 app.conf.task_time_limit = 600  # 10 minutes hard limit
 app.conf.task_soft_time_limit = 540  # 9 minutes soft limit
 app.conf.task_acks_late = True  # Acknowledge after task completes
-app.conf.worker_prefetch_multiplier = 1  # One task at a time per worker
 app.conf.task_reject_on_worker_lost = True  # Reject if worker dies
 
 # Result backend settings
