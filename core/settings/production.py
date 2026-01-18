@@ -153,11 +153,16 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'apikey')
 EMAIL_HOST_PASSWORD = os.environ.get('SENDGRID_API_KEY', '')
 
 # =============================================================================
-# CELERY
+# CELERY - MEMORY OPTIMIZED FOR LOW RESOURCE ENVIRONMENTS
 # =============================================================================
 CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', REDIS_URL)
 CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', REDIS_URL)
 CELERY_TASK_ALWAYS_EAGER = False
+
+# Worker memory optimization
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1  # One task at a time
+CELERY_WORKER_MAX_TASKS_PER_CHILD = 500  # Restart worker after 500 tasks
+CELERY_TASK_ACKS_LATE = True  # Acknowledge after completion
 
 # =============================================================================
 # CHANNEL LAYERS - WebSockets with Redis

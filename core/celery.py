@@ -297,8 +297,7 @@ app.conf.task_routes = {
 }
 
 # =============================================================================
-# TASK SETTINGS
-# =============================================================================
+# Task settings - MEMORY OPTIMIZED
 app.conf.task_time_limit = 600  # 10 minutes hard limit
 app.conf.task_soft_time_limit = 540  # 9 minutes soft limit
 app.conf.task_acks_late = True  # Acknowledge after task completes
@@ -311,14 +310,10 @@ app.conf.result_expires = 3600  # Results expire after 1 hour
 # Retry settings
 app.conf.task_default_retry_delay = 60  # 1 minute
 app.conf.task_max_retries = 3
-app.conf.task_soft_time_limit = 300  # 5 minutes soft limit
 
-# Result backend settings
-app.conf.result_expires = 3600  # Results expire after 1 hour
-
-# Worker settings
-app.conf.worker_prefetch_multiplier = 4
-app.conf.worker_max_tasks_per_child = 1000
+# Worker settings - MEMORY OPTIMIZED for 512MB limit
+app.conf.worker_prefetch_multiplier = 1  # Load one task at a time (4)
+app.conf.worker_max_tasks_per_child = 500  # Restart worker after 500 (1000) tasks to free memory
 
 
 @app.task(bind=True)
