@@ -63,6 +63,7 @@ celerybeat.pid
 # ============================================
 ml/models_data/
 ml/training_data/
+ml/registry/models/
 ml_models/
 mlruns/
 wandb/
@@ -73,6 +74,7 @@ outputs/
 *.pkl
 *.joblib
 *.h5
+mlflow.db
 
 # ============================================
 # Environment Variables
