@@ -28,7 +28,7 @@ class Command(BaseCommand):
         # Top categories by product_count
         try:
             from apps.catalog.models import Category
-            cats = Category.objects.filter(is_active=True, is_deleted=False)
+            cats = Category.objects.filter(is_visible=True, is_deleted=False)
             cats = sorted(list(cats), key=lambda c: c.product_count, reverse=True)[:categories_n]
             for c in cats:
                 paths.add(f"/categories/{c.slug}/")
