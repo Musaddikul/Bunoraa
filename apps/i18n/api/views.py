@@ -496,13 +496,26 @@ class ContentTranslationViewSet(viewsets.ModelViewSet):
 class UserLocalePreferenceView(APIView):
     """API view for user locale preferences."""
     
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     
     def get(self, request):
         """Get current user's locale preferences."""
-        pref = UserPreferenceService.get_or_create_preference(request.user)
-        serializer = UserLocalePreferenceSerializer(pref)
-        return Response(serializer.data)
+        if request.user.is_authenticated:
+            pref = UserPreferenceService.get_or_create_preference(request.user)
+            serializer = UserLocalePreferenceSerializer(pref)
+            return Response(serializer.data)
+        else:
+            # Return session-based preferences for anonymous users
+            return Response({
+                'language': request.session.get('language'),
+                'language_name': request.session.get('language'),
+                'currency_code': request.session.get('currency_code'),
+                'currency': None,
+                'timezone': request.session.get('timezone'),
+                'timezone_name': request.session.get('timezone'),
+                'auto_detect_language': request.session.get('auto_detect_language', True),
+                'auto_detect_currency': request.session.get('auto_detect_currency', True),
+            })
     
     def post(self, request):
         """Create or update user's locale preferences (alias for PUT for convenience)."""
@@ -527,34 +540,69 @@ class UserLocalePreferenceView(APIView):
             if 'auto_detect_currency' not in validated_data:
                 validated_data['auto_detect_currency'] = False
         
-        pref = UserPreferenceService.update_preference(
-            request.user, **validated_data
-        )
+        response = Response()
         
-        # Update session
-        if pref.language:
-            request.session['language'] = pref.language.code
-            request.session['django_language'] = pref.language.code
-        if pref.currency:
-            request.session['currency_code'] = pref.currency.code
-        if pref.timezone:
-            request.session['timezone'] = pref.timezone.name
-        
-        # Return success with preference data
-        response_data = UserLocalePreferenceSerializer(pref).data
-        response_data['success'] = True
-        
-        response = Response(response_data)
-        
-        # Also set cookie for currency (persists across sessions)
-        if pref.currency:
-            response.set_cookie(
-                'currency',
-                pref.currency.code,
-                max_age=365 * 24 * 60 * 60,  # 1 year
-                httponly=False,
-                samesite='Lax'
+        # Update based on authentication status
+        if request.user.is_authenticated:
+            pref = UserPreferenceService.update_preference(
+                request.user, **validated_data
             )
+            
+            # Update session
+            if pref.language:
+                request.session['language'] = pref.language.code
+                request.session['django_language'] = pref.language.code
+            if pref.currency:
+                request.session['currency_code'] = pref.currency.code
+            if pref.timezone:
+                request.session['timezone'] = pref.timezone.name
+            
+            # Return success with preference data
+            response_data = UserLocalePreferenceSerializer(pref).data
+            response_data['success'] = True
+            response.data = response_data
+            
+            # Also set cookie for currency (persists across sessions)
+            if pref.currency:
+                response.set_cookie(
+                    'currency',
+                    pref.currency.code,
+                    max_age=365 * 24 * 60 * 60,  # 1 year
+                    httponly=False,
+                    samesite='Lax'
+                )
+        else:
+            # For anonymous users, only set in session and cookie
+            response_data = {'success': True}
+            
+            if 'language_code' in validated_data or 'language' in validated_data:
+                lang_code = validated_data.get('language_code') or validated_data.get('language')
+                if lang_code:
+                    request.session['language'] = lang_code
+                    request.session['django_language'] = lang_code
+                    response_data['language'] = lang_code
+            
+            if 'currency_code' in validated_data or 'currency' in validated_data:
+                curr_code = validated_data.get('currency_code') or validated_data.get('currency')
+                if curr_code:
+                    request.session['currency_code'] = curr_code
+                    response_data['currency_code'] = curr_code
+                    # Set cookie for currency persistence
+                    response.set_cookie(
+                        'currency',
+                        curr_code,
+                        max_age=365 * 24 * 60 * 60,  # 1 year
+                        httponly=False,
+                        samesite='Lax'
+                    )
+            
+            if 'timezone' in validated_data:
+                tz = validated_data.get('timezone')
+                if tz:
+                    request.session['timezone'] = tz
+                    response_data['timezone'] = tz
+            
+            response.data = response_data
         
         return response
     

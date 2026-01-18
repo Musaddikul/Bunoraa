@@ -500,16 +500,18 @@
       const cart = response.data;
       const items = cart?.items || [];
       
+      // Don't open drawer if cart is empty
+      if (items.length === 0) {
+        window.Toast?.info('Your cart is empty. Start shopping!', { duration: 3000 });
+        return;
+      }
+      
       cartDrawer.classList.remove('hidden');
       requestAnimationFrame(() => cartDrawer.classList.add('open'));
       render(cartDrawer, cart);
       
       // Also update saved section
       updateSavedSection(cartDrawer);
-      
-      if (items.length === 0) {
-        window.Toast?.info('Your cart is empty. Start shopping!', { duration: 3000 });
-      }
     } catch (error) {
       window.Toast?.error(error.message || 'Unable to open cart right now.');
     }
