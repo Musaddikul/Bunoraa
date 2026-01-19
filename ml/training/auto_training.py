@@ -446,15 +446,14 @@ class AutoTrainingManager:
     
     def _trigger_sync_training(self, decision: TrainingDecision):
         """Trigger synchronous training."""
-        from ..services.ml_service import MLService
-        
-        service = MLService()
+        from .tasks import train_recommendation_model
         
         # Mark as training
         self.redis.sadd('ml:training_in_progress', decision.model_name)
         
         try:
-            service.train_model(decision.model_name)
+            # Execute the training task synchronously
+            train_recommendation_model(decision.model_name, {})
         finally:
             # Remove from training set
             self.redis.srem('ml:training_in_progress', decision.model_name)

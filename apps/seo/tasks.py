@@ -1,7 +1,8 @@
 from celery import shared_task
 from django.utils import timezone
-from .models import Keyword
+from .models import Keyword, SitemapSubmission, SitemapError
 from .services import snapshot_keyword_serp
+import requests
 
 
 @shared_task(bind=True)
@@ -47,6 +48,78 @@ def warmup_service(self):
             results.append({'url': url, 'error': str(exc)})
     return results
 
+
+@shared_task(bind=True)
+def verify_sitemap_accessibility(self):
+    """Verify that all submitted sitemaps are accessible"""
+    sitemaps = SitemapSubmission.objects.all()
+    results = {'verified': 0, 'errors': 0}
+
+    for sitemap in sitemaps:
+        try:
+            response = requests.head(sitemap.url, timeout=5)
+            if response.status_code == 200:
+                results['verified'] += 1
+            else:
+                results['errors'] += 1
+                SitemapError.objects.create(
+                    submission=sitemap,
+                    severity='error',
+                    error_code=f'HTTP_{response.status_code}',
+                    message=f'Sitemap returned HTTP {response.status_code}'
+                )
+        except requests.RequestException as e:
+            results['errors'] += 1
+            SitemapError.objects.create(
+                submission=sitemap,
+                severity='critical',
+                error_code='CONNECTION_ERROR',
+                message=str(e)
+            )
+
+    return results
+
+
+@shared_task(bind=True)
+def submit_sitemaps_to_engines(self):
+    """Submit pending sitemaps to search engines"""
+    sitemaps = SitemapSubmission.objects.filter(status='pending')
+    results = {'submitted': 0, 'failed': 0}
+
+    for sitemap in sitemaps:
+        engines = sitemap.search_engines or ['google', 'bing']
+        
+        for engine in engines:
+            try:
+                if engine == 'google':
+                    url = f'https://www.google.com/ping?sitemap={sitemap.url}'
+                elif engine == 'bing':
+                    url = f'https://www.bing.com/ping?sitemap={sitemap.url}'
+                elif engine == 'yandex':
+                    url = f'https://www.yandex.ru/ping?sitemap={sitemap.url}'
+                else:
+                    continue
+
+                response = requests.get(url, timeout=5)
+                if response.status_code in [200, 204]:
+                    results['submitted'] += 1
+                else:
+                    results['failed'] += 1
+            except requests.RequestException as e:
+                results['failed'] += 1
+                SitemapError.objects.create(
+                    submission=sitemap,
+                    severity='warning',
+                    error_code=f'SUBMIT_FAILED_{engine.upper()}',
+                    message=f'Failed to submit to {engine}: {str(e)}'
+                )
+
+        # Update submission status
+        sitemap.status = 'submitted'
+        sitemap.submitted_at = timezone.now()
+        sitemap.save()
+
+    return results
 
 @shared_task(bind=True)
 def prerender_top_task(self, categories=10, products=20, include_static=True):

@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Sitemap Submissions" %} - {% trans "Admin" %}{% endblock %}
+
+{% block content %}
+<div class="sitemap-submissions">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">{% trans "Submitted Sitemaps" %}</h1>
+                <p class="text-gray-600 mt-2">{% trans "Track and manage your submitted sitemaps across search engines" %}</p>
+            </div>
+            <button class="btn btn-primary" onclick="document.getElementById('new-sitemap-modal').showModal()">
+                {% trans "Add New Sitemap" %}
+            </button>
+        </div>
+
+        <!-- Summary Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-sm font-medium text-gray-600 mb-2">{% trans "Total Sitemaps" %}</h3>
+                <p class="text-3xl font-bold text-gray-900" id="total-count">-</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-sm font-medium text-gray-600 mb-2">{% trans "Discovered Pages" %}</h3>
+                <p class="text-3xl font-bold text-green-600" id="discovered-pages">-</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-sm font-medium text-gray-600 mb-2">{% trans "Indexed Pages" %}</h3>
+                <p class="text-3xl font-bold text-blue-600" id="indexed-pages">-</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-sm font-medium text-gray-600 mb-2">{% trans "Errors" %}</h3>
+                <p class="text-3xl font-bold text-red-600" id="error-count">-</p>
+            </div>
+        </div>
+
+        <!-- Filter and Sort -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{% trans "Sitemap Type" %}</label>
+                    <select id="filter-type" class="input input-bordered w-full">
+                        <option value="">{% trans "All Types" %}</option>
+                        <option value="static">{% trans "Static Pages" %}</option>
+                        <option value="products">{% trans "Products" %}</option>
+                        <option value="categories">{% trans "Categories" %}</option>
+                        <option value="blog">{% trans "Blog Posts" %}</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{% trans "Status" %}</label>
+                    <select id="filter-status" class="input input-bordered w-full">
+                        <option value="">{% trans "All Statuses" %}</option>
+                        <option value="pending">{% trans "Pending" %}</option>
+                        <option value="submitted">{% trans "Submitted" %}</option>
+                        <option value="indexed">{% trans "Indexed" %}</option>
+                        <option value="error">{% trans "Error" %}</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{% trans "Search" %}</label>
+                    <input type="text" id="search-url" placeholder="{% trans 'Search by URL' %}" class="input input-bordered w-full">
+                </div>
+            </div>
+        </div>
+
+        <!-- Sitemaps Table -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">{% trans "Sitemap" %}</th>
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">{% trans "Type" %}</th>
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">{% trans "Status" %}</th>
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">{% trans "Submitted" %}</th>
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">{% trans "Last Read" %}</th>
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">{% trans "Discovered Pages" %}</th>
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">{% trans "Discovered Videos" %}</th>
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody id="sitemaps-tbody" class="divide-y">
+                    <!-- Populated by JavaScript -->
+                </tbody>
+            </table>
+            <div id="no-results" class="text-center py-8 text-gray-500">
+                {% trans "No sitemaps found" %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Sitemap Modal -->
+<dialog id="new-sitemap-modal" class="modal">
+    <form method="dialog" class="modal-box w-11/12 max-w-2xl">
+        <h3 class="font-bold text-lg mb-4">{% trans "Add New Sitemap" %}</h3>
+        
+        <div class="form-control mb-4">
+            <label class="label">
+                <span class="label-text">{% trans "Sitemap Type" %}</span>
+            </label>
+            <select id="modal-type" class="select select-bordered w-full">
+                <option value="static">{% trans "Static Pages" %}</option>
+                <option value="products">{% trans "Products" %}</option>
+                <option value="categories">{% trans "Categories" %}</option>
+                <option value="blog">{% trans "Blog Posts" %}</option>
+            </select>
+        </div>
+
+        <div class="form-control mb-4">
+            <label class="label">
+                <span class="label-text">{% trans "Sitemap URL" %}</span>
+            </label>
+            <input type="url" id="modal-url" placeholder="https://example.com/sitemap.xml" class="input input-bordered w-full" required>
+        </div>
+
+        <div class="form-control mb-4">
+            <label class="label">
+                <span class="label-text">{% trans "Search Engines (optional)" %}</span>
+            </label>
+            <div class="space-y-2">
+                <label class="flex items-center">
+                    <input type="checkbox" class="checkbox checkbox-sm" value="google" id="engine-google">
+                    <span class="label-text ml-2">Google</span>
+                </label>
+                <label class="flex items-center">
+                    <input type="checkbox" class="checkbox checkbox-sm" value="bing" id="engine-bing">
+                    <span class="label-text ml-2">Bing</span>
+                </label>
+                <label class="flex items-center">
+                    <input type="checkbox" class="checkbox checkbox-sm" value="yandex" id="engine-yandex">
+                    <span class="label-text ml-2">Yandex</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="modal-action">
+            <button type="submit" class="btn">{% trans "Close" %}</button>
+            <button type="button" class="btn btn-primary" onclick="saveSitemap()">{% trans "Add Sitemap" %}</button>
+        </div>
+    </form>
+</dialog>
+
+<!-- Status Badge Modal -->
+<dialog id="status-modal" class="modal">
+    <form method="dialog" class="modal-box w-11/12 max-w-md">
+        <h3 class="font-bold text-lg mb-4">{% trans "Update Sitemap Status" %}</h3>
+        
+        <input type="hidden" id="status-modal-id">
+
+        <div class="form-control mb-4">
+            <label class="label">
+                <span class="label-text">{% trans "Status" %}</span>
+            </label>
+            <select id="status-modal-status" class="select select-bordered w-full">
+                <option value="pending">{% trans "Pending" %}</option>
+                <option value="submitted">{% trans "Submitted" %}</option>
+                <option value="indexed">{% trans "Indexed" %}</option>
+                <option value="error">{% trans "Error" %}</option>
+            </select>
+        </div>
+
+        <div class="form-control mb-4">
+            <label class="label">
+                <span class="label-text">{% trans "Discovered Pages" %}</span>
+            </label>
+            <input type="number" id="status-modal-pages" min="0" class="input input-bordered w-full">
+        </div>
+
+        <div class="form-control mb-4">
+            <label class="label">
+                <span class="label-text">{% trans "Indexed Pages" %}</span>
+            </label>
+            <input type="number" id="status-modal-indexed" min="0" class="input input-bordered w-full">
+        </div>
+
+        <div class="modal-action">
+            <button type="submit" class="btn">{% trans "Close" %}</button>
+            <button type="button" class="btn btn-primary" onclick="updateSitemapStatus()">{% trans "Update" %}</button>
+        </div>
+    </form>
+</dialog>
+
+<style>
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    .status-pending { background-color: #fef3c7; color: #92400e; }
+    .status-submitted { background-color: #dbeafe; color: #1e40af; }
+    .status-indexed { background-color: #dcfce7; color: #166534; }
+    .status-error { background-color: #fee2e2; color: #991b1b; }
+</style>
+
+<script>
+    const API_BASE = '/api/v1/seo/sitemap-submissions/';
+
+    async function loadSitemaps() {
+        try {
+            const response = await fetch(API_BASE);
+            const data = await response.json();
+            renderSitemaps(data.results || data);
+            loadSummary();
+        } catch (error) {
+            console.error('Error loading sitemaps:', error);
+        }
+    }
+
+    function renderSitemaps(sitemaps) {
+        const tbody = document.getElementById('sitemaps-tbody');
+        const noResults = document.getElementById('no-results');
+
+        if (!sitemaps || sitemaps.length === 0) {
+            tbody.innerHTML = '';
+            noResults.style.display = 'block';
+            return;
+        }
+
+        noResults.style.display = 'none';
+        tbody.innerHTML = sitemaps.map(sitemap => `
+            <tr>
+                <td class="px-6 py-4 text-sm text-gray-900">
+                    <a href="${sitemap.url}" target="_blank" class="link link-primary">
+                        ${sitemap.url.replace(/^https?:\/\//, '')}
+                    </a>
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-600">
+                    ${sitemap.get_sitemap_type_display || sitemap.sitemap_type}
+                </td>
+                <td class="px-6 py-4 text-sm">
+                    <span class="status-badge status-${sitemap.status}">
+                        ${sitemap.get_status_display || sitemap.status}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-600">
+                    ${sitemap.submitted_at ? new Date(sitemap.submitted_at).toLocaleDateString() : '-'}
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-600">
+                    ${sitemap.last_read ? new Date(sitemap.last_read).toLocaleDateString() : '-'}
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-600">
+                    <span class="font-semibold">${sitemap.discovered_pages || 0}</span>
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-600">
+                    <span class="font-semibold">${sitemap.discovered_videos || 0}</span>
+                </td>
+                <td class="px-6 py-4 text-sm space-x-2">
+                    <button class="btn btn-sm btn-ghost" onclick="openStatusModal(${sitemap.id})">
+                        {% trans "Edit" %}
+                    </button>
+                    <button class="btn btn-sm btn-ghost btn-error" onclick="deleteSitemap(${sitemap.id})">
+                        {% trans "Delete" %}
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function loadSummary() {
+        try {
+            const response = await fetch(API_BASE + 'summary/');
+            const summary = await response.json();
+            
+            document.getElementById('total-count').textContent = summary.total;
+            document.getElementById('discovered-pages').textContent = summary.total_discovered_pages;
+            document.getElementById('indexed-pages').textContent = summary.total_indexed_pages;
+            document.getElementById('error-count').textContent = summary.by_status.error;
+        } catch (error) {
+            console.error('Error loading summary:', error);
+        }
+    }
+
+    function openStatusModal(id) {
+        document.getElementById('status-modal-id').value = id;
+        document.getElementById('status-modal').showModal();
+    }
+
+    async function saveSitemap() {
+        const type = document.getElementById('modal-type').value;
+        const url = document.getElementById('modal-url').value;
+        const engines = Array.from(document.querySelectorAll('input[id^="engine-"]:checked'))
+            .map(el => el.value);
+
+        try {
+            const response = await fetch(API_BASE, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                },
+                body: JSON.stringify({
+                    sitemap_type: type,
+                    url: url,
+                    search_engines: engines,
+                    status: 'pending'
+                })
+            });
+
+            if (response.ok) {
+                loadSitemaps();
+                document.getElementById('new-sitemap-modal').close();
+            }
+        } catch (error) {
+            console.error('Error saving sitemap:', error);
+        }
+    }
+
+    async function updateSitemapStatus() {
+        const id = document.getElementById('status-modal-id').value;
+        const status = document.getElementById('status-modal-status').value;
+        const pages = document.getElementById('status-modal-pages').value;
+        const indexed = document.getElementById('status-modal-indexed').value;
+
+        try {
+            const response = await fetch(`${API_BASE}${id}/update_status/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                },
+                body: JSON.stringify({
+                    status: status,
+                    discovered_pages: parseInt(pages) || 0,
+                    indexed_pages: parseInt(indexed) || 0
+                })
+            });
+
+            if (response.ok) {
+                loadSitemaps();
+                document.getElementById('status-modal').close();
+            }
+        } catch (error) {
+            console.error('Error updating status:', error);
+        }
+    }
+
+    async function deleteSitemap(id) {
+        if (!confirm('{% trans "Are you sure?" %}')) return;
+
+        try {
+            const response = await fetch(`${API_BASE}${id}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                }
+            });
+
+            if (response.ok) {
+                loadSitemaps();
+            }
+        } catch (error) {
+            console.error('Error deleting sitemap:', error);
+        }
+    }
+
+    // Load sitemaps on page load
+    document.addEventListener('DOMContentLoaded', loadSitemaps);
+
+    // Filter sitemaps
+    ['filter-type', 'filter-status', 'search-url'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', loadSitemaps);
+        document.getElementById(id)?.addEventListener('input', loadSitemaps);
+    });
+</script>
+{% endblock %}

@@ -7,7 +7,7 @@ from django.views.generic.base import RedirectView
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.sitemaps.views import sitemap
-from .sitemaps import StaticViewSitemap, ProductSitemap, CategorySitemap
+from .sitemaps import StaticViewSitemap, ProductSitemap, CategorySitemap, BlogSitemap
 from .views import HomeView, health_check
 from .views_health import health_check_detailed, readiness_check, liveness_check
 
@@ -15,6 +15,7 @@ sitemaps = {
     'static': StaticViewSitemap,
     'products': ProductSitemap,
     'categories': CategorySitemap,
+    'blog': BlogSitemap,
 }
 
 urlpatterns = [
@@ -39,6 +40,9 @@ urlpatterns = [
     path('health/detailed/', health_check_detailed, name='health_check_detailed'),
     path('health/ready/', readiness_check, name='readiness_check'),
     path('health/live/', liveness_check, name='liveness_check'),
+    
+    # SEO (Robots.txt) - Served from static directory by web server
+    # No need for Django route - nginx/web server serves static/robots.txt directly
     
     # Sitemap
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),

@@ -3,6 +3,7 @@ Sitemap configuration
 """
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
+from django.contrib.sites.shortcuts import get_current_site
 
 
 class StaticViewSitemap(Sitemap):
@@ -11,7 +12,7 @@ class StaticViewSitemap(Sitemap):
     changefreq = 'weekly'
     
     def items(self):
-        return ['home']
+        return ['home', 'catalog:catalog_list']
     
     def location(self, item):
         return reverse(item)
@@ -21,6 +22,7 @@ class ProductSitemap(Sitemap):
     """Sitemap for products, including images for image sitemap support."""
     changefreq = 'daily'
     priority = 0.8
+    limit = 50000  # Google sitemap limit
     
     def items(self):
         from apps.catalog.models import Product
@@ -30,9 +32,10 @@ class ProductSitemap(Sitemap):
         return obj.updated_at
     
     def location(self, obj):
-        return reverse('products:product_detail', kwargs={'slug': obj.slug})
+        return reverse('catalog:product_detail', kwargs={'slug': obj.slug})
 
     def images(self, obj):
+        """Include images in the sitemap for better indexing"""
         imgs = []
         for img in obj.images.all()[:5]:
             if img.image:
@@ -57,4 +60,21 @@ class CategorySitemap(Sitemap):
         return obj.updated_at
     
     def location(self, obj):
-        return reverse('categories:category_detail', kwargs={'slug': obj.slug})
+        return reverse('catalog:category_detail', kwargs={'slug': obj.slug})
+
+
+class BlogSitemap(Sitemap):
+    """Sitemap for blog posts."""
+    changefreq = 'weekly'
+    priority = 0.6
+    
+    def items(self):
+        from apps.pages.models import Page
+        return Page.objects.filter(status='published', is_deleted=False)
+    
+    def lastmod(self, obj):
+        return obj.updated_at
+    
+    def location(self, obj):
+        return reverse('pages:page_detail', kwargs={'slug': obj.slug})
+

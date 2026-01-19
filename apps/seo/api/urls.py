@@ -10,6 +10,8 @@ from .views import (
     SitemapViewSet,
     SearchRankingViewSet,
     KeywordViewSet,
+    SitemapSubmissionViewSet,
+    SitemapErrorViewSet,
 )
 
 router = DefaultRouter()
@@ -18,7 +20,5 @@ router.register(r'redirects', RedirectViewSet, basename='seo-redirects')
 router.register(r'sitemap', SitemapViewSet, basename='seo-sitemap')
 router.register(r'rankings', SearchRankingViewSet, basename='seo-rankings')
 router.register(r'keywords', KeywordViewSet, basename='seo-keywords')
-
-urlpatterns = [
-    path('', include(router.urls)),
-]
+router.register(r'sitemap-submissions', SitemapSubmissionViewSet, basename='sitemap-submissions')
+router.register(r'sitemap-errors', SitemapErrorViewSet, basename='sitemap-errors')

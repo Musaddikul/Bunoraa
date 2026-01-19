@@ -2,7 +2,7 @@
 SEO API serializers.
 """
 from rest_framework import serializers
-from ..models import SEOMetadata, Redirect, SitemapEntry, SearchRanking, Keyword
+from ..models import SEOMetadata, Redirect, SitemapEntry, SearchRanking, Keyword, SitemapSubmission, SitemapError
 
 
 class SEOMetadataSerializer(serializers.ModelSerializer):
@@ -98,4 +98,52 @@ class SearchRankingSerializer(serializers.ModelSerializer):
             'search_engine',
             'recorded_at',
         ]
+
+
+class SitemapSubmissionSerializer(serializers.ModelSerializer):
+    """Sitemap submission serializer."""
+    
+    class Meta:
+        model = SitemapSubmission
+        fields = [
+            'id',
+            'sitemap_type',
+            'url',
+            'status',
+            'submitted_at',
+            'last_read',
+            'discovered_pages',
+            'discovered_videos',
+            'indexed_pages',
+            'errors',
+            'search_engines',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['created_at', 'updated_at']
+
+
+class SitemapErrorSerializer(serializers.ModelSerializer):
+    """Sitemap error serializer."""
+    submission_type = serializers.CharField(
+        source='submission.sitemap_type',
+        read_only=True
+    )
+    
+    class Meta:
+        model = SitemapError
+        fields = [
+            'id',
+            'submission',
+            'submission_type',
+            'severity',
+            'error_code',
+            'message',
+            'affected_urls',
+            'resolved',
+            'resolved_at',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['created_at', 'updated_at']
         read_only_fields = ['recorded_at']

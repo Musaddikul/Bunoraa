@@ -1,11 +1,20 @@
 User-agent: *
-Disallow:
-Disallow: /account/
-Disallow: /cart/
-Disallow: /checkout/
-Disallow: /search/
-Disallow: /admin/
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /search
+Disallow: /static/
+Disallow: /media/uploads/
 
-# Sitemap location (served by Django at /sitemap.xml)
+# Google-specific rules
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+# Bing-specific rules
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 2
+
+# Sitemap locations
 Sitemap: https://bunoraa.com/sitemap.xml
-Host: bunoraa.com
