@@ -270,8 +270,8 @@ class CategoryService:
     
     @classmethod
     def get_breadcrumbs(cls, category: Category) -> List[Dict]:
-        """Get breadcrumb trail for a category."""
-        ancestors = category.get_ancestors(include_self=True)
+        """Get breadcrumb trail for a category (excluding the category itself)."""
+        ancestors = category.get_ancestors(include_self=False)
         return [
             {
                 'id': str(c.id),

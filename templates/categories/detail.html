@@ -12,16 +12,16 @@
 <div id="category-page" class="container mx-auto px-4 py-8" data-category-slug="{{ category.slug }}" data-category-id="{{ category.id }}">
     <!-- Breadcrumb -->
     <nav class="mb-8">
-        <ol class="flex items-center space-x-2 text-sm text-gray-500 dark:text-stone-400">
-            <li><a href="{% url 'pages:home' %}" class="hover:text-primary-600 dark:hover:text-amber-400">Home</a></li>
+        <ol class="flex items-center space-x-2 text-sm text-gray-500 dark:text-stone-400 transition-colors duration-500">
+            <li><a href="{% url 'pages:home' %}" class="hover:text-primary-600 dark:hover:text-amber-400 transition-colors duration-500">Home</a></li>
             <li><span class="mx-2">/</span></li>
-            <li><a href="{% url 'catalog:product-list' %}" class="hover:text-primary-600 dark:hover:text-amber-400">Products</a></li>
+            <li><a href="{% url 'catalog:product-list' %}" class="hover:text-primary-600 dark:hover:text-amber-400 transition-colors duration-500">Products</a></li>
             {% for ancestor in category.get_ancestors %}
             <li><span class="mx-2">/</span></li>
-            <li><a href="{% url 'catalog:category-detail' ancestor.slug %}" class="hover:text-primary-600">{{ ancestor.name }}</a></li>
+            <li><a href="{% url 'catalog:category-detail' ancestor.slug %}" class="hover:text-primary-600 dark:hover:text-amber-400 transition-colors duration-500">{{ ancestor.name }}</a></li>
             {% endfor %}
             <li><span class="mx-2">/</span></li>
-            <li class="text-gray-900 dark:text-stone-100">{{ category.name }}</li>
+            <li class="text-gray-900 dark:text-stone-100 transition-colors duration-500">{{ category.name }}</li>
         </ol>
     </nav>
     
