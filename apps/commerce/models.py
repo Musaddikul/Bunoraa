@@ -476,28 +476,167 @@ class WishlistItem(models.Model):
 
 
 class WishlistShare(models.Model):
-    """Sharing configuration for wishlists."""
-    
+    """
+    Share wishlists with friends and family.
+    Allow comments and suggestions on shared wishlists.
+    """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    wishlist = models.ForeignKey(Wishlist, on_delete=models.CASCADE, related_name='shares')
-    share_token = models.CharField(max_length=64, unique=True)
-    is_active = models.BooleanField(default=True)
     
-    allow_view = models.BooleanField(default=True)
-    allow_purchase = models.BooleanField(default=False)
+    wishlist = models.OneToOneField(
+        'commerce.Wishlist',
+        on_delete=models.CASCADE,
+        related_name='share'
+    )
+    
+    # Share token for public/private access
+    share_token = models.CharField(
+        max_length=50,
+        unique=True,
+        editable=False
+    )
+    
+    # Settings
+    is_public = models.BooleanField(
+        default=False,
+        help_text='Anyone with link can view'
+    )
+    allow_comments = models.BooleanField(default=True)
+    allow_suggestions = models.BooleanField(
+        default=True,
+        help_text='Friends can suggest items to add'
+    )
+    
+    # Tracking
+    view_count = models.PositiveIntegerField(default=0)
+    shared_with = models.ManyToManyField(
+        'accounts.User',
+        blank=True,
+        related_name='shared_wishlists'
+    )
     
     created_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField(null=True, blank=True)
-    view_count = models.PositiveIntegerField(default=0)
-    last_viewed_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        ordering = ['-created_at']
+        verbose_name = 'wishlist share'
+        verbose_name_plural = 'wishlist shares'
     
     def __str__(self):
-        return f"Share for {self.wishlist}"
+        return f"Share of {self.wishlist.name}"
     
     def save(self, *args, **kwargs):
+        if not self.share_token:
+            import secrets
+            self.share_token = secrets.token_urlsafe(32)
+        super().save(*args, **kwargs)
+    
+    def get_share_url(self):
+        from django.urls import reverse
+        return reverse('wishlist:shared_view', kwargs={'token': self.share_token})
+
+
+class WishlistComment(models.Model):
+    """
+    Comments on shared wishlists.
+    Friends can discuss items and make suggestions.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    wishlist_share = models.ForeignKey(
+        WishlistShare,
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
+    
+    author = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.CASCADE,
+        related_name='wishlist_comments'
+    )
+    
+    # Comment content
+    content = models.TextField()
+    
+    # Reply to another comment (threaded)
+    reply_to = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='replies'
+    )
+    
+    # Moderation
+    is_approved = models.BooleanField(default=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'wishlist comment'
+        verbose_name_plural = 'wishlist comments'
+        ordering = ['created_at']
+    
+    def __str__(self):
+        return f"Comment by {self.author.email} on {self.wishlist_share}"
+
+
+class WishlistSuggestion(models.Model):
+    """
+    Suggested items to add to wishlist from friends.
+    Owner can approve/reject suggestions.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    wishlist_share = models.ForeignKey(
+        WishlistShare,
+        on_delete=models.CASCADE,
+        related_name='suggestions'
+    )
+    
+    suggested_by = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.CASCADE,
+        related_name='wishlist_suggestions'
+    )
+    
+    # Suggested product
+    product = models.ForeignKey(
+        'catalog.Product',
+        on_delete=models.CASCADE,
+        related_name='wishlist_suggestions'
+    )
+    
+    # Reason for suggestion
+    reason = models.TextField(blank=True)
+    
+    # Status
+    STATUS_PENDING = 'pending'
+    STATUS_ADDED = 'added'
+    STATUS_REJECTED = 'rejected'
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'Pending'),
+        (STATUS_ADDED, 'Added to Wishlist'),
+        (STATUS_REJECTED, 'Rejected'),
+    ]
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_PENDING
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        verbose_name = 'wishlist suggestion'
+        verbose_name_plural = 'wishlist suggestions'
+        ordering = ['-created_at']
+        unique_together = ['wishlist_share', 'suggested_by', 'product']
+    
+    def __str__(self):
+        return f"{self.suggested_by.email} suggested {self.product.name}"
+
         if not self.share_token:
             import secrets
             self.share_token = secrets.token_urlsafe(32)

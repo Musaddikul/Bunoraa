@@ -1,0 +1,389 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Customer Testimonials & Reviews - Bunoraa{% endblock %}
+
+{% block content %}
+<div class="testimonials-container">
+    <!-- Header Section -->
+    <div class="testimonials-hero">
+        <div class="container mx-auto px-4 py-16">
+            <h1 class="text-4xl font-bold text-center mb-4">What Our Customers Say</h1>
+            <p class="text-xl text-gray-600 text-center mb-8">
+                Discover why thousands of customers love our hand-embroidered products
+            </p>
+            
+            <!-- Stats Section -->
+            <div class="grid grid-cols-3 gap-8 max-w-2xl mx-auto mb-12">
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-purple-600" id="total-reviews">0</div>
+                    <p class="text-gray-600">Total Reviews</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-yellow-500" id="avg-rating">0</div>
+                    <div class="stars mb-1">
+                        <span class="text-yellow-400">★★★★★</span>
+                    </div>
+                    <p class="text-gray-600">Average Rating</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-green-600" id="verified-count">0</div>
+                    <p class="text-gray-600">Verified Purchases</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="bg-gray-100 py-8">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-wrap gap-4 items-center justify-center">
+                <!-- Rating Filter -->
+                <div class="flex gap-2">
+                    <button class="filter-btn active" data-filter="all">All Ratings</button>
+                    <button class="filter-btn" data-filter="5">⭐⭐⭐⭐⭐ 5 Stars</button>
+                    <button class="filter-btn" data-filter="4">⭐⭐⭐⭐ 4 Stars</button>
+                    <button class="filter-btn" data-filter="3">⭐⭐⭐ 3 Stars</button>
+                </div>
+                
+                <!-- Verified Only -->
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" id="verified-only" class="w-4 h-4">
+                    <span>Verified Purchases Only</span>
+                </label>
+                
+                <!-- Sort -->
+                <select id="sort-by" class="px-4 py-2 border rounded-lg">
+                    <option value="newest">Newest First</option>
+                    <option value="helpful">Most Helpful</option>
+                    <option value="highest">Highest Rated</option>
+                </select>
+                
+                <!-- Search -->
+                <input type="text" id="search-testimonials" placeholder="Search reviews..." 
+                       class="px-4 py-2 border rounded-lg flex-1 max-w-xs">
+            </div>
+        </div>
+    </div>
+
+    <!-- Featured Section -->
+    <div class="bg-gradient-to-r from-purple-50 to-pink-50 py-16">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold mb-8">⭐ Featured Testimonials</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="featured-reviews">
+                <!-- Loaded via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Reviews Section -->
+    <div class="container mx-auto px-4 py-16">
+        <h2 class="text-3xl font-bold mb-8">All Customer Reviews</h2>
+        
+        <!-- Rating Distribution -->
+        <div class="mb-12 bg-white p-8 rounded-lg border">
+            <h3 class="text-xl font-semibold mb-6">Rating Distribution</h3>
+            <div class="space-y-4" id="rating-distribution">
+                <!-- Loaded via JS -->
+            </div>
+        </div>
+
+        <!-- Reviews List -->
+        <div class="space-y-6" id="reviews-container">
+            <!-- Loaded via JS -->
+        </div>
+        
+        <!-- Pagination -->
+        <div class="flex justify-center mt-12">
+            <div id="pagination" class="flex gap-2">
+                <!-- Loaded via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Write Review CTA -->
+    <div class="bg-purple-600 text-white py-12">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-3xl font-bold mb-4">Share Your Experience</h2>
+            <p class="text-lg mb-6">Have you purchased from us? We'd love to hear about your experience!</p>
+            <a href="{% url 'products:list' %}" class="btn btn-white inline-block">
+                Browse & Review Products →
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .filter-btn {
+        @apply px-4 py-2 rounded-lg border-2 border-gray-300 bg-white hover:border-purple-600 transition;
+    }
+    
+    .filter-btn.active {
+        @apply border-purple-600 bg-purple-600 text-white;
+    }
+    
+    .review-card {
+        @apply bg-white rounded-lg border p-6 hover:shadow-lg transition;
+    }
+    
+    .review-header {
+        @apply flex items-start justify-between mb-4;
+    }
+    
+    .reviewer-info {
+        @apply flex items-center gap-3;
+    }
+    
+    .reviewer-avatar {
+        @apply w-12 h-12 rounded-full bg-gray-300 object-cover;
+    }
+    
+    .verified-badge {
+        @apply inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold;
+    }
+    
+    .review-images {
+        @apply flex gap-2 mt-4 overflow-x-auto;
+    }
+    
+    .review-image {
+        @apply w-24 h-24 rounded-lg object-cover cursor-pointer hover:opacity-80;
+    }
+    
+    .helpful-section {
+        @apply flex gap-4 mt-6 pt-4 border-t;
+    }
+    
+    .helpful-btn {
+        @apply text-sm text-gray-600 hover:text-gray-900 cursor-pointer;
+    }
+    
+    .rating-bar {
+        @apply flex items-center gap-3;
+    }
+    
+    .rating-label {
+        @apply w-20 font-semibold;
+    }
+    
+    .rating-progress {
+        @apply flex-1 bg-gray-200 rounded-full h-2 overflow-hidden;
+    }
+    
+    .rating-fill {
+        @apply bg-yellow-400 h-full;
+    }
+</style>
+
+<script>
+const API_BASE = '/api/v1';
+
+class TestimonialManager {
+    constructor() {
+        this.currentPage = 1;
+        this.currentFilter = 'all';
+        this.verifiedOnly = false;
+        this.sortBy = 'newest';
+        this.searchQuery = '';
+        this.pageSize = 12;
+        
+        this.init();
+    }
+    
+    async init() {
+        this.setupEventListeners();
+        await this.loadTestimonials();
+        await this.loadFeatured();
+        await this.loadStats();
+    }
+    
+    setupEventListeners() {
+        // Rating filters
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                this.currentFilter = e.target.dataset.filter;
+                this.currentPage = 1;
+                this.loadTestimonials();
+            });
+        });
+        
+        // Verified only
+        document.getElementById('verified-only').addEventListener('change', (e) => {
+            this.verifiedOnly = e.target.checked;
+            this.currentPage = 1;
+            this.loadTestimonials();
+        });
+        
+        // Sort
+        document.getElementById('sort-by').addEventListener('change', (e) => {
+            this.sortBy = e.target.value;
+            this.currentPage = 1;
+            this.loadTestimonials();
+        });
+        
+        // Search
+        const searchInput = document.getElementById('search-testimonials');
+        let searchTimeout;
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                this.searchQuery = e.target.value;
+                this.currentPage = 1;
+                this.loadTestimonials();
+            }, 300);
+        });
+    }
+    
+    async loadStats() {
+        try {
+            const response = await fetch(`${API_BASE}/reviews/testimonials/?limit=1`);
+            const data = await response.json();
+            
+            if (data.stats) {
+                document.getElementById('total-reviews').textContent = data.stats.total_reviews || 0;
+                document.getElementById('avg-rating').textContent = 
+                    (data.stats.average_rating || 0).toFixed(1);
+                
+                // Render rating distribution
+                const dist = data.stats.rating_distribution || {};
+                const distContainer = document.getElementById('rating-distribution');
+                distContainer.innerHTML = '';
+                
+                for (let r = 5; r >= 1; r--) {
+                    const count = dist[r] || 0;
+                    const percentage = (data.stats.total_reviews > 0) 
+                        ? (count / data.stats.total_reviews) * 100 
+                        : 0;
+                    
+                    distContainer.innerHTML += `
+                        <div class="rating-bar">
+                            <span class="rating-label">${r} ⭐</span>
+                            <div class="rating-progress">
+                                <div class="rating-fill" style="width: ${percentage}%"></div>
+                            </div>
+                            <span class="text-gray-600 font-semibold">${count}</span>
+                        </div>
+                    `;
+                }
+            }
+        } catch (error) {
+            console.error('Error loading stats:', error);
+        }
+    }
+    
+    async loadTestimonials() {
+        try {
+            let url = `${API_BASE}/reviews/testimonials/?page=${this.currentPage}&limit=${this.pageSize}`;
+            
+            if (this.currentFilter !== 'all') {
+                url += `&rating=${this.currentFilter}`;
+            }
+            if (this.verifiedOnly) {
+                url += `&verified_only=true`;
+            }
+            if (this.searchQuery) {
+                url += `&search=${encodeURIComponent(this.searchQuery)}`;
+            }
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            this.renderReviews(data.testimonials || []);
+            this.renderPagination(data.pagination || {});
+        } catch (error) {
+            console.error('Error loading testimonials:', error);
+        }
+    }
+    
+    async loadFeatured() {
+        try {
+            const response = await fetch(`${API_BASE}/reviews/testimonials/featured/`);
+            const data = await response.json();
+            
+            const container = document.getElementById('featured-reviews');
+            container.innerHTML = '';
+            
+            data.featured_testimonials?.forEach(review => {
+                container.innerHTML += this.renderReviewCard(review, true);
+            });
+        } catch (error) {
+            console.error('Error loading featured testimonials:', error);
+        }
+    }
+    
+    renderReviews(reviews) {
+        const container = document.getElementById('reviews-container');
+        container.innerHTML = '';
+        
+        if (reviews.length === 0) {
+            container.innerHTML = '<p class="text-gray-600 text-center py-8">No reviews found.</p>';
+            return;
+        }
+        
+        reviews.forEach(review => {
+            container.innerHTML += this.renderReviewCard(review, false);
+        });
+    }
+    
+    renderReviewCard(review, isFeatured) {
+        const rating = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
+        const verifiedBadge = review.is_verified_purchase 
+            ? '<span class="verified-badge">✓ Verified Purchase</span>'
+            : '';
+        
+        const images = review.images?.map(img => 
+            `<img src="${img.image}" alt="Review" class="review-image">`
+        ).join('') || '';
+        
+        const cardClass = isFeatured ? 'bg-white shadow-lg border-2 border-yellow-200' : 'review-card';
+        
+        return `
+            <div class="${cardClass}">
+                <div class="review-header">
+                    <div class="reviewer-info">
+                        <img src="${review.user_avatar || '/static/images/default-avatar.png'}" 
+                             alt="${review.user_name}" class="reviewer-avatar">
+                        <div>
+                            <p class="font-semibold">${review.user_name || 'Anonymous'}</p>
+                            <p class="text-sm text-gray-600">${new Date(review.created_at).toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-yellow-400">${rating}</div>
+                    </div>
+                </div>
+                
+                ${verifiedBadge}
+                
+                ${review.title ? `<h4 class="font-semibold mt-2">${review.title}</h4>` : ''}
+                <p class="text-gray-700 mt-3">${review.content}</p>
+                
+                ${images ? `<div class="review-images">${images}</div>` : ''}
+                
+                <div class="helpful-section">
+                    <button class="helpful-btn" onclick="this.textContent = '👍 Helpful (' + (parseInt(this.textContent) + 1) + ')'">
+                        👍 Helpful (${review.helpful_count})
+                    </button>
+                    <button class="helpful-btn" onclick="this.textContent = '👎 Not Helpful (' + (parseInt(this.textContent) + 1) + ')'">
+                        👎 Not Helpful (${review.not_helpful_count})
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    renderPagination(pagination) {
+        const container = document.getElementById('pagination');
+        container.innerHTML = '';
+        // Add pagination controls as needed
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    new TestimonialManager();
+});
+</script>
+{% endblock %}

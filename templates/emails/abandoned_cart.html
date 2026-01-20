@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Your Order</title>
+    <style>
+        body { font-family: Arial, sans-serif; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: #f9f9f9; padding: 30px; border: 1px solid #ddd; border-radius: 0 0 8px 8px; }
+        .items-table { width: 100%; margin: 20px 0; border-collapse: collapse; }
+        .items-table td { padding: 10px; border-bottom: 1px solid #ddd; }
+        .item-name { font-weight: bold; }
+        .item-price { text-align: right; }
+        .totals { margin: 20px 0; }
+        .total-row { display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; }
+        .total-final { display: flex; justify-content: space-between; padding: 15px 0; font-size: 18px; font-weight: bold; border-top: 2px solid #ddd; }
+        .cta-button { display: inline-block; background: #667eea; color: white; padding: 15px 40px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
+        .discount-badge { background: #28a745; color: white; padding: 10px 15px; border-radius: 5px; margin: 15px 0; font-weight: bold; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
+        .footer a { color: #667eea; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>You Left Something Behind! 🧵</h1>
+            <p>Your beautiful embroidered items are waiting</p>
+        </div>
+
+        <div class="content">
+            <p>Hi {{ user.first_name|default:user.email }},</p>
+            
+            <p>We noticed you left {{ item_count }} gorgeous embroidered item{{ item_count|pluralize }} in your cart. We'd hate for you to miss out!</p>
+            
+            <h3>Your Cart Items:</h3>
+            <table class="items-table">
+                {% for item in items %}
+                <tr>
+                    <td class="item-name">{{ item.product.name }}</td>
+                    <td class="item-price">{{ item.currency }} {{ item.price }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+
+            <div class="totals">
+                <div class="total-row">
+                    <span>Subtotal:</span>
+                    <span>{{ cart.currency }} {{ subtotal }}</span>
+                </div>
+                {% if discount %}
+                <div class="total-row">
+                    <span>Discount:</span>
+                    <span>-{{ cart.currency }} {{ discount }}</span>
+                </div>
+                {% endif %}
+                <div class="total-final">
+                    <span>Total:</span>
+                    <span>{{ cart.currency }} {{ total }}</span>
+                </div>
+            </div>
+
+            <div class="discount-badge">
+                🎉 Use code "{{ discount_code }}" for {{ discount_percentage }}% off!
+            </div>
+
+            <center>
+                <a href="{{ cart_url }}" class="cta-button">Complete Your Purchase →</a>
+            </center>
+
+            <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                We offer free shipping on orders over {{ settings.FREE_SHIPPING_THRESHOLD|default:"$50" }}, and your embroidered items are carefully crafted with premium materials.
+            </p>
+
+            <p>
+                Have questions about customization or materials? <a href="{{ settings.SITE_URL }}/contact/">Contact us</a> - we're here to help!
+            </p>
+
+            <p>
+                Best regards,<br>
+                <strong>The Bunoraa Team</strong>
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>
+                This is an automated message. Don't want to receive these emails?
+                <a href="{{ settings.SITE_URL }}/account/notifications/">Manage preferences</a>
+            </p>
+            <p>&copy; {% now "Y" %} Bunoraa. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

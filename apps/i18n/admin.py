@@ -36,7 +36,7 @@ class LanguageAdmin(admin.ModelAdmin):
             'fields': ('name', 'native_name', 'code', 'locale_code')
         }),
         (_('Display'), {
-            'fields': ('flag_emoji', 'font_family', 'is_rtl')
+            'fields': ('flag_code', 'font_family', 'is_rtl')
         }),
         (_('Status'), {
             'fields': ('is_active', 'is_default', 'sort_order')
@@ -48,7 +48,7 @@ class LanguageAdmin(admin.ModelAdmin):
     )
     
     def flag_display(self, obj):
-        return format_html('<span style="font-size: 1.5em;">{}</span>', obj.flag_emoji or '')
+        return format_html('<span style="font-size: 1.5em;">{}</span>', obj.flag_code or '')
     flag_display.short_description = _('Flag')
     
     def translation_progress_display(self, obj):
@@ -80,11 +80,11 @@ class CurrencyAdmin(admin.ModelAdmin):
     
     fieldsets = (
         (None, {
-            'fields': ('code', 'name', 'native_name')
+            'fields': ('code', 'name', 'symbol', 'native_symbol')
         }),
         (_('Display'), {
-            'fields': ('symbol', 'native_symbol', 'decimal_places', 
-                      'symbol_position', 'thousands_separator', 'decimal_separator')
+            'fields': ('decimal_places', 'symbol_position', 
+                      'thousand_separator', 'decimal_separator')
         }),
         (_('Number Formatting'), {
             'fields': ('number_system',),
@@ -231,46 +231,40 @@ class DivisionInline(admin.TabularInline):
 @admin.register(Country)
 class CountryAdmin(admin.ModelAdmin):
     list_display = (
-        'flag_display', 'name', 'code',
+        'name', 'code',
         'phone_code_display', 'default_currency', 
         'is_shipping_available', 'is_active'
     )
     list_filter = ('is_active', 'is_shipping_available', 'continent')
-    search_fields = ('name', 'native_name', 'code', 'code3')
+    search_fields = ('name', 'native_name', 'code', 'code_alpha3')
     list_editable = ('is_active', 'is_shipping_available')
     ordering = ('name',)
     inlines = [DivisionInline]
     
     fieldsets = (
         (None, {
-            'fields': ('name', 'native_name', 'code', 'code3', 'numeric_code')
-        }),
-        (_('Display'), {
-            'fields': ('flag_emoji',)
+            'fields': ('name', 'native_name', 'code', 'code_alpha3', 'code_numeric')
         }),
         (_('Geographic'), {
-            'fields': ('continent', 'region', 'latitude', 'longitude')
+            'fields': ('continent', 'region',)
         }),
         (_('Localization'), {
             'fields': ('phone_code', 'default_currency', 'default_language', 'default_timezone')
         }),
         (_('Address Format'), {
-            'fields': ('address_format', 'postal_code_format', 'postal_code_regex'),
+            'fields': ('address_format', 'postal_code_format',),
             'classes': ('collapse',)
         }),
         (_('Tax'), {
-            'fields': ('vat_name', 'vat_rate', 'vat_included_in_prices'),
+            'fields': ('default_tax_rate', 'vat_number_format'),
             'classes': ('collapse',)
         }),
         (_('Status'), {
-            'fields': ('is_active', 'is_shipping_available')
+            'fields': ('is_active', 'is_shipping_available', 'is_billing_allowed')
         }),
     )
     
-    def flag_display(self, obj):
-        return format_html('<span style="font-size: 1.5em;">{}</span>', obj.flag_emoji or '')
-    flag_display.short_description = _('Flag')
-    
+
     def phone_code_display(self, obj):
         return f"+{obj.phone_code}" if obj.phone_code else '-'
     phone_code_display.short_description = _('Phone')
@@ -420,7 +414,7 @@ class ContentTranslationAdmin(admin.ModelAdmin):
         'language', 'is_approved', 'is_machine_translated', 'updated_at'
     )
     list_filter = ('content_type', 'language', 'is_approved', 'is_machine_translated')
-    search_fields = ('content_id', 'source_text', 'translated_text')
+    search_fields = ('content_id', 'original_text', 'translated_text')
     list_editable = ('is_approved',)
     ordering = ('-updated_at',)
     date_hierarchy = 'updated_at'
@@ -430,7 +424,7 @@ class ContentTranslationAdmin(admin.ModelAdmin):
             'fields': ('content_type', 'content_id', 'field_name', 'language')
         }),
         (_('Content'), {
-            'fields': ('source_text', 'translated_text')
+            'fields': ('original_text', 'translated_text')
         }),
         (_('Status'), {
             'fields': ('is_approved', 'is_machine_translated', 'translated_by')
@@ -485,15 +479,14 @@ class I18nSettingsAdmin(admin.ModelAdmin):
     
     fieldsets = (
         (_('Language Settings'), {
-            'fields': ('default_language', 'fallback_language', 'enable_language_detection')
+            'fields': ('default_language', 'fallback_language', 'auto_detect_language', 'show_language_selector')
         }),
         (_('Currency Settings'), {
-            'fields': ('default_currency', 'fallback_currency', 'show_currency_switcher', 
-                      'display_prices_in_both_currencies', 'primary_display_currency',
-                      'rounding_method')
+            'fields': ('default_currency', 'auto_detect_currency', 'show_currency_selector',
+                      'show_original_price', 'rounding_method')
         }),
         (_('Timezone Settings'), {
-            'fields': ('default_timezone', 'enable_timezone_detection')
+            'fields': ('default_timezone', 'auto_detect_timezone', 'show_timezone_selector')
         }),
         (_('Exchange Rates'), {
             'fields': ('auto_update_exchange_rates', 'exchange_rate_update_frequency',
@@ -501,12 +494,12 @@ class I18nSettingsAdmin(admin.ModelAdmin):
                       'last_exchange_rate_update')
         }),
         (_('Machine Translation'), {
-            'fields': ('machine_translation_provider', 'machine_translation_api_key',
-                      'auto_translate_content'),
+            'fields': ('enable_machine_translation', 'translation_provider', 'translation_api_key',
+                      'auto_translate_new_content', 'require_human_review'),
             'classes': ('collapse',)
         }),
         (_('Geo Detection'), {
-            'fields': ('enable_geo_ip_detection', 'geo_ip_provider', 'geo_ip_api_key'),
+            'fields': ('enable_geo_detection', 'geo_ip_provider', 'geo_ip_api_key'),
             'classes': ('collapse',)
         }),
     )

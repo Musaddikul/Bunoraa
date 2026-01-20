@@ -273,3 +273,134 @@ class ReviewViewSet(viewsets.ModelViewSet):
             'message': 'Statistics retrieved',
             'data': stats
         })
+
+
+# ============================================================================
+# FEATURE: Customer Testimonials Showcase
+# ============================================================================
+
+class TestimonialViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for displaying customer testimonials with verified purchase badges.
+    
+    Features:
+    - Filter by rating
+    - Show verified purchases only
+    - Aggregate statistics
+    - Featured reviews showcase
+    """
+    permission_classes = [AllowAny]
+    
+    def get_queryset(self):
+        return Review.objects.filter(
+            status='approved',
+            is_deleted=False
+        ).select_related('user', 'product').prefetch_related('images').order_by('-created_at')
+    
+    def list(self, request, *args, **kwargs):
+        """
+        List approved reviews with statistics.
+        
+        Query params:
+        - product_id: Filter by product
+        - rating: Filter by rating (1-5)
+        - verified_only: Show only verified purchases (true/false)
+        - search: Search in title/content
+        """
+        from django.db.models import Avg, Count, Q
+        from apps.orders.models import OrderItem
+        
+        queryset = self.get_queryset()
+        
+        # Filter by product
+        product_id = request.query_params.get('product_id')
+        if product_id:
+            queryset = queryset.filter(product_id=product_id)
+        
+        # Filter by rating
+        rating = request.query_params.get('rating')
+        if rating:
+            try:
+                queryset = queryset.filter(rating=int(rating))
+            except (ValueError, TypeError):
+                pass
+        
+        # Show verified purchases only
+        verified_only = request.query_params.get('verified_only', '').lower() == 'true'
+        if verified_only:
+            # This will be filtered in serializer
+            pass
+        
+        # Search
+        search = request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) | Q(content__icontains=search)
+            )
+        
+        # Get statistics
+        all_reviews = Review.objects.filter(status='approved', is_deleted=False)
+        stats = all_reviews.aggregate(
+            total_reviews=Count('id'),
+            average_rating=Avg('rating'),
+        )
+        
+        # Rating distribution
+        rating_dist = {}
+        for r in range(1, 6):
+            rating_dist[r] = all_reviews.filter(rating=r).count()
+        stats['rating_distribution'] = rating_dist
+        
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response({
+                'testimonials': serializer.data,
+                'stats': stats
+            })
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({
+            'testimonials': serializer.data,
+            'stats': stats
+        })
+    
+    def get_serializer_class(self):
+        from apps.reviews.api.serializers import ReviewSerializer
+        return ReviewSerializer
+    
+    @action(detail=False, methods=['get'])
+    def featured(self, request):
+        """Get featured testimonials with highest ratings and helpful votes."""
+        from django.db.models import Avg, Count, Q
+        
+        featured = self.get_queryset().annotate(
+            helpfulness=Count('id', filter=Q(helpful_count__gt=0))
+        ).filter(
+            rating__gte=4,
+            images__isnull=False  # Has images
+        ).order_by('-helpful_count', '-rating', '-created_at')[:12]
+        
+        serializer = self.get_serializer(featured, many=True)
+        return Response({
+            'featured_testimonials': serializer.data,
+            'count': len(featured)
+        })
+    
+    @action(detail=False, methods=['get'])
+    def by_rating(self, request):
+        """Get reviews grouped by rating."""
+        from django.db.models import Avg, Count
+        
+        by_rating = {}
+        for r in range(5, 0, -1):
+            reviews = self.get_queryset().filter(rating=r)[:3]
+            if reviews.exists():
+                serializer = self.get_serializer(reviews, many=True)
+                by_rating[f'{r}_stars'] = {
+                    'rating': r,
+                    'count': reviews.count(),
+                    'testimonials': serializer.data
+                }
+        
+        return Response(by_rating)

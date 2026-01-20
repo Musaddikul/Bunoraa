@@ -3,6 +3,283 @@ Pages models
 """
 import uuid
 from django.db import models
+from django.utils.translation import gettext_lazy as _
+from django.utils.text import slugify
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+
+class NewsletterIncentive(models.Model):
+    """
+    Incentive campaigns for newsletter signups.
+    Give discount codes to new subscribers.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Campaign details
+    title = models.CharField(_('title'), max_length=255)
+    description = models.TextField(_('description'), blank=True)
+    
+    # Incentive
+    discount_percentage = models.PositiveIntegerField(
+        _('discount percentage'),
+        default=10,
+        help_text=_('E.g., 10 for 10% off')
+    )
+    discount_code = models.CharField(
+        _('discount code'),
+        max_length=50,
+        unique=True,
+        help_text=_('E.g., WELCOME10')
+    )
+    min_order_amount = models.DecimalField(
+        _('minimum order amount'),
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_('Minimum order amount required to use code')
+    )
+    max_uses = models.PositiveIntegerField(
+        _('maximum uses'),
+        null=True,
+        blank=True,
+        help_text=_('Leave blank for unlimited')
+    )
+    
+    # Active status
+    is_active = models.BooleanField(_('active'), default=True)
+    valid_from = models.DateTimeField(_('valid from'), auto_now_add=True)
+    valid_until = models.DateTimeField(_('valid until'), null=True, blank=True)
+    
+    # Tracking
+    uses_count = models.PositiveIntegerField(default=0)
+    signups_count = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        verbose_name = _('newsletter incentive')
+        verbose_name_plural = _('newsletter incentives')
+        ordering = ['-valid_from']
+    
+    def __str__(self):
+        return f"{self.title} ({self.discount_code})"
+    
+    @property
+    def available_uses(self):
+        """Get remaining uses if limited."""
+        if self.max_uses is None:
+            return '∞'
+        return self.max_uses - self.uses_count
+
+
+class SubscriberIncentive(models.Model):
+    """
+    Track which incentive was used when subscriber signed up.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    subscriber = models.OneToOneField(
+        'pages.Subscriber',
+        on_delete=models.CASCADE,
+        related_name='incentive_info'
+    )
+    incentive = models.ForeignKey(
+        NewsletterIncentive,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='subscribers'
+    )
+    
+    discount_code_generated = models.CharField(
+        _('discount code'),
+        max_length=50,
+        unique=True,
+        help_text=_('Unique code sent to this subscriber')
+    )
+    code_used = models.BooleanField(default=False)
+    code_used_date = models.DateTimeField(null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = _('subscriber incentive')
+        verbose_name_plural = _('subscriber incentives')
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.subscriber.email} - {self.discount_code_generated}"
+
+
+class BlogCategory(models.Model):
+    """Blog post categories."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(_('name'), max_length=100)
+    slug = models.SlugField(_('slug'), max_length=120, unique=True)
+    description = models.TextField(_('description'), blank=True)
+    icon = models.CharField(_('icon class'), max_length=50, blank=True)
+    
+    class Meta:
+        verbose_name = _('blog category')
+        verbose_name_plural = _('blog categories')
+        ordering = ['name']
+    
+    def __str__(self):
+        return self.name
+
+
+class BlogTag(models.Model):
+    """Blog post tags."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(_('name'), max_length=100, unique=True)
+    slug = models.SlugField(_('slug'), max_length=120, unique=True)
+    
+    class Meta:
+        verbose_name = _('blog tag')
+        verbose_name_plural = _('blog tags')
+        ordering = ['name']
+    
+    def __str__(self):
+        return self.name
+
+
+class BlogPost(models.Model):
+    """
+    Blog post - Articles about embroidery care, techniques, inspiration.
+    
+    Featured posts:
+    - Embroidery Care Guide
+    - How to Choose Embroidery Design
+    - Thread Types & Colors
+    - Seasonal Embroidery Trends
+    - Customer Embroidery Projects
+    """
+    STATUS_DRAFT = 'draft'
+    STATUS_PUBLISHED = 'published'
+    STATUS_ARCHIVED = 'archived'
+    STATUS_CHOICES = [
+        (STATUS_DRAFT, 'Draft'),
+        (STATUS_PUBLISHED, 'Published'),
+        (STATUS_ARCHIVED, 'Archived'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Content
+    title = models.CharField(_('title'), max_length=255)
+    slug = models.SlugField(_('slug'), max_length=255, unique=True)
+    excerpt = models.CharField(_('excerpt'), max_length=500)
+    content = models.TextField(_('content'))
+    featured_image = models.ImageField(_('featured image'), upload_to='blog/')
+    
+    # Metadata
+    category = models.ForeignKey(
+        BlogCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='posts'
+    )
+    tags = models.ManyToManyField(
+        BlogTag,
+        related_name='posts',
+        blank=True
+    )
+    
+    author = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='blog_posts'
+    )
+    
+    # Status & Publishing
+    status = models.CharField(
+        _('status'),
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_DRAFT,
+        db_index=True
+    )
+    published_at = models.DateTimeField(_('published at'), null=True, blank=True)
+    
+    # Engagement
+    view_count = models.PositiveIntegerField(_('view count'), default=0)
+    reading_time_minutes = models.PositiveIntegerField(
+        _('reading time (minutes)'),
+        default=5,
+        help_text=_('Estimated reading time')
+    )
+    
+    # SEO
+    meta_title = models.CharField(_('meta title'), max_length=255, blank=True)
+    meta_description = models.CharField(_('meta description'), max_length=500, blank=True)
+    meta_keywords = models.CharField(_('meta keywords'), max_length=500, blank=True)
+    
+    # Timestamps
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('updated at'), auto_now=True)
+    
+    class Meta:
+        verbose_name = _('blog post')
+        verbose_name_plural = _('blog posts')
+        ordering = ['-published_at', '-created_at']
+        indexes = [
+            models.Index(fields=['status', '-published_at']),
+            models.Index(fields=['category']),
+        ]
+    
+    def __str__(self):
+        return self.title
+    
+    def get_absolute_url(self):
+        from django.urls import reverse
+        return reverse('blog:post_detail', kwargs={'slug': self.slug})
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        
+        # Calculate reading time
+        word_count = len(self.content.split())
+        self.reading_time_minutes = max(1, word_count // 200)
+        
+        super().save(*args, **kwargs)
+
+
+class BlogComment(models.Model):
+    """Comments on blog posts."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    post = models.ForeignKey(
+        BlogPost,
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
+    
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='blog_comments',
+        null=True,
+        blank=True
+    )
+    author_name = models.CharField(max_length=100, blank=True)
+    author_email = models.EmailField(blank=True)
+    
+    content = models.TextField()
+    is_approved = models.BooleanField(default=False)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = _('blog comment')
+        verbose_name_plural = _('blog comments')
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Comment on {self.post.title}"
 
 
 class Page(models.Model):

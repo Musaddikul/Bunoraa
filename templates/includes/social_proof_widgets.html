@@ -1,0 +1,242 @@
+{% load static %}
+
+<!-- Social Proof Widgets - Include in base template or specific pages -->
+
+{% block extra_js %}
+<script>
+// Social Proof Widget Manager
+class SocialProofManager {
+    constructor() {
+        this.api = '/api/v1';
+        this.init();
+    }
+    
+    async init() {
+        await this.loadRecentlyPurchased();
+        await this.loadBestSellers();
+        await this.loadStoreStats();
+    }
+    
+    async loadRecentlyPurchased() {
+        try {
+            const response = await fetch(`${this.api}/orders/?limit=5&status=delivered&fields=id,user,product,created_at`);
+            const data = await response.json();
+            // Render on page
+            this.renderRecentlyPurchased(data.results || []);
+        } catch (error) {
+            console.error('Error loading recently purchased:', error);
+        }
+    }
+    
+    async loadBestSellers() {
+        try {
+            const response = await fetch(`${this.api}/analytics/products/sales?limit=8`);
+            const data = await response.json();
+            this.renderBestSellers(data.products || []);
+        } catch (error) {
+            console.error('Error loading best sellers:', error);
+        }
+    }
+    
+    async loadStoreStats() {
+        try {
+            const response = await fetch(`${this.api}/analytics/store/stats`);
+            const data = await response.json();
+            this.renderStats(data.stats || {});
+        } catch (error) {
+            console.error('Error loading stats:', error);
+        }
+    }
+    
+    renderRecentlyPurchased(orders) {
+        const container = document.getElementById('recently-purchased-widget');
+        if (!container) return;
+        
+        let html = '<div class="space-y-3">';
+        orders.forEach(order => {
+            const initials = order.user?.first_name?.[0]?.toUpperCase() || '?';
+            const name = order.user?.first_name || 'Customer';
+            const product = order.product?.name || 'Product';
+            const time = new Date(order.created_at).toLocaleDateString();
+            
+            html += `
+                <div class="flex items-center gap-2 p-2 rounded bg-gray-50 text-sm">
+                    <div class="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center font-bold text-xs">
+                        ${initials}
+                    </div>
+                    <div class="flex-1 truncate">
+                        <p class="font-semibold text-xs">${name}</p>
+                        <p class="text-gray-600 text-xs truncate">${product}</p>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    }
+    
+    renderBestSellers(products) {
+        const container = document.getElementById('best-sellers-widget');
+        if (!container) return;
+        
+        let html = '<div class="grid grid-cols-2 gap-2">';
+        products.forEach(product => {
+            html += `
+                <a href="${product.url || '#'}" class="product-card text-center hover:opacity-75">
+                    <img src="${product.image}" alt="${product.name}" class="w-full rounded">
+                    <p class="font-semibold text-xs mt-1 truncate">${product.name}</p>
+                    <p class="text-purple-600 font-bold">${product.sales} sold</p>
+                </a>
+            `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    }
+    
+    renderStats(stats) {
+        if (stats.total_customers) {
+            const el = document.getElementById('total-customers');
+            if (el) el.textContent = this.formatNumber(stats.total_customers);
+        }
+        
+        if (stats.total_reviews) {
+            const el = document.getElementById('total-reviews-stat');
+            if (el) el.textContent = this.formatNumber(stats.total_reviews);
+        }
+        
+        if (stats.average_rating) {
+            const el = document.getElementById('average-rating-stat');
+            if (el) el.textContent = stats.average_rating.toFixed(1);
+        }
+    }
+    
+    formatNumber(num) {
+        if (num >= 1000) {
+            return (num / 1000).toFixed(1) + 'K';
+        }
+        return num.toString();
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    new SocialProofManager();
+});
+</script>
+{% endblock %}
+
+<!-- Widget: Store Stats Bar -->
+<div class="bg-gradient-to-r from-purple-50 to-pink-50 border-y py-4 my-8">
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-3 gap-4 text-center">
+            <div>
+                <div class="text-2xl font-bold text-purple-600" id="total-customers">1.2K+</div>
+                <p class="text-sm text-gray-600">Happy Customers</p>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-yellow-500" id="average-rating-stat">4.8</div>
+                <p class="text-sm text-gray-600">Average Rating</p>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-green-600" id="total-reviews-stat">500+</div>
+                <p class="text-sm text-gray-600">5-Star Reviews</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Widget: Recently Purchased (Sidebar) -->
+<div class="bg-white rounded-lg border p-4">
+    <h3 class="font-semibold mb-4 text-sm">👥 Recently Purchased</h3>
+    <div id="recently-purchased-widget" class="space-y-3">
+        <div class="animate-pulse space-y-3">
+            <div class="h-10 bg-gray-200 rounded"></div>
+            <div class="h-10 bg-gray-200 rounded"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Widget: Best Sellers (Carousel or Grid) -->
+<div class="bg-white rounded-lg border p-4">
+    <h3 class="font-semibold mb-4 text-sm">⭐ Best Sellers This Week</h3>
+    <div id="best-sellers-widget" class="grid grid-cols-2 gap-2">
+        <div class="animate-pulse space-y-2">
+            <div class="h-20 bg-gray-200 rounded"></div>
+            <div class="h-4 bg-gray-200 rounded"></div>
+        </div>
+        <div class="animate-pulse space-y-2">
+            <div class="h-20 bg-gray-200 rounded"></div>
+            <div class="h-4 bg-gray-200 rounded"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Widget: Trust Badges -->
+<div class="grid grid-cols-3 gap-4 my-8">
+    <div class="text-center p-4">
+        <div class="text-3xl mb-2">🔒</div>
+        <p class="font-semibold text-sm">100% Secure</p>
+        <p class="text-xs text-gray-600">SSL Encrypted</p>
+    </div>
+    <div class="text-center p-4">
+        <div class="text-3xl mb-2">🚚</div>
+        <p class="font-semibold text-sm">Fast Shipping</p>
+        <p class="text-xs text-gray-600">Worldwide</p>
+    </div>
+    <div class="text-center p-4">
+        <div class="text-3xl mb-2">↩️</div>
+        <p class="font-semibold text-sm">Easy Returns</p>
+        <p class="text-xs text-gray-600">30 Days</p>
+    </div>
+</div>
+
+<!-- Widget: Customer Review Snippet -->
+<div class="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200 p-4 my-6">
+    <div class="flex gap-3">
+        <div class="flex gap-1 text-yellow-400">
+            <span>★★★★★</span>
+        </div>
+    </div>
+    <p class="text-sm mt-2 italic text-gray-700">
+        "The embroidery quality is absolutely amazing! Worth every penny."
+    </p>
+    <p class="text-xs text-gray-600 mt-2">— Sarah M., Verified Buyer</p>
+</div>
+
+<!-- Widget: Limited Stock Warning -->
+<div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-sm">
+    <p class="font-semibold text-red-700">⚠️ Only 3 left in stock!</p>
+    <p class="text-red-600 text-xs mt-1">This popular design is selling fast</p>
+</div>
+
+<!-- Widget: People Also Viewed -->
+<div class="my-8">
+    <h3 class="font-bold mb-4">👀 People Also Viewed</h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <!-- Dynamically loaded -->
+    </div>
+</div>
+
+<!-- Widget: Live Notification -->
+<div id="live-notification" class="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-xs animate-slide-in-up">
+    <p class="text-sm font-semibold">🎉 Someone just bought this!</p>
+    <p class="text-xs text-gray-600">Embroidered Pocket Square</p>
+    <button onclick="this.parentElement.style.display='none'" class="text-xs text-gray-400 mt-2">Dismiss</button>
+</div>
+
+<style>
+    @keyframes slide-in-up {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    .animate-slide-in-up {
+        animation: slide-in-up 0.3s ease-out;
+    }
+</style>

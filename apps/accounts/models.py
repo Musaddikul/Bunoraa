@@ -23,7 +23,7 @@ class UserManager(BaseUserManager):
         return user
     
     def create_superuser(self, email, password=None, **extra_fields):
-        """Create and return a superuser."""
+        """Create and return a superuser. Promotes existing user if email already exists."""
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
@@ -33,7 +33,21 @@ class UserManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError(_('Superuser must have is_superuser=True.'))
         
-        return self.create_user(email, password, **extra_fields)
+        # Check if user already exists
+        email = self.normalize_email(email)
+        try:
+            user = self.model.objects.get(email=email)
+            # Promote existing user
+            user.is_staff = True
+            user.is_superuser = True
+            user.is_active = True
+            if password:
+                user.set_password(password)
+            user.save(using=self._db)
+            return user
+        except self.model.DoesNotExist:
+            # User doesn't exist, create new one
+            return self.create_user(email, password, **extra_fields)
 
 
 class User(AbstractUser):

@@ -38,6 +38,26 @@ ASPECT_UNIT_CHOICES = [
 ]
 
 
+class ProductFilterGroup(models.Model):
+    """
+    Groups filters for better organization.
+    E.g., "Embroidery Details", "Materials", "Customization"
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    name = models.CharField(max_length=100)
+    slug = models.SlugField(max_length=120, unique=True)
+    display_order = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        verbose_name = 'filter group'
+        verbose_name_plural = 'filter groups'
+        ordering = ['display_order']
+    
+    def __str__(self):
+        return self.name
+
+
 class TimeStampedMixin(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

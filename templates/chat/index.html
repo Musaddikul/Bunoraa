@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Live Chat Support - Bunoraa{% endblock %}
+
+{% block content %}
+<div class="chat-container max-w-2xl mx-auto">
+    <!-- Chat Header -->
+    <div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-t-lg p-4">
+        <h1 class="text-xl font-bold">💬 Live Chat Support</h1>
+        <p class="text-sm text-purple-100">Average response time: &lt; 2 minutes</p>
+    </div>
+
+    <!-- Chat Box -->
+    <div class="bg-white rounded-b-lg border border-gray-200 flex flex-col h-[500px]">
+        <!-- Messages -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4">
+            <!-- Welcome message -->
+            <div class="flex gap-3">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center text-sm font-bold">
+                        B
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <div class="bg-gray-100 rounded-lg p-3 max-w-xs">
+                        <p class="text-sm text-gray-800">
+                            Hi! 👋 Welcome to Bunoraa support. I'm here to help with any questions about our embroidered products, 
+                            customization options, or your order.
+                        </p>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Just now</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="border-t border-gray-200 p-4 bg-gray-50">
+            <div class="flex gap-2">
+                <input type="text" id="chat-input" placeholder="Type your message..." 
+                       class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-600">
+                <button id="send-btn" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition">
+                    Send
+                </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">💡 We're online Mon-Sat, 9AM-6PM (UTC+6)</p>
+        </div>
+    </div>
+
+    <!-- Chat Categories -->
+    <div class="mt-8">
+        <h2 class="text-2xl font-bold mb-6">How can we help?</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button class="chat-category-btn p-4 border rounded-lg hover:border-purple-600 hover:bg-purple-50 transition text-left" 
+                    data-category="product">
+                <div class="text-2xl mb-2">🧵</div>
+                <h3 class="font-semibold">Product Questions</h3>
+                <p class="text-sm text-gray-600">About materials, sizes, and customization</p>
+            </button>
+            
+            <button class="chat-category-btn p-4 border rounded-lg hover:border-purple-600 hover:bg-purple-50 transition text-left"
+                    data-category="order">
+                <div class="text-2xl mb-2">📦</div>
+                <h3 class="font-semibold">Order Status</h3>
+                <p class="text-sm text-gray-600">Tracking and delivery information</p>
+            </button>
+            
+            <button class="chat-category-btn p-4 border rounded-lg hover:border-purple-600 hover:bg-purple-50 transition text-left"
+                    data-category="shipping">
+                <div class="text-2xl mb-2">🚚</div>
+                <h3 class="font-semibold">Shipping & Delivery</h3>
+                <p class="text-sm text-gray-600">Rates, methods, and timelines</p>
+            </button>
+            
+            <button class="chat-category-btn p-4 border rounded-lg hover:border-purple-600 hover:bg-purple-50 transition text-left"
+                    data-category="returns">
+                <div class="text-2xl mb-2">↩️</div>
+                <h3 class="font-semibold">Returns & Refunds</h3>
+                <p class="text-sm text-gray-600">Return process and policies</p>
+            </button>
+            
+            <button class="chat-category-btn p-4 border rounded-lg hover:border-purple-600 hover:bg-purple-50 transition text-left"
+                    data-category="care">
+                <div class="text-2xl mb-2">✨</div>
+                <h3 class="font-semibold">Care Instructions</h3>
+                <p class="text-sm text-gray-600">How to maintain your items</p>
+            </button>
+            
+            <button class="chat-category-btn p-4 border rounded-lg hover:border-purple-600 hover:bg-purple-50 transition text-left"
+                    data-category="custom">
+                <div class="text-2xl mb-2">🎨</div>
+                <h3 class="font-semibold">Custom Orders</h3>
+                <p class="text-sm text-gray-600">Unique designs and bulk orders</p>
+            </button>
+        </div>
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="mt-12">
+        <h2 class="text-2xl font-bold mb-6">Quick Answers</h2>
+        <div class="space-y-4">
+            <details class="bg-white rounded-lg border p-4">
+                <summary class="font-semibold cursor-pointer">How long does shipping take?</summary>
+                <p class="mt-3 text-gray-700">
+                    Standard shipping: 5-7 business days. Express: 2-3 business days. 
+                    International: 10-21 days. Delivery time may vary by location.
+                </p>
+            </details>
+            
+            <details class="bg-white rounded-lg border p-4">
+                <summary class="font-semibold cursor-pointer">Can I customize my order?</summary>
+                <p class="mt-3 text-gray-700">
+                    Absolutely! We offer custom embroidery on most items. 
+                    Choose your design, thread colors, and placement. 
+                    Lead time: 7-14 days for custom orders.
+                </p>
+            </details>
+            
+            <details class="bg-white rounded-lg border p-4">
+                <summary class="font-semibold cursor-pointer">What's your return policy?</summary>
+                <p class="mt-3 text-gray-700">
+                    30-day returns on non-embroidered items. Custom embroidered items can be exchanged 
+                    if there's an error. Contact us within 48 hours of delivery.
+                </p>
+            </details>
+            
+            <details class="bg-white rounded-lg border p-4">
+                <summary class="font-semibold cursor-pointer">Do you offer bulk discounts?</summary>
+                <p class="mt-3 text-gray-700">
+                    Yes! Orders of 10+ items receive special pricing. 
+                    Contact our team for a custom quote.
+                </p>
+            </details>
+        </div>
+    </div>
+
+    <!-- Contact Methods -->
+    <div class="mt-12 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border p-8">
+        <h2 class="text-2xl font-bold mb-6">Other Ways to Reach Us</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+                <h3 class="font-semibold mb-2">📧 Email</h3>
+                <p class="text-gray-700">support@bunoraa.com</p>
+                <p class="text-sm text-gray-600">Response: 24 hours</p>
+            </div>
+            
+            <div>
+                <h3 class="font-semibold mb-2">📱 WhatsApp</h3>
+                <p class="text-gray-700">+880 1700-000000</p>
+                <p class="text-sm text-gray-600">Response: &lt; 2 hours</p>
+            </div>
+            
+            <div>
+                <h3 class="font-semibold mb-2">📞 Phone</h3>
+                <p class="text-gray-700">+880 2-1234-5678</p>
+                <p class="text-sm text-gray-600">Mon-Sat, 9AM-6PM</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .chat-container {
+        @apply bg-gray-50 rounded-lg p-4;
+    }
+    
+    #chat-messages {
+        background: linear-gradient(180deg, rgba(249, 250, 251, 0.5) 0%, rgba(255, 255, 255, 1) 100%);
+    }
+    
+    .message-incoming {
+        @apply flex gap-3 justify-start;
+    }
+    
+    .message-outgoing {
+        @apply flex gap-3 justify-end;
+    }
+    
+    .message-bubble {
+        @apply rounded-lg p-3 max-w-xs;
+    }
+    
+    .message-incoming .message-bubble {
+        @apply bg-gray-100 text-gray-800;
+    }
+    
+    .message-outgoing .message-bubble {
+        @apply bg-purple-600 text-white;
+    }
+</style>
+
+<script>
+class ChatWidget {
+    constructor() {
+        this.conversationId = null;
+        this.endpoint = '/api/v1/chat/';
+        this.init();
+    }
+    
+    init() {
+        this.setupEventListeners();
+        this.loadConversation();
+    }
+    
+    setupEventListeners() {
+        document.getElementById('send-btn').addEventListener('click', () => this.sendMessage());
+        document.getElementById('chat-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.sendMessage();
+        });
+        
+        document.querySelectorAll('.chat-category-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const category = e.currentTarget.dataset.category;
+                this.sendCategoryMessage(category);
+            });
+        });
+    }
+    
+    async loadConversation() {
+        try {
+            // In a real implementation, fetch existing conversation
+            // const response = await fetch(this.endpoint + 'conversations/me/');
+            // const data = await response.json();
+            // this.renderMessages(data.messages);
+        } catch (error) {
+            console.error('Error loading conversation:', error);
+        }
+    }
+    
+    async sendMessage() {
+        const input = document.getElementById('chat-input');
+        const message = input.value.trim();
+        
+        if (!message) return;
+        
+        // Clear input
+        input.value = '';
+        
+        // Add message to UI
+        this.addMessageToUI(message, 'outgoing');
+        
+        try {
+            // In real implementation, send to API
+            // const response = await fetch(this.endpoint + 'messages/', {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify({ conversation_id: this.conversationId, message })
+            // });
+            
+            // Simulate agent response
+            setTimeout(() => {
+                this.addMessageToUI(
+                    '👍 Thank you for your message! Our support team will respond shortly.',
+                    'incoming'
+                );
+            }, 500);
+            
+        } catch (error) {
+            console.error('Error sending message:', error);
+        }
+    }
+    
+    sendCategoryMessage(category) {
+        const categoryTitles = {
+            product: '🧵 I have a product question',
+            order: '📦 I need help with my order',
+            shipping: '🚚 Shipping & delivery question',
+            returns: '↩️ I want to return my item',
+            care: '✨ Care instructions',
+            custom: '🎨 I want a custom order'
+        };
+        
+        this.addMessageToUI(categoryTitles[category], 'outgoing');
+        
+        setTimeout(() => {
+            const responses = {
+                product: 'Great! Tell me which product you\'re interested in, and I\'ll be happy to help with any questions about materials, sizes, or customization options.',
+                order: 'I\'d be glad to help! Can you provide your order number? It usually starts with ORD-',
+                shipping: 'Shipping details depend on your location. Where are you located?',
+                returns: 'Our return policy allows 30 days from delivery. Can you tell me more about your concern?',
+                care: 'I can provide care instructions for your embroidered items. Which type of item do you have?',
+                custom: 'Custom orders are our specialty! What would you like to create?'
+            };
+            
+            this.addMessageToUI(responses[category], 'incoming');
+        }, 500);
+    }
+    
+    addMessageToUI(message, type) {
+        const messagesDiv = document.getElementById('chat-messages');
+        const messageEl = document.createElement('div');
+        messageEl.className = `message-${type}`;
+        
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        if (type === 'incoming') {
+            messageEl.innerHTML = `
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center text-sm font-bold">
+                        B
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <div class="message-bubble">
+                        <p class="text-sm">${message}</p>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">${time}</p>
+                </div>
+            `;
+        } else {
+            messageEl.innerHTML = `
+                <div class="flex-1">
+                    <div class="message-bubble">
+                        <p class="text-sm">${message}</p>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 text-right">${time}</p>
+                </div>
+            `;
+        }
+        
+        messagesDiv.appendChild(messageEl);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    new ChatWidget();
+});
+</script>
+{% endblock %}

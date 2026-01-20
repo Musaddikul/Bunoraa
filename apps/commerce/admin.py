@@ -85,10 +85,10 @@ class WishlistAdmin(admin.ModelAdmin):
 
 @admin.register(WishlistShare)
 class WishlistShareAdmin(admin.ModelAdmin):
-    list_display = ['id', 'wishlist', 'share_token_short', 'view_count', 'expires_at', 'allow_purchase', 'created_at']
-    list_filter = ['allow_purchase', 'created_at', 'expires_at']
+    list_display = ['id', 'wishlist', 'share_token_short', 'view_count', 'is_public', 'allow_comments', 'created_at']
+    list_filter = ['is_public', 'allow_comments', 'created_at']
     search_fields = ['wishlist__user__email', 'share_token']
-    readonly_fields = ['share_token', 'created_at']
+    readonly_fields = ['share_token', 'created_at', 'updated_at']
     
     def share_token_short(self, obj):
         return obj.share_token[:16] + '...'

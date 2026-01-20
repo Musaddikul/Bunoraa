@@ -6,6 +6,119 @@ from decimal import Decimal
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+from django.core.validators import MinValueValidator, MaxValueValidator
+
+
+class Bundle(models.Model):
+    """
+    Product bundle - Group related products with bundle pricing.
+    Perfect for embroidery sets, gift packages, etc.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Basic info
+    name = models.CharField(_('name'), max_length=255)
+    slug = models.SlugField(_('slug'), max_length=255, unique=True)
+    description = models.TextField(_('description'), blank=True)
+    image = models.ImageField(_('image'), upload_to='bundles/', blank=True, null=True)
+    
+    # Products in bundle
+    products = models.ManyToManyField(
+        'catalog.Product',
+        through='BundleItem',
+        related_name='bundles'
+    )
+    
+    # Pricing
+    regular_price = models.DecimalField(
+        _('regular price'),
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.00'))]
+    )
+    bundle_price = models.DecimalField(
+        _('bundle price'),
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.00'))]
+    )
+    
+    @property
+    def savings(self):
+        """Calculate savings compared to buying individually."""
+        return self.regular_price - self.bundle_price
+    
+    @property
+    def discount_percentage(self):
+        """Calculate discount percentage."""
+        if self.regular_price == 0:
+            return Decimal('0')
+        return round((self.savings / self.regular_price) * 100, 2)
+    
+    # Display
+    is_featured = models.BooleanField(_('featured'), default=False, db_index=True)
+    is_active = models.BooleanField(_('active'), default=True, db_index=True)
+    
+    # SEO
+    meta_title = models.CharField(_('meta title'), max_length=255, blank=True)
+    meta_description = models.CharField(_('meta description'), max_length=500, blank=True)
+    
+    # Timestamps
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('updated at'), auto_now=True)
+    
+    class Meta:
+        verbose_name = _('bundle')
+        verbose_name_plural = _('bundles')
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['is_active', '-created_at']),
+            models.Index(fields=['is_featured']),
+        ]
+    
+    def __str__(self):
+        return self.name
+    
+    def get_absolute_url(self):
+        from django.urls import reverse
+        return reverse('bundles:detail', kwargs={'slug': self.slug})
+
+
+class BundleItem(models.Model):
+    """
+    Item in a bundle - Links products to bundles with ordering.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    bundle = models.ForeignKey(
+        Bundle,
+        on_delete=models.CASCADE,
+        related_name='items'
+    )
+    product = models.ForeignKey(
+        'catalog.Product',
+        on_delete=models.CASCADE,
+        related_name='bundle_items'
+    )
+    
+    # Quantity in bundle
+    quantity = models.PositiveIntegerField(default=1)
+    
+    # Display order
+    display_order = models.PositiveIntegerField(default=0)
+    
+    # Optional description
+    description = models.CharField(max_length=255, blank=True)
+    
+    class Meta:
+        verbose_name = _('bundle item')
+        verbose_name_plural = _('bundle items')
+        ordering = ['display_order']
+        unique_together = ['bundle', 'product']
+    
+    def __str__(self):
+        return f"{self.bundle.name} - {self.product.name} (x{self.quantity})"
 
 
 class Coupon(models.Model):

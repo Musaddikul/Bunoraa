@@ -192,7 +192,7 @@ def send_push_notification(user_id: int, notification_type: str, context: dict):
     Uses the enhanced push services for comprehensive delivery.
     """
     try:
-        from apps.notifications.push_services import PushNotificationManager
+        from apps.notifications.services import PushNotificationManager
         
         title = get_notification_title(notification_type, context)
         body = get_notification_message(notification_type, context, short=True)
@@ -242,7 +242,7 @@ def send_bulk_push_notification(user_ids: list, notification_type: str, context:
     Uses multicast for FCM tokens.
     """
     try:
-        from apps.notifications.push_services import PushNotificationManager
+        from apps.notifications.services import PushNotificationManager
         
         title = get_notification_title(notification_type, context)
         body = get_notification_message(notification_type, context, short=True)
@@ -269,7 +269,7 @@ def process_daily_digest():
     Process and send daily notification digests.
     Should be scheduled to run once daily (e.g., 9 AM local time).
     """
-    from apps.notifications.digest_service import DigestService
+    from apps.notifications.services import DigestService
     
     result = DigestService.process_daily_digests()
     logger.info(f"Daily digest completed: {result}")
@@ -282,7 +282,7 @@ def process_weekly_digest():
     Process and send weekly notification digests.
     Should be scheduled to run once weekly (e.g., Monday 9 AM).
     """
-    from apps.notifications.digest_service import DigestService
+    from apps.notifications.services import DigestService
     
     result = DigestService.process_weekly_digests()
     logger.info(f"Weekly digest completed: {result}")
@@ -435,3 +435,101 @@ def send_via_sslwireless(phone: str, message: str):
         timeout=30,
     )
     response.raise_for_status()
+
+
+# ============================================================================
+# FEATURE: Abandoned Cart Recovery
+# ============================================================================
+
+@shared_task(bind=True, max_retries=3)
+def send_abandoned_cart_email(self, cart_id):
+    """
+    Send abandoned cart recovery email to user.
+    Triggered when cart hasn't been updated for 24 hours.
+    """
+    from datetime import timedelta
+    from apps.commerce.models import Cart
+    from apps.orders.models import Order
+    from django.core.mail import send_mail
+    
+    try:
+        cart = Cart.objects.select_related('user', 'coupon').get(id=cart_id)
+        
+        # Skip if cart is empty or user not logged in
+        if not cart.items.exists() or not cart.user:
+            return
+        
+        # Skip if user already purchased
+        recent_order = Order.objects.filter(
+            user=cart.user,
+            created_at__gte=timezone.now() - timedelta(hours=1)
+        ).exists()
+        
+        if recent_order:
+            return
+        
+        # Prepare email context
+        items = cart.items.all()
+        discount_code = f"COMEBACK{cart.id.hex[:8].upper()}"
+        
+        context = {
+            'user': cart.user,
+            'cart': cart,
+            'items': items,
+            'item_count': cart.item_count,
+            'subtotal': cart.subtotal,
+            'discount': cart.discount_amount,
+            'total': cart.total,
+            'cart_url': f"{settings.SITE_URL}/cart/",
+            'discount_code': discount_code,
+            'discount_percentage': 10,
+        }
+        
+        # Render email
+        subject = f"You left {cart.item_count} beautiful items behind! 🧵"
+        try:
+            html_message = render_to_string('emails/abandoned_cart.html', context)
+        except:
+            html_message = None
+        
+        # Send email
+        send_mail(
+            subject=subject,
+            message=f"Complete your embroidered items purchase at {settings.SITE_URL}/cart/",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[cart.user.email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        
+        logger.info(f"Abandoned cart email sent to {cart.user.email}")
+        
+    except Exception as exc:
+        logger.error(f"Error sending abandoned cart email: {exc}")
+        raise self.retry(exc=exc, countdown=300)
+
+
+@shared_task
+def check_abandoned_carts():
+    """
+    Scheduled task to find and email abandoned carts.
+    Run every 6 hours via Celery Beat.
+    """
+    from datetime import timedelta
+    from apps.commerce.models import Cart
+    
+    abandoned_threshold = timezone.now() - timedelta(hours=24)
+    
+    carts = Cart.objects.filter(
+        updated_at__lt=abandoned_threshold,
+        user__isnull=False
+    ).prefetch_related('items')
+    
+    sent_count = 0
+    for cart in carts:
+        if cart.items.exists():
+            send_abandoned_cart_email.delay(str(cart.id))
+            sent_count += 1
+    
+    logger.info(f"Queued {sent_count} abandoned cart reminder emails")
+    return sent_count
