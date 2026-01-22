@@ -29,7 +29,11 @@ from .models import (
     Badge,
     ShippingMaterial,
     Spotlight,
+    ProductMakingOf,
     Product3DAsset,
+    CustomerPhoto,
+    ProductQuestion, 
+    ProductAnswer,   
     Attribute,
     AttributeValue,
     Facet,
@@ -78,6 +82,47 @@ class Product3DAssetInline(EnhancedTabularInline):
     model = Product3DAsset
     extra = 0
     fields = ("file", "file_type", "validated", "is_ar_compatible")
+
+
+class ProductMakingOfInline(EnhancedTabularInline):
+    model = ProductMakingOf
+    extra = 0
+    fields = ("order", "title", "description", "image", "video_url")
+    ordering = ["order"]
+
+
+class CustomerPhotoInline(EnhancedTabularInline):
+    model = CustomerPhoto
+    extra = 0
+    fields = ("image", "thumbnail_preview", "description", "status")
+    readonly_fields = ("thumbnail_preview",)
+    ordering = ["-created_at"]
+
+    def thumbnail_preview(self, obj):
+        if obj.image:
+            return format_html(
+                '<img src="{}" style="max-height: 50px; max-width: 80px; object-fit: cover; border-radius: 4px;" />',
+                obj.image.url
+            )
+        return "-"
+    thumbnail_preview.short_description = "Preview"
+
+
+class ProductAnswerInline(EnhancedTabularInline):
+    model = ProductAnswer
+    extra = 0
+    fields = ("user", "answer_text", "status")
+    readonly_fields = ("user",)
+    ordering = ["created_at"]
+
+
+class ProductQuestionInline(EnhancedTabularInline):
+    model = ProductQuestion
+    extra = 0
+    fields = ("user", "question_text", "status")
+    readonly_fields = ("user",)
+    ordering = ["-created_at"]
+    inlines = [ProductAnswerInline] # Nested inline for answers
 
 
 @admin.register(Category)
@@ -178,7 +223,7 @@ class ProductAdmin(EnhancedModelAdmin, BulkActivateMixin, BulkFeaturedMixin):
         "is_active", "is_featured", "is_bestseller", "is_new_arrival",
         StockFilter, PriceRangeFilter, "aspect_ratio", "primary_category"
     )
-    inlines = [ProductImageInline, ProductVariantInline, Product3DAssetInline]
+    inlines = [ProductImageInline, ProductVariantInline, Product3DAssetInline, ProductMakingOfInline, CustomerPhotoInline, ProductQuestionInline]
     prepopulated_fields = {"slug": ("name",)}
     date_hierarchy = "created_at"
     list_per_page = 25
@@ -234,7 +279,7 @@ class ProductAdmin(EnhancedModelAdmin, BulkActivateMixin, BulkFeaturedMixin):
             "classes": ("collapse",),
         }),
         (_('Status & Flags'), {
-            "fields": ("is_active", "is_featured", "is_bestseller", "is_new_arrival"),
+            "fields": ("is_active", "is_featured", "is_bestseller", "is_new_arrival", "can_be_customized"),
         }),
         (_('SEO'), {
             "fields": ("meta_title", "meta_description"),
@@ -447,8 +492,80 @@ class TagAdmin(admin.ModelAdmin):
     search_fields = ("name",)
 
 
+@admin.register(ProductQuestion)
+class ProductQuestionAdmin(admin.ModelAdmin):
+    list_display = ('product', 'user', 'question_text', 'status', 'created_at')
+    list_filter = ('status', 'created_at')
+    search_fields = ('product__name', 'user__email', 'question_text')
+    readonly_fields = ('product', 'user', 'created_at', 'updated_at')
+    ordering = ['-created_at']
+    inlines = [ProductAnswerInline]
+
+    actions = ['approve_questions', 'reject_questions']
+
+    def approve_questions(self, request, queryset):
+        updated = queryset.update(status='approved')
+        self.message_user(request, f'{updated} questions approved.')
+    approve_questions.short_description = 'Approve selected questions'
+
+    def reject_questions(self, request, queryset):
+        updated = queryset.update(status='rejected')
+        self.message_user(request, f'{updated} questions rejected.')
+    reject_questions.short_description = 'Reject selected questions'
+
+
+@admin.register(ProductAnswer)
+class ProductAnswerAdmin(admin.ModelAdmin):
+    list_display = ('question', 'user', 'answer_text', 'status', 'created_at')
+    list_filter = ('status', 'created_at')
+    search_fields = ('question__question_text', 'user__email', 'answer_text')
+    readonly_fields = ('question', 'user', 'created_at', 'updated_at')
+    ordering = ['created_at']
+
+    actions = ['approve_answers', 'reject_answers']
+
+    def approve_answers(self, request, queryset):
+        updated = queryset.update(status='approved')
+        self.message_user(request, f'{updated} answers approved.')
+    approve_answers.short_description = 'Approve selected answers'
+
+    def reject_answers(self, request, queryset):
+        updated = queryset.update(status='rejected')
+        self.message_user(request, f'{updated} answers rejected.')
+    reject_answers.short_description = 'Reject selected answers'
+
+
 # Inline registered for ProductVariant to ensure attribute M2M is manageable
 @admin.register(ProductVariant)
 class ProductVariantAdmin(admin.ModelAdmin):
     list_display = ("sku", "product", "price", "stock_quantity", "is_default")
     search_fields = ("sku", "product__name")
+
+
+@admin.register(CustomerPhoto)
+class CustomerPhotoAdmin(admin.ModelAdmin):
+    list_display = ('product', 'user', 'status', 'created_at', 'thumbnail_preview')
+    list_filter = ('status', 'created_at')
+    search_fields = ('product__name', 'user__email', 'description')
+    readonly_fields = ('product', 'user', 'created_at', 'updated_at', 'thumbnail_preview')
+    
+    actions = ['approve_photos', 'reject_photos']
+
+    def thumbnail_preview(self, obj):
+        if obj.image:
+            return format_html(
+                '<img src="{}" style="max-height: 80px; max-width: 120px; object-fit: cover; border-radius: 4px;" />',
+                obj.image.url
+            )
+        return "-"
+    thumbnail_preview.short_description = "Image Preview"
+
+    def approve_photos(self, request, queryset):
+        updated = queryset.update(status='approved')
+        self.message_user(request, f'{updated} photos approved.')
+    approve_photos.short_description = 'Approve selected photos'
+
+    def reject_photos(self, request, queryset):
+        updated = queryset.update(status='rejected')
+        self.message_user(request, f'{updated} photos rejected.')
+    reject_photos.short_description = 'Reject selected photos'

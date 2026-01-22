@@ -72,6 +72,7 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     'core',
     'apps.accounts',
+    'apps.artisans',
     'apps.catalog',
     'apps.recommendations',
     'apps.orders',
@@ -85,6 +86,7 @@ LOCAL_APPS = [
     'apps.shipping',
     'apps.i18n',
     'apps.contacts',
+    'apps.referral',
     'apps.seo',
     'apps.subscriptions',
     'apps.commerce',

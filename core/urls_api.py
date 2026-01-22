@@ -43,6 +43,7 @@ urlpatterns = [
     # path('wishlist/', include('apps.wishlist.api.urls')),  # Deprecated
     path('i18n/', include('apps.i18n.api.urls')),  # Unified i18n (replaces currencies and localization)
     path('contacts/', include('apps.contacts.api.urls')),
+    path('referral/', include('apps.referral.api.urls')), 
     path('preorders/', include('apps.preorders.api.urls')),
     path('subscriptions/', include('apps.subscriptions.api.urls')),
     path('chat/', include('apps.chat.urls')),  # Live chat system

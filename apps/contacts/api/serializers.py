@@ -5,7 +5,8 @@ from rest_framework import serializers
 
 from ..models import (
     ContactCategory, ContactInquiry, ContactResponse,
-    ContactAttachment, StoreLocation, ContactSettings
+    ContactAttachment, StoreLocation, ContactSettings,
+    CustomizationRequest
 )
 
 
@@ -158,3 +159,11 @@ class NearbyLocationRequestSerializer(serializers.Serializer):
     latitude = serializers.DecimalField(max_digits=9, decimal_places=6)
     longitude = serializers.DecimalField(max_digits=9, decimal_places=6)
     radius_km = serializers.IntegerField(required=False, default=50, min_value=1, max_value=500)
+
+
+class CustomizationRequestSerializer(serializers.ModelSerializer):
+    """Serializer for creating a customization request."""
+    
+    class Meta:
+        model = CustomizationRequest
+        fields = ['product', 'name', 'email', 'phone', 'message']

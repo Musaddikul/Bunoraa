@@ -128,6 +128,8 @@ class Category(TimeStampedMixin):
         ]
         indexes = [models.Index(fields=["slug"]), models.Index(fields=["is_visible"]), models.Index(fields=["path"]), models.Index(fields=["product_count"])]
         ordering = ["path"]
+        verbose_name = "category"
+        verbose_name_plural = "categories"
 
     def __str__(self):
         return self.name
@@ -385,7 +387,7 @@ class ProductQuerySet(models.QuerySet):
         return self.filter(Q(stock_quantity__gt=0) | Q(variants__stock_quantity__gt=0)).distinct()
 
     def prefetch_for_list(self):
-        return self.select_related("primary_category").prefetch_related("images", "variants", "categories", "tags")
+        return self.select_related("primary_category", "artisan").prefetch_related("images", "variants", "categories", "tags")
 
 
 from .managers import SoftDeleteManager
@@ -442,6 +444,15 @@ class Product(TimeStampedMixin):
     primary_category = models.ForeignKey(Category, null=True, blank=True, related_name="primary_products", on_delete=models.SET_NULL)
     tags = models.ManyToManyField(Tag, blank=True, related_name="products")
 
+    artisan = models.ForeignKey(
+        'artisans.Artisan',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='products',
+        help_text='The artisan who created this product.'
+    )
+
     attributes = models.ManyToManyField(AttributeValue, through="ProductAttributeValue", blank=True)
     related_products = models.ManyToManyField("self", blank=True)
 
@@ -485,6 +496,7 @@ class Product(TimeStampedMixin):
     is_featured = models.BooleanField(default=False, db_index=True)
     is_bestseller = models.BooleanField(default=False, db_index=True)
     is_new_arrival = models.BooleanField(default=False, db_index=True)
+    can_be_customized = models.BooleanField(default=False, help_text="Can this product be customized by customers?")
 
     # Soft delete
     is_deleted = models.BooleanField(default=False, db_index=True)
@@ -1261,6 +1273,28 @@ class ProductImpression(models.Model):
 
 # End advanced section
 
+
+class ProductMakingOf(models.Model):
+    """
+    Represents a step in the making-of process for a product.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    product = models.ForeignKey(Product, related_name='making_of_steps', on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    image = models.ImageField(upload_to='catalog/making_of/', blank=True, null=True)
+    video_url = models.URLField(blank=True, help_text="URL to a video of this step (e.g., YouTube, Vimeo).")
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order']
+        verbose_name = 'Making Of Step'
+        verbose_name_plural = 'Making Of Steps'
+
+    def __str__(self):
+        return f"Step {self.order} for {self.product.name}"
+
+
 class Product3DAsset(models.Model):
     """3D assets associated with a product; restored from accidental overwrite.
 
@@ -1300,6 +1334,130 @@ class Product3DAsset(models.Model):
     def save(self, *args, **kwargs):
         # TODO: schedule validation/compression tasks via background worker
         super().save(*args, **kwargs)
+
+
+class CustomerPhotoManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(status='approved')
+
+
+class CustomerPhoto(models.Model):
+    """
+    Customer-uploaded photos of products in use.
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Pending Review'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    product = models.ForeignKey(Product, related_name='customer_photos', on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='customer_photos'
+    )
+    image = models.ImageField(upload_to='catalog/customer_photos/')
+    description = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager() # The default manager
+    approved = CustomerPhotoManager() # Our custom manager for approved photos
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Customer Photo'
+        verbose_name_plural = 'Customer Photos'
+
+    def __str__(self):
+        return f"Photo for {self.product.name} by {self.user.get_full_name() if self.user else 'Anonymous'}"
+
+
+class ProductQuestionManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(status='approved')
+
+
+class ProductAnswerManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(status='approved')
+
+
+class ProductQuestion(models.Model):
+    """
+    A question asked by a user about a product.
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Pending Review'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    product = models.ForeignKey(Product, related_name='questions', on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='product_questions'
+    )
+    question_text = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager() # The default manager
+    approved = ProductQuestionManager() # Our custom manager for approved questions
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Product Question'
+        verbose_name_plural = 'Product Questions'
+
+    def __str__(self):
+        return f"Question for {self.product.name} by {self.user.get_full_name() if self.user else 'Anonymous'}"
+
+
+class ProductAnswer(models.Model):
+    """
+    An answer to a product question.
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Pending Review'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    question = models.ForeignKey(ProductQuestion, related_name='answers', on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='product_answers'
+    )
+    answer_text = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager() # The default manager
+    approved = ProductAnswerManager() # Our custom manager for approved answers
+
+    class Meta:
+        ordering = ['created_at']
+        verbose_name = 'Product Answer'
+        verbose_name_plural = 'Product Answers'
+
+    def __str__(self):
+        return f"Answer to '{self.question.question_text[:50]}...' by {self.user.get_full_name() if self.user else 'Anonymous'}"
 
 
 # Facet system

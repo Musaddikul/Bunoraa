@@ -5,6 +5,8 @@ from django.db.models import Sum, Count, Avg, F
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 from datetime import timedelta
+from django.contrib.auth import get_user_model 
+from apps.catalog.models import Product 
 
 from .models import PageView, ProductView, SearchQuery, CartEvent, DailyStat, ProductStat
 
@@ -275,6 +277,45 @@ class DashboardService:
             'checkout_completed': checkout_complete,
             'abandonment_rate': round(abandonment_rate, 2)
         }
+
+    @staticmethod
+    def get_new_users_data(days=30):
+        """Get new user registrations over time."""
+        User = get_user_model()
+        end_date = timezone.now().date()
+        start_date = end_date - timedelta(days=days)
+
+        new_users = User.objects.filter(
+            date_joined__date__gte=start_date,
+            date_joined__date__lte=end_date
+        ).annotate(date=TruncDate('date_joined')).values('date').annotate(count=Count('id')).order_by('date')
+        
+        # Fill missing dates with 0
+        date_range = [start_date + timedelta(n) for n in range(days + 1)]
+        data_dict = {str(d): {'date': d, 'count': 0} for d in date_range}
+        for entry in new_users:
+            data_dict[str(entry['date'])] = {'date': entry['date'], 'count': entry['count']}
+        
+        return list(data_dict.values())
+
+    @staticmethod
+    def get_product_views_data(days=30):
+        """Get product views over time."""
+        end_date = timezone.now().date()
+        start_date = end_date - timedelta(days=days)
+
+        product_views = ProductView.objects.filter(
+            created_at__date__gte=start_date,
+            created_at__date__lte=end_date
+        ).annotate(date=TruncDate('created_at')).values('date').annotate(count=Count('id')).order_by('date')
+
+        # Fill missing dates with 0
+        date_range = [start_date + timedelta(n) for n in range(days + 1)]
+        data_dict = {str(d): {'date': d, 'count': 0} for d in date_range}
+        for entry in product_views:
+            data_dict[str(entry['date'])] = {'date': entry['date'], 'count': entry['count']}
+        
+        return list(data_dict.values())
 
 
 class ReportService:

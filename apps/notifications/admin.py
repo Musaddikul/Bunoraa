@@ -3,7 +3,8 @@ Notifications admin configuration
 """
 from django.contrib import admin
 from .models import (
-    Notification, NotificationPreference, EmailTemplate, EmailLog, PushToken
+    Notification, NotificationPreference, EmailTemplate, EmailLog, PushToken,
+    BackInStockNotification
 )
 
 
@@ -124,3 +125,32 @@ class PushTokenAdmin(admin.ModelAdmin):
     list_filter = ['device_type', 'is_active']
     search_fields = ['user__email', 'device_name']
     readonly_fields = ['id', 'created_at', 'last_used_at']
+
+
+@admin.register(BackInStockNotification)
+class BackInStockNotificationAdmin(admin.ModelAdmin):
+    list_display = ('product', 'variant_display', 'user_display', 'email', 'is_notified', 'created_at')
+    list_filter = ('is_notified', 'created_at')
+    search_fields = ('product__name', 'user__email', 'email')
+    readonly_fields = ('product', 'variant', 'user', 'email', 'created_at', 'notified_at')
+
+    actions = ['mark_as_notified', 'mark_as_unnotified']
+
+    def variant_display(self, obj):
+        return obj.variant if obj.variant else "N/A"
+    variant_display.short_description = "Variant"
+
+    def user_display(self, obj):
+        return obj.user.email if obj.user else "N/A"
+    user_display.short_description = "User"
+
+    def mark_as_notified(self, request, queryset):
+        from django.utils import timezone
+        updated = queryset.update(is_notified=True, notified_at=timezone.now())
+        self.message_user(request, f'{updated} notifications marked as notified.')
+    mark_as_notified.short_description = 'Mark selected as notified'
+
+    def mark_as_unnotified(self, request, queryset):
+        updated = queryset.update(is_notified=False, notified_at=None)
+        self.message_user(request, f'{updated} notifications marked as unnotified.')
+    mark_as_unnotified.short_description = 'Mark selected as unnotified'

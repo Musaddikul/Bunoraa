@@ -14,6 +14,7 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.cache import cache_page
 from django.views.decorators.http import require_GET
+from apps.analytics.services import DashboardService 
 
 
 def get_date_range(period='30d'):
@@ -51,12 +52,10 @@ def admin_dashboard(request):
     context = {
         'title': 'Dashboard',
         'period': period,
-        'start_date': start_date,
-        'end_date': end_date,
+        'start_date': start_date.isoformat(), 
+        'end_date': end_date.isoformat(),     
+        'selected_period': period,
     }
-    
-    # Get summary stats
-    context.update(get_summary_stats(start_date, end_date))
     
     return render(request, 'admin/dashboard/index.html', context)
 
@@ -67,9 +66,17 @@ def admin_dashboard(request):
 def dashboard_stats_api(request):
     """API endpoint for dashboard statistics."""
     period = request.GET.get('period', '30d')
+    days = int(period.replace('d', '').replace('y', '365') if period != 'today' else 0) if period else 30 
+    if period == 'today':
+        days = 1
+    
     start_date, end_date = get_date_range(period)
     
     stats = get_summary_stats(start_date, end_date)
+    
+    # Add new users and product views data
+    stats['new_users_over_time'] = DashboardService.get_new_users_data(days)
+    stats['product_views_over_time'] = DashboardService.get_product_views_data(days)
     
     # Convert Decimals to floats for JSON serialization
     for key, value in stats.items():
@@ -77,6 +84,8 @@ def dashboard_stats_api(request):
             stats[key] = float(value)
         elif isinstance(value, dict):
             stats[key] = {k: decimal_to_float(v) for k, v in value.items()}
+        elif isinstance(value, list): # Handle lists (like chart data)
+            stats[key] = [{k: decimal_to_float(v) for k, v in item.items()} if isinstance(item, dict) else item for item in value]
     
     return JsonResponse(stats)
 

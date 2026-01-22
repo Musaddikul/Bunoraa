@@ -10,6 +10,7 @@ from django.utils import timezone
 from decimal import Decimal
 import random
 import uuid
+from django.core.management import call_command # Added
 
 User = get_user_model()
 
@@ -35,6 +36,13 @@ class Command(BaseCommand):
 
         if options['clear']:
             self.clear_data()
+        
+        # Initialize lists to hold created objects for later use
+        self.users = list(User.objects.all()) # Existing users
+        self.categories = []
+        self.brands = []
+        self.products = []
+        self.artisans = []
 
         self.create_users()
         self.create_categories()
@@ -43,6 +51,13 @@ class Command(BaseCommand):
         self.create_promotions()
         self.create_pages()
         self.create_reviews()
+
+        # Seed new features
+        call_command('seed_artisans_data') 
+        call_command('seed_catalog_data') 
+        call_command('seed_contacts_data')
+        call_command('seed_referral_data')
+        call_command('seed_notification_data')
         
         # Seed additional data (currencies, shipping, payments, locations)
         self.seed_currencies()
@@ -57,287 +72,31 @@ class Command(BaseCommand):
         """Clear existing data"""
         self.stdout.write('Clearing existing data...')
         
-        from apps.catalog.models import Product, Category
+        from apps.catalog.models import (
+            Product, Category, ProductMakingOf, CustomizationRequest, CustomerPhoto,
+            ProductQuestion, ProductAnswer
+        )
         from apps.promotions.models import Promotion, Coupon
-        from apps.reviews.models import Review
         from apps.pages.models import Page
+        from apps.referral.models import ReferralCode, ReferralReward
+        from apps.notifications.models import BackInStockNotification
         
         Product.objects.all().delete()
         Category.objects.all().delete()
+        ProductMakingOf.objects.all().delete()
+        CustomizationRequest.objects.all().delete()
+        CustomerPhoto.objects.all().delete()
+        ProductQuestion.objects.all().delete()
+        ProductAnswer.objects.all().delete()
         Promotion.objects.all().delete()
         Coupon.objects.all().delete()
-        Review.objects.all().delete()
+        ReferralCode.objects.all().delete()
+        ReferralReward.objects.all().delete()
+        BackInStockNotification.objects.all().delete()
         Page.objects.all().delete()
         User.objects.filter(is_superuser=False).delete()
+        self.stdout.write('Existing data cleared.\n')
 
-    def create_users(self):
-        """Create sample users"""
-        self.stdout.write('Creating users...')
-
-        # Create admin user
-        if not User.objects.filter(email='admin@bunoraa.com').exists():
-            User.objects.create_superuser(
-                email='admin@bunoraa.com',
-                password='admin123',
-                first_name='Admin',
-                last_name='User'
-            )
-            self.stdout.write('  Created admin user: admin@bunoraa.com')
-
-        # Create sample customers
-        customers = [
-            ('john@example.com', 'John', 'Doe'),
-            ('jane@example.com', 'Jane', 'Smith'),
-            ('bob@example.com', 'Bob', 'Johnson'),
-        ]
-
-        for email, first_name, last_name in customers:
-            if not User.objects.filter(email=email).exists():
-                User.objects.create_user(
-                    email=email,
-                    password='password123',
-                    first_name=first_name,
-                    last_name=last_name
-                )
-                self.stdout.write(f'  Created customer: {email}')
-
-    def create_categories(self):
-        """Create sample categories"""
-        self.stdout.write('Creating categories...')
-
-        from apps.catalog.models import Category
-
-        categories_data = [
-            {
-                'name': 'Electronics',
-                'description': 'Latest electronic gadgets and devices',
-                'subcategories': [
-                    {'name': 'Smartphones', 'description': 'Mobile phones and accessories'},
-                    {'name': 'Laptops', 'description': 'Notebooks and laptops'},
-                    {'name': 'Audio', 'description': 'Headphones, speakers, and audio equipment'},
-                    {'name': 'Cameras', 'description': 'Digital cameras and photography gear'},
-                ]
-            },
-            {
-                'name': 'Fashion',
-                'description': 'Trendy clothing and accessories',
-                'subcategories': [
-                    {'name': 'Men', 'description': "Men's clothing and accessories"},
-                    {'name': 'Women', 'description': "Women's clothing and accessories"},
-                    {'name': 'Shoes', 'description': 'Footwear for all occasions'},
-                    {'name': 'Accessories', 'description': 'Bags, belts, and more'},
-                ]
-            },
-            {
-                'name': 'Home & Living',
-                'description': 'Everything for your home',
-                'subcategories': [
-                    {'name': 'Furniture', 'description': 'Sofas, tables, chairs, and more'},
-                    {'name': 'Decor', 'description': 'Home decoration items'},
-                    {'name': 'Kitchen', 'description': 'Kitchen appliances and utensils'},
-                    {'name': 'Bedding', 'description': 'Bed sheets, pillows, and blankets'},
-                ]
-            },
-            {
-                'name': 'Sports & Outdoors',
-                'description': 'Sports equipment and outdoor gear',
-                'subcategories': [
-                    {'name': 'Fitness', 'description': 'Gym equipment and fitness accessories'},
-                    {'name': 'Outdoor', 'description': 'Camping and hiking gear'},
-                    {'name': 'Sports Equipment', 'description': 'Equipment for various sports'},
-                ]
-            },
-            {
-                'name': 'Beauty & Health',
-                'description': 'Beauty products and health essentials',
-                'subcategories': [
-                    {'name': 'Skincare', 'description': 'Skincare products and treatments'},
-                    {'name': 'Makeup', 'description': 'Makeup and cosmetics'},
-                    {'name': 'Health', 'description': 'Health supplements and equipment'},
-                ]
-            },
-        ]
-
-        for cat_data in categories_data:
-            parent, created = Category.objects.get_or_create(
-                name=cat_data['name'],
-                defaults={
-                    'slug': slugify(cat_data['name']),
-                    'description': cat_data['description'],
-                    'is_active': True,
-                }
-            )
-            if created:
-                self.stdout.write(f"  Created category: {parent.name}")
-
-            for sub_data in cat_data.get('subcategories', []):
-                sub, created = Category.objects.get_or_create(
-                    name=sub_data['name'],
-                    parent=parent,
-                    defaults={
-                        'slug': slugify(sub_data['name']),
-                        'description': sub_data['description'],
-                        'is_active': True,
-                    }
-                )
-                if created:
-                    self.stdout.write(f"    Created subcategory: {sub.name}")
-
-        self.categories = list(Category.objects.filter(parent__isnull=False))
-
-    def create_products(self, count):
-        """Create sample products"""
-        self.stdout.write(f'Creating {count} products...')
-
-        from apps.catalog.models import Product
-
-        product_templates = [
-            # Electronics
-            {'name': 'Wireless Bluetooth Headphones', 'base_price': 79.99, 'category': 'Audio'},
-            {'name': 'Smart Watch Series 5', 'base_price': 299.99, 'category': 'Smartphones'},
-            {'name': 'Gaming Laptop Pro', 'base_price': 1299.99, 'category': 'Laptops'},
-            {'name': '4K Action Camera', 'base_price': 199.99, 'category': 'Cameras'},
-            {'name': 'Noise Cancelling Earbuds', 'base_price': 149.99, 'category': 'Audio'},
-            {'name': 'Portable Bluetooth Speaker', 'base_price': 59.99, 'category': 'Audio'},
-            {'name': 'Ultra HD Monitor 27"', 'base_price': 399.99, 'category': 'Laptops'},
-            
-            # Fashion
-            {'name': 'Classic Cotton T-Shirt', 'base_price': 24.99, 'category': 'Men'},
-            {'name': 'Slim Fit Jeans', 'base_price': 59.99, 'category': 'Men'},
-            {'name': 'Elegant Summer Dress', 'base_price': 89.99, 'category': 'Women'},
-            {'name': 'Running Shoes Pro', 'base_price': 129.99, 'category': 'Shoes'},
-            {'name': 'Leather Crossbody Bag', 'base_price': 79.99, 'category': 'Accessories'},
-            {'name': 'Wool Winter Coat', 'base_price': 199.99, 'category': 'Women'},
-            
-            # Home
-            {'name': 'Modern Coffee Table', 'base_price': 249.99, 'category': 'Furniture'},
-            {'name': 'Ceramic Vase Set', 'base_price': 49.99, 'category': 'Decor'},
-            {'name': 'Stainless Steel Cookware Set', 'base_price': 149.99, 'category': 'Kitchen'},
-            {'name': 'Luxury Bed Sheet Set', 'base_price': 89.99, 'category': 'Bedding'},
-            {'name': 'Ergonomic Office Chair', 'base_price': 299.99, 'category': 'Furniture'},
-            
-            # Sports
-            {'name': 'Yoga Mat Premium', 'base_price': 39.99, 'category': 'Fitness'},
-            {'name': 'Camping Tent 4-Person', 'base_price': 179.99, 'category': 'Outdoor'},
-            {'name': 'Professional Basketball', 'base_price': 29.99, 'category': 'Sports Equipment'},
-            {'name': 'Adjustable Dumbbell Set', 'base_price': 249.99, 'category': 'Fitness'},
-            
-            # Beauty
-            {'name': 'Anti-Aging Serum', 'base_price': 49.99, 'category': 'Skincare'},
-            {'name': 'Professional Makeup Kit', 'base_price': 89.99, 'category': 'Makeup'},
-            {'name': 'Vitamin D3 Supplements', 'base_price': 19.99, 'category': 'Health'},
-        ]
-
-        from apps.catalog.models import Category
-
-        created_count = 0
-        for i in range(count):
-            template = random.choice(product_templates)
-            
-            # Add variation to name
-            suffix = f" - Edition {i+1}" if i > len(product_templates) else ""
-            name = template['name'] + suffix
-            
-            # Find category
-            try:
-                category = Category.objects.get(name=template['category'])
-            except Category.DoesNotExist:
-                category = random.choice(self.categories) if self.categories else None
-
-            # Random price variation
-            price = Decimal(str(template['base_price'])) * Decimal(str(random.uniform(0.8, 1.2)))
-            price = price.quantize(Decimal('0.01'))
-            
-            # Maybe add compare price (sale)
-            compare_price = None
-            if random.random() > 0.7:
-                compare_price = price * Decimal(str(random.uniform(1.1, 1.5)))
-                compare_price = compare_price.quantize(Decimal('0.01'))
-
-            # Create product
-            product, created = Product.objects.get_or_create(
-                name=name,
-                defaults={
-                    'slug': slugify(name) + '-' + str(uuid.uuid4())[:8],
-                    'description': f'Premium quality {name.lower()}. Perfect for everyday use.',
-                    'price': price,
-                    'compare_price': compare_price,
-                    'category': category,
-                    'brand': random.choice(self.brands) if self.brands else None,
-                    'stock_quantity': random.randint(0, 100),
-                    'is_active': True,
-                    'is_featured': random.random() > 0.8,
-                }
-            )
-            
-            if created:
-                created_count += 1
-
-        self.stdout.write(f'  Created {created_count} products')
-
-    def create_promotions(self):
-        """Create sample promotions and coupons"""
-        self.stdout.write('Creating promotions...')
-
-        from apps.promotions.models import Promotion, Coupon
-
-        promotions_data = [
-            {
-                'name': 'Summer Sale',
-                'discount_type': 'percentage',
-                'discount_value': 20,
-                'description': 'Get 20% off on all summer collection items!',
-            },
-            {
-                'name': 'New Customer Offer',
-                'discount_type': 'percentage',
-                'discount_value': 15,
-                'description': '15% off for first-time customers!',
-            },
-            {
-                'name': 'Flash Sale',
-                'discount_type': 'percentage',
-                'discount_value': 30,
-                'description': 'Limited time offer - 30% off!',
-            },
-        ]
-
-        for promo_data in promotions_data:
-            promo, created = Promotion.objects.get_or_create(
-                name=promo_data['name'],
-                defaults={
-                    'discount_type': promo_data['discount_type'],
-                    'discount_value': promo_data['discount_value'],
-                    'description': promo_data['description'],
-                    'is_active': True,
-                    'start_date': timezone.now(),
-                    'end_date': timezone.now() + timezone.timedelta(days=30),
-                }
-            )
-            if created:
-                self.stdout.write(f"  Created promotion: {promo.name}")
-
-        coupons_data = [
-            {'code': 'WELCOME10', 'discount_type': 'percentage', 'discount_value': 10},
-            {'code': 'SAVE20', 'discount_type': 'percentage', 'discount_value': 20},
-            {'code': 'FLAT50', 'discount_type': 'fixed', 'discount_value': 50},
-            {'code': 'FREESHIP', 'discount_type': 'free_shipping', 'discount_value': 0},
-        ]
-
-        for coupon_data in coupons_data:
-            coupon, created = Coupon.objects.get_or_create(
-                code=coupon_data['code'],
-                defaults={
-                    'discount_type': coupon_data['discount_type'],
-                    'discount_value': coupon_data['discount_value'],
-                    'is_active': True,
-                    'valid_from': timezone.now(),
-                    'valid_until': timezone.now() + timezone.timedelta(days=90),
-                    'usage_limit': 100,
-                }
-            )
-            if created:
-                self.stdout.write(f"  Created coupon: {coupon.code}")
 
     def create_pages(self):
         """Create sample CMS pages"""
@@ -427,8 +186,7 @@ class Command(BaseCommand):
         """Create sample reviews"""
         self.stdout.write('Creating reviews...')
 
-        from apps.products.models import Product
-        from apps.reviews.models import Review
+        from apps.catalog.models import Product, Review, ProductQuestion, ProductAnswer 
 
         review_templates = [
             {'rating': 5, 'title': 'Excellent product!', 'content': 'Exceeded my expectations. Highly recommend!'},

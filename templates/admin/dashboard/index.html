@@ -568,6 +568,20 @@
                 <canvas id="orderStatusChart"></canvas>
             </div>
         </div>
+
+        <div class="chart-card">
+            <h3 class="chart-title">{% trans "New Users Over Time" %}</h3>
+            <div class="chart-container">
+                <canvas id="newUsersChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <h3 class="chart-title">{% trans "Product Views Over Time" %}</h3>
+            <div class="chart-container">
+                <canvas id="productViewsChart"></canvas>
+            </div>
+        </div>
     </div>
     
     <!-- Tables -->
@@ -662,8 +676,10 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const period = '{{ period }}';
-    let revenueChart, orderStatusChart;
+    const period = '{{ selected_period }}';
+    const start_date = '{{ start_date }}';
+    const end_date = '{{ end_date }}';
+    let revenueChart, orderStatusChart, newUsersChart, productViewsChart;
     
     // Period selector
     document.querySelectorAll('.period-btn').forEach(btn => {
@@ -673,20 +689,104 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Initialize charts
-    initCharts();
+    // Load all dashboard data
+    loadDashboardData();
     
-    // Load data
-    loadRecentOrders();
-    loadLowStock();
-    loadTopProducts();
-    loadSystemHealth();
-    loadRevenueChart();
-    
-    function initCharts() {
-        // Order Status Chart
-        const orderStatusData = {{ order_status_breakdown|safe }};
+    async function loadDashboardData() {
+        try {
+            const response = await fetch(`/admin/dashboard/api/stats/?period=${period}`);
+            const data = await response.json();
+
+            // Update stat cards (example, adapt as needed)
+            document.getElementById('stat-revenue').innerText = `৳${data.total_revenue.toLocaleString()}`;
+            document.getElementById('stat-orders').innerText = data.total_orders.toLocaleString();
+            document.getElementById('stat-users').innerText = data.new_users.toLocaleString();
+            document.getElementById('stat-views').innerText = data.page_views.toLocaleString();
+
+
+            // Render charts
+            renderRevenueChart(data.revenue_over_time); // This is now in dashboard_stats_api response
+            renderOrderStatusChart(data.order_status_breakdown);
+            renderNewUsersChart(data.new_users_over_time);
+            renderProductViewsChart(data.product_views_over_time);
+
+            // Load tables
+            loadRecentOrders(); // These functions might need to be adjusted to take data from the single API call
+            loadLowStock();
+            loadTopProducts();
+            loadSystemHealth();
+
+        } catch (e) {
+            console.error('Failed to load dashboard data:', e);
+        }
+    }
+
+    function renderRevenueChart(chartData) {
+        const labels = chartData.map(item => item.date);
+        const revenue = chartData.map(item => item.revenue);
+        const orders = chartData.map(item => item.orders);
+
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        if (revenueChart) revenueChart.destroy(); // Destroy old chart instance
+        revenueChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '{% trans "Revenue" %}',
+                    data: revenue,
+                    borderColor: '#0ea5e9',
+                    backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    yAxisID: 'y'
+                }, {
+                    label: '{% trans "Orders" %}',
+                    data: orders,
+                    borderColor: '#10b981',
+                    backgroundColor: 'transparent',
+                    tension: 0.4,
+                    yAxisID: 'y1'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        grid: { drawOnChartArea: false }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim() || '#1e293b'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderOrderStatusChart(orderStatusData) {
         const statusCtx = document.getElementById('orderStatusChart').getContext('2d');
+        if (orderStatusChart) orderStatusChart.destroy(); // Destroy old chart instance
         orderStatusChart = new Chart(statusCtx, {
             type: 'doughnut',
             data: {
@@ -707,6 +807,100 @@ document.addEventListener('DOMContentLoaded', function() {
                         position: 'right',
                         labels: {
                             color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim() || '#1e293b'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderNewUsersChart(chartData) {
+        const labels = chartData.map(item => item.date);
+        const counts = chartData.map(item => item.count);
+
+        const ctx = document.getElementById('newUsersChart').getContext('2d');
+        if (newUsersChart) newUsersChart.destroy();
+        newUsersChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '{% trans "New Users" %}',
+                    data: counts,
+                    backgroundColor: '#3b82f6', // blue
+                    borderColor: '#3b82f6',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false,
+                        labels: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim() || '#1e293b'
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim() || '#64748b'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim() || '#64748b'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderProductViewsChart(chartData) {
+        const labels = chartData.map(item => item.date);
+        const counts = chartData.map(item => item.count);
+
+        const ctx = document.getElementById('productViewsChart').getContext('2d');
+        if (productViewsChart) productViewsChart.destroy();
+        productViewsChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '{% trans "Product Views" %}',
+                    data: counts,
+                    borderColor: '#a855f7', // purple
+                    backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim() || '#1e293b'
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim() || '#64748b'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim() || '#64748b'
                         }
                     }
                 }

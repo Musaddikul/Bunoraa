@@ -104,6 +104,16 @@
             <!-- Title -->
             <h1 class="text-3xl font-bold text-stone-900 dark:text-stone-100 mb-2 transition-colors duration-500">{{ product.name }}</h1>
 
+            <!-- Artisan Link -->
+            {% if product.artisan %}
+            <div class="mb-4">
+                <span class="text-sm text-gray-500">By:</span>
+                <a href="{{ product.artisan.get_absolute_url }}" class="text-lg font-semibold text-blue-600 hover:underline">
+                    {{ product.artisan.name }}
+                </a>
+            </div>
+            {% endif %}
+
             <!-- Badges -->
             <div class="flex flex-wrap items-center gap-2 mb-4" aria-hidden="false">
                 {% if product.is_new %}
@@ -230,6 +240,16 @@
                 </button>
             </div>
 
+            {% if product.can_be_customized %}
+            <div class="mt-4">
+                <button id="request-customization-btn" 
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-semibold transition-colors"
+                        data-product-id="{{ product.id }}">
+                    Request a Customization
+                </button>
+            </div>
+            {% endif %}
+
             <!-- Stock Status -->
             <div id="stock-status" class="mb-4" aria-live="polite">
                 {% if product.stock_quantity > 10 %}
@@ -252,8 +272,8 @@
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
                     </svg>
                     Out of Stock
-                    <button id="stock-alert-btn" class="ml-3 text-sm text-primary-600 dark:text-amber-400 hover:underline">
-                        Notify Me
+                    <button id="back-in-stock-btn" class="ml-3 text-sm text-primary-600 dark:text-amber-400 hover:underline">
+                        Notify Me When Back in Stock
                     </button>
                 </span>
                 {% endif %}
@@ -331,7 +351,13 @@
         <div class="border-b border-stone-200 dark:border-stone-700">
             <nav class="flex space-x-8" aria-label="Tabs">
                 <button class="tab-btn border-b-2 border-amber-500 py-4 px-1 text-sm font-medium text-amber-600 dark:text-amber-400 transition-colors duration-500" data-tab="description">Description</button>
+                {% if product.making_of_steps.exists %}
+                <button class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:border-stone-300 dark:hover:border-stone-500 transition-colors duration-500" data-tab="making-of">The Making Of</button>
+                {% endif %}
                 <button class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:border-stone-300 dark:hover:border-stone-500 transition-colors duration-500" data-tab="reviews">Reviews ({{ review_summary.total_reviews|default:0 }})</button>
+                {% if product.customer_photos.approved.exists %}
+                <button class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:border-stone-300 dark:hover:border-stone-500 transition-colors duration-500" data-tab="customer-photos">Customer Photos</button>
+                {% endif %}
                 <button class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:border-stone-300 dark:hover:border-stone-500 transition-colors duration-500" data-tab="qa">Q&A</button>
             </nav>
         </div>
@@ -341,6 +367,53 @@
                 {{ product.description|safe }}
             </div>
         </div>
+
+        {% if product.making_of_steps.exists %}
+        <div id="making-of-tab" class="tab-content py-8 hidden">
+            <div class="space-y-8">
+                {% for step in product.making_of_steps.all %}
+                <div class="flex flex-col md:flex-row gap-8">
+                    <div class="md:w-1/2">
+                        {% if step.image %}
+                        <img src="{{ step.image.url }}" alt="{{ step.title }}" class="rounded-lg shadow-md w-full">
+                        {% elif step.video_url %}
+                        <div class="aspect-w-16 aspect-h-9">
+                            <iframe src="{{ step.video_url }}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen class="rounded-lg shadow-md w-full h-full"></iframe>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="md:w-1/2">
+                        <h3 class="text-2xl font-bold mb-2">{{ step.title }}</h3>
+                        <p class="text-gray-700">{{ step.description|linebreaks }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if product.customer_photos.approved.exists %}
+        <div id="customer-photos-tab" class="tab-content py-8 hidden">
+            <h3 class="text-xl font-bold mb-4">Customer Photos</h3>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {% for photo in product.customer_photos.approved %}
+                <div class="relative group aspect-square rounded-lg overflow-hidden shadow-md">
+                    <img src="{{ photo.image.url }}" alt="{{ photo.description }}" class="w-full h-full object-cover">
+                    {% if photo.description %}
+                    <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {{ photo.description }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            <div class="mt-8 text-center">
+                <button id="upload-customer-photo-btn" class="inline-flex items-center justify-center px-5 py-2 rounded-full bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors duration-500">
+                    Upload Your Photo
+                </button>
+            </div>
+        </div>
+        {% endif %}
         
         <div id="reviews-tab" class="tab-content py-8 hidden">
             <div id="reviews-section">
@@ -424,6 +497,126 @@
     </section>
     {% endif %}
 </div>
+
+<!-- Customization Request Modal -->
+<div id="customization-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Request Customization for <br> "{{ product.name }}"</h3>
+            <div class="mt-2 px-7 py-3">
+                <form id="customization-form" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="product" value="{{ product.id }}">
+                    <div class="mb-4">
+                        <label for="id_name" class="block text-sm font-medium text-gray-700 text-left">Your Name</label>
+                        <input type="text" name="name" id="id_name" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="id_email" class="block text-sm font-medium text-gray-700 text-left">Your Email</label>
+                        <input type="email" name="email" id="id_email" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="id_phone" class="block text-sm font-medium text-gray-700 text-left">Your Phone (Optional)</label>
+                        <input type="text" name="phone" id="id_phone"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="id_message" class="block text-sm font-medium text-gray-700 text-left">Describe your customization</label>
+                        <textarea name="message" id="id_message" rows="4" required
+                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div class="items-center px-4 py-3">
+                        <button id="submit-customization-btn" type="submit"
+                                class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                            Submit Request
+                        </button>
+                        <button id="cancel-customization-btn" type="button"
+                                class="mt-3 px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+<!-- Customer Photo Upload Modal -->
+<div id="customer-photo-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Upload Your Photo for <br> "{{ product.name }}"</h3>
+            <div class="mt-2 px-7 py-3">
+                <form id="customer-photo-form" method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="product" value="{{ product.id }}">
+                    <div class="mb-4">
+                        <label for="id_image" class="block text-sm font-medium text-gray-700 text-left">Photo</label>
+                        <input type="file" name="image" id="id_image" accept="image/*" required
+                               class="mt-1 block w-full text-sm text-gray-500
+                               file:mr-4 file:py-2 file:px-4
+                               file:rounded-full file:border-0
+                               file:text-sm file:font-semibold
+                               file:bg-blue-50 file:text-blue-700
+                               hover:file:bg-blue-100">
+                    </div>
+                    <div class="mb-4">
+                        <label for="id_description" class="block text-sm font-medium text-gray-700 text-left">Description (Optional)</label>
+                        <textarea name="description" id="id_description" rows="3"
+                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div class="items-center px-4 py-3">
+                        <button id="submit-customer-photo-btn" type="submit"
+                                class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                            Upload Photo
+                        </button>
+                        <button id="cancel-customer-photo-btn" type="button"
+                                class="mt-3 px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Back in Stock Notification Modal -->
+<div id="back-in-stock-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Notify Me When Back in Stock <br> "{{ product.name }}"</h3>
+            <div class="mt-2 px-7 py-3">
+                <form id="back-in-stock-form" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="product" value="{{ product.id }}">
+                    <input type="hidden" name="variant" value="" id="back-in-stock-variant">
+                    {% if not request.user.is_authenticated %}
+                    <div class="mb-4">
+                        <label for="id_back_in_stock_email" class="block text-sm font-medium text-gray-700 text-left">Your Email</label>
+                        <input type="email" name="email" id="id_back_in_stock_email" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    {% else %}
+                    <p class="text-sm text-gray-600 mb-4">We'll notify you at your registered email: <strong>{{ request.user.email }}</strong></p>
+                    {% endif %}
+                    
+                    <div class="items-center px-4 py-3">
+                        <button id="submit-back-in-stock-btn" type="submit"
+                                class="px-4 py-2 bg-green-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-300">
+                            Submit Request
+                        </button>
+                        <button id="cancel-back-in-stock-btn" type="button"
+                                class="mt-3 px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -471,5 +664,179 @@
         var max = parseInt(input.max) || 999;
         if (parseInt(input.value) < max) input.value = parseInt(input.value) + 1;
     });
+
+    // Customization Request Modal Logic
+    const customizationModal = document.getElementById('customization-modal');
+    const requestCustomizationBtn = document.getElementById('request-customization-btn');
+    const cancelCustomizationBtn = document.getElementById('cancel-customization-btn');
+    const customizationForm = document.getElementById('customization-form');
+    const productId = document.getElementById('product-detail').dataset.productId;
+
+    if (requestCustomizationBtn) {
+        requestCustomizationBtn.addEventListener('click', () => {
+            customizationModal.classList.remove('hidden');
+        });
+    }
+
+    if (cancelCustomizationBtn) {
+        cancelCustomizationBtn.addEventListener('click', () => {
+            customizationModal.classList.add('hidden');
+            customizationForm.reset();
+        });
+    }
+
+    if (customizationForm) {
+        customizationForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(customizationForm);
+            const data = {
+                product: productId,
+                name: formData.get('name'),
+                email: formData.get('email'),
+                phone: formData.get('phone'),
+                message: formData.get('message'),
+            };
+
+            try {
+                const response = await fetch('/api/v1/contacts/customization-requests/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(result.message);
+                    customizationModal.classList.add('hidden');
+                    customizationForm.reset();
+                } else {
+                    alert('Error: ' + JSON.stringify(result.errors || result.message));
+                }
+            } catch (error) {
+                console.error('Error submitting customization request:', error);
+                alert('An unexpected error occurred. Please try again.');
+            }
+        });
+    }
+
+    // Customer Photo Upload Modal Logic
+    const customerPhotoModal = document.getElementById('customer-photo-modal');
+    const uploadCustomerPhotoBtn = document.getElementById('upload-customer-photo-btn');
+    const cancelCustomerPhotoBtn = document.getElementById('cancel-customer-photo-btn');
+    const customerPhotoForm = document.getElementById('customer-photo-form');
+
+    if (uploadCustomerPhotoBtn) {
+        uploadCustomerPhotoBtn.addEventListener('click', () => {
+            customerPhotoModal.classList.remove('hidden');
+        });
+    }
+
+    if (cancelCustomerPhotoBtn) {
+        cancelCustomerPhotoBtn.addEventListener('click', () => {
+            customerPhotoModal.classList.add('hidden');
+            customerPhotoForm.reset();
+        });
+    }
+
+    if (customerPhotoForm) {
+        customerPhotoForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(customerPhotoForm);
+            formData.append('product', productId);
+
+            try {
+                const response = await fetch('/api/v1/catalog/customer-photos/upload/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    },
+                    body: formData,
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(result.message);
+                    customerPhotoModal.classList.add('hidden');
+                    customerPhotoForm.reset();
+                    // Optionally, reload customer photos section or update dynamically
+                } else {
+                    alert('Error: ' + JSON.stringify(result.errors || result.message));
+                }
+            } catch (error) {
+                console.error('Error submitting customer photo:', error);
+                alert('An unexpected error occurred. Please try again.');
+            }
+        });
+    }
+
+    // Back in Stock Notification Modal Logic
+    const backInStockModal = document.getElementById('back-in-stock-modal');
+    const backInStockBtn = document.getElementById('back-in-stock-btn');
+    const cancelBackInStockBtn = document.getElementById('cancel-back-in-stock-btn');
+    const backInStockForm = document.getElementById('back-in-stock-form');
+    const backInStockVariantInput = document.getElementById('back-in-stock-variant');
+
+    if (backInStockBtn) {
+        backInStockBtn.addEventListener('click', () => {
+            // Check for selected variant if applicable
+            const selectedVariantBtn = document.querySelector('.variant-btn.border-primary-500');
+            if (selectedVariantBtn) {
+                backInStockVariantInput.value = selectedVariantBtn.dataset.variant;
+            } else {
+                backInStockVariantInput.value = ''; // No specific variant selected
+            }
+            backInStockModal.classList.remove('hidden');
+        });
+    }
+
+    if (cancelBackInStockBtn) {
+        cancelBackInStockBtn.addEventListener('click', () => {
+            backInStockModal.classList.add('hidden');
+            backInStockForm.reset();
+        });
+    }
+
+    if (backInStockForm) {
+        backInStockForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(backInStockForm);
+            const data = {
+                product: productId,
+                variant: formData.get('variant'),
+                email: formData.get('email'),
+            };
+
+            try {
+                const response = await fetch(`/api/v1/products/${productSlug}/request-back-in-stock/`, { // Use productSlug from data-product-slug
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                const result = await response.json();
+
+                if (result.detail === 'You have already requested a notification for this product/variant.') {
+                    alert(result.detail);
+                } else if (result.success) {
+                    alert(result.detail);
+                    backInStockModal.classList.add('hidden');
+                    backInStockForm.reset();
+                } else {
+                    alert('Error: ' + JSON.stringify(result.errors || result.detail));
+                }
+            } catch (error) {
+                console.error('Error submitting back in stock request:', error);
+                alert('An unexpected error occurred. Please try again.');
+            }
+        });
+    }
 </script>
 {% endblock %}

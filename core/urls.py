@@ -56,6 +56,9 @@ urlpatterns = [
     path('products/', include('apps.catalog.urls', namespace='catalog-products')),
     path('categories/', include('apps.catalog.urls', namespace='catalog-categories')),
     
+    # Artisans
+    path('artisans/', include('apps.artisans.urls', namespace='artisans')),
+    
     # Shopping features - Cart, Wishlist, Checkout via commerce app
     path('', include(('apps.commerce.urls', 'commerce'), namespace='commerce')),
     path('orders/', include('apps.orders.urls')),

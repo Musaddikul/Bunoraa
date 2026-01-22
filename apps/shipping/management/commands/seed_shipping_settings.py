@@ -13,7 +13,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--threshold',
             type=float,
-            default=2000,
+            default=3000,
             help='Free shipping threshold amount (default: 2000)'
         )
         parser.add_argument(
@@ -49,7 +49,7 @@ class Command(BaseCommand):
                 # Units
                 'default_weight_unit': 'kg',
                 'default_dimension_unit': 'cm',
-                'default_package_weight': Decimal('0.50'),
+                'default_package_weight': Decimal('0.45'),
                 
                 # Display
                 'show_delivery_estimates': True,

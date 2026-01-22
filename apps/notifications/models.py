@@ -4,6 +4,9 @@ Notifications models
 import uuid
 from django.db import models
 from django.conf import settings
+from django.db.models import Q
+from django.core.exceptions import ValidationError
+from apps.catalog.models import Product, ProductVariant
 
 
 class NotificationType(models.TextChoices):
@@ -208,6 +211,72 @@ class EmailLog(models.Model):
     
     def __str__(self):
         return f"{self.recipient_email} - {self.subject}"
+
+
+class BackInStockNotification(models.Model):
+    """
+    Records a customer's request to be notified when a product or variant is back in stock.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='back_in_stock_requests')
+    variant = models.ForeignKey(
+        ProductVariant,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='back_in_stock_requests',
+        help_text='Specific variant of the product requested (if applicable).'
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='back_in_stock_subscriptions',
+        help_text='Authenticated user who requested the notification.'
+    )
+    email = models.EmailField(
+        blank=True,
+        help_text='Email address to notify if user is not authenticated.'
+    )
+    
+    is_notified = models.BooleanField(default=False, help_text='Has the customer been notified?')
+    notified_at = models.DateTimeField(null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Back in Stock Notification Request'
+        verbose_name_plural = 'Back in Stock Notification Requests'
+        # Ensure uniqueness of request (product/variant/user or product/variant/email)
+        constraints = [
+            models.UniqueConstraint(
+                fields=['product', 'variant', 'user'],
+                condition=Q(user__isnull=False),
+                name='unique_back_in_stock_user'
+            ),
+            models.UniqueConstraint(
+                fields=['product', 'variant', 'email'],
+                condition=Q(user__isnull=True),
+                name='unique_back_in_stock_email'
+            ),
+        ]
+
+    def clean(self):
+        if not self.user and not self.email:
+            raise ValidationError("Either a user or an email address must be provided.")
+        if self.user and self.email:
+            raise ValidationError("Cannot provide both a user and an email address.")
+        if self.variant and self.variant.product != self.product:
+            raise ValidationError("The selected variant does not belong to the specified product.")
+
+    def __str__(self):
+        target = self.product.name
+        if self.variant:
+            target += f" ({self.variant})"
+        requester = self.user.get_full_name() if self.user else self.email
+        return f"Back in stock request for {target} by {requester}"
 
 
 class PushToken(models.Model):

@@ -16,7 +16,8 @@ from .serializers import (
     ContactCategorySerializer, ContactInquiryCreateSerializer,
     ContactInquirySerializer, ContactInquiryDetailSerializer,
     StoreLocationSerializer, StoreLocationMinimalSerializer,
-    ContactSettingsPublicSerializer, NearbyLocationRequestSerializer
+    ContactSettingsPublicSerializer, NearbyLocationRequestSerializer,
+    CustomizationRequestSerializer
 )
 
 
@@ -266,3 +267,44 @@ class ContactSettingsView(APIView):
             'success': True,
             'data': serializer.data
         })
+
+
+class CustomizationRequestView(APIView):
+    """View for creating customization requests."""
+    
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        """Create a new customization request."""
+        serializer = CustomizationRequestSerializer(data=request.data)
+        
+        if not serializer.is_valid():
+            return Response({
+                'success': False,
+                'message': 'Invalid data',
+                'errors': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get client info
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip_address = x_forwarded_for.split(',')[0].strip()
+        else:
+            ip_address = request.META.get('REMOTE_ADDR')
+        
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        
+        customization_request = serializer.save(
+            user=request.user if request.user.is_authenticated else None,
+            ip_address=ip_address,
+            user_agent=user_agent
+        )
+        
+        # Here you could add a call to a service to send a notification email
+        # to the admin, similar to ContactInquiryService.
+        
+        return Response({
+            'success': True,
+            'message': 'Your customization request has been submitted successfully!',
+            'data': CustomizationRequestSerializer(customization_request).data
+        }, status=status.HTTP_201_CREATED)

@@ -3,7 +3,7 @@ Notifications API serializers
 """
 from rest_framework import serializers
 
-from ..models import Notification, NotificationPreference
+from ..models import Notification, NotificationPreference, BackInStockNotification
 
 
 class NotificationSerializer(serializers.ModelSerializer):
@@ -48,3 +48,11 @@ class PushTokenSerializer(serializers.Serializer):
     token = serializers.CharField(max_length=500)
     device_type = serializers.ChoiceField(choices=['ios', 'android', 'web'])
     device_name = serializers.CharField(max_length=100, required=False, allow_blank=True)
+
+
+class BackInStockNotificationSerializer(serializers.ModelSerializer):
+    """Serializer for back-in-stock notification requests."""
+    
+    class Meta:
+        model = BackInStockNotification
+        fields = ['product', 'variant', 'email']

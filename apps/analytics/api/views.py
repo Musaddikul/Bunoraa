@@ -5,6 +5,9 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAdminUser
+from django.contrib.auth import get_user_model 
+
+User = get_user_model()
 
 from ..models import DailyStat
 from ..services import DashboardService, AnalyticsService
@@ -106,6 +109,30 @@ class DashboardViewSet(viewsets.ViewSet):
             'success': True,
             'message': 'Cart analytics retrieved successfully',
             'data': serializer.data,
+            'meta': {'days': days}
+        })
+
+    @action(detail=False, methods=['get'], url_path='new-users')
+    def new_users(self, request):
+        """Get new user registrations over time."""
+        days = int(request.query_params.get('days', 30))
+        data = DashboardService.get_new_users_data(days)
+        return Response({
+            'success': True,
+            'message': 'New users data retrieved successfully',
+            'data': data,
+            'meta': {'days': days}
+        })
+
+    @action(detail=False, methods=['get'], url_path='product-views-over-time')
+    def product_views_over_time(self, request):
+        """Get product views over time."""
+        days = int(request.query_params.get('days', 30))
+        data = DashboardService.get_product_views_data(days)
+        return Response({
+            'success': True,
+            'message': 'Product views data retrieved successfully',
+            'data': data,
             'meta': {'days': days}
         })
 

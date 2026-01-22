@@ -8,7 +8,8 @@ from apps.catalog.models import (
     Category, Product, ProductImage, ProductVariant, Tag, Attribute, AttributeValue,
     Collection, CollectionItem, Review, ReviewImage, Badge, Spotlight, Bundle, BundleItem,
     Facet, CategoryFacet, ShippingMaterial, Product3DAsset, Option, OptionValue,
-    Currency, ProductPrice, EcoCertification
+    Currency, ProductPrice, EcoCertification, CustomerPhoto,
+    ProductQuestion, ProductAnswer
 )
 
 
@@ -449,3 +450,70 @@ class ProductPriceSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductPrice
         fields = ('id', 'currency', 'price')
+
+
+class CustomerPhotoSerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField()
+    product_name = serializers.CharField(source='product.name', read_only=True)
+
+    class Meta:
+        model = CustomerPhoto
+        fields = ['id', 'product', 'product_name', 'user', 'user_name', 'image', 'description', 'status', 'created_at']
+        read_only_fields = ['user', 'status', 'created_at', 'updated_at', 'product_name']
+
+    def get_user_name(self, obj):
+        if obj.user:
+            return obj.user.get_full_name()
+        return "Anonymous"
+
+    def create(self, validated_data):
+        # Set user if authenticated
+        user = self.context['request'].user
+        if user.is_authenticated:
+            validated_data['user'] = user
+        return super().create(validated_data)
+
+
+class ProductQuestionSerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField()
+    answers = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ProductQuestion
+        fields = ['id', 'product', 'user', 'user_name', 'question_text', 'status', 'created_at', 'answers']
+        read_only_fields = ['user', 'status', 'created_at', 'updated_at']
+
+    def get_user_name(self, obj):
+        if obj.user:
+            return obj.user.get_full_name()
+        return "Anonymous"
+
+    def get_answers(self, obj):
+        answers = obj.answers.approved().order_by('created_at')
+        return ProductAnswerSerializer(answers, many=True, context=self.context).data
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        if user.is_authenticated:
+            validated_data['user'] = user
+        return super().create(validated_data)
+
+
+class ProductAnswerSerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ProductAnswer
+        fields = ['id', 'question', 'user', 'user_name', 'answer_text', 'status', 'created_at']
+        read_only_fields = ['user', 'status', 'created_at', 'updated_at']
+
+    def get_user_name(self, obj):
+        if obj.user:
+            return obj.user.get_full_name()
+        return "Anonymous"
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        if user.is_authenticated:
+            validated_data['user'] = user
+        return super().create(validated_data)

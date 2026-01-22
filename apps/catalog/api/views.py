@@ -6,12 +6,15 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
-from rest_framework.pagination import PageNumberPagination
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.generics import CreateAPIView 
+from rest_framework.pagination import PageNumberPagination 
 from django.shortcuts import get_object_or_404
 from django.db.models import Count, Q, Avg
 
 from apps.catalog.models import (
-    Category, Product, Collection, Bundle, Review, Badge, Spotlight, Facet, Tag
+    Category, Product, Collection, Bundle, Review, Badge, Spotlight, Facet, Tag, CustomerPhoto,
+    ProductQuestion, ProductAnswer
 )
 from apps.catalog.services import (
     CategoryService, ProductService, CollectionService, ReviewService,
@@ -26,8 +29,12 @@ from .serializers import (
     BundleListSerializer, BundleDetailSerializer,
     ReviewSerializer, CreateReviewSerializer,
     FacetSerializer, FacetWithCountsSerializer, FacetValueSerializer,
-    SpotlightSerializer, TagSerializer, BadgeSerializer
+    SpotlightSerializer, TagSerializer, BadgeSerializer,
+    CustomerPhotoSerializer,
+    ProductQuestionSerializer, ProductAnswerSerializer
 )
+
+from apps.notifications.api.serializers import BackInStockNotificationSerializer 
 
 
 # =============================================================================
@@ -280,6 +287,43 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'], permission_classes=[AllowAny], url_path='request-back-in-stock')
+    def request_back_in_stock(self, request, slug=None):
+        """
+        Allows a user to request a notification when a product or variant is back in stock.
+        """
+        product = self.get_object()
+        variant_id = request.data.get('variant_id')
+        email = request.data.get('email')
+
+        if not request.user.is_authenticated and not email:
+            return Response({'detail': 'Email is required for unauthenticated users.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if variant_id:
+            variant = get_object_or_404(ProductVariant, id=variant_id, product=product)
+        else:
+            variant = None
+        
+        # Check if already requested
+        if request.user.is_authenticated:
+            existing_request = BackInStockNotification.objects.filter(product=product, variant=variant, user=request.user).exists()
+        else:
+            existing_request = BackInStockNotification.objects.filter(product=product, variant=variant, email=email).exists()
+
+        if existing_request:
+            return Response({'detail': 'You have already requested a notification for this product/variant.'}, status=status.HTTP_409_CONFLICT) # 409 Conflict
+
+        serializer = BackInStockNotificationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(
+                product=product,
+                variant=variant,
+                user=request.user if request.user.is_authenticated else None,
+                email=email if not request.user.is_authenticated else ''
+            )
+            return Response({'detail': 'We will notify you when this product is back in stock!'}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     @action(detail=False, methods=['get'])
     def featured(self, request):
@@ -503,3 +547,82 @@ class HomepageDataView(APIView):
                 many=True, context={'request': request}
             ).data,
         })
+
+
+class CustomerPhotoUploadView(CreateAPIView):
+    """
+    API endpoint for customers to upload photos of products.
+    """
+    queryset = CustomerPhoto.objects.all()
+    serializer_class = CustomerPhotoSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly] # Allow anonymous to upload, status will be pending
+    parser_classes = [MultiPartParser, FormParser]
+
+    def perform_create(self, serializer):
+        # The serializer's create method handles setting the user if authenticated
+        serializer.save()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response({
+            'success': True,
+            'message': 'Your photo has been uploaded and is pending review!',
+            'data': serializer.data
+        }, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class ProductQuestionListView(mixins.ListModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
+    """
+    API endpoint for listing and creating product questions.
+    """
+    serializer_class = ProductQuestionSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        product_id = self.kwargs['product_pk']
+        return ProductQuestion.approved.filter(product_id=product_id)
+
+    def perform_create(self, serializer):
+        product = get_object_or_404(Product, pk=self.kwargs['product_pk'])
+        serializer.save(product=product, user=self.request.user if self.request.user.is_authenticated else None)
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def ask_question(self, request, product_pk=None):
+        product = get_object_or_404(Product, pk=product_pk)
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response({
+            'success': True,
+            'message': 'Your question has been submitted and is pending review!',
+            'data': serializer.data
+        }, status=status.HTTP_201_CREATED)
+
+
+class ProductAnswerCreateView(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    """
+    API endpoint for creating product answers.
+    Only staff or the original question asker can answer a question?
+    For now, any authenticated user can answer. Answers are pending moderation.
+    """
+    serializer_class = ProductAnswerSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        question = get_object_or_404(ProductQuestion, pk=self.kwargs['question_pk'])
+        serializer.save(question=question, user=self.request.user)
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def add_answer(self, request, question_pk=None):
+        question = get_object_or_404(ProductQuestion, pk=question_pk)
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response({
+            'success': True,
+            'message': 'Your answer has been submitted and is pending review!',
+            'data': serializer.data
+        }, status=status.HTTP_201_CREATED)

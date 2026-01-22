@@ -6,7 +6,8 @@ from django.utils.html import format_html
 
 from .models import (
     ContactCategory, ContactInquiry, ContactResponse,
-    ContactAttachment, StoreLocation, ContactSettings
+    ContactAttachment, StoreLocation, ContactSettings,
+    CustomizationRequest
 )
 
 
@@ -136,6 +137,58 @@ class ContactInquiryAdmin(admin.ModelAdmin):
         count = queryset.update(status='spam')
         self.message_user(request, f'{count} inquiries marked as spam.')
     mark_spam.short_description = 'Mark as spam'
+
+
+@admin.register(CustomizationRequest)
+class CustomizationRequestAdmin(admin.ModelAdmin):
+    """Admin for CustomizationRequest model."""
+    
+    list_display = ['product', 'name', 'email', 'status', 'created_at']
+    list_filter = ['status', 'created_at']
+    search_fields = ['name', 'email', 'message', 'product__name']
+    readonly_fields = ['product', 'user', 'ip_address', 'user_agent', 'created_at', 'updated_at']
+    ordering = ['-created_at']
+    
+    fieldsets = (
+        (None, {
+            'fields': ('product', 'user', 'name', 'email', 'phone')
+        }),
+        ('Request Details', {
+            'fields': ('message',)
+        }),
+        ('Status', {
+            'fields': ('status',)
+        }),
+        ('Internal Notes', {
+            'fields': ('internal_notes',)
+        }),
+        ('Tracking', {
+            'fields': ('ip_address', 'user_agent', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    actions = ['mark_in_progress', 'mark_quoted', 'mark_ordered', 'mark_closed']
+    
+    def mark_in_progress(self, request, queryset):
+        updated = queryset.update(status='in_progress')
+        self.message_user(request, f'{updated} requests marked as in progress.')
+    mark_in_progress.short_description = 'Mark as In Progress'
+
+    def mark_quoted(self, request, queryset):
+        updated = queryset.update(status='quoted')
+        self.message_user(request, f'{updated} requests marked as quoted.')
+    mark_quoted.short_description = 'Mark as Quoted'
+
+    def mark_ordered(self, request, queryset):
+        updated = queryset.update(status='ordered')
+        self.message_user(request, f'{updated} requests marked as ordered.')
+    mark_ordered.short_description = 'Mark as Ordered'
+
+    def mark_closed(self, request, queryset):
+        updated = queryset.update(status='closed')
+        self.message_user(request, f'{updated} requests marked as closed.')
+    mark_closed.short_description = 'Mark as Closed'
 
 
 @admin.register(ContactResponse)

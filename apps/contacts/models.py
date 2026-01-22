@@ -181,6 +181,58 @@ class ContactResponse(models.Model):
         return f'Response to: {self.inquiry.subject}'
 
 
+
+class CustomizationRequest(models.Model):
+    """
+    A request from a customer for a product customization.
+    """
+    STATUS_CHOICES = [
+        ('new', 'New'),
+        ('in_progress', 'In Progress'),
+        ('quoted', 'Quoted'),
+        ('ordered', 'Ordered'),
+        ('closed', 'Closed'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    product = models.ForeignKey(
+        'catalog.Product',
+        on_delete=models.CASCADE,
+        related_name='customization_requests'
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='customization_requests'
+    )
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    phone = models.CharField(max_length=30, blank=True)
+    message = models.TextField(help_text="Please describe the customization you want in detail.")
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
+    
+    # Tracking
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)
+    
+    # Admin notes
+    internal_notes = models.TextField(blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Customization Request'
+        verbose_name_plural = 'Customization Requests'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'Customization request for {self.product.name} from {self.name}'
+
+
 class ContactAttachment(models.Model):
     """Attachment for contact inquiries."""
     
