@@ -210,8 +210,11 @@ class CategoryAdmin(admin.ModelAdmin):
     export_selected_csv.short_description = "Export selected categories as CSV"
 
 
+from .forms import ProductAdminForm 
+
 @admin.register(Product)
 class ProductAdmin(EnhancedModelAdmin, BulkActivateMixin, BulkFeaturedMixin):
+    form = ProductAdminForm 
     list_display = (
         "thumbnail_preview", "name", "sku", "primary_category_display", 
         "price_display", "stock_status", "performance_stats", "is_active",
@@ -229,6 +232,7 @@ class ProductAdmin(EnhancedModelAdmin, BulkActivateMixin, BulkFeaturedMixin):
     list_per_page = 25
     list_editable = ("is_active",)
     save_on_top = True
+    filter_horizontal = ("categories", "tags")
     
     # Export fields
     export_fields = ['sku', 'name', 'price', 'sale_price', 'stock_quantity', 
@@ -291,6 +295,32 @@ class ProductAdmin(EnhancedModelAdmin, BulkActivateMixin, BulkFeaturedMixin):
         return super().get_queryset(request).select_related(
             'primary_category', 'shipping_material'
         ).prefetch_related('categories', 'images')
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        
+        # After saving the product, ensure primary_category is also in categories M2M
+        if obj.primary_category and obj.primary_category not in obj.categories.all():
+            obj.categories.add(obj.primary_category)
+            messages.info(request, _("Primary category automatically added to product categories."))
+        
+        # Also ensure product_count is updated for the primary category
+        if change:
+            # If primary category changed, update counts for old and new
+            old_primary_category_id = form.initial.get('primary_category')
+            if old_primary_category_id and old_primary_category_id != obj.primary_category_id:
+                old_primary_category = Category.objects.get(pk=old_primary_category_id)
+                old_primary_category.product_count = old_primary_category.products.count()
+                old_primary_category.save()
+            
+            # Update new primary category count
+            if obj.primary_category:
+                obj.primary_category.product_count = obj.primary_category.products.count()
+                obj.primary_category.save()
+        else: # New product
+            if obj.primary_category:
+                obj.primary_category.product_count = obj.primary_category.products.count()
+                obj.primary_category.save()
     
     def thumbnail_preview(self, obj):
         # Try to get primary image or first image

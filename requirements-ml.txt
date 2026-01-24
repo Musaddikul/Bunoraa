@@ -72,7 +72,7 @@ pydantic
 # =============================================================================
 peft  # Parameter-efficient fine-tuning
 wandb  # Weights & Biases tracking
-ray  # Distributed training
+# ray  # Distributed training
 # triton  # For custom CUDA kernels
 # bitsandbytes  # For 8-bit optimization
 # =============================================================================

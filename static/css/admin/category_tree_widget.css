@@ -1,0 +1,58 @@
+.category-tree-widget-container .category-tree-wrapper {
+    border: 1px solid #ddd;
+    padding: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    border-radius: 4px;
+}
+
+.category-tree-widget-container ul {
+    list-style-type: none;
+    padding-left: 0; /* Remove padding, will be handled by JS */
+}
+
+.category-tree-widget-container li {
+    padding: 2px 0;
+}
+
+.category-tree-widget-container .category-node .label {
+    cursor: pointer;
+    padding: 3px 5px;
+    border-radius: 3px;
+    display: inline-block; /* Needed for padding to work correctly */
+}
+
+.category-tree-widget-container .category-node .label:hover {
+    background-color: #f2f2f2;
+}
+
+.category-tree-widget-container .category-node .label.selected {
+    background-color: #4CAF50;
+    color: white;
+    font-weight: bold;
+}
+
+.category-tree-widget-container .category-node .toggle {
+    cursor: pointer;
+    display: inline-block;
+    width: 15px;
+    text-align: center;
+    margin-right: 5px;
+}
+
+.category-tree-widget-container .category-node .toggle::before {
+    content: '+'; /* Collapsed */
+    font-weight: bold;
+}
+
+.category-tree-widget-container .category-node.expanded > .toggle::before {
+    content: '−'; /* Expanded */
+}
+
+.category-tree-widget-container .category-node > ul {
+    display: none;
+}
+
+.category-tree-widget-container .category-node.expanded > ul {
+    display: block;
+}

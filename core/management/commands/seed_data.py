@@ -58,6 +58,7 @@ class Command(BaseCommand):
         call_command('seed_contacts_data')
         call_command('seed_referral_data')
         call_command('seed_notification_data')
+        call_command('seed_chat_data')
         
         # Seed additional data (currencies, shipping, payments, locations)
         self.seed_currencies()
@@ -73,26 +74,33 @@ class Command(BaseCommand):
         self.stdout.write('Clearing existing data...')
         
         from apps.catalog.models import (
-            Product, Category, ProductMakingOf, CustomizationRequest, CustomerPhoto,
+            Product, Category, ProductMakingOf, CustomerPhoto,
             ProductQuestion, ProductAnswer
         )
         from apps.promotions.models import Promotion, Coupon
         from apps.pages.models import Page
+        from apps.contacts.models import CustomizationRequest
         from apps.referral.models import ReferralCode, ReferralReward
         from apps.notifications.models import BackInStockNotification
-        
+        from apps.artisans.models import Artisan 
+        from apps.chat.models import Conversation, Message 
+
+        # Delete in order of dependencies
+        Message.objects.all().delete() 
+        Conversation.objects.all().delete() 
+        BackInStockNotification.objects.all().delete()
+        ReferralReward.objects.all().delete()
+        ReferralCode.objects.all().delete()
+        CustomizationRequest.objects.all().delete()
+        ProductAnswer.objects.all().delete()
+        ProductQuestion.objects.all().delete()
+        CustomerPhoto.objects.all().delete()
+        ProductMakingOf.objects.all().delete()
         Product.objects.all().delete()
         Category.objects.all().delete()
-        ProductMakingOf.objects.all().delete()
-        CustomizationRequest.objects.all().delete()
-        CustomerPhoto.objects.all().delete()
-        ProductQuestion.objects.all().delete()
-        ProductAnswer.objects.all().delete()
         Promotion.objects.all().delete()
         Coupon.objects.all().delete()
-        ReferralCode.objects.all().delete()
-        ReferralReward.objects.all().delete()
-        BackInStockNotification.objects.all().delete()
+        Artisan.objects.all().delete() 
         Page.objects.all().delete()
         User.objects.filter(is_superuser=False).delete()
         self.stdout.write('Existing data cleared.\n')

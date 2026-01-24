@@ -221,9 +221,8 @@ class WishlistViewSet(viewsets.ViewSet):
         serializer = WishlistSerializer(wishlist, context={'request': request})
         return Response(serializer.data)
     
-    @action(detail=False, methods=['post'])
-    def add(self, request):
-        """Add item to wishlist."""
+    def create(self, request): # Added create method
+        """Add item to wishlist (maps to POST /wishlist/)."""
         from apps.catalog.models import Product, ProductVariant
         
         serializer = AddToWishlistSerializer(data=request.data)
@@ -259,6 +258,13 @@ class WishlistViewSet(viewsets.ViewSet):
             return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['post'])
+    def add(self, request):
+        """Add item to wishlist (alternative method, can be removed if create is sufficient)."""
+        # This method duplicates the create logic. It can be kept for backward compatibility
+        # or removed if all clients can switch to POST /wishlist/.
+        return self.create(request)
     
     @action(detail=False, methods=['post'], url_path='remove/(?P<item_id>[^/.]+)')
     def remove_item(self, request, item_id=None):

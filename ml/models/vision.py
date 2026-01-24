@@ -470,6 +470,35 @@ class ProductImageClassifier(BaseNeuralNetwork):
         self._indexed_ids = product_ids
         
         logger.info("Similarity index built successfully")
+
+    def save(self, path: Union[str, Path]) -> Path:
+        """Save model and similarity index."""
+        path = super().save(path)
+        
+        if self._feature_index is not None and self._indexed_ids is not None:
+            index_path = path / "similarity_index.npz"
+            np.savez_compressed(
+                index_path,
+                feature_index=self._feature_index,
+                indexed_ids=self._indexed_ids
+            )
+            logger.info(f"Similarity index saved to {index_path}")
+            
+        return path
+
+    @classmethod
+    def load(cls, path: Union[str, Path]) -> "ProductImageClassifier":
+        """Load model and similarity index."""
+        instance = super().load(path)
+        
+        index_path = Path(path) / "similarity_index.npz"
+        if index_path.exists():
+            data = np.load(index_path, allow_pickle=True)
+            instance._feature_index = data["feature_index"]
+            instance._indexed_ids = data["indexed_ids"]
+            logger.info(f"Similarity index loaded from {index_path}")
+        
+        return instance
     
     def find_similar(
         self,

@@ -967,7 +967,31 @@
       "notes": "",
       "traffic_percentage": 0.0,
       "is_shadow": false
+    },
+    "visual_similarity_classifier-1.0.0-20260124054301": {
+      "model_id": "visual_similarity_classifier-1.0.0-20260124054301",
+      "model_name": "visual_similarity_classifier",
+      "version": "1.0.0",
+      "model_type": "vision",
+      "framework": "pytorch",
+      "status": "development",
+      "artifact_path": "D:\\Website\\Bunoraa\\ml\\registry\\models\\visual_similarity_classifier-1.0.0-20260124054301",
+      "created_at": "2026-01-24T05:43:02.312253",
+      "updated_at": "2026-01-24T05:43:02.312268",
+      "deployed_at": null,
+      "metrics": {},
+      "training_data_hash": "",
+      "num_training_samples": 0,
+      "training_time_seconds": 0.0,
+      "tags": [
+        "visual_search",
+        "recommendation"
+      ],
+      "description": "Product image classifier with visual similarity index for product recommendations.",
+      "notes": "",
+      "traffic_percentage": 0.0,
+      "is_shadow": false
     }
   },
-  "updated_at": "2026-01-08T09:36:45.166090"
+  "updated_at": "2026-01-24T05:43:02.313177"
 }

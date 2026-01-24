@@ -535,9 +535,6 @@ class Product(TimeStampedMixin):
         # price validations
         if self.sale_price is not None and self.sale_price >= self.price:
             raise ValidationError("Sale price must be lower than regular price")
-        # primary_category must belong to categories if set
-        if self.primary_category and not self.categories.filter(id=self.primary_category_id).exists():
-            raise ValidationError({"primary_category": "Primary category must be one of the product categories"})
 
     def soft_delete(self):
         # decrement category product_count if not already deleted
