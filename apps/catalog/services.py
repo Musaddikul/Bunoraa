@@ -420,6 +420,10 @@ class ProductService:
         paginator = Paginator(queryset, page_size)
         page_obj = paginator.get_page(page)
         
+        # Attach primary image to each product for easy template access
+        for product in page_obj:
+            product.primary_image = product.images.filter(is_primary=True).first() or product.images.first()
+
         return {
             'products': list(page_obj),
             'total': paginator.count,
@@ -456,40 +460,52 @@ class ProductService:
     @classmethod
     def get_featured_products(cls, limit=8):
         """Get featured products for homepage."""
-        return Product.objects.filter(
+        products = Product.objects.filter(
             is_active=True,
             is_deleted=False,
             is_featured=True
         ).select_related('primary_category').prefetch_related(
             'images', 'categories'
         ).order_by('-created_at')[:limit]
+        
+        for product in products:
+            product.primary_image = product.images.filter(is_primary=True).first() or product.images.first()
+        return products
     
     @classmethod
     def get_new_arrivals(cls, limit=8):
         """Get new arrival products."""
-        return Product.objects.filter(
+        products = Product.objects.filter(
             is_active=True,
             is_deleted=False,
             is_new_arrival=True
         ).select_related('primary_category').prefetch_related(
             'images', 'categories'
         ).order_by('-created_at')[:limit]
+
+        for product in products:
+            product.primary_image = product.images.filter(is_primary=True).first() or product.images.first()
+        return products
     
     @classmethod
     def get_bestsellers(cls, limit=8):
         """Get bestselling products."""
-        return Product.objects.filter(
+        products = Product.objects.filter(
             is_active=True,
             is_deleted=False,
             is_bestseller=True
         ).select_related('primary_category').prefetch_related(
             'images', 'categories'
         ).order_by('-sales_count')[:limit]
+
+        for product in products:
+            product.primary_image = product.images.filter(is_primary=True).first() or product.images.first()
+        return products
     
     @classmethod
     def get_on_sale_products(cls, limit=8):
         """Get products on sale."""
-        return Product.objects.filter(
+        products = Product.objects.filter(
             is_active=True,
             is_deleted=False,
             sale_price__isnull=False,
@@ -497,6 +513,10 @@ class ProductService:
         ).select_related('primary_category').prefetch_related(
             'images', 'categories'
         ).order_by('-created_at')[:limit]
+        
+        for product in products:
+            product.primary_image = product.images.filter(is_primary=True).first() or product.images.first()
+        return products
     
     @classmethod
     def get_related_products(cls, product: Product, limit=4):
@@ -524,12 +544,16 @@ class ProductService:
             
             related.extend(additional)
         
+        # Attach primary image to each product for easy template access
+        for p in related:
+            p.primary_image = p.images.filter(is_primary=True).first() or p.images.first()
+
         return related
     
     @classmethod
     def search_products(cls, query: str, limit=20):
         """Full-text search for products."""
-        return Product.objects.filter(
+        products = Product.objects.filter(
             Q(name__icontains=query) |
             Q(description__icontains=query) |
             Q(short_description__icontains=query) |
@@ -540,6 +564,10 @@ class ProductService:
         ).select_related('primary_category').prefetch_related(
             'images'
         ).distinct().order_by('-views_count')[:limit]
+        
+        for product in products:
+            product.primary_image = product.images.filter(is_primary=True).first() or product.images.first()
+        return products
     
     @classmethod
     @transaction.atomic
