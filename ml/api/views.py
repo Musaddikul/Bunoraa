@@ -387,7 +387,7 @@ class MLPredictionsAPIView(View):
 class PersonalizedRecommendationsView(APIView):
     """Get personalized recommendations for a user."""
     
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     
     def get(self, request):
         try:
@@ -450,6 +450,30 @@ class SimilarProductsView(APIView):
             "success": True,
             "product_id": product_id,
             "similar_products": similar,
+            "count": len(similar),
+        })
+
+
+class VisuallySimilarProductsView(APIView):
+    """Get visually similar products to a given product."""
+    
+    permission_classes = [AllowAny]
+    
+    def get(self, request, product_id: int):
+        from ..services.recommendation_service import RecommendationService
+        
+        num_items = int(request.query_params.get("limit", 10))
+        
+        service = RecommendationService()
+        similar = service.get_visually_similar_products(
+            product_id=product_id,
+            num_items=num_items
+        )
+        
+        return Response({
+            "success": True,
+            "product_id": product_id,
+            "visually_similar_products": similar,
             "count": len(similar),
         })
 

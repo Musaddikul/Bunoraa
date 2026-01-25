@@ -13,6 +13,7 @@ from .views import (
     # Recommendations
     PersonalizedRecommendationsView,
     SimilarProductsView,
+    VisuallySimilarProductsView,
     FrequentlyBoughtTogetherView,
     CartRecommendationsView,
     PopularProductsView,
@@ -85,6 +86,13 @@ urlpatterns = [
         "recommendations/similar/<int:product_id>/",
         SimilarProductsView.as_view(),
         name="similar-products"
+    ),
+
+    # GET /ml/recommendations/visual-similar/<int:product_id>/ - Get visually similar products
+    path(
+        "recommendations/visual-similar/<int:product_id>/",
+        VisuallySimilarProductsView.as_view(),
+        name="visual-similar-products"
     ),
     
     # GET /ml/recommendations/fbt/<product_id>/ - Frequently bought together

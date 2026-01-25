@@ -485,6 +485,16 @@
         </div>
     </section>
     
+    <!-- ML-Powered: Visually Similar Products -->
+    <section id="ml-visually-similar-products" class="mt-16" data-ml-recommendations="visual" data-product-id="{{ product.id }}" data-limit="8" data-show-header="true" data-title="Visually Similar Products">
+        <!-- Visually similar products loaded by JavaScript -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {% for i in "12345678" %}
+            <div class="skeleton h-72 rounded-2xl"></div>
+            {% endfor %}
+        </div>
+    </section>
+    
     <!-- Related Products (Fallback) -->
     {% if related_products %}
     <section id="related-products" class="mt-16">

@@ -256,8 +256,7 @@ class WishlistViewSet(viewsets.ViewSet):
             
         except Product.DoesNotExist:
             return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        # Removed the broad 'except Exception as e' to allow DRF's validation errors to propagate
     
     @action(detail=False, methods=['post'])
     def add(self, request):

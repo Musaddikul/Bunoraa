@@ -20,6 +20,11 @@ except ImportError:
     settings = None
 
 import numpy as np
+import requests # Added
+from io import BytesIO # Added
+from PIL import Image # Added
+from apps.catalog.models import Product, ProductImage # Added
+from ml.models.vision import ProductImageClassifier # Added
 
 logger = logging.getLogger("bunoraa.ml.services.recommendations")
 
@@ -400,10 +405,121 @@ class RecommendationService:
         
         return unique_recs[:num_items]
     
+    def get_visually_similar_products(
+        self,
+        product_id: int,
+        num_items: int = 10,
+        exclude_product_ids: Optional[List[int]] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Get visually similar products using a pre-trained image classifier and similarity index.
+        
+        Args:
+            product_id: The ID of the product for which to find similar items.
+            num_items: The number of similar items to return.
+            exclude_product_ids: Optional list of product IDs to exclude from results.
+        
+        Returns:
+            List of visually similar products, enriched with product data.
+        """
+        from apps.catalog.models import Product, ProductImage
+        from ml.models.vision import ProductImageClassifier
+        from django.conf import settings
+        import requests
+        from io import BytesIO
+        from PIL import Image
+        # numpy is already imported
+        
+        cache_key = self._cache_key(
+            "visually_similar",
+            product_id=product_id,
+            num_items=num_items
+        )
+        
+        if cache:
+            cached = cache.get(cache_key)
+            if cached:
+                return cached
+        
+        similar_products_data = []
+        try:
+            # 1. Load the ProductImageClassifier model with its pre-built index
+            registry = self._get_registry()
+            model_entry = registry.get_production_model("visual_similarity_classifier")
+            
+            if not model_entry:
+                logger.warning("Visual similarity classifier not found in registry. Returning empty list.")
+                return []
+            
+            # Use model_class to load the specific type and its custom load method
+            model: ProductImageClassifier = registry.load_model(model_entry.model_id, model_class=ProductImageClassifier)
+            
+            if not model:
+                logger.error("Failed to load visual similarity classifier model.")
+                return []
+
+            # 2. Get the primary image of the target product
+            target_product = Product.objects.filter(id=product_id, is_active=True).first()
+            if not target_product:
+                logger.warning(f"Product with ID {product_id} not found or not active.")
+                return []
+            
+            primary_image_obj = target_product.images.filter(is_primary=True).first()
+            if not primary_image_obj:
+                primary_image_obj = target_product.images.first() # Fallback to first image
+            
+            if not primary_image_obj or not primary_image_obj.image:
+                logger.warning(f"No primary image found for product {product_id}.")
+                return []
+            
+            # 3. Download the image
+            media_url_base = settings.MEDIA_URL
+            if not media_url_base.endswith('/'):
+                media_url_base += '/'
+            
+            image_url = f"{media_url_base}{primary_image_obj.image.name}"
+            response = requests.get(image_url, stream=True)
+            response.raise_for_status()
+            
+            target_image = Image.open(BytesIO(response.content)).convert('RGB')
+            target_image_np = np.array(target_image)
+
+            # 4. Find similar products using the loaded model
+            # Exclude the product itself from the results, and any other specified IDs
+            exclude_ids_list = [str(product_id)]
+            if exclude_product_ids:
+                exclude_ids_list.extend([str(pid) for pid in exclude_product_ids])
+
+            similar_results = model.find_similar(
+                image=target_image_np,
+                top_k=num_items + len(exclude_ids_list), # Fetch more to account for exclusions
+                exclude_ids=exclude_ids_list
+            )
+            
+            # Extract product IDs and sort by similarity score
+            similar_product_ids_scores = [
+                {"product_id": res["product_id"], "score": res["similarity"]}
+                for res in similar_results
+            ]
+            
+            # 5. Enrich the results with product data
+            similar_products_data = self._enrich_recommendations(similar_product_ids_scores[:num_items])
+            
+        except Exception as e:
+            logger.error(f"Failed to get visually similar products for {product_id}: {e}")
+            # Fallback to content-based or popular if visual fails
+            similar_products_data = self.get_similar_products(product_id, num_items, similarity_type="content")
+            if not similar_products_data:
+                similar_products_data = self.get_popular_items(num_items)
+
+        if cache and similar_products_data:
+            cache.set(cache_key, similar_products_data, self._cache_ttl)
+            
+        return similar_products_data
+    
     # -------------------------------------------------------------------------
     # Private helper methods
-    # -------------------------------------------------------------------------
-    
+    # -------------------------------------------------------------------------    
     def _get_user_features(self, user_id: int) -> Dict[str, Any]:
         """Get user features from feature store."""
         try:

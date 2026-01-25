@@ -147,6 +147,16 @@
         return data.products || [];
     }
 
+    async function getVisuallySimilarProducts(productId, limit = 8) {
+        const cacheKey = getCacheKey('visual', { productId, limit });
+        const cached = getFromCache(cacheKey);
+        if (cached) return cached;
+
+        const data = await fetchWithRetry(`${CONFIG.apiBase}/recommendations/visual-similar/${productId}/?limit=${limit}`);
+        setCache(cacheKey, data.visually_similar_products || []);
+        return data.visually_similar_products || [];
+    }
+
     // ================================
     // UI Components
     // ================================
@@ -407,6 +417,10 @@
                 case 'similar':
                     if (!productId) throw new Error('productId required for similar products');
                     products = await getSimilarProducts(productId, limit);
+                    break;
+                case 'visual':
+                    if (!productId) throw new Error('productId required for visually similar products');
+                    products = await getVisuallySimilarProducts(productId, limit);
                     break;
                 case 'fbt':
                 case 'frequently-bought-together':

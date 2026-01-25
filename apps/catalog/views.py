@@ -18,7 +18,7 @@ from .models import (
 )
 from .services import (
     CategoryService, ProductService, CollectionService, ReviewService,
-    BadgeService, SpotlightService, BundleService
+    BadgeService, SpotlightService, BundleService,
 )
 
 
