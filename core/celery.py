@@ -21,32 +21,33 @@ app.autodiscover_tasks()
 # =============================================================================
 # CELERY BEAT SCHEDULE - Automated Tasks
 # All times are in Bangladesh timezone (Asia/Dhaka)
+# OPTIMIZED FOR RENDER FREE TIER: Disabled memory-intensive tasks
 # =============================================================================
 app.conf.beat_schedule = {
     # ==========================================================================
-    # BACKUP TASKS
+    # BACKUP TASKS - DISABLED on Render free tier (memory intensive)
     # ==========================================================================
     
     # Daily database backup at 3 AM Bangladesh time
-    'daily-database-backup': {
-        'task': 'core.tasks.backup_database_to_r2',
-        'schedule': crontab(hour=3, minute=0),
-        'options': {'queue': 'backups'},
-    },
+    # 'daily-database-backup': {
+    #     'task': 'core.tasks.backup_database_to_r2',
+    #     'schedule': crontab(hour=3, minute=0),
+    #     'options': {'queue': 'backups'},
+    # },
     
     # Weekly full media backup on Sunday at 4 AM
-    'weekly-media-backup': {
-        'task': 'core.tasks.backup_media_to_r2',
-        'schedule': crontab(hour=4, minute=0, day_of_week=0),
-        'options': {'queue': 'backups'},
-    },
+    # 'weekly-media-backup': {
+    #     'task': 'core.tasks.backup_media_to_r2',
+    #     'schedule': crontab(hour=4, minute=0, day_of_week=0),
+    #     'options': {'queue': 'backups'},
+    # },
     
     # Daily incremental media sync at 2 AM
-    'daily-media-sync': {
-        'task': 'core.tasks.sync_media_incremental',
-        'schedule': crontab(hour=2, minute=0),
-        'options': {'queue': 'backups'},
-    },
+    # 'daily-media-sync': {
+    #     'task': 'core.tasks.sync_media_incremental',
+    #     'schedule': crontab(hour=2, minute=0),
+    #     'options': {'queue': 'backups'},
+    # },
     
     # ==========================================================================
     # DATA MAINTENANCE TASKS
@@ -64,11 +65,11 @@ app.conf.beat_schedule = {
         'schedule': crontab(hour=0, minute=30),
     },
     
-    # Update user behavior profiles every 4 hours
-    'update-behavior-profiles': {
-        'task': 'core.tasks.update_user_behavior_profiles',
-        'schedule': crontab(hour='*/4', minute=15),
-    },
+    # Update user behavior profiles every 4 hours - DISABLED (moved to batch processing)
+    # 'update-behavior-profiles': {
+    #     'task': 'core.tasks.update_user_behavior_profiles',
+    #     'schedule': crontab(hour='*/4', minute=15),
+    # },
     
     # Clean expired sessions daily at 2 AM
     'cleanup-expired-sessions': {
@@ -77,14 +78,14 @@ app.conf.beat_schedule = {
     },
     
     # ==========================================================================
-    # PERFORMANCE TASKS
+    # PERFORMANCE TASKS - DISABLED (cache warming too frequent)
     # ==========================================================================
     
-    # Warm cache every 30 minutes
-    'warm-cache': {
-        'task': 'core.tasks.warm_cache',
-        'schedule': crontab(minute='*/30'),
-    },
+    # Warm cache every 30 minutes - DISABLED on Render free tier
+    # 'warm-cache': {
+    #     'task': 'core.tasks.warm_cache',
+    #     'schedule': crontab(minute='*/30'),
+    # },
     
     # ==========================================================================
     # MARKETING & ENGAGEMENT TASKS
@@ -161,32 +162,32 @@ app.conf.beat_schedule = {
         'options': {'queue': 'ml_training'},
     },
     
-    # Train churn predictor weekly on Tuesday at 1 AM
-    'train-churn-predictor': {
-        'task': 'ml_models.training.tasks.train_churn_predictor',
-        'schedule': crontab(hour=1, minute=0, day_of_week=2),
-        'options': {'queue': 'ml_training'},
-    },
+    # Train churn predictor weekly on Tuesday at 1 AM - DISABLED
+    # 'train-churn-predictor': {
+    #     'task': 'ml_models.training.tasks.train_churn_predictor',
+    #     'schedule': crontab(hour=1, minute=0, day_of_week=2),
+    #     'options': {'queue': 'ml_training'},
+    # },
     
-    # Train search model weekly on Wednesday at 1 AM
-    'train-search-model': {
-        'task': 'ml_models.training.tasks.train_search_model',
-        'schedule': crontab(hour=1, minute=0, day_of_week=3),
-        'options': {'queue': 'ml_training'},
-    },
+    # Train search model weekly on Wednesday at 1 AM - DISABLED
+    # 'train-search-model': {
+    #     'task': 'ml_models.training.tasks.train_search_model',
+    #     'schedule': crontab(hour=1, minute=0, day_of_week=3),
+    #     'options': {'queue': 'ml_training'},
+    # },
     
-    # ML model health check hourly
-    'ml-health-check': {
-        'task': 'ml_models.training.tasks.model_health_check',
-        'schedule': crontab(minute=0),
-    },
+    # ML model health check hourly - DISABLED
+    # 'ml-health-check': {
+    #     'task': 'ml_models.training.tasks.model_health_check',
+    #     'schedule': crontab(minute=0),
+    # },
     
-    # Batch inference for recommendations every 6 hours
-    'batch-recommendations': {
-        'task': 'ml_models.training.tasks.batch_generate_recommendations',
-        'schedule': crontab(hour='*/6', minute=30),
-        'options': {'queue': 'ml_inference'},
-    },
+    # Batch inference for recommendations every 6 hours - DISABLED
+    # 'batch-recommendations': {
+    #     'task': 'ml_models.training.tasks.batch_generate_recommendations',
+    #     'schedule': crontab(hour='*/6', minute=30),
+    #     'options': {'queue': 'ml_inference'},
+    # },
     
     # ==========================================================================
     # CLEANUP TASKS
@@ -216,17 +217,17 @@ app.conf.beat_schedule = {
     # LIVE CHAT TASKS
     # ==========================================================================
     
-    # Update chat analytics every hour
+    # Update chat analytics every hour - REDUCED frequency
     'update-chat-analytics': {
         'task': 'apps.chat.tasks.update_daily_analytics',
-        'schedule': crontab(minute=5),  # 5 minutes past every hour
+        'schedule': crontab(minute=5, hour='*/3'),  # Every 3 hours instead of every hour
     },
     
-    # Cleanup stale typing indicators every 5 minutes
-    'cleanup-typing-indicators': {
-        'task': 'apps.chat.tasks.cleanup_old_typing_indicators',
-        'schedule': crontab(minute='*/5'),
-    },
+    # Cleanup stale typing indicators - DISABLED (runs too frequently)
+    # 'cleanup-typing-indicators': {
+    #     'task': 'apps.chat.tasks.cleanup_old_typing_indicators',
+    #     'schedule': crontab(minute='*/5'),
+    # },
     
     # Auto-resolve inactive conversations daily at 1 AM
     'auto-resolve-inactive-chats': {
@@ -235,23 +236,23 @@ app.conf.beat_schedule = {
         'kwargs': {'hours': 24},
     },
     
-    # Notify waiting customers every 10 minutes during business hours
-    'notify-waiting-customers': {
-        'task': 'apps.chat.tasks.notify_waiting_customers',
-        'schedule': crontab(minute='*/10', hour='9-21'),
-    },
+    # Notify waiting customers - REDUCED frequency for memory
+    # 'notify-waiting-customers': {
+    #     'task': 'apps.chat.tasks.notify_waiting_customers',
+    #     'schedule': crontab(minute='*/10', hour='9-21'),
+    # },
     
-    # Update agent online status every 5 minutes
-    'update-agent-status': {
-        'task': 'apps.chat.tasks.update_agent_online_status',
-        'schedule': crontab(minute='*/5'),
-    },
+    # Update agent online status - DISABLED (runs too frequently)
+    # 'update-agent-status': {
+    #     'task': 'apps.chat.tasks.update_agent_online_status',
+    #     'schedule': crontab(minute='*/5'),
+    # },
     
-    # Sync agent metrics hourly
-    'sync-agent-metrics': {
-        'task': 'apps.chat.tasks.sync_agent_metrics',
-        'schedule': crontab(minute=30),  # 30 minutes past every hour
-    },
+    # Sync agent metrics hourly - DISABLED
+    # 'sync-agent-metrics': {
+    #     'task': 'apps.chat.tasks.sync_agent_metrics',
+    #     'schedule': crontab(minute=30),  # 30 minutes past every hour
+    # },
     
     # ==========================================================================
     # NOTIFICATION DIGEST TASKS

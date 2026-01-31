@@ -234,10 +234,10 @@ class DatabaseOptimizer:
         """
         indexes = [
             # Products
-            ('products_product', 'category_id', 'idx_product_category'),
-            ('products_product', 'is_active', 'idx_product_active'),
-            ('products_product', 'created_at', 'idx_product_created'),
-            ('products_product', 'price', 'idx_product_price'),
+            ('catalog_product', 'primary_category_id', 'idx_product_category'),
+            ('catalog_product', 'is_active', 'idx_product_active'),
+            ('catalog_product', 'created_at', 'idx_product_created'),
+            ('catalog_product', 'price', 'idx_product_price'),
             
             # Orders
             ('orders_order', 'user_id', 'idx_order_user'),
@@ -246,7 +246,7 @@ class DatabaseOptimizer:
             
             # Analytics
             ('analytics_pageview', 'created_at', 'idx_pageview_created'),
-            ('analytics_pageview', 'session_id', 'idx_pageview_session'),
+            ('analytics_pageview', 'user_id', 'idx_pageview_user'),  # Changed from session_id
             
             # User behavior
             ('accounts_userbehaviorprofile', 'user_id', 'idx_behavior_user'),
@@ -255,11 +255,34 @@ class DatabaseOptimizer:
         ]
         
         created = []
+        errors = []
         
         with connection.cursor() as cursor:
+            # First, get list of existing tables
+            cursor.execute("""
+                SELECT tablename FROM pg_tables 
+                WHERE schemaname = 'public'
+            """)
+            existing_tables = {row[0] for row in cursor.fetchall()}
+            
             for table, column, index_name in indexes:
                 try:
-                    # Check if index exists
+                    # Skip if table doesn't exist
+                    if table not in existing_tables:
+                        logger.warning(f'Skipping index {index_name}: table "{table}" does not exist')
+                        continue
+                    
+                    # Check if table has the column
+                    cursor.execute("""
+                        SELECT 1 FROM information_schema.columns 
+                        WHERE table_name = %s AND column_name = %s
+                    """, [table, column])
+                    
+                    if not cursor.fetchone():
+                        logger.warning(f'Skipping index {index_name}: column "{column}" does not exist in table "{table}"')
+                        continue
+                    
+                    # Check if index already exists
                     cursor.execute("""
                         SELECT 1 FROM pg_indexes 
                         WHERE indexname = %s
@@ -272,7 +295,12 @@ class DatabaseOptimizer:
                         ''')
                         created.append(index_name)
                 except Exception as e:
-                    logger.error(f'Failed to create index {index_name}: {e}')
+                    error_msg = f'Failed to create index {index_name}: {e}'
+                    logger.error(error_msg)
+                    errors.append(error_msg)
+        
+        if errors:
+            logger.warning(f'Index creation had {len(errors)} errors (see above)')
         
         return created
 

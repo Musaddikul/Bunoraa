@@ -16,6 +16,8 @@ import sys
 from pathlib import Path
 from datetime import timedelta
 
+from apps.catalog import ml
+
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -92,7 +94,7 @@ LOCAL_APPS = [
     'apps.commerce',
     'apps.chat',
     'apps.email_service',
-    'ml',
+    # 'ml',  # Disabled: High memory consumption for Render free tier
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -111,14 +113,14 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'core.middleware.bot_prerender.BotPreRenderMiddleware',
+    # 'core.middleware.bot_prerender.BotPreRenderMiddleware',  # Disabled: Memory overhead
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'core.middleware.seo_headers.SEOHeadersMiddleware',
-    'core.middleware.request_logging.RequestLoggingMiddleware',
+    # 'core.middleware.request_logging.RequestLoggingMiddleware',  # Disabled: Memory overhead
     'core.middleware.cache_control_html.CacheControlHTMLMiddleware',
     'core.middleware.api_response.APIResponseMiddleware',
-    'ml.middleware.MLTrackingMiddleware',
+    # 'ml.middleware.MLInferenceMiddleware',  # Disabled: Memory overhead
 ]
 
 # Return JSON on CSRF failures and set a fresh cookie for SPA-friendly recovery

@@ -44,12 +44,13 @@ DATABASES = {
     )
 }
 
-# Connection pooling - Memory optimized
-DATABASES['default']['CONN_MAX_AGE'] = 300  # Close connections after 5 mins inactivity
+# Connection pooling - Memory optimized for Render free tier
+DATABASES['default']['CONN_MAX_AGE'] = 120  # Reduced from 300 - Close connections faster
 DATABASES['default']['OPTIONS'] = {
     'connect_timeout': 10,
     'options': '-c statement_timeout=30000',
     'isolation_level': psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED,  # Reduces lock memory
+    'tcp_keepalives': True,
 }
 
 # =============================================================================
@@ -89,7 +90,7 @@ if REDIS_URL:
             'OPTIONS': {
                 'CLIENT_CLASS': 'django_redis.client.DefaultClient',
                 'CONNECTION_POOL_KWARGS': {
-                    'max_connections': 50,
+                    'max_connections': 20,  # Reduced from 50 for free tier
                     'retry_on_timeout': True,
                 },
                 'SOCKET_CONNECT_TIMEOUT': 5,

@@ -7,12 +7,10 @@ from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
 
 def site_settings(request):
-    """Add site settings to template context."""
+    """Add site settings to template context. Optimized for memory-constrained environments."""
     # Cache the site settings for performance
     cache_key = 'site_settings_context'
     cached_settings = cache.get(cache_key)
-    
-    tax_rate = 0  # Default tax rate - will be set from site settings if cached
     
     if cached_settings is None:
         try:
@@ -22,7 +20,7 @@ def site_settings(request):
             # Get tax rate from site settings
             tax_rate = float(site.tax_rate) if site.tax_rate else 0
 
-            # Build social links list (name, url, icon-url) from the settings' related links
+            # Build social links list - optimized for memory
             social_links = []
             try:
                 qs = site.social_links.filter(is_active=True).order_by('order')

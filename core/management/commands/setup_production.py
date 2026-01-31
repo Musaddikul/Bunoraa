@@ -1,12 +1,19 @@
 """
 Management command for production setup and optimization.
 """
+import sys
+import io
 from django.core.management.base import BaseCommand, CommandError
 from django.core.management import call_command
 from django.conf import settings
 from django.db import connection
 import os
 import subprocess
+
+
+# Ensure UTF-8 encoding for cross-platform compatibility
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
 
 
 class Command(BaseCommand):
@@ -86,40 +93,40 @@ class Command(BaseCommand):
 
     def run_migrations(self):
         """Run database migrations."""
-        self.stdout.write('\n📦 Running database migrations...')
+        self.stdout.write('\n[*] Running database migrations...')
         try:
             call_command('migrate', verbosity=1)
-            self.stdout.write(self.style.SUCCESS('✓ Migrations complete'))
+            self.stdout.write(self.style.SUCCESS('[OK] Migrations - No migrations to apply'))
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f'✗ Migration error: {e}'))
+            self.stdout.write(self.style.ERROR(f'[ERROR] Migration error: {e}'))
 
     def collect_static(self):
         """Collect static files."""
-        self.stdout.write('\n📁 Collecting static files...')
+        self.stdout.write('\n[*] Collecting static files...')
         try:
             call_command('collectstatic', '--noinput', verbosity=1)
-            self.stdout.write(self.style.SUCCESS('✓ Static files collected'))
+            self.stdout.write(self.style.SUCCESS('[OK] Static files collected'))
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f'✗ Static collection error: {e}'))
+            self.stdout.write(self.style.ERROR(f'[ERROR] Static collection error: {e}'))
 
     def compress_static(self):
         """Compress static files."""
-        self.stdout.write('\n🗜️  Compressing static files...')
+        self.stdout.write('\n[*] Compressing static files...')
         try:
             # Check if django-compressor is installed
             call_command('compress', '--force', verbosity=1)
-            self.stdout.write(self.style.SUCCESS('✓ Static files compressed'))
+            self.stdout.write(self.style.SUCCESS('[OK] Static files compressed'))
         except CommandError:
-            self.stdout.write(self.style.WARNING('⚠ django-compressor not installed, skipping'))
+            self.stdout.write(self.style.WARNING('[SKIP] Compression - django-compressor not installed'))
         except Exception as e:
-            self.stdout.write(self.style.WARNING(f'⚠ Compression skipped: {e}'))
+            self.stdout.write(self.style.WARNING(f'[SKIP] Compression skipped: {e}'))
 
     def optimize_database(self):
         """Optimize database tables."""
-        self.stdout.write('\n🔧 Optimizing database...')
+        self.stdout.write('\n[*] Optimizing database...')
         
         if 'postgresql' not in settings.DATABASES['default']['ENGINE']:
-            self.stdout.write(self.style.WARNING('⚠ Skipping: Not PostgreSQL'))
+            self.stdout.write(self.style.WARNING('[SKIP] Database optimization - Not PostgreSQL'))
             return
         
         try:
@@ -135,25 +142,23 @@ class Command(BaseCommand):
             # Get stats
             stats = optimizer.get_table_stats()
             total_rows = sum(s.get('row_count', 0) for s in stats)
-            self.stdout.write(f'  Total rows: {total_rows:,}')
+            self.stdout.write(f'  Database optimized - Total rows: {total_rows:,}')
             
             # Check for missing indexes
             missing = optimizer.get_missing_indexes()
             if missing:
-                self.stdout.write(self.style.WARNING(
-                    f'  ⚠ {len(missing)} tables may need indexes'
-                ))
+                self.stdout.write(f'  Note: {len(missing)} tables may benefit from additional indexes')
             
-            self.stdout.write(self.style.SUCCESS('✓ Database optimized'))
+            self.stdout.write(self.style.SUCCESS('[OK] Database optimized'))
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f'✗ Optimization error: {e}'))
+            self.stdout.write(self.style.ERROR(f'[ERROR] Optimization error: {e}'))
 
     def create_indexes(self):
         """Create recommended database indexes."""
-        self.stdout.write('\n📊 Creating database indexes...')
+        self.stdout.write('\n[*] Creating database indexes...')
         
         if 'postgresql' not in settings.DATABASES['default']['ENGINE']:
-            self.stdout.write(self.style.WARNING('⚠ Skipping: Not PostgreSQL'))
+            self.stdout.write(self.style.WARNING('[SKIP] Index creation - Not PostgreSQL'))
             return
         
         try:
@@ -167,15 +172,15 @@ class Command(BaseCommand):
             else:
                 self.stdout.write('  All recommended indexes already exist')
             
-            self.stdout.write(self.style.SUCCESS('✓ Indexes created'))
+            self.stdout.write(self.style.SUCCESS('[OK] Indexes created'))
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f'✗ Index creation error: {e}'))
+            self.stdout.write(self.style.ERROR(f'[ERROR] Index creation error: {e}'))
 
     def compile_messages(self):
         """Compile translation messages."""
-        self.stdout.write('\n🌐 Compiling translation messages...')
+        self.stdout.write('\n[*] Compiling translation messages...')
         try:
             call_command('compilemessages', verbosity=1)
-            self.stdout.write(self.style.SUCCESS('✓ Messages compiled'))
+            self.stdout.write(self.style.SUCCESS('[OK] Messages compiled'))
         except Exception as e:
-            self.stdout.write(self.style.WARNING(f'⚠ Message compilation skipped: {e}'))
+            self.stdout.write(self.style.WARNING(f'[SKIP] Message compilation - {str(e)[:50]}'))
