@@ -5,6 +5,7 @@ services:
     buildCommand: "./build.sh"
     startCommand: "gunicorn core.wsgi:application --config gunicorn_conf.py"
     postDeployCommand: "python manage.py migrate || true && python manage.py setup_seo_schedules || true"
+    healthCheckPath: "/health/"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -13,9 +14,9 @@ services:
       - key: SECRET_KEY
         sync: false
       - key: GUNICORN_WORKERS
-        value: "2"  # Force 2 workers max for free tier (512MB memory)
+        value: "1"  # Force 1 worker for free tier (512MB memory)
       - key: GUNICORN_THREADS
-        value: "2"  # Reduce threads
+        value: "1"  # Single thread for minimal memory usage
       - key: GUNICORN_MAX_REQUESTS
         value: "500"  # Recycle workers more frequently
       - key: GUNICORN_LOG_LEVEL
