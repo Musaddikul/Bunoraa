@@ -22,7 +22,8 @@ urlpatterns = [
     path('recommendations/', include('apps.recommendations.urls')),
     
     # ML/AI APIs (comprehensive ML services)
-    path('ml/', include('ml.api.urls')),
+    # Disabled: ML module requires torch and other ML packages not installed on free tier
+    # path('ml/', include('ml.api.urls')),
     
     # Commerce API (cart, wishlist, checkout)
     path('commerce/', include('apps.commerce.api.urls')),
