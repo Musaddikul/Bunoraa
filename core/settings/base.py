@@ -68,7 +68,8 @@ THIRD_PARTY_APPS = [
     'storages',
     'django_hugeicons_stroke',
     'django_celery_beat',
-    'social_django'
+    'social_django',
+    'compressor',
 ]
 
 LOCAL_APPS = [

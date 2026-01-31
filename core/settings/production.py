@@ -5,7 +5,6 @@ Uses PostgreSQL, Redis, Cloudflare R2 storage.
 """
 import os
 import dj_database_url
-import psycopg2.extensions
 from .base import *
 
 # =============================================================================
@@ -49,8 +48,7 @@ DATABASES['default']['CONN_MAX_AGE'] = 120  # Reduced from 300 - Close connectio
 DATABASES['default']['OPTIONS'] = {
     'connect_timeout': 10,
     'options': '-c statement_timeout=30000',
-    'isolation_level': psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED,  # Reduces lock memory
-    'tcp_keepalives': True,
+    'isolation_level': 1,  # READ_COMMITTED - Reduces lock memory (psycopg3 compatible)
 }
 
 # =============================================================================
