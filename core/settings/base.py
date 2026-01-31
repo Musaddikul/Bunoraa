@@ -70,6 +70,9 @@ THIRD_PARTY_APPS = [
     'django_celery_beat',
     'social_django',
     'compressor',
+    'crispy_forms',
+    'crispy_bootstrap5',
+    'crispy_tailwind',
 ]
 
 LOCAL_APPS = [
@@ -147,6 +150,10 @@ TEMPLATES = [
         },
     },
 ]
+
+# Crispy Forms Configuration
+CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
+CRISPY_TEMPLATE_PACK = "tailwind"
 
 WSGI_APPLICATION = 'core.wsgi.application'
 ASGI_APPLICATION = 'core.asgi.application'

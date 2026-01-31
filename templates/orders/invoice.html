@@ -61,19 +61,19 @@
         <div class="mt-6 max-w-sm ml-auto">
             <div class="flex justify-between text-sm">
                 <span>Subtotal</span>
-                <span class="font-medium">{% if currency %}{{ currency.format_amount(items_total) }}{% else %}{% format_price order.subtotal %}{% endif %}</span>
+                <span class="font-medium">{% format_price order.subtotal %}</span>
             </div>
             <div class="flex justify-between text-sm">
                 <span>Shipping</span>
-                <span class="font-medium">{% if currency %}{{ currency.format_amount(display_shipping) }}{% else %}{% if order.shipping_cost == 0 %}Free{% else %}{% format_price order.shipping_cost %}{% endif %}{% endif %}</span>
+                <span class="font-medium">{% if order.shipping_cost == 0 %}Free{% else %}{% format_price order.shipping_cost %}{% endif %}</span>
             </div>
             <div class="flex justify-between text-sm">
                 <span>Tax</span>
-                <span class="font-medium">{% if currency %}{{ currency.format_amount(display_tax) }}{% else %}{% format_price order.tax %}{% endif %}</span>
+                <span class="font-medium">{% format_price order.tax %}</span>
             </div>
             <div class="flex justify-between text-sm font-semibold border-t pt-2 mt-2">
                 <span>Total</span>
-                <span class="font-medium">{% if currency %}{{ currency.format_amount(display_total) }}{% else %}{% format_price order.total %}{% endif %}</span>
+                <span class="font-medium">{% format_price order.total %}</span>
             </div>
         </div>
     </div>

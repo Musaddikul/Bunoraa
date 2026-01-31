@@ -24,11 +24,11 @@
                     <path class="text-gray-200 dark:text-gray-700" stroke="currentColor" stroke-width="3" fill="none"
                           d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
                     <path class="text-emerald-500" stroke="currentColor" stroke-width="3" fill="none"
-                          stroke-dasharray="{{ product.sustainability_score|multiply:100 }}, 100"
+                          stroke-dasharray="{% widthratio product.sustainability_score 1 100 %}, 100"
                           d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
                 </svg>
                 <span class="absolute inset-0 flex items-center justify-center text-lg font-bold text-emerald-700 dark:text-emerald-300">
-                    {{ product.sustainability_score|multiply:100|floatformat:0 }}
+                    {% widthratio product.sustainability_score 1 100 %}
                 </span>
             </div>
             <span class="text-xs text-gray-600 dark:text-gray-400">Eco Score</span>

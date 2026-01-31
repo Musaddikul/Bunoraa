@@ -33,11 +33,11 @@
             </div>
         </div>
         {% else %}
-    <h1 class="text-4xl font-bold text-gray-900 dark:text-stone-100 transition-colors duration-500">{{ collection.name }}</h1>
-    {% if collection.description %}
-    <p class="text-lg text-gray-600 dark:text-stone-400 mt-2 transition-colors duration-500">{{ collection.description }}</p>
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-stone-100 transition-colors duration-500">{{ collection.name }}</h1>
+        {% if collection.description %}
+        <p class="text-lg text-gray-600 dark:text-stone-400 mt-2 transition-colors duration-500">{{ collection.description }}</p>
         {% endif %}
-    </div>
+        {% endif %}
     
     <!-- Products -->
     {% if products %}
