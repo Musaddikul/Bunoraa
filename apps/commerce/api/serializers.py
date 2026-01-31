@@ -106,6 +106,7 @@ class WishlistItemSerializer(serializers.ModelSerializer):
     price_change = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
     price_change_percent = serializers.SerializerMethodField()
     in_stock = serializers.SerializerMethodField()
+    variant = serializers.SerializerMethodField()
     
     class Meta:
         model = WishlistItem
@@ -115,7 +116,17 @@ class WishlistItemSerializer(serializers.ModelSerializer):
             'price_change_percent', 'in_stock', 'notes', 'priority',
             'notify_on_sale', 'notify_on_stock', 'added_at'
         ]
-        read_only_fields = ['id', 'added_at']
+        read_only_fields = ['id', 'added_at', 'variant']
+    
+    def get_variant(self, obj):
+        """Serialize the variant field."""
+        if obj.variant:
+            return {
+                'id': str(obj.variant.id),
+                'name': obj.variant.name,
+                'sku': obj.variant.sku,
+            }
+        return None
     
     def get_product_image(self, obj):
         image = obj.product.images.filter(is_primary=True).first() or obj.product.images.first()

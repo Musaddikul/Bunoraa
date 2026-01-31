@@ -218,32 +218,18 @@ class WishlistViewSet(viewsets.ViewSet):
     
     def list(self, request):
         """Get current user's wishlist."""
-        try:
-            wishlist = WishlistService.get_or_create_wishlist(request.user)
-            items = wishlist.items.select_related('product', 'variant').prefetch_related('product__images').all()
-            
-            # Apply pagination
-            paginator = StandardResultsSetPagination()
-            paginated_items = paginator.paginate_queryset(items, request)
-            
-            if paginated_items is None:
-                paginated_items = []
-            
-            item_serializer = WishlistItemSerializer(paginated_items, many=True, context={'request': request})
-            return paginator.get_paginated_response(item_serializer.data)
-        except Exception as e:
-            from django.http import JsonResponse
-            import traceback
-            logger = __import__('logging').getLogger(__name__)
-            logger.error(f"Wishlist list error: {str(e)}", exc_info=True)
-            return Response(
-                {
-                    'success': False,
-                    'message': f'Error retrieving wishlist: {str(e)}',
-                    'data': None,
-                },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        wishlist = WishlistService.get_or_create_wishlist(request.user)
+        items = wishlist.items.select_related('product', 'variant').prefetch_related('product__images').all()
+        
+        # Apply pagination
+        paginator = StandardResultsSetPagination()
+        paginated_items = paginator.paginate_queryset(items, request)
+        
+        if paginated_items is None:
+            paginated_items = []
+        
+        item_serializer = WishlistItemSerializer(paginated_items, many=True, context={'request': request})
+        return paginator.get_paginated_response(item_serializer.data)
     
     def create(self, request): # Added create method
         """Add item to wishlist (maps to POST /wishlist/)."""
