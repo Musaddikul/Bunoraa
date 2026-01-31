@@ -457,15 +457,17 @@ class EventTracker:
             self.redis_client.hincrby(minute_key, f"events:{event.event_type}", 1)
             self.redis_client.expire(minute_key, 3600)  # 1 hour
             
-            # Track active users
+            # Track active users (convert UUID to string if necessary)
             if event.user_id:
                 active_key = f"ml:active_users:{now.strftime('%Y%m%d%H')}"
-                self.redis_client.sadd(active_key, event.user_id)
+                user_id_str = str(event.user_id)  # Convert UUID or int to string
+                self.redis_client.sadd(active_key, user_id_str)
                 self.redis_client.expire(active_key, 7200)
             
-            # Track active sessions
+            # Track active sessions (convert UUID to string if necessary)
             session_key = f"ml:active_sessions:{now.strftime('%Y%m%d%H')}"
-            self.redis_client.sadd(session_key, event.session_id)
+            session_id_str = str(event.session_id)  # Convert UUID or string to string
+            self.redis_client.sadd(session_key, session_id_str)
             self.redis_client.expire(session_key, 7200)
             
             # Product view tracking

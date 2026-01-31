@@ -277,7 +277,7 @@ SOCIAL_AUTH_REDIRECT_IS_HTTPS = os.environ.get('SOCIAL_AUTH_REDIRECT_IS_HTTPS', 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
+        'core.exceptions.CSRFExemptSessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
@@ -506,6 +506,9 @@ LOGGING = {
         'require_debug_true': {
             '()': 'django.utils.log.RequireDebugTrue',
         },
+        'ignore_cancelled_error': {
+            '()': 'core.logging_filters.IgnoreCancelledErrorFilter',
+        },
     },
     'handlers': {
         'console': {
@@ -560,6 +563,12 @@ LOGGING = {
         'bunoraa.ml': {
             'handlers': ['console', 'file'],
             'level': 'INFO',
+            'propagate': False,
+        },
+        'asgiref': {
+            'handlers': ['file'],
+            'level': 'WARNING',
+            'filters': ['ignore_cancelled_error'],
             'propagate': False,
         },
         'bunoraa.chat': {

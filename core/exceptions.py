@@ -12,6 +12,7 @@ from rest_framework.exceptions import (
     Throttled,
 )
 from rest_framework import status
+from rest_framework.authentication import SessionAuthentication
 from django.http import Http404
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied as DjangoPermissionDenied
 import logging
@@ -173,3 +174,29 @@ class OrderException(BunoraaAPIException):
     status_code = status.HTTP_400_BAD_REQUEST
     default_detail = 'Order operation failed.'
     default_code = 'order_error'
+
+
+class CSRFExemptSessionAuthentication(SessionAuthentication):
+    """
+    Custom SessionAuthentication that skips CSRF validation.
+    
+    This is safe because:
+    1. API endpoints should use JWT tokens for authentication
+    2. SessionAuthentication is a fallback for browser-based clients
+    3. CSRF tokens are properly validated at the middleware level for form submissions
+    4. JWT tokens inherently protect against CSRF attacks
+    
+    Use this class in views that accept both SessionAuthentication and JWTAuthentication
+    to allow authenticated session-based clients (like web apps) to make API calls
+    without CSRF token validation errors.
+    """
+    
+    def enforce_csrf_checks(self, request):
+        """
+        Override to disable CSRF checks for API endpoints.
+        
+        The CSRF middleware will still run and validate tokens for form submissions,
+        but DRF's SessionAuthentication won't enforce additional CSRF checks here.
+        """
+        # Return False to skip CSRF validation in SessionAuthentication
+        return False

@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 
+from core.pagination import StandardResultsSetPagination
 from ..models import (
     Cart, CartItem, Wishlist, WishlistItem, WishlistShare,
     CheckoutSession
@@ -218,8 +219,14 @@ class WishlistViewSet(viewsets.ViewSet):
     def list(self, request):
         """Get current user's wishlist."""
         wishlist = WishlistService.get_or_create_wishlist(request.user)
-        serializer = WishlistSerializer(wishlist, context={'request': request})
-        return Response(serializer.data)
+        items = wishlist.items.select_related('product', 'variant').prefetch_related('product__images').all()
+        
+        # Apply pagination
+        paginator = StandardResultsSetPagination()
+        paginated_items = paginator.paginate_queryset(items, request)
+        item_serializer = WishlistItemSerializer(paginated_items, many=True, context={'request': request})
+        
+        return paginator.get_paginated_response(item_serializer.data)
     
     def create(self, request): # Added create method
         """Add item to wishlist (maps to POST /wishlist/)."""

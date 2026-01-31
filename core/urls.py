@@ -33,7 +33,8 @@ urlpatterns = [
     path('api/v1/', include('core.urls_api')),
     
     # ML API (direct path for frontend JS library compatibility)
-    path('api/ml/', include('ml.api.urls')),
+    # Disabled to reduce memory footprint on Render free tier (torch not available)
+    # path('api/ml/', include('ml.api.urls')),
     
     # Health checks
     path('health/', health_check, name='health_check'),
