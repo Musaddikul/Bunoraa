@@ -43,7 +43,8 @@ const CartApi = (function() {
     }
 
     async function updateItem(itemId, quantity) {
-        const response = await ApiClient.patch(`${CART_PATH}items/${itemId}/`, { quantity });
+        // Use POST on the update endpoint: POST /api/v1/commerce/cart/update/{itemId}/
+        const response = await ApiClient.post(`${CART_PATH}update/${itemId}/`, { quantity });
         
         if (response.success) {
             updateBadge(response.data?.cart);
@@ -55,7 +56,8 @@ const CartApi = (function() {
     }
 
     async function removeItem(itemId) {
-        const response = await ApiClient.delete(`${CART_PATH}items/${itemId}/`);
+        // Use POST on the remove endpoint: POST /api/v1/commerce/cart/remove/{itemId}/
+        const response = await ApiClient.post(`${CART_PATH}remove/${itemId}/`);
         
         if (response.success) {
             updateBadge(response.data?.cart);
@@ -67,7 +69,8 @@ const CartApi = (function() {
     }
 
     async function clearCart() {
-        const response = await ApiClient.delete(`${CART_PATH}clear/`);
+        // Use POST on the clear endpoint: POST /api/v1/commerce/cart/clear/
+        const response = await ApiClient.post(`${CART_PATH}clear/`);
         
         if (response.success) {
             updateBadge({ item_count: 0 });
@@ -79,7 +82,8 @@ const CartApi = (function() {
     }
 
     async function applyCoupon(code) {
-        const response = await ApiClient.post(`${CART_PATH}coupon/`, { code });
+        // Use POST on the apply_coupon endpoint: POST /api/v1/commerce/cart/apply_coupon/
+        const response = await ApiClient.post(`${CART_PATH}apply_coupon/`, { coupon_code: code });
         
         if (response.success) {
             window.dispatchEvent(new CustomEvent('cart:coupon-applied', { detail: response.data }));
@@ -90,7 +94,8 @@ const CartApi = (function() {
     }
 
     async function removeCoupon() {
-        const response = await ApiClient.delete(`${CART_PATH}coupon/`);
+        // Use POST on the remove_coupon endpoint: POST /api/v1/commerce/cart/remove_coupon/
+        const response = await ApiClient.post(`${CART_PATH}remove_coupon/`);
         
         if (response.success) {
             window.dispatchEvent(new CustomEvent('cart:coupon-removed'));
@@ -101,11 +106,11 @@ const CartApi = (function() {
     }
 
     async function validate() {
-        return ApiClient.get(`${CART_PATH}validate/`);
+        return ApiClient.get(`${CART_PATH}summary/`);
     }
 
     async function merge() {
-        return ApiClient.post(`${CART_PATH}merge/`, {}, { requiresAuth: true });
+        return ApiClient.post(`${CART_PATH}`, {}, { requiresAuth: true });
     }
 
     function updateBadge(cart) {

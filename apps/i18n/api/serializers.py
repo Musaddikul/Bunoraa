@@ -3,6 +3,8 @@ Internationalization API Serializers
 
 DRF serializers for i18n models.
 """
+import logging
+from decimal import Decimal
 from rest_framework import serializers
 from ..models import (
     Language, Currency, ExchangeRate, ExchangeRateHistory,
@@ -10,6 +12,9 @@ from ..models import (
     TranslationNamespace, TranslationKey, Translation, ContentTranslation,
     UserLocalePreference
 )
+from ..services import CurrencyService, CurrencyConversionService
+
+logger = logging.getLogger(__name__)
 
 
 # =============================================================================
@@ -403,3 +408,51 @@ class CurrencyConversionResponseSerializer(serializers.Serializer):
     converted_formatted = serializers.CharField()
     
     exchange_rate = serializers.DecimalField(max_digits=20, decimal_places=10)
+
+
+# =============================================================================
+# Product Price Conversion Mixin
+# =============================================================================
+
+class PriceConversionMixin:
+    """Mixin to add currency conversion to product serializers."""
+    
+    def convert_price_fields(self, data):
+        """Convert price fields to the user's selected currency.
+        
+        Args:
+            data (dict): Serializer data containing price fields
+            
+        Returns:
+            dict: Data with converted prices
+        """
+        request = self.context.get('request')
+        if not request:
+            return data
+        
+        # Get the user's selected currency from the request
+        user_currency = CurrencyService.get_user_currency(request=request)
+        
+        if not user_currency or user_currency.code == 'BDT':
+            # No conversion needed if BDT or no currency selected
+            return data
+        
+        # Price fields to convert
+        price_fields = ['price', 'sale_price', 'current_price']
+        
+        try:
+            for field in price_fields:
+                if field in data and data[field]:
+                    amount = Decimal(str(data[field]))
+                    converted = CurrencyConversionService.convert_by_code(
+                        amount, 
+                        'BDT', 
+                        user_currency.code,
+                        round_result=True
+                    )
+                    data[field] = str(converted)
+        except Exception as e:
+            # Log the error but don't fail the serialization
+            logger.exception(f"Error converting prices: {e}")
+        
+        return data

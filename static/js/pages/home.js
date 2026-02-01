@@ -136,6 +136,8 @@ const HomePage = (function() {
             if (recentPurchases.length === 0 || proofCount >= maxProofs) return;
             
             const proof = recentPurchases[index];
+            if (!proof) return;
+            
             const popup = document.createElement('div');
             popup.className = 'social-proof-popup fixed bottom-4 left-4 z-50 max-w-xs bg-white dark:bg-stone-800 rounded-xl shadow-2xl border border-stone-200 dark:border-stone-700 p-4 transform translate-y-full opacity-0 transition-all duration-500';
             

@@ -362,7 +362,7 @@ export async function initCurrencySelector(selector) {
                 if (!resp.ok) {
                     let bodyText = '';
                     try { bodyText = await resp.text(); } catch (_) { bodyText = String(resp.status); }
-                    await showListMessage('Failed to set currency (server error). See console for details.', 'error');
+                    await showListMessage('Failed to set currency. Please reload the page and try again.', 'error');
                     console.debug('Currency preference response:', resp.status, bodyText);
                     return { success: false, message: 'Server error while setting currency' };
                 }

@@ -39,7 +39,8 @@ const WishlistApi = (function() {
     }
 
     async function removeItem(itemId) {
-        const response = await ApiClient.delete(`${WISHLIST_PATH}${itemId}/`, { requiresAuth: true });
+        // Use POST on the remove endpoint: POST /api/v1/commerce/wishlist/remove/{itemId}/
+        const response = await ApiClient.post(`${WISHLIST_PATH}remove/${itemId}/`, {}, { requiresAuth: true });
 
         if (response.success) {
             window.dispatchEvent(new CustomEvent('wishlist:item-removed', { detail: { itemId } }));
@@ -54,7 +55,8 @@ const WishlistApi = (function() {
     }
 
     async function moveToCart(itemId, quantity = 1) {
-        const response = await ApiClient.post(`${WISHLIST_PATH}${itemId}/move_to_cart/`, { quantity }, { requiresAuth: true });
+        // Use POST on the move-to-cart endpoint: POST /api/v1/commerce/wishlist/move-to-cart/{itemId}/
+        const response = await ApiClient.post(`${WISHLIST_PATH}move-to-cart/${itemId}/`, { quantity }, { requiresAuth: true });
 
         if (response.success) {
             window.dispatchEvent(new CustomEvent('wishlist:item-moved', { detail: { itemId } }));
@@ -77,8 +79,9 @@ const WishlistApi = (function() {
         return response;
     }
 
-    async function check(productIds) {
-        return ApiClient.post(`${WISHLIST_PATH}check/`, { product_ids: productIds }, { requiresAuth: true });
+    async function check(productId) {
+        // Use POST on the toggle endpoint: POST /api/v1/commerce/wishlist/toggle/
+        return ApiClient.post(`${WISHLIST_PATH}toggle/`, { product_id: productId }, { requiresAuth: true });
     }
 
     function updateBadge(wishlist) {

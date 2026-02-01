@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static currency_tags %}
 
 {% block title %}{{ category.name }} - Custom Pre-Order | {{ SITE_NAME }}{% endblock %}
 
@@ -152,7 +152,7 @@
                                 </a>
                             </div>
                             {% if template.base_price %}
-                            <p class="mt-2 text-sm text-primary-600 font-medium">From {{ currency_symbol }}{{ template.base_price }}</p>
+                            <p class="mt-2 text-sm text-primary-600 font-medium">From {% format_price template.base_price %}</p>
                             {% endif %}
                         </div>
                         {% endfor %}
@@ -167,7 +167,7 @@
                 <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 sticky top-4">
                     <div class="text-center mb-6">
                         <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Starting from</p>
-                        <p class="text-4xl font-bold text-primary-600">{{ currency_symbol }}{{ category.base_price }}</p>
+                        <p class="text-4xl font-bold text-primary-600">{% format_price category.base_price %}</p>
                         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">per unit</p>
                     </div>
 

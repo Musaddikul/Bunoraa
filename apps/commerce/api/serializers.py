@@ -103,7 +103,7 @@ class WishlistItemSerializer(serializers.ModelSerializer):
     product_slug = serializers.CharField(source='product.slug', read_only=True)
     product_image = serializers.SerializerMethodField()
     current_price = serializers.SerializerMethodField()
-    price_change = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    price_change = serializers.SerializerMethodField()
     price_change_percent = serializers.SerializerMethodField()
     in_stock = serializers.SerializerMethodField()
     variant = serializers.SerializerMethodField()
@@ -113,10 +113,10 @@ class WishlistItemSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'product_id', 'product_name', 'product_slug', 'product_image',
             'variant', 'price_at_add', 'current_price', 'price_change',
-            'price_change_percent', 'in_stock', 'notes', 'priority',
-            'notify_on_sale', 'notify_on_stock', 'added_at'
+            'price_change_percent', 'in_stock', 'notes', 'priority', 'added_at',
+            'desired_quantity', 'notify_on_sale', 'notify_on_restock', 'notify_on_price_drop', 'target_price'
         ]
-        read_only_fields = ['id', 'added_at', 'variant']
+        read_only_fields = ['id', 'added_at', 'variant', 'price_change', 'price_change_percent', 'current_price', 'in_stock']
     
     def get_variant(self, obj):
         """Serialize the variant field."""
@@ -129,25 +129,48 @@ class WishlistItemSerializer(serializers.ModelSerializer):
         return None
     
     def get_product_image(self, obj):
-        image = obj.product.images.filter(is_primary=True).first() or obj.product.images.first()
-        if image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(image.image.url)
-            return image.image.url
+        try:
+            image = obj.product.images.filter(is_primary=True).first() or obj.product.images.first()
+            if image:
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(image.image.url)
+                return image.image.url
+        except Exception:
+            pass
         return None
     
     def get_current_price(self, obj):
-        return str(obj.product.current_price)
+        try:
+            return str(obj.product.current_price)
+        except Exception:
+            return "0.00"
+    
+    def get_price_change(self, obj):
+        """Calculate price change from when added to current price."""
+        try:
+            if obj.price_at_add:
+                return float(obj.product.current_price) - float(obj.price_at_add)
+        except Exception:
+            pass
+        return 0
     
     def get_price_change_percent(self, obj):
-        if obj.price_at_add and obj.price_at_add > 0:
-            change = obj.price_change
-            return round((change / obj.price_at_add) * 100, 1)
+        try:
+            if obj.price_at_add and obj.price_at_add > 0:
+                current = float(obj.product.current_price)
+                added = float(obj.price_at_add)
+                change = current - added
+                return round((change / added) * 100, 1)
+        except Exception:
+            pass
         return 0
     
     def get_in_stock(self, obj):
-        return obj.product.is_in_stock()
+        try:
+            return obj.product.is_in_stock()
+        except Exception:
+            return False
 
 
 class WishlistSerializer(serializers.ModelSerializer):

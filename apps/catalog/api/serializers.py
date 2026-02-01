@@ -11,6 +11,8 @@ from apps.catalog.models import (
     Currency, ProductPrice, EcoCertification, CustomerPhoto,
     ProductQuestion, ProductAnswer
 )
+from apps.i18n.services import CurrencyService, CurrencyConversionService
+from apps.i18n.api.serializers import PriceConversionMixin
 
 
 # =============================================================================
@@ -148,7 +150,7 @@ class BadgeSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'slug', 'css_class', 'start', 'end', 'priority')
 
 
-class ProductListSerializer(serializers.ModelSerializer):
+class ProductListSerializer(PriceConversionMixin, serializers.ModelSerializer):
     """Lightweight product serializer for lists."""
     primary_image = serializers.SerializerMethodField()
     current_price = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
@@ -179,9 +181,14 @@ class ProductListSerializer(serializers.ModelSerializer):
     
     def get_is_in_stock(self, obj):
         return obj.is_in_stock()
+    
+    def to_representation(self, instance):
+        """Convert prices to user's selected currency."""
+        data = super().to_representation(instance)
+        return self.convert_price_fields(data)
 
 
-class ProductDetailSerializer(serializers.ModelSerializer):
+class ProductDetailSerializer(PriceConversionMixin, serializers.ModelSerializer):
     """Full product serializer with all details."""
     images = ProductImageSerializer(many=True, read_only=True)
     variants = ProductVariantSerializer(many=True, read_only=True)
@@ -237,9 +244,14 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     
     def get_schema_org(self, obj):
         return obj.to_schema()
+    
+    def to_representation(self, instance):
+        """Convert prices to user's selected currency."""
+        data = super().to_representation(instance)
+        return self.convert_price_fields(data)
 
 
-class QuickViewProductSerializer(serializers.ModelSerializer):
+class QuickViewProductSerializer(PriceConversionMixin, serializers.ModelSerializer):
     """Lightweight serializer for quick view modal."""
     primary_image = serializers.SerializerMethodField()
     current_price = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
@@ -271,6 +283,11 @@ class QuickViewProductSerializer(serializers.ModelSerializer):
         from apps.catalog.services import BadgeService
         badges = BadgeService.get_product_badges(obj)
         return BadgeSerializer(badges, many=True, context=self.context).data
+    
+    def to_representation(self, instance):
+        """Convert prices to user's selected currency."""
+        data = super().to_representation(instance)
+        return self.convert_price_fields(data)
 
 
 # =============================================================================
