@@ -141,7 +141,7 @@
                                     <label for="address-new" 
                                            class="block p-4 border-2 border-dashed rounded-xl cursor-pointer transition-all peer-checked:border-primary-600 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 hover:border-gray-400 dark:hover:border-gray-500 border-gray-300 dark:border-gray-600 h-full min-h-[120px] flex items-center justify-center">
                                         <div class="text-center">
-                                            <svg class="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-8 h-8 text-gray-400 dark:text-stone-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                                             </svg>
                                             <span class="text-gray-600 dark:text-gray-400 font-medium">Add new address</span>
@@ -239,7 +239,7 @@
                                 </svg>
                                 Gift Options
                             </h2>
-                            <svg id="gift-toggle-icon" class="w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg id="gift-toggle-icon" class="w-5 h-5 text-gray-400 dark:text-stone-500 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </div>
@@ -299,10 +299,10 @@
             
             <!-- Order Summary Sidebar -->
             <div class="lg:w-96">
-                <button id="order-summary-toggle" aria-expanded="false" class="w-full md:hidden mb-4 inline-flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200">
+                <button id="order-summary-toggle" aria-expanded="false" class="w-full md:hidden mb-4 inline-flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-stone-700">
                     <span class="font-medium">Order Summary</span>
                     <span class="text-sm text-gray-500 dark:text-gray-400">{{ cart_items|length }} items</span>
-                    <svg class="w-5 h-5 text-gray-500 transform transition-transform" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg>
+                    <svg class="w-5 h-5 text-gray-500 dark:text-stone-400 transform transition-transform" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg>
                 </button>
                 <div id="order-summary-block" class="hidden md:block bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 lg:sticky lg:top-24">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center justify-between">
@@ -330,7 +330,7 @@
                                 {% if it.original_total %}
                                 <div class="flex items-center gap-2 mt-1">
                                     <span class="text-sm font-medium text-primary-600">{{ cart_summary.currency.symbol|default:currency_symbol }}{{ it.total }}</span>
-                                    <span class="text-xs text-gray-400 line-through">{{ cart_summary.currency.symbol|default:currency_symbol }}{{ it.original_total|default:'' }}</span>
+                                    <span class="text-xs text-gray-400 dark:text-stone-500 line-through">{{ cart_summary.currency.symbol|default:currency_symbol }}{{ it.original_total|default:'' }}</span>
                                 </div>
                                 {% else %}
                                 <p class="text-sm font-medium text-gray-900 dark:text-white mt-1">{{ cart_summary.currency.symbol|default:currency_symbol }}{{ it.total }}</p>

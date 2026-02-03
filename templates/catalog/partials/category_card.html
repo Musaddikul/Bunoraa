@@ -52,7 +52,7 @@
             </a>
             {% endfor %}
             {% if category.children.count > 4 %}
-            <span class="text-xs text-gray-400">+{{ category.children.count|add:"-4" }} more</span>
+            <span class="text-xs text-gray-400 dark:text-stone-500">+{{ category.children.count|add:"-4" }} more</span>
             {% endif %}
         </div>
     </div>

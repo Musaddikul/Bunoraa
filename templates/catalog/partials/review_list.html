@@ -182,7 +182,7 @@
     {% if has_more_reviews %}
     <div class="text-center mt-8">
         <button id="load-more-reviews" 
-                class="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                class="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:bg-stone-900 dark:hover:bg-gray-800 transition-colors"
                 data-page="2"
                 data-product-id="{{ product.id }}">
             Load More Reviews
@@ -247,7 +247,7 @@ function openReviewImage(imageUrl) {
     const modal = document.createElement('div');
     modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80';
     modal.innerHTML = `
-        <button class="absolute top-4 right-4 text-white hover:text-gray-300" onclick="this.parentElement.remove()">
+        <button class="absolute top-4 right-4 text-white hover:text-gray-300 dark:text-stone-600" onclick="this.parentElement.remove()">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>

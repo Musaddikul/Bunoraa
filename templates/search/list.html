@@ -135,15 +135,15 @@
                             </button>
                         </div>
                         <div class="space-y-2" id="availability-filter" data-filter-content>
-                            <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-stone-800 p-1.5 rounded-lg transition-colors">
+                            <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:bg-stone-900 dark:hover:bg-stone-800 p-1.5 rounded-lg transition-colors">
                                 <input type="checkbox" id="in-stock" class="w-4 h-4 text-primary-600 dark:text-amber-400 border-gray-300 dark:border-stone-700 rounded focus:ring-primary-500 dark:focus:ring-amber-900">
                                 <span class="text-sm text-gray-700 dark:text-stone-200">In Stock Only</span>
                             </label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-stone-800 p-1.5 rounded-lg transition-colors">
+                            <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:bg-stone-900 dark:hover:bg-stone-800 p-1.5 rounded-lg transition-colors">
                                 <input type="checkbox" id="on-sale" class="w-4 h-4 text-primary-600 dark:text-amber-400 border-gray-300 dark:border-stone-700 rounded focus:ring-primary-500 dark:focus:ring-amber-900">
                                 <span class="text-sm text-gray-700 dark:text-stone-200">On Sale</span>
                             </label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-stone-800 p-1.5 rounded-lg transition-colors">
+                            <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:bg-stone-900 dark:hover:bg-stone-800 p-1.5 rounded-lg transition-colors">
                                 <input type="checkbox" id="new-arrivals" class="w-4 h-4 text-primary-600 dark:text-amber-400 border-gray-300 dark:border-stone-700 rounded focus:ring-primary-500 dark:focus:ring-amber-900">
                                 <span class="text-sm text-gray-700 dark:text-stone-200">New Arrivals</span>
                             </label>
@@ -166,11 +166,11 @@
                             <button id="mobile-view-grid" class="p-2 bg-transparent text-gray-600 dark:text-stone-300 rounded-md" title="Grid View (mobile)">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                             </button>
-                            <button id="mobile-view-list" class="p-2 text-gray-400 hover:text-gray-600 rounded-md" title="List View (mobile)">
+                            <button id="mobile-view-list" class="p-2 text-gray-400 dark:text-stone-500 hover:text-gray-600 dark:text-stone-300 rounded-md" title="List View (mobile)">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
                             </button>
                         </div>
-                        <select id="mobile-sort-select" class="px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-700 font-medium focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        <select id="mobile-sort-select" class="px-4 py-3 bg-white dark:bg-stone-900 border border-gray-200 dark:border-stone-700 rounded-xl text-gray-700 dark:text-stone-200 font-medium focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                             <option value="popular">Popular</option>
                             <option value="newest">Newest</option>
                             <option value="price_low">Price ↑</option>
@@ -231,7 +231,7 @@
         </div>
         <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 dark:border-stone-700 bg-white dark:bg-stone-900">
             <div class="flex gap-3">
-                <button id="mobile-clear-filters" class="flex-1 py-3 border border-gray-200 dark:border-stone-700 text-gray-700 dark:text-stone-200 font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-stone-800 transition-colors">Clear</button>
+                <button id="mobile-clear-filters" class="flex-1 py-3 border border-gray-200 dark:border-stone-700 text-gray-700 dark:text-stone-200 font-medium rounded-xl hover:bg-gray-50 dark:bg-stone-900 dark:hover:bg-stone-800 transition-colors">Clear</button>
                 <button id="mobile-apply-filters" class="flex-1 py-3 bg-primary-700 dark:bg-amber-600 text-white font-medium rounded-xl hover:bg-primary-800 transition-colors">Apply</button>
             </div>
         </div>
@@ -398,7 +398,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const hasChildren = Array.isArray(item.children) && item.children.length > 0;
                 const expanded = hasChildren ? isNodeExpanded(item, depth) : false;
                 const toggleButton = hasChildren
-                    ? `<button type="button" class="category-toggle w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600" data-category-toggle="${escapeHtml(slug)}" aria-label="Toggle ${escapeHtml(label)}" aria-expanded="${expanded ? 'true' : 'false'}">
+                    ? `<button type="button" class="category-toggle w-6 h-6 flex items-center justify-center text-gray-400 dark:text-stone-500 hover:text-gray-600 dark:text-stone-300" data-category-toggle="${escapeHtml(slug)}" aria-label="Toggle ${escapeHtml(label)}" aria-expanded="${expanded ? 'true' : 'false'}">
                             <svg class="w-4 h-4 transition-transform duration-200 ${expanded ? 'rotate-90' : 'rotate-0'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </button>`
                     : '<span class="w-6 h-6 flex-shrink-0"></span>';
@@ -411,13 +411,13 @@ document.addEventListener('DOMContentLoaded', async function() {
 
                 return `
                     <li class="category-tree-item" data-slug="${escapeHtml(slug)}">
-                        <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 px-2 py-1 rounded-lg">
-                            <input type="checkbox" class="category-checkbox w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500" value="${escapeHtml(slug)}" ${isChecked}>
+                        <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:bg-stone-900 px-2 py-1 rounded-lg">
+                            <input type="checkbox" class="category-checkbox w-4 h-4 text-primary-600 border-gray-300 dark:border-stone-700 rounded focus:ring-primary-500" value="${escapeHtml(slug)}" ${isChecked}>
                             <span class="flex items-center gap-2 flex-1">
-                                <span class="text-sm text-gray-700">${escapeHtml(label)}</span>
+                                <span class="text-sm text-gray-700 dark:text-stone-200">${escapeHtml(label)}</span>
                                 ${toggleButton}
                             </span>
-                            <span class="text-xs text-gray-400 flex-shrink-0">${item.product_count || 0}</span>
+                            <span class="text-xs text-gray-400 dark:text-stone-500 flex-shrink-0">${item.product_count || 0}</span>
                         </label>
                         ${childrenMarkup}
                     </li>
@@ -583,25 +583,25 @@ document.addEventListener('DOMContentLoaded', async function() {
                     <div class="flex-1 py-3 md:py-4 px-1 md:px-4 flex flex-col">
                         <div class="flex-1">
                             <a href="${buildRoute('productDetail', product.slug)}">
-                                <h3 class="font-bold text-gray-900 mb-2 hover:text-primary-600 transition-colors text-sm md:text-base">${escapeHtml(product.name)}</h3>
+                                <h3 class="font-bold text-gray-900 dark:text-white mb-2 hover:text-primary-600 transition-colors text-sm md:text-base">${escapeHtml(product.name)}</h3>
                             </a>
-                            ${product.short_description ? `<p class="text-gray-600 text-sm mb-3 line-clamp-2">${escapeHtml(product.short_description)}</p>` : ''}
+                            ${product.short_description ? `<p class="text-gray-600 dark:text-stone-300 text-sm mb-3 line-clamp-2">${escapeHtml(product.short_description)}</p>` : ''}
                             ${product.average_rating ? `
                             <div class="flex items-center gap-1 mb-3">
                                 <div class="flex text-yellow-400">
                                     ${[1,2,3,4,5].map(i => `<svg class="w-4 h-4 ${i <= Math.round(product.average_rating) ? 'fill-current text-yellow-400' : 'fill-gray-300'}" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>`).join('')}
                                 </div>
-                                <span class="text-sm text-gray-500">(${product.review_count || 0} reviews)</span>
+                                <span class="text-sm text-gray-500 dark:text-stone-400">(${product.review_count || 0} reviews)</span>
                             </div>
                             ` : ''}
                         </div>
                         <div class="flex items-center justify-between pt-4 border-t border-gray-100">
                             <div class="flex items-center gap-2">
                                 ${product.sale_price ? `
-                                    <span class="text-sm md:text-base font-normal text-gray-900">${formatProductPrice(getProductDisplayAmount(product))}</span>
-                                    <span class="text-xs md:text-sm text-gray-400 line-through">${formatProductPrice(getProductOriginalAmount(product))}</span>
+                                    <span class="text-sm md:text-base font-normal text-gray-900 dark:text-white">${formatProductPrice(getProductDisplayAmount(product))}</span>
+                                    <span class="text-xs md:text-sm text-gray-400 dark:text-stone-500 line-through">${formatProductPrice(getProductOriginalAmount(product))}</span>
                                 ` : `
-                                    <span class="text-sm md:text-base font-normal text-gray-900">${formatProductPrice(getProductDisplayAmount(product))}</span>
+                                    <span class="text-sm md:text-base font-normal text-gray-900 dark:text-white">${formatProductPrice(getProductDisplayAmount(product))}</span>
                                 `}
                             </div>
                             <div class="flex gap-2">
@@ -630,28 +630,28 @@ document.addEventListener('DOMContentLoaded', async function() {
                             <svg class="w-5 h-5 text-gray-700 dark:text-stone-300" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                         </button>
                     </div>
-                    <button data-add-to-wishlist="${product.id}" class="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur rounded-full text-gray-600 hover:scale-110 transition-all">
+                    <button data-add-to-wishlist="${product.id}" class="absolute top-3 right-3 p-2 bg-white dark:bg-stone-900/80 backdrop-blur rounded-full text-gray-600 dark:text-stone-300 hover:scale-110 transition-all">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
                     </button>
                 </div>
                 <div class="py-3 md:py-4 px-1 md:px-4">
                     <a href="${buildRoute('productDetail', product.slug)}" class="block">
-                        <h3 class="font-bold text-gray-900 line-clamp-2 mb-2 hover:text-primary-600 transition-colors text-sm md:text-base">${escapeHtml(product.name)}</h3>
+                        <h3 class="font-bold text-gray-900 dark:text-white line-clamp-2 mb-2 hover:text-primary-600 transition-colors text-sm md:text-base">${escapeHtml(product.name)}</h3>
                     </a>
                     ${product.average_rating ? `
                     <div class="flex items-center gap-1 mb-2">
                         <div class="flex text-yellow-400">
                             ${[1,2,3,4,5].map(i => `<svg class="w-4 h-4 ${i <= Math.round(product.average_rating) ? 'fill-current text-yellow-400' : 'fill-gray-300'}" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>`).join('')}
                         </div>
-                        <span class="text-xs text-gray-500">(${product.review_count || 0})</span>
+                        <span class="text-xs text-gray-500 dark:text-stone-400">(${product.review_count || 0})</span>
                     </div>
                     ` : ''}
                     <div class="flex items-center gap-2">
                         ${product.sale_price ? `
-                            <span class="text-sm md:text-base font-normal text-gray-900" data-price-id="product-price-${product.id}">${formatProductPrice(product.sale_price_converted ?? product.sale_price)}</span>
-                            <span class="text-sm text-gray-400 line-through" data-price-id="product-price-${product.id}-orig">${formatProductPrice(product.price_converted ?? product.price)}</span>
+                            <span class="text-sm md:text-base font-normal text-gray-900 dark:text-white" data-price-id="product-price-${product.id}">${formatProductPrice(product.sale_price_converted ?? product.sale_price)}</span>
+                            <span class="text-sm text-gray-400 dark:text-stone-500 line-through" data-price-id="product-price-${product.id}-orig">${formatProductPrice(product.price_converted ?? product.price)}</span>
                         ` : `
-                            <span class="text-sm md:text-base font-normal text-gray-900" data-price-id="product-price-${product.id}">${formatProductPrice(product.price_converted ?? product.price)}</span>
+                            <span class="text-sm md:text-base font-normal text-gray-900 dark:text-white" data-price-id="product-price-${product.id}">${formatProductPrice(product.price_converted ?? product.price)}</span>
                         `}
                     </div>
                 </div>
@@ -833,7 +833,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 indexCategoryNames(treeData);
                 container.innerHTML = renderCategoryTree(treeData);
             } else {
-                container.innerHTML = '<p class="text-sm text-gray-500">No categories available right now.</p>';
+                container.innerHTML = '<p class="text-sm text-gray-500 dark:text-stone-400">No categories available right now.</p>';
             }
         } catch (error) {
             console.error('Error loading categories:', error);
@@ -847,11 +847,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (!button) return;
         if (isActive) {
             button.classList.add('bg-primary-600', 'text-white', 'border-primary-600', 'ring-2', 'ring-primary-200', 'ring-offset-1', 'ring-offset-white');
-            button.classList.remove('text-gray-600', 'border-gray-200', 'bg-white');
+            button.classList.remove('text-gray-600 dark:text-stone-300', 'border-gray-200 dark:border-stone-700', 'bg-white dark:bg-stone-900');
             button.setAttribute('aria-pressed', 'true');
         } else {
             button.classList.remove('bg-primary-600', 'text-white', 'border-primary-600', 'ring-2', 'ring-primary-200', 'ring-offset-1', 'ring-offset-white');
-            button.classList.add('text-gray-600', 'border-gray-200', 'bg-white');
+            button.classList.add('text-gray-600 dark:text-stone-300', 'border-gray-200 dark:border-stone-700', 'bg-white dark:bg-stone-900');
             button.setAttribute('aria-pressed', 'false');
         }
     }
@@ -1019,9 +1019,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('view-grid').addEventListener('click', () => {
         viewMode = 'grid';
         document.getElementById('view-grid').classList.add('bg-primary-100', 'text-primary-700');
-        document.getElementById('view-grid').classList.remove('text-gray-400');
+        document.getElementById('view-grid').classList.remove('text-gray-400 dark:text-stone-500');
         document.getElementById('view-list').classList.remove('bg-primary-100', 'text-primary-700');
-        document.getElementById('view-list').classList.add('text-gray-400');
+        document.getElementById('view-list').classList.add('text-gray-400 dark:text-stone-500');
         // reset responsive gaps for grid
         productsGrid.className = 'grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6';
         // mirror to mobile controls
@@ -1034,9 +1034,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('view-list').addEventListener('click', () => {
         viewMode = 'list';
         document.getElementById('view-list').classList.add('bg-primary-100', 'text-primary-700');
-        document.getElementById('view-list').classList.remove('text-gray-400');
+        document.getElementById('view-list').classList.remove('text-gray-400 dark:text-stone-500');
         document.getElementById('view-grid').classList.remove('bg-primary-100', 'text-primary-700');
-        document.getElementById('view-grid').classList.add('text-gray-400');
+        document.getElementById('view-grid').classList.add('text-gray-400 dark:text-stone-500');
         productsGrid.className = 'grid grid-cols-1 gap-4';
         // mirror to mobile controls
         const mg = document.getElementById('mobile-view-grid'); const ml = document.getElementById('mobile-view-list');

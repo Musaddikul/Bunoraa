@@ -254,10 +254,10 @@
             
             <!-- Order Summary Sidebar -->
             <div class="lg:w-96">
-                <button id="order-summary-toggle" aria-expanded="false" class="w-full md:hidden mb-4 inline-flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200">
+                <button id="order-summary-toggle" aria-expanded="false" class="w-full md:hidden mb-4 inline-flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-stone-700">
                     <span class="font-medium">Order Summary</span>
                     <span class="text-sm text-gray-500 dark:text-gray-400">{{ cart_items|length }} items</span>
-                    <svg class="w-5 h-5 text-gray-500 transform transition-transform" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg>
+                    <svg class="w-5 h-5 text-gray-500 dark:text-stone-400 transform transition-transform" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg>
                 </button>
                 <div id="order-summary-block" class="hidden md:block bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 lg:sticky lg:top-24">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center justify-between">
@@ -354,10 +354,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (type === 'delivery') {
             deliveryTab.classList.add('border-primary-600', 'text-primary-600');
-            deliveryTab.classList.remove('border-transparent', 'text-gray-500');
+            deliveryTab.classList.remove('border-transparent', 'text-gray-500 dark:text-stone-400');
             if (pickupTab) {
                 pickupTab.classList.remove('border-primary-600', 'text-primary-600');
-                pickupTab.classList.add('border-transparent', 'text-gray-500');
+                pickupTab.classList.add('border-transparent', 'text-gray-500 dark:text-stone-400');
             }
             deliveryOptions.classList.remove('hidden');
             if (pickupOptions) pickupOptions.classList.add('hidden');
@@ -365,10 +365,10 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             if (pickupTab) {
                 pickupTab.classList.add('border-primary-600', 'text-primary-600');
-                pickupTab.classList.remove('border-transparent', 'text-gray-500');
+                pickupTab.classList.remove('border-transparent', 'text-gray-500 dark:text-stone-400');
             }
             deliveryTab.classList.remove('border-primary-600', 'text-primary-600');
-            deliveryTab.classList.add('border-transparent', 'text-gray-500');
+            deliveryTab.classList.add('border-transparent', 'text-gray-500 dark:text-stone-400');
             deliveryOptions.classList.add('hidden');
             if (pickupOptions) pickupOptions.classList.remove('hidden');
             shippingTypeInput.value = 'pickup';

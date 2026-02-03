@@ -9,8 +9,8 @@
         <!-- Header -->
         <div class="flex justify-between items-center mb-8">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900">{% trans "Submitted Sitemaps" %}</h1>
-                <p class="text-gray-600 mt-2">{% trans "Track and manage your submitted sitemaps across search engines" %}</p>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{% trans "Submitted Sitemaps" %}</h1>
+                <p class="text-gray-600 dark:text-stone-300 mt-2">{% trans "Track and manage your submitted sitemaps across search engines" %}</p>
             </div>
             <button class="btn btn-primary" onclick="document.getElementById('new-sitemap-modal').showModal()">
                 {% trans "Add New Sitemap" %}
@@ -19,29 +19,29 @@
 
         <!-- Summary Statistics -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-sm font-medium text-gray-600 mb-2">{% trans "Total Sitemaps" %}</h3>
-                <p class="text-3xl font-bold text-gray-900" id="total-count">-</p>
+            <div class="bg-white dark:bg-stone-900 rounded-lg shadow p-6">
+                <h3 class="text-sm font-medium text-gray-600 dark:text-stone-300 mb-2">{% trans "Total Sitemaps" %}</h3>
+                <p class="text-3xl font-bold text-gray-900 dark:text-white" id="total-count">-</p>
             </div>
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-sm font-medium text-gray-600 mb-2">{% trans "Discovered Pages" %}</h3>
+            <div class="bg-white dark:bg-stone-900 rounded-lg shadow p-6">
+                <h3 class="text-sm font-medium text-gray-600 dark:text-stone-300 mb-2">{% trans "Discovered Pages" %}</h3>
                 <p class="text-3xl font-bold text-green-600" id="discovered-pages">-</p>
             </div>
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-sm font-medium text-gray-600 mb-2">{% trans "Indexed Pages" %}</h3>
+            <div class="bg-white dark:bg-stone-900 rounded-lg shadow p-6">
+                <h3 class="text-sm font-medium text-gray-600 dark:text-stone-300 mb-2">{% trans "Indexed Pages" %}</h3>
                 <p class="text-3xl font-bold text-blue-600" id="indexed-pages">-</p>
             </div>
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-sm font-medium text-gray-600 mb-2">{% trans "Errors" %}</h3>
+            <div class="bg-white dark:bg-stone-900 rounded-lg shadow p-6">
+                <h3 class="text-sm font-medium text-gray-600 dark:text-stone-300 mb-2">{% trans "Errors" %}</h3>
                 <p class="text-3xl font-bold text-red-600" id="error-count">-</p>
             </div>
         </div>
 
         <!-- Filter and Sort -->
-        <div class="bg-white rounded-lg shadow p-6 mb-8">
+        <div class="bg-white dark:bg-stone-900 rounded-lg shadow p-6 mb-8">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">{% trans "Sitemap Type" %}</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-stone-200 mb-2">{% trans "Sitemap Type" %}</label>
                     <select id="filter-type" class="input input-bordered w-full">
                         <option value="">{% trans "All Types" %}</option>
                         <option value="static">{% trans "Static Pages" %}</option>
@@ -51,7 +51,7 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">{% trans "Status" %}</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-stone-200 mb-2">{% trans "Status" %}</label>
                     <select id="filter-status" class="input input-bordered w-full">
                         <option value="">{% trans "All Statuses" %}</option>
                         <option value="pending">{% trans "Pending" %}</option>
@@ -61,32 +61,32 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">{% trans "Search" %}</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-stone-200 mb-2">{% trans "Search" %}</label>
                     <input type="text" id="search-url" placeholder="{% trans 'Search by URL' %}" class="input input-bordered w-full">
                 </div>
             </div>
         </div>
 
         <!-- Sitemaps Table -->
-        <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="bg-white dark:bg-stone-900 rounded-lg shadow overflow-hidden">
             <table class="w-full">
-                <thead class="bg-gray-50 border-b">
+                <thead class="bg-gray-50 dark:bg-stone-900 border-b">
                     <tr>
-                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">{% trans "Sitemap" %}</th>
-                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">{% trans "Type" %}</th>
-                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">{% trans "Status" %}</th>
-                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">{% trans "Submitted" %}</th>
-                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">{% trans "Last Read" %}</th>
-                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">{% trans "Discovered Pages" %}</th>
-                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">{% trans "Discovered Videos" %}</th>
-                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">{% trans "Actions" %}</th>
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-stone-200">{% trans "Sitemap" %}</th>
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-stone-200">{% trans "Type" %}</th>
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-stone-200">{% trans "Status" %}</th>
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-stone-200">{% trans "Submitted" %}</th>
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-stone-200">{% trans "Last Read" %}</th>
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-stone-200">{% trans "Discovered Pages" %}</th>
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-stone-200">{% trans "Discovered Videos" %}</th>
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-stone-200">{% trans "Actions" %}</th>
                     </tr>
                 </thead>
                 <tbody id="sitemaps-tbody" class="divide-y">
                     <!-- Populated by JavaScript -->
                 </tbody>
             </table>
-            <div id="no-results" class="text-center py-8 text-gray-500">
+            <div id="no-results" class="text-center py-8 text-gray-500 dark:text-stone-400">
                 {% trans "No sitemaps found" %}
             </div>
         </div>
@@ -225,12 +225,12 @@
         noResults.style.display = 'none';
         tbody.innerHTML = sitemaps.map(sitemap => `
             <tr>
-                <td class="px-6 py-4 text-sm text-gray-900">
+                <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">
                     <a href="${sitemap.url}" target="_blank" class="link link-primary">
                         ${sitemap.url.replace(/^https?:\/\//, '')}
                     </a>
                 </td>
-                <td class="px-6 py-4 text-sm text-gray-600">
+                <td class="px-6 py-4 text-sm text-gray-600 dark:text-stone-300">
                     ${sitemap.get_sitemap_type_display || sitemap.sitemap_type}
                 </td>
                 <td class="px-6 py-4 text-sm">
@@ -238,16 +238,16 @@
                         ${sitemap.get_status_display || sitemap.status}
                     </span>
                 </td>
-                <td class="px-6 py-4 text-sm text-gray-600">
+                <td class="px-6 py-4 text-sm text-gray-600 dark:text-stone-300">
                     ${sitemap.submitted_at ? new Date(sitemap.submitted_at).toLocaleDateString() : '-'}
                 </td>
-                <td class="px-6 py-4 text-sm text-gray-600">
+                <td class="px-6 py-4 text-sm text-gray-600 dark:text-stone-300">
                     ${sitemap.last_read ? new Date(sitemap.last_read).toLocaleDateString() : '-'}
                 </td>
-                <td class="px-6 py-4 text-sm text-gray-600">
+                <td class="px-6 py-4 text-sm text-gray-600 dark:text-stone-300">
                     <span class="font-semibold">${sitemap.discovered_pages || 0}</span>
                 </td>
-                <td class="px-6 py-4 text-sm text-gray-600">
+                <td class="px-6 py-4 text-sm text-gray-600 dark:text-stone-300">
                     <span class="font-semibold">${sitemap.discovered_videos || 0}</span>
                 </td>
                 <td class="px-6 py-4 text-sm space-x-2">

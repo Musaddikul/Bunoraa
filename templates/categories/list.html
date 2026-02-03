@@ -33,7 +33,7 @@
                     {% if category.image %}
                     <img src="{{ category.image.url }}" alt="{{ category.name }}" loading="lazy" decoding="async" class="absolute inset-0 w-full h-full object-cover">
                     {% else %}
-                    <div class="absolute inset-0 flex items-center justify-center text-gray-400 text-sm tracking-[0.4em] uppercase">{{ category.name|slice:":3" }}</div>
+                    <div class="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-stone-500 text-sm tracking-[0.4em] uppercase">{{ category.name|slice:":3" }}</div>
                     {% endif %}
                     <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent"></div>
                     <span class="absolute top-4 left-4 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/90 text-gray-900 dark:bg-black/60 dark:text-stone-100">{{ category.product_count }} products</span>

@@ -144,7 +144,7 @@
                 <span class="sr-only">Announcement</span>
             </p>
         </div>
-        <button onclick="document.getElementById('announcement-bar').remove()" class="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 hover:bg-white/10 rounded-full transition-colors" aria-label="Close announcement">
+        <button onclick="document.getElementById('announcement-bar').remove()" class="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 hover:bg-white dark:bg-stone-900/10 rounded-full transition-colors" aria-label="Close announcement">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
     </div>
@@ -301,7 +301,7 @@
                     <span class="text-xl font-display font-bold">{{ SITE_NAME }}</span>
                     {% endif %}
                 </div>
-                <button data-mobile-menu-close class="p-2 hover:bg-white/10 dark:hover:bg-white/20 rounded-lg transition-colors" aria-label="Close menu">
+                <button data-mobile-menu-close class="p-2 hover:bg-white dark:bg-stone-900/10 dark:hover:bg-white dark:bg-stone-900/20 rounded-lg transition-colors" aria-label="Close menu">
                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
@@ -829,7 +829,7 @@
                         return `
                             <div class="flex items-center gap-3 ${baseCls}">
                                 <span class="font-bold text-red-600">${formatPrice(salePrice)}</span>
-                                <span class="line-through text-gray-400">${formatPrice(price)}</span>
+                                <span class="line-through text-gray-400 dark:text-stone-500">${formatPrice(price)}</span>
                             </div>
                         `;
                     }
@@ -880,7 +880,7 @@
                                 ${img ? `
                                     <img src="${img}" alt="${(window.Templates?.escapeHtml?.(p.name)) || ''}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy">
                                 ` : `
-                                    <div class="w-full h-full bg-gray-100"></div>
+                                    <div class="w-full h-full bg-gray-100 dark:bg-stone-800"></div>
                                 `}
                                 <div class="absolute top-2 left-2 flex flex-col space-y-1">
                                     ${showBadge ? `<span class="bg-blue-500 text-white text-xs px-2 py-1 rounded">${options.badge}</span>` : ''}
@@ -896,7 +896,7 @@
                                 </div>
                             </a>
                             <div class="py-3 md:py-4 px-1 md:px-4">
-                                <h3 class="mt-1 font-bold text-gray-900 line-clamp-2 text-sm md:text-base"><a href="${href}" class="hover:text-primary-600">${(window.Templates?.escapeHtml?.(p.name)) || ''}</a></h3>
+                                <h3 class="mt-1 font-bold text-gray-900 dark:text-white line-clamp-2 text-sm md:text-base"><a href="${href}" class="hover:text-primary-600">${(window.Templates?.escapeHtml?.(p.name)) || ''}</a></h3>
                                 <div class="mt-2 product-price text-sm md:text-base font-normal">
                                     ${(() => {
                                         const priceSize = options.priceSize || 'small';
@@ -910,7 +910,7 @@
                                         return priceHtml;
                                     })()}
                                 </div>
-                                <button class="add-to-cart-btn mt-3 w-full bg-primary-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-primary-700 ${inStock ? '' : 'disabled bg-gray-300 cursor-not-allowed'}" ${inStock ? '' : 'disabled'}> ${inStock ? 'Add to Cart' : 'Out of Stock'} </button>
+                                <button class="add-to-cart-btn mt-3 w-full bg-primary-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-primary-700 ${inStock ? '' : 'disabled bg-gray-300 dark:bg-stone-600 cursor-not-allowed'}" ${inStock ? '' : 'disabled'}> ${inStock ? 'Add to Cart' : 'Out of Stock'} </button>
                             </div>
                         </div>
                     `;
@@ -2061,7 +2061,7 @@
             installBanner.className = 'fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl shadow-2xl p-4 z-50 text-white transform transition-all duration-300';
             installBanner.innerHTML = `
                 <div class="flex items-start gap-4">
-                    <div class="w-12 h-12 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center flex-shrink-0">
+                    <div class="w-12 h-12 bg-white dark:bg-stone-900/20 backdrop-blur rounded-xl flex items-center justify-center flex-shrink-0">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     </div>
                     <div class="flex-1">
@@ -2073,7 +2073,7 @@
                     </button>
                 </div>
                 <div class="flex gap-2 mt-4">
-                    <button id="pwa-install-later" class="flex-1 py-2 border border-white/30 text-white font-medium rounded-xl hover:bg-white/10 transition-colors">
+                    <button id="pwa-install-later" class="flex-1 py-2 border border-white/30 text-white font-medium rounded-xl hover:bg-white dark:bg-stone-900/10 transition-colors">
                         Maybe Later
                     </button>
                     <button id="pwa-install-btn" class="flex-1 py-2 bg-stone-100 dark:bg-stone-800 text-amber-600 dark:text-amber-400 font-semibold rounded-xl hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors">

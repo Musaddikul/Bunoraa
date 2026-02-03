@@ -9,7 +9,7 @@
     <div class="bg-gradient-to-r from-purple-50 to-pink-50 py-8 mb-8">
         <div class="container mx-auto px-4">
             <h1 class="text-3xl font-bold mb-2">Compare Products</h1>
-            <p class="text-gray-700">Side-by-side comparison of embroidered items</p>
+            <p class="text-gray-700 dark:text-stone-200">Side-by-side comparison of embroidered items</p>
         </div>
     </div>
 
@@ -18,21 +18,21 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <div class="comparison-slot" data-position="1">
                 <input type="hidden" class="product-id" value="">
-                <div class="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50" 
+                <div class="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50 dark:bg-stone-900" 
                      onclick="openProductSelector(1)">
                     <p class="text-4xl mb-2">+</p>
-                    <p class="font-semibold text-gray-600">Add Product to Compare</p>
-                    <p class="text-sm text-gray-500">Click to select</p>
+                    <p class="font-semibold text-gray-600 dark:text-stone-300">Add Product to Compare</p>
+                    <p class="text-sm text-gray-500 dark:text-stone-400">Click to select</p>
                 </div>
             </div>
             
             <div class="comparison-slot" data-position="2">
                 <input type="hidden" class="product-id" value="">
-                <div class="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50"
+                <div class="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50 dark:bg-stone-900"
                      onclick="openProductSelector(2)">
                     <p class="text-4xl mb-2">+</p>
-                    <p class="font-semibold text-gray-600">Add Product to Compare</p>
-                    <p class="text-sm text-gray-500">Click to select</p>
+                    <p class="font-semibold text-gray-600 dark:text-stone-300">Add Product to Compare</p>
+                    <p class="text-sm text-gray-500 dark:text-stone-400">Click to select</p>
                 </div>
             </div>
         </div>
@@ -45,9 +45,9 @@
         </div>
 
         <!-- Comparison Table -->
-        <div id="comparison-table" class="bg-white rounded-lg border overflow-x-auto hidden">
+        <div id="comparison-table" class="bg-white dark:bg-stone-900 rounded-lg border overflow-x-auto hidden">
             <table class="w-full">
-                <thead class="bg-gray-100 border-b">
+                <thead class="bg-gray-100 dark:bg-stone-800 border-b">
                     <tr>
                         <th class="px-4 py-3 text-left font-semibold w-32">Attribute</th>
                         <th id="product-header-1" class="px-4 py-3 text-center font-semibold min-w-48">
@@ -195,7 +195,7 @@
         <div id="empty-state" class="text-center py-12">
             <p class="text-4xl mb-4">🔍</p>
             <h2 class="text-2xl font-bold mb-2">Start Comparing</h2>
-            <p class="text-gray-600 mb-8">Select at least 2 products to compare features, pricing, and materials</p>
+            <p class="text-gray-600 dark:text-stone-300 mb-8">Select at least 2 products to compare features, pricing, and materials</p>
             <a href="{% url 'products:list' %}" class="btn btn-primary">Browse Products</a>
         </div>
     </div>
@@ -203,8 +203,8 @@
 
 <!-- Product Selector Modal -->
 <div id="product-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
-        <div class="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
+    <div class="bg-white dark:bg-stone-900 rounded-lg max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
+        <div class="sticky top-0 bg-white dark:bg-stone-900 border-b p-4 flex justify-between items-center">
             <h3 class="text-lg font-bold">Select Product</h3>
             <button onclick="closeProductSelector()" class="text-2xl">✕</button>
         </div>
@@ -225,7 +225,7 @@
     }
     
     .comparison-table tbody tr:nth-child(even) {
-        @apply bg-gray-50;
+        @apply bg-gray-50 dark:bg-stone-900;
     }
     
     .btn {
@@ -237,7 +237,7 @@
     }
     
     .btn-secondary {
-        @apply bg-gray-200 text-gray-800 hover:bg-gray-300;
+        @apply bg-gray-200 dark:bg-stone-700 text-gray-800 dark:text-stone-100 hover:bg-gray-300 dark:bg-stone-600;
     }
 </style>
 
@@ -297,7 +297,7 @@ class ProductComparison {
         if (!slot) return;
         
         slot.innerHTML = `
-            <div class="bg-white rounded-lg border p-4 text-center">
+            <div class="bg-white dark:bg-stone-900 rounded-lg border p-4 text-center">
                 <img src="${product.image}" alt="${product.name}" class="w-full h-48 object-cover rounded mb-3">
                 <h3 class="font-bold mb-2">${product.name}</h3>
                 <p class="text-purple-600 font-bold text-lg mb-3">${product.price}</p>
@@ -405,10 +405,10 @@ function removeProduct(position) {
     manager.selectedProducts[position - 1] = null;
     const slot = document.querySelector(`[data-position="${position}"]`);
     slot.innerHTML = `
-        <div class="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50" 
+        <div class="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50 dark:bg-stone-900" 
              onclick="openProductSelector(${position})">
             <p class="text-4xl mb-2">+</p>
-            <p class="font-semibold text-gray-600">Add Product to Compare</p>
+            <p class="font-semibold text-gray-600 dark:text-stone-300">Add Product to Compare</p>
         </div>
     `;
     manager.updateComparisonTable();

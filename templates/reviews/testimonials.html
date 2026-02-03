@@ -9,7 +9,7 @@
     <div class="testimonials-hero">
         <div class="container mx-auto px-4 py-16">
             <h1 class="text-4xl font-bold text-center mb-4">What Our Customers Say</h1>
-            <p class="text-xl text-gray-600 text-center mb-8">
+            <p class="text-xl text-gray-600 dark:text-stone-300 text-center mb-8">
                 Discover why thousands of customers love our hand-embroidered products
             </p>
             
@@ -17,25 +17,25 @@
             <div class="grid grid-cols-3 gap-8 max-w-2xl mx-auto mb-12">
                 <div class="text-center">
                     <div class="text-3xl font-bold text-purple-600" id="total-reviews">0</div>
-                    <p class="text-gray-600">Total Reviews</p>
+                    <p class="text-gray-600 dark:text-stone-300">Total Reviews</p>
                 </div>
                 <div class="text-center">
                     <div class="text-3xl font-bold text-yellow-500" id="avg-rating">0</div>
                     <div class="stars mb-1">
                         <span class="text-yellow-400">★★★★★</span>
                     </div>
-                    <p class="text-gray-600">Average Rating</p>
+                    <p class="text-gray-600 dark:text-stone-300">Average Rating</p>
                 </div>
                 <div class="text-center">
                     <div class="text-3xl font-bold text-green-600" id="verified-count">0</div>
-                    <p class="text-gray-600">Verified Purchases</p>
+                    <p class="text-gray-600 dark:text-stone-300">Verified Purchases</p>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Filters Section -->
-    <div class="bg-gray-100 py-8">
+    <div class="bg-gray-100 dark:bg-stone-800 py-8">
         <div class="container mx-auto px-4">
             <div class="flex flex-wrap gap-4 items-center justify-center">
                 <!-- Rating Filter -->
@@ -81,7 +81,7 @@
         <h2 class="text-3xl font-bold mb-8">All Customer Reviews</h2>
         
         <!-- Rating Distribution -->
-        <div class="mb-12 bg-white p-8 rounded-lg border">
+        <div class="mb-12 bg-white dark:bg-stone-900 p-8 rounded-lg border">
             <h3 class="text-xl font-semibold mb-6">Rating Distribution</h3>
             <div class="space-y-4" id="rating-distribution">
                 <!-- Loaded via JS -->
@@ -115,7 +115,7 @@
 
 <style>
     .filter-btn {
-        @apply px-4 py-2 rounded-lg border-2 border-gray-300 bg-white hover:border-purple-600 transition;
+        @apply px-4 py-2 rounded-lg border-2 border-gray-300 dark:border-stone-700 bg-white dark:bg-stone-900 hover:border-purple-600 transition;
     }
     
     .filter-btn.active {
@@ -123,7 +123,7 @@
     }
     
     .review-card {
-        @apply bg-white rounded-lg border p-6 hover:shadow-lg transition;
+        @apply bg-white dark:bg-stone-900 rounded-lg border p-6 hover:shadow-lg transition;
     }
     
     .review-header {
@@ -135,7 +135,7 @@
     }
     
     .reviewer-avatar {
-        @apply w-12 h-12 rounded-full bg-gray-300 object-cover;
+        @apply w-12 h-12 rounded-full bg-gray-300 dark:bg-stone-600 object-cover;
     }
     
     .verified-badge {
@@ -155,7 +155,7 @@
     }
     
     .helpful-btn {
-        @apply text-sm text-gray-600 hover:text-gray-900 cursor-pointer;
+        @apply text-sm text-gray-600 dark:text-stone-300 hover:text-gray-900 dark:text-white cursor-pointer;
     }
     
     .rating-bar {
@@ -167,7 +167,7 @@
     }
     
     .rating-progress {
-        @apply flex-1 bg-gray-200 rounded-full h-2 overflow-hidden;
+        @apply flex-1 bg-gray-200 dark:bg-stone-700 rounded-full h-2 overflow-hidden;
     }
     
     .rating-fill {
@@ -263,7 +263,7 @@ class TestimonialManager {
                             <div class="rating-progress">
                                 <div class="rating-fill" style="width: ${percentage}%"></div>
                             </div>
-                            <span class="text-gray-600 font-semibold">${count}</span>
+                            <span class="text-gray-600 dark:text-stone-300 font-semibold">${count}</span>
                         </div>
                     `;
                 }
@@ -318,7 +318,7 @@ class TestimonialManager {
         container.innerHTML = '';
         
         if (reviews.length === 0) {
-            container.innerHTML = '<p class="text-gray-600 text-center py-8">No reviews found.</p>';
+            container.innerHTML = '<p class="text-gray-600 dark:text-stone-300 text-center py-8">No reviews found.</p>';
             return;
         }
         
@@ -337,7 +337,7 @@ class TestimonialManager {
             `<img src="${img.image}" alt="Review" class="review-image">`
         ).join('') || '';
         
-        const cardClass = isFeatured ? 'bg-white shadow-lg border-2 border-yellow-200' : 'review-card';
+        const cardClass = isFeatured ? 'bg-white dark:bg-stone-900 shadow-lg border-2 border-yellow-200' : 'review-card';
         
         return `
             <div class="${cardClass}">
@@ -347,7 +347,7 @@ class TestimonialManager {
                              alt="${review.user_name}" class="reviewer-avatar">
                         <div>
                             <p class="font-semibold">${review.user_name || 'Anonymous'}</p>
-                            <p class="text-sm text-gray-600">${new Date(review.created_at).toLocaleDateString()}</p>
+                            <p class="text-sm text-gray-600 dark:text-stone-300">${new Date(review.created_at).toLocaleDateString()}</p>
                         </div>
                     </div>
                     <div class="text-right">
@@ -358,7 +358,7 @@ class TestimonialManager {
                 ${verifiedBadge}
                 
                 ${review.title ? `<h4 class="font-semibold mt-2">${review.title}</h4>` : ''}
-                <p class="text-gray-700 mt-3">${review.content}</p>
+                <p class="text-gray-700 dark:text-stone-200 mt-3">${review.content}</p>
                 
                 ${images ? `<div class="review-images">${images}</div>` : ''}
                 

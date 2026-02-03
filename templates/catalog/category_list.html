@@ -16,8 +16,8 @@
             <h1 class="text-4xl md:text-5xl font-semibold leading-tight mt-4">Find the perfect category to start your shopping journey.</h1>
             <p class="text-base md:text-lg text-white/80 mt-4">Browse curated collections organized by lifestyle, room, and trend. Select any category to explore featured products and stories.</p>
             <div class="flex flex-wrap gap-3 mt-8 text-sm">
-                <span class="px-4 py-2 rounded-full border border-white/20 bg-white/10">Top-level categories: {{ categories|length }}</span>
-                <span class="px-4 py-2 rounded-full border border-white/20 bg-white/10">Updated weekly</span>
+                <span class="px-4 py-2 rounded-full border border-white/20 bg-white dark:bg-stone-900/10">Top-level categories: {{ categories|length }}</span>
+                <span class="px-4 py-2 rounded-full border border-white/20 bg-white dark:bg-stone-900/10">Updated weekly</span>
             </div>
         </div>
     </div>
@@ -33,7 +33,7 @@
                     {% if category.image %}
                     <img src="{{ category.image.url }}" alt="{{ category.name }}" loading="lazy" decoding="async" class="absolute inset-0 w-full h-full object-cover">
                     {% else %}
-                    <div class="absolute inset-0 flex items-center justify-center text-gray-400 text-sm tracking-[0.4em] uppercase">{{ category.name|slice:":3" }}</div>
+                    <div class="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-stone-500 text-sm tracking-[0.4em] uppercase">{{ category.name|slice:":3" }}</div>
                     {% endif %}
                     <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent"></div>
                     <span class="absolute top-4 left-4 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/90 dark:bg-stone-700 text-gray-900 dark:text-stone-100">{{ category.product_count }} products</span>
@@ -55,7 +55,7 @@
                         <span class="px-2 py-1 rounded-full bg-gray-100 dark:bg-stone-700">{{ child.name }}</span>
                         {% endfor %}
                         {% if category.children.count > 3 %}
-                        <span class="px-2 py-1 rounded-full bg-gray-100">+{{ category.children.count|add:"-3" }} more</span>
+                        <span class="px-2 py-1 rounded-full bg-gray-100 dark:bg-stone-800">+{{ category.children.count|add:"-3" }} more</span>
                         {% endif %}
                     </div>
                     {% endif %}
@@ -72,7 +72,7 @@
         </div>
         {% else %}
         <div class="bg-white dark:bg-stone-800 rounded-2xl shadow-sm border border-dashed border-gray-200 dark:border-stone-700 p-12 text-center transition-colors duration-500">
-            <p class="text-lg text-gray-500">No categories available yet. Check back soon.</p>
+            <p class="text-lg text-gray-500 dark:text-stone-400">No categories available yet. Check back soon.</p>
             <a href="{% url 'catalog:product-list' %}" class="inline-flex items-center justify-center mt-5 px-5 py-2 rounded-full bg-primary-600 text-white text-sm font-medium hover:bg-primary-700">Browse all products</a>
         </div>
         {% endif %}
@@ -85,23 +85,23 @@
             <div class="mt-4 space-y-4">
                 {% for branch in category_tree %}
                 <div>
-                    <a href="{% url 'catalog:category-detail' branch.slug %}" class="flex items-center justify-between text-sm font-medium text-gray-800 hover:text-primary-600">
+                    <a href="{% url 'catalog:category-detail' branch.slug %}" class="flex items-center justify-between text-sm font-medium text-gray-800 dark:text-stone-100 hover:text-primary-600">
                         <span>{{ branch.name }}</span>
-                        <span class="text-xs text-gray-400">{% if branch.product_count %}{{ branch.product_count }} items{% endif %}</span>
+                        <span class="text-xs text-gray-400 dark:text-stone-500">{% if branch.product_count %}{{ branch.product_count }} items{% endif %}</span>
                     </a>
                     {% if branch.children %}
-                    <div class="mt-2 flex flex-wrap gap-2 text-xs text-gray-500">
+                    <div class="mt-2 flex flex-wrap gap-2 text-xs text-gray-500 dark:text-stone-400">
                         {% for child in branch.children|slice:":4" %}
-                        <a href="{% url 'catalog:category-detail' child.slug %}" class="px-2 py-1 rounded-full bg-gray-100 hover:bg-primary-50 hover:text-primary-600 transition">{{ child.name }}</a>
+                        <a href="{% url 'catalog:category-detail' child.slug %}" class="px-2 py-1 rounded-full bg-gray-100 dark:bg-stone-800 hover:bg-primary-50 hover:text-primary-600 transition">{{ child.name }}</a>
                         {% endfor %}
                         {% if branch.children|length > 4 %}
-                        <span class="px-2 py-1 rounded-full bg-gray-100">+{{ branch.children|length|add:"-4" }} more</span>
+                        <span class="px-2 py-1 rounded-full bg-gray-100 dark:bg-stone-800">+{{ branch.children|length|add:"-4" }} more</span>
                         {% endif %}
                     </div>
                     {% endif %}
                 </div>
                 {% empty %}
-                <p class="text-sm text-gray-500">No departments available.</p>
+                <p class="text-sm text-gray-500 dark:text-stone-400">No departments available.</p>
                 {% endfor %}
             </div>
         </div>

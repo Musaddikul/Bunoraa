@@ -60,13 +60,13 @@ class SocialProofManager {
             const time = new Date(order.created_at).toLocaleDateString();
             
             html += `
-                <div class="flex items-center gap-2 p-2 rounded bg-gray-50 text-sm">
+                <div class="flex items-center gap-2 p-2 rounded bg-gray-50 dark:bg-stone-900 text-sm">
                     <div class="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center font-bold text-xs">
                         ${initials}
                     </div>
                     <div class="flex-1 truncate">
                         <p class="font-semibold text-xs">${name}</p>
-                        <p class="text-gray-600 text-xs truncate">${product}</p>
+                        <p class="text-gray-600 dark:text-stone-300 text-xs truncate">${product}</p>
                     </div>
                 </div>
             `;
@@ -131,42 +131,42 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="grid grid-cols-3 gap-4 text-center">
             <div>
                 <div class="text-2xl font-bold text-purple-600" id="total-customers">1.2K+</div>
-                <p class="text-sm text-gray-600">Happy Customers</p>
+                <p class="text-sm text-gray-600 dark:text-stone-300">Happy Customers</p>
             </div>
             <div>
                 <div class="text-2xl font-bold text-yellow-500" id="average-rating-stat">4.8</div>
-                <p class="text-sm text-gray-600">Average Rating</p>
+                <p class="text-sm text-gray-600 dark:text-stone-300">Average Rating</p>
             </div>
             <div>
                 <div class="text-2xl font-bold text-green-600" id="total-reviews-stat">500+</div>
-                <p class="text-sm text-gray-600">5-Star Reviews</p>
+                <p class="text-sm text-gray-600 dark:text-stone-300">5-Star Reviews</p>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Widget: Recently Purchased (Sidebar) -->
-<div class="bg-white rounded-lg border p-4">
+<div class="bg-white dark:bg-stone-900 rounded-lg border p-4">
     <h3 class="font-semibold mb-4 text-sm">👥 Recently Purchased</h3>
     <div id="recently-purchased-widget" class="space-y-3">
         <div class="animate-pulse space-y-3">
-            <div class="h-10 bg-gray-200 rounded"></div>
-            <div class="h-10 bg-gray-200 rounded"></div>
+            <div class="h-10 bg-gray-200 dark:bg-stone-700 rounded"></div>
+            <div class="h-10 bg-gray-200 dark:bg-stone-700 rounded"></div>
         </div>
     </div>
 </div>
 
 <!-- Widget: Best Sellers (Carousel or Grid) -->
-<div class="bg-white rounded-lg border p-4">
+<div class="bg-white dark:bg-stone-900 rounded-lg border p-4">
     <h3 class="font-semibold mb-4 text-sm">⭐ Best Sellers This Week</h3>
     <div id="best-sellers-widget" class="grid grid-cols-2 gap-2">
         <div class="animate-pulse space-y-2">
-            <div class="h-20 bg-gray-200 rounded"></div>
-            <div class="h-4 bg-gray-200 rounded"></div>
+            <div class="h-20 bg-gray-200 dark:bg-stone-700 rounded"></div>
+            <div class="h-4 bg-gray-200 dark:bg-stone-700 rounded"></div>
         </div>
         <div class="animate-pulse space-y-2">
-            <div class="h-20 bg-gray-200 rounded"></div>
-            <div class="h-4 bg-gray-200 rounded"></div>
+            <div class="h-20 bg-gray-200 dark:bg-stone-700 rounded"></div>
+            <div class="h-4 bg-gray-200 dark:bg-stone-700 rounded"></div>
         </div>
     </div>
 </div>
@@ -176,17 +176,17 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="text-center p-4">
         <div class="text-3xl mb-2">🔒</div>
         <p class="font-semibold text-sm">100% Secure</p>
-        <p class="text-xs text-gray-600">SSL Encrypted</p>
+        <p class="text-xs text-gray-600 dark:text-stone-300">SSL Encrypted</p>
     </div>
     <div class="text-center p-4">
         <div class="text-3xl mb-2">🚚</div>
         <p class="font-semibold text-sm">Fast Shipping</p>
-        <p class="text-xs text-gray-600">Worldwide</p>
+        <p class="text-xs text-gray-600 dark:text-stone-300">Worldwide</p>
     </div>
     <div class="text-center p-4">
         <div class="text-3xl mb-2">↩️</div>
         <p class="font-semibold text-sm">Easy Returns</p>
-        <p class="text-xs text-gray-600">30 Days</p>
+        <p class="text-xs text-gray-600 dark:text-stone-300">30 Days</p>
     </div>
 </div>
 
@@ -197,10 +197,10 @@ document.addEventListener('DOMContentLoaded', () => {
             <span>★★★★★</span>
         </div>
     </div>
-    <p class="text-sm mt-2 italic text-gray-700">
+    <p class="text-sm mt-2 italic text-gray-700 dark:text-stone-200">
         "The embroidery quality is absolutely amazing! Worth every penny."
     </p>
-    <p class="text-xs text-gray-600 mt-2">— Sarah M., Verified Buyer</p>
+    <p class="text-xs text-gray-600 dark:text-stone-300 mt-2">— Sarah M., Verified Buyer</p>
 </div>
 
 <!-- Widget: Limited Stock Warning -->
@@ -218,10 +218,10 @@ document.addEventListener('DOMContentLoaded', () => {
 </div>
 
 <!-- Widget: Live Notification -->
-<div id="live-notification" class="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-xs animate-slide-in-up">
+<div id="live-notification" class="fixed bottom-4 right-4 bg-white dark:bg-stone-900 rounded-lg shadow-lg p-4 max-w-xs animate-slide-in-up">
     <p class="text-sm font-semibold">🎉 Someone just bought this!</p>
-    <p class="text-xs text-gray-600">Embroidered Pocket Square</p>
-    <button onclick="this.parentElement.style.display='none'" class="text-xs text-gray-400 mt-2">Dismiss</button>
+    <p class="text-xs text-gray-600 dark:text-stone-300">Embroidered Pocket Square</p>
+    <button onclick="this.parentElement.style.display='none'" class="text-xs text-gray-400 dark:text-stone-500 mt-2">Dismiss</button>
 </div>
 
 <style>

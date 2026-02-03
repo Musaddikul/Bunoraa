@@ -21,7 +21,7 @@
         <div class="bg-white dark:bg-gray-800 rounded-lg p-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <!-- File Type Icon -->
-                <div class="w-12 h-12 rounded-lg flex items-center justify-center {% if asset.file_type == 'pdf' %}bg-red-100 dark:bg-red-900/30 text-red-600{% elif asset.file_type == 'zip' %}bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600{% elif asset.file_type == 'video' %}bg-blue-100 dark:bg-blue-900/30 text-blue-600{% elif asset.file_type == 'audio' %}bg-green-100 dark:bg-green-900/30 text-green-600{% elif asset.file_type == 'image' %}bg-purple-100 dark:bg-purple-900/30 text-purple-600{% else %}bg-gray-100 dark:bg-gray-700 text-gray-600{% endif %}">
+                <div class="w-12 h-12 rounded-lg flex items-center justify-center {% if asset.file_type == 'pdf' %}bg-red-100 dark:bg-red-900/30 text-red-600{% elif asset.file_type == 'zip' %}bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600{% elif asset.file_type == 'video' %}bg-blue-100 dark:bg-blue-900/30 text-blue-600{% elif asset.file_type == 'audio' %}bg-green-100 dark:bg-green-900/30 text-green-600{% elif asset.file_type == 'image' %}bg-purple-100 dark:bg-purple-900/30 text-purple-600{% else %}bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-stone-300{% endif %}">
                     {% if asset.file_type == 'pdf' %}
                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M13,9V3.5L18.5,9H13M10.92,12.31C10.68,11.54 10.15,9.08 11.55,9.04C12.95,9 12.03,12.16 12.03,12.16C12.42,13.65 14.05,14.72 14.05,14.72C14.55,14.57 17.4,14.24 17,15.72C16.57,17.2 13.5,15.81 13.5,15.81C11.55,15.95 10.09,16.47 10.09,16.47C8.96,18.58 7.64,19.5 7.1,18.61C6.43,17.5 9.23,16.07 9.23,16.07C10.68,13.72 10.9,12.35 10.92,12.31Z"/>
@@ -73,7 +73,7 @@
             <!-- Download Button / Preview -->
             <div class="flex items-center gap-2">
                 {% if asset.preview_url %}
-                <a href="{{ asset.preview_url }}" target="_blank" class="p-2 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors" title="Preview">
+                <a href="{{ asset.preview_url }}" target="_blank" class="p-2 text-gray-400 dark:text-stone-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors" title="Preview">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
@@ -125,7 +125,7 @@
     {% else %}
     <!-- Digital Product Notice (No Files Yet) -->
     <div class="text-center py-6 text-gray-500 dark:text-gray-400">
-        <svg class="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-12 h-12 mx-auto mb-3 text-gray-400 dark:text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
         </svg>
         <p class="text-sm">This is a digital product. Files will be available after purchase.</p>
@@ -140,7 +140,7 @@
     <div class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
         {% if product.license_type %}
         <div class="flex items-center gap-2">
-            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 text-gray-400 dark:text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
             </svg>
             <span>License: {{ product.get_license_type_display }}</span>
@@ -148,7 +148,7 @@
         {% endif %}
         {% if product.license_key_required %}
         <div class="flex items-center gap-2">
-            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 text-gray-400 dark:text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
             </svg>
             <span>License key will be provided after purchase</span>

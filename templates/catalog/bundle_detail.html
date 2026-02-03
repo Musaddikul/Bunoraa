@@ -57,7 +57,7 @@
                 {% if bundle.original_price %}
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-gray-600 dark:text-stone-300">Original Price:</span>
-                    <span class="text-lg text-gray-400 line-through">{% format_price bundle.original_price bundle.currency %}</span>
+                    <span class="text-lg text-gray-400 dark:text-stone-500 line-through">{% format_price bundle.original_price bundle.currency %}</span>
                 </div>
                 {% endif %}
                 {% if bundle.savings %}
@@ -76,7 +76,7 @@
                 Add Bundle to Cart
             </button>
             {% else %}
-            <button class="w-full bg-gray-300 text-gray-500 py-4 px-6 rounded-xl font-semibold text-lg cursor-not-allowed" disabled>
+            <button class="w-full bg-gray-300 dark:bg-stone-600 text-gray-500 dark:text-stone-400 py-4 px-6 rounded-xl font-semibold text-lg cursor-not-allowed" disabled>
                 Currently Unavailable
             </button>
             {% endif %}

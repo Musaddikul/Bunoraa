@@ -51,7 +51,7 @@
     <!-- Subcategories -->
     {% if subcategories %}
     <div class="mb-8">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Browse Subcategories</h2>
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Browse Subcategories</h2>
         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {% for subcat in subcategories %}
             <a href="{% url 'catalog:category-detail' subcat.slug %}" class="group">
@@ -84,7 +84,7 @@
                 <form id="filter-form" method="GET">
                     <!-- Price Range -->
                     <div class="mb-6">
-                        <h3 class="font-medium text-gray-900 mb-3">Price Range</h3>
+                        <h3 class="font-medium text-gray-900 dark:text-white mb-3">Price Range</h3>
                         <div class="flex items-center space-x-2">
                             <input type="number" name="min_price" placeholder="Min" 
                                    value="{{ request.GET.min_price }}"
@@ -99,14 +99,14 @@
                     <!-- Brands -->
                     {% if brands %}
                     <div class="mb-6">
-                        <h3 class="font-medium text-gray-900 mb-3">Brands</h3>
+                        <h3 class="font-medium text-gray-900 dark:text-white mb-3">Brands</h3>
                         <ul class="space-y-2 max-h-48 overflow-y-auto">
                             {% for brand in brands %}
                             <li>
                                 <label class="flex items-center text-sm text-gray-600 dark:text-stone-200">
                                     <input type="checkbox" name="brand" value="{{ brand.id }}"
                                            {% if brand.id|stringformat:'s' in request.GET.brand %}checked{% endif %}
-                                           class="mr-2 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:focus:ring-amber-900">
+                                           class="mr-2 rounded border-gray-300 dark:border-stone-700 text-primary-600 focus:ring-primary-500 dark:focus:ring-amber-900">
                                     {{ brand.name }} ({{ brand.product_count }})
                                 </label>
                             </li>
@@ -117,14 +117,14 @@
                     
                     <!-- Rating -->
                     <div class="mb-6">
-                        <h3 class="font-medium text-gray-900 mb-3">Rating</h3>
+                        <h3 class="font-medium text-gray-900 dark:text-white mb-3">Rating</h3>
                         <ul class="space-y-2">
                             {% for rating in '4321' %}
                             <li>
                                 <label class="flex items-center text-sm text-gray-600 dark:text-stone-200 cursor-pointer">
                                     <input type="radio" name="min_rating" value="{{ rating }}"
                                            {% if request.GET.min_rating == rating %}checked{% endif %}
-                                           class="mr-2 border-gray-300 text-primary-600 focus:ring-primary-500 dark:focus:ring-amber-900">
+                                           class="mr-2 border-gray-300 dark:border-stone-700 text-primary-600 focus:ring-primary-500 dark:focus:ring-amber-900">
                                     <div class="flex text-yellow-400">
                                         {% for i in '12345' %}
                                         {% if forloop.counter <= rating|add:'0' %}
@@ -132,7 +132,7 @@
                                             <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
                                         </svg>
                                         {% else %}
-                                        <svg class="w-4 h-4 fill-current text-gray-300" viewBox="0 0 20 20">
+                                        <svg class="w-4 h-4 fill-current text-gray-300 dark:text-stone-600" viewBox="0 0 20 20">
                                             <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
                                         </svg>
                                         {% endif %}
@@ -147,11 +147,11 @@
                     
                     <!-- Availability -->
                     <div class="mb-6">
-                        <h3 class="font-medium text-gray-900 mb-3">Availability</h3>
+                        <h3 class="font-medium text-gray-900 dark:text-white mb-3">Availability</h3>
                         <label class="flex items-center text-sm text-gray-600 dark:text-stone-200">
                             <input type="checkbox" name="in_stock" value="true"
                                    {% if request.GET.in_stock %}checked{% endif %}
-                                   class="mr-2 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:focus:ring-amber-900">
+                                   class="mr-2 rounded border-gray-300 dark:border-stone-700 text-primary-600 focus:ring-primary-500 dark:focus:ring-amber-900">
                             In Stock Only
                         </label>
                     </div>
@@ -161,7 +161,7 @@
                         <button type="submit" class="flex-1 bg-primary-600 text-white py-2 rounded-lg hover:bg-primary-700 dark:bg-amber-600 dark:hover:bg-amber-700 transition-colors">
                             Apply
                         </button>
-                        <a href="{% url 'catalog:category-detail' category.slug %}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800 transition-colors">
+                        <a href="{% url 'catalog:category-detail' category.slug %}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 dark:bg-stone-900 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800 transition-colors">
                             Clear
                         </a>
                     </div>
@@ -204,7 +204,7 @@
                 <nav class="flex items-center space-x-2">
                     {% if products.has_previous %}
                     <a href="?page={{ products.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
-                       class="px-3 py-2 border border-gray-300 dark:border-stone-700 rounded-lg text-gray-600 dark:text-stone-200 hover:bg-gray-50 dark:hover:bg-stone-800">
+                       class="px-3 py-2 border border-gray-300 dark:border-stone-700 rounded-lg text-gray-600 dark:text-stone-200 hover:bg-gray-50 dark:bg-stone-900 dark:hover:bg-stone-800">
                         Previous
                     </a>
                     {% endif %}
@@ -214,7 +214,7 @@
                     <span class="px-4 py-2 bg-primary-600 dark:bg-amber-600 text-white rounded-lg">{{ num }}</span>
                     {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
                     <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
-                       class="px-4 py-2 border border-gray-300 dark:border-stone-700 rounded-lg text-gray-600 dark:text-stone-200 hover:bg-gray-50 dark:hover:bg-stone-800">
+                       class="px-4 py-2 border border-gray-300 dark:border-stone-700 rounded-lg text-gray-600 dark:text-stone-200 hover:bg-gray-50 dark:bg-stone-900 dark:hover:bg-stone-800">
                         {{ num }}
                     </a>
                     {% endif %}
@@ -222,7 +222,7 @@
                     
                     {% if products.has_next %}
                     <a href="?page={{ products.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
-                       class="px-3 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
+                       class="px-3 py-2 border border-gray-300 dark:border-stone-700 rounded-lg text-gray-600 dark:text-stone-300 hover:bg-gray-50 dark:bg-stone-900">
                         Next
                     </a>
                     {% endif %}

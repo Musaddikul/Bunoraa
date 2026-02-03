@@ -9,13 +9,13 @@
     
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
         {% for artisan in artisans %}
-        <div class="bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300">
+        <div class="bg-white dark:bg-stone-900 rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300">
             <a href="{{ artisan.get_absolute_url }}">
                 {% if artisan.photo %}
                 <img src="{{ artisan.photo.url }}" alt="{{ artisan.name }}" class="w-full h-64 object-cover">
                 {% else %}
-                <div class="w-full h-64 bg-gray-200 flex items-center justify-center">
-                    <span class="text-gray-500">No Photo</span>
+                <div class="w-full h-64 bg-gray-200 dark:bg-stone-700 flex items-center justify-center">
+                    <span class="text-gray-500 dark:text-stone-400">No Photo</span>
                 </div>
                 {% endif %}
                 <div class="p-4">
@@ -24,7 +24,7 @@
             </a>
         </div>
         {% empty %}
-        <div class="col-span-full text-center text-gray-500">
+        <div class="col-span-full text-center text-gray-500 dark:text-stone-400">
             <p>We are currently featuring no artisans. Please check back later.</p>
         </div>
         {% endfor %}

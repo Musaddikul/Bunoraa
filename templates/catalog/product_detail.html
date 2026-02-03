@@ -107,7 +107,7 @@
             <!-- Artisan Link -->
             {% if product.artisan %}
             <div class="mb-4">
-                <span class="text-sm text-gray-500">By:</span>
+                <span class="text-sm text-gray-500 dark:text-stone-400">By:</span>
                 <a href="{{ product.artisan.get_absolute_url }}" class="text-lg font-semibold text-blue-600 hover:underline">
                     {{ product.artisan.name }}
                 </a>
@@ -159,7 +159,7 @@
                 {% if product.sale_price %}
                 <div class="flex items-center space-x-4">
                     <span id="product-price" class="text-3xl font-bold text-red-600">{% format_price product.sale_price product.currency %}</span>
-                    <span class="text-xl text-gray-400 line-through">{% format_price product.price product.currency %}</span>
+                    <span class="text-xl text-gray-400 dark:text-stone-500 line-through">{% format_price product.price product.currency %}</span>
                     {% if product.discount_percentage %}
                     <span class="bg-red-100 text-red-600 px-2 py-1 rounded text-sm font-semibold">
                         {{ product.discount_percentage|floatformat:0 }}% off
@@ -181,12 +181,12 @@
             <div class="mb-6">
                 {% for option_name, option_values in variant_options.items %}
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ option_name }}</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-stone-200 mb-2">{{ option_name }}</label>
                     <div class="flex flex-wrap gap-2">
                         {% for opt in option_values %}
                         <button type="button" 
                                 onclick="selectVariant('{{ opt.variant_id }}', '{{ option_name }}', '{{ opt.value }}')"
-                                class="variant-btn px-4 py-2 border border-gray-300 rounded-lg hover:border-primary-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-colors {% if not opt.in_stock %}opacity-50{% endif %}"
+                                class="variant-btn px-4 py-2 border border-gray-300 dark:border-stone-700 rounded-lg hover:border-primary-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-colors {% if not opt.in_stock %}opacity-50{% endif %}"
                                 data-variant="{{ opt.variant_id }}"
                                 data-price="{{ opt.price }}"
                                 {% if not opt.in_stock %}disabled{% endif %}>
@@ -223,13 +223,13 @@
                     Add to Cart
                 </button>
                 {% else %}
-                <button class="flex-1 bg-gray-300 text-gray-500 py-3 px-6 rounded-lg font-semibold cursor-not-allowed" disabled>
+                <button class="flex-1 bg-gray-300 dark:bg-stone-600 text-gray-500 dark:text-stone-400 py-3 px-6 rounded-lg font-semibold cursor-not-allowed" disabled>
                     Out of Stock
                 </button>
                 {% endif %}
 
                 <button id="add-to-wishlist-btn"
-                    class="p-2 border border-gray-300 rounded-lg hover:border-primary-500 hover:text-red-500 transition-colors"
+                    class="p-2 border border-gray-300 dark:border-stone-700 rounded-lg hover:border-primary-500 hover:text-red-500 transition-colors"
                     data-product-id="{{ product.id }}"
                     title="Add to Wishlist" aria-pressed="false">
                     <svg class="w-7 h-7" stroke="currentColor" viewBox="0 0 24 24">
@@ -296,7 +296,7 @@
             
             <!-- SKU -->
             {% if product.sku %}
-            <div class="text-sm text-gray-500 mb-6">
+            <div class="text-sm text-gray-500 dark:text-stone-400 mb-6">
                 <span>SKU: {{ product.sku }}</span>
             </div>
             {% endif %}
@@ -311,13 +311,13 @@
                     </svg>
                 </a>
                 <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri }}&text={{ product.name }}" 
-                   target="_blank" class="text-gray-400 hover:text-blue-400">
+                   target="_blank" class="text-gray-400 dark:text-stone-500 hover:text-blue-400">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
                     </svg>
                 </a>
                 <a href="https://pinterest.com/pin/create/button/?url={{ request.build_absolute_uri }}&description={{ product.name }}" 
-                   target="_blank" class="text-gray-400 hover:text-red-600">
+                   target="_blank" class="text-gray-400 dark:text-stone-500 hover:text-red-600">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 0c-6.627 0-12 5.372-12 12 0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146 1.124.347 2.317.535 3.554.535 6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z"/>
                     </svg>
@@ -384,7 +384,7 @@
                     </div>
                     <div class="md:w-1/2">
                         <h3 class="text-2xl font-bold mb-2">{{ step.title }}</h3>
-                        <p class="text-gray-700">{{ step.description|linebreaks }}</p>
+                        <p class="text-gray-700 dark:text-stone-200">{{ step.description|linebreaks }}</p>
                     </div>
                 </div>
                 {% endfor %}
@@ -510,32 +510,32 @@
 
 <!-- Customization Request Modal -->
 <div id="customization-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-stone-900">
         <div class="mt-3 text-center">
-            <h3 class="text-lg leading-6 font-medium text-gray-900">Request Customization for <br> "{{ product.name }}"</h3>
+            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">Request Customization for <br> "{{ product.name }}"</h3>
             <div class="mt-2 px-7 py-3">
                 <form id="customization-form" method="POST">
                     {% csrf_token %}
                     <input type="hidden" name="product" value="{{ product.id }}">
                     <div class="mb-4">
-                        <label for="id_name" class="block text-sm font-medium text-gray-700 text-left">Your Name</label>
+                        <label for="id_name" class="block text-sm font-medium text-gray-700 dark:text-stone-200 text-left">Your Name</label>
                         <input type="text" name="name" id="id_name" required
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                               class="mt-1 block w-full rounded-md border-gray-300 dark:border-stone-700 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                     <div class="mb-4">
-                        <label for="id_email" class="block text-sm font-medium text-gray-700 text-left">Your Email</label>
+                        <label for="id_email" class="block text-sm font-medium text-gray-700 dark:text-stone-200 text-left">Your Email</label>
                         <input type="email" name="email" id="id_email" required
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                               class="mt-1 block w-full rounded-md border-gray-300 dark:border-stone-700 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                     <div class="mb-4">
-                        <label for="id_phone" class="block text-sm font-medium text-gray-700 text-left">Your Phone (Optional)</label>
+                        <label for="id_phone" class="block text-sm font-medium text-gray-700 dark:text-stone-200 text-left">Your Phone (Optional)</label>
                         <input type="text" name="phone" id="id_phone"
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                               class="mt-1 block w-full rounded-md border-gray-300 dark:border-stone-700 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                     <div class="mb-4">
-                        <label for="id_message" class="block text-sm font-medium text-gray-700 text-left">Describe your customization</label>
+                        <label for="id_message" class="block text-sm font-medium text-gray-700 dark:text-stone-200 text-left">Describe your customization</label>
                         <textarea name="message" id="id_message" rows="4" required
-                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                                  class="mt-1 block w-full rounded-md border-gray-300 dark:border-stone-700 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
                     </div>
                     <div class="items-center px-4 py-3">
                         <button id="submit-customization-btn" type="submit"
@@ -543,7 +543,7 @@
                             Submit Request
                         </button>
                         <button id="cancel-customization-btn" type="button"
-                                class="mt-3 px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                                class="mt-3 px-4 py-2 bg-gray-200 dark:bg-stone-700 text-gray-800 dark:text-stone-100 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-300 dark:bg-stone-600 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:ring-stone-600">
                             Cancel
                         </button>
                     </div>
@@ -553,17 +553,17 @@
     </div>
 <!-- Customer Photo Upload Modal -->
 <div id="customer-photo-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-stone-900">
         <div class="mt-3 text-center">
-            <h3 class="text-lg leading-6 font-medium text-gray-900">Upload Your Photo for <br> "{{ product.name }}"</h3>
+            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">Upload Your Photo for <br> "{{ product.name }}"</h3>
             <div class="mt-2 px-7 py-3">
                 <form id="customer-photo-form" method="POST" enctype="multipart/form-data">
                     {% csrf_token %}
                     <input type="hidden" name="product" value="{{ product.id }}">
                     <div class="mb-4">
-                        <label for="id_image" class="block text-sm font-medium text-gray-700 text-left">Photo</label>
+                        <label for="id_image" class="block text-sm font-medium text-gray-700 dark:text-stone-200 text-left">Photo</label>
                         <input type="file" name="image" id="id_image" accept="image/*" required
-                               class="mt-1 block w-full text-sm text-gray-500
+                               class="mt-1 block w-full text-sm text-gray-500 dark:text-stone-400
                                file:mr-4 file:py-2 file:px-4
                                file:rounded-full file:border-0
                                file:text-sm file:font-semibold
@@ -571,9 +571,9 @@
                                hover:file:bg-blue-100">
                     </div>
                     <div class="mb-4">
-                        <label for="id_description" class="block text-sm font-medium text-gray-700 text-left">Description (Optional)</label>
+                        <label for="id_description" class="block text-sm font-medium text-gray-700 dark:text-stone-200 text-left">Description (Optional)</label>
                         <textarea name="description" id="id_description" rows="3"
-                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                                  class="mt-1 block w-full rounded-md border-gray-300 dark:border-stone-700 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
                     </div>
                     <div class="items-center px-4 py-3">
                         <button id="submit-customer-photo-btn" type="submit"
@@ -581,7 +581,7 @@
                             Upload Photo
                         </button>
                         <button id="cancel-customer-photo-btn" type="button"
-                                class="mt-3 px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                                class="mt-3 px-4 py-2 bg-gray-200 dark:bg-stone-700 text-gray-800 dark:text-stone-100 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-300 dark:bg-stone-600 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:ring-stone-600">
                             Cancel
                         </button>
                     </div>
@@ -593,9 +593,9 @@
 
 <!-- Back in Stock Notification Modal -->
 <div id="back-in-stock-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-stone-900">
         <div class="mt-3 text-center">
-            <h3 class="text-lg leading-6 font-medium text-gray-900">Notify Me When Back in Stock <br> "{{ product.name }}"</h3>
+            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">Notify Me When Back in Stock <br> "{{ product.name }}"</h3>
             <div class="mt-2 px-7 py-3">
                 <form id="back-in-stock-form" method="POST">
                     {% csrf_token %}
@@ -603,12 +603,12 @@
                     <input type="hidden" name="variant" value="" id="back-in-stock-variant">
                     {% if not request.user.is_authenticated %}
                     <div class="mb-4">
-                        <label for="id_back_in_stock_email" class="block text-sm font-medium text-gray-700 text-left">Your Email</label>
+                        <label for="id_back_in_stock_email" class="block text-sm font-medium text-gray-700 dark:text-stone-200 text-left">Your Email</label>
                         <input type="email" name="email" id="id_back_in_stock_email" required
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                               class="mt-1 block w-full rounded-md border-gray-300 dark:border-stone-700 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                     {% else %}
-                    <p class="text-sm text-gray-600 mb-4">We'll notify you at your registered email: <strong>{{ request.user.email }}</strong></p>
+                    <p class="text-sm text-gray-600 dark:text-stone-300 mb-4">We'll notify you at your registered email: <strong>{{ request.user.email }}</strong></p>
                     {% endif %}
                     
                     <div class="items-center px-4 py-3">
@@ -617,7 +617,7 @@
                             Submit Request
                         </button>
                         <button id="cancel-back-in-stock-btn" type="button"
-                                class="mt-3 px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                                class="mt-3 px-4 py-2 bg-gray-200 dark:bg-stone-700 text-gray-800 dark:text-stone-100 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-300 dark:bg-stone-600 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:ring-stone-600">
                             Cancel
                         </button>
                     </div>
@@ -653,13 +653,13 @@
         btn.addEventListener('click', function() {
             document.querySelectorAll('.tab-btn').forEach(function(b) {
                 b.classList.remove('border-primary-500', 'text-primary-600');
-                b.classList.add('border-transparent', 'text-gray-500');
+                b.classList.add('border-transparent', 'text-gray-500 dark:text-stone-400');
             });
             document.querySelectorAll('.tab-content').forEach(function(c) {
                 c.classList.add('hidden');
             });
             this.classList.add('border-primary-500', 'text-primary-600');
-            this.classList.remove('border-transparent', 'text-gray-500');
+            this.classList.remove('border-transparent', 'text-gray-500 dark:text-stone-400');
             document.getElementById(this.dataset.tab + '-tab').classList.remove('hidden');
         });
     });

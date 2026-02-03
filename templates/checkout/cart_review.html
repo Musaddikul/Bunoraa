@@ -11,22 +11,22 @@
         <div class="flex items-center justify-center text-sm font-medium">
             <div class="flex items-center">
                 <div class="w-10 h-10 rounded-full bg-primary-600 text-white flex items-center justify-center">1</div>
-                <span class="ml-2 text-gray-900">Cart Review</span>
+                <span class="ml-2 text-gray-900 dark:text-white">Cart Review</span>
             </div>
             <div class="w-16 h-0.5 mx-4 bg-primary-600"></div>
             <div class="flex items-center">
-                <div class="w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center">2</div>
-                <span class="ml-2 text-gray-500">Shipping</span>
+                <div class="w-10 h-10 rounded-full bg-gray-300 dark:bg-stone-600 text-gray-600 dark:text-stone-300 flex items-center justify-center">2</div>
+                <span class="ml-2 text-gray-500 dark:text-stone-400">Shipping</span>
             </div>
-            <div class="w-16 h-0.5 mx-4 bg-gray-300"></div>
+            <div class="w-16 h-0.5 mx-4 bg-gray-300 dark:bg-stone-600"></div>
             <div class="flex items-center">
-                <div class="w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center">3</div>
-                <span class="ml-2 text-gray-500">Payment</span>
+                <div class="w-10 h-10 rounded-full bg-gray-300 dark:bg-stone-600 text-gray-600 dark:text-stone-300 flex items-center justify-center">3</div>
+                <span class="ml-2 text-gray-500 dark:text-stone-400">Payment</span>
             </div>
-            <div class="w-16 h-0.5 mx-4 bg-gray-300"></div>
+            <div class="w-16 h-0.5 mx-4 bg-gray-300 dark:bg-stone-600"></div>
             <div class="flex items-center">
-                <div class="w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center">4</div>
-                <span class="ml-2 text-gray-500">Review</span>
+                <div class="w-10 h-10 rounded-full bg-gray-300 dark:bg-stone-600 text-gray-600 dark:text-stone-300 flex items-center justify-center">4</div>
+                <span class="ml-2 text-gray-500 dark:text-stone-400">Review</span>
             </div>
         </div>
     </div>
@@ -34,11 +34,11 @@
     <div class="flex flex-col lg:flex-row gap-8">
         <!-- Cart Items -->
         <div class="flex-1 space-y-6">
-            <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="bg-white dark:bg-stone-900 rounded-lg shadow-sm p-6">
                 <div class="flex items-start justify-between mb-6">
                     <div>
-                        <h1 class="text-2xl font-semibold text-gray-900">Review Your Cart</h1>
-                        <p class="text-sm text-gray-500 mt-1">Make sure quantities and variants look right before choosing shipping.</p>
+                        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Review Your Cart</h1>
+                        <p class="text-sm text-gray-500 dark:text-stone-400 mt-1">Make sure quantities and variants look right before choosing shipping.</p>
                     </div>
                     <a href="{% url 'commerce:cart' %}" class="text-sm text-primary-600 hover:text-primary-700">Edit Cart</a>
                 </div>
@@ -50,9 +50,9 @@
                         <div class="flex items-center space-x-4 flex-1">
                             <img src="{{ item.product.primary_image.url|default:'/static/images/placeholder.svg' }}" loading="lazy" decoding="async" alt="{{ item.product.name }}" class="w-20 h-20 rounded-lg object-cover">
                             <div>
-                                <p class="font-medium text-gray-900">{{ item.product.name }}</p>
+                                <p class="font-medium text-gray-900 dark:text-white">{{ item.product.name }}</p>
                                 {% if item.variant %}
-                                <p class="text-sm text-gray-500">{{ item.variant.name }}</p>
+                                <p class="text-sm text-gray-500 dark:text-stone-400">{{ item.variant.name }}</p>
                                 {% endif %}
                                 {% if not item.is_available %}
                                 <p class="text-sm text-red-600 mt-1">This item is currently unavailable.</p>
@@ -61,16 +61,16 @@
                         </div>
                         <div class="flex items-center justify-between md:justify-end md:space-x-10 mt-4 md:mt-0 text-sm">
                             <div>
-                                <p class="text-gray-500">Quantity</p>
-                                <p class="font-semibold text-gray-900 text-base">{{ item.quantity }}</p>
+                                <p class="text-gray-500 dark:text-stone-400">Quantity</p>
+                                <p class="font-semibold text-gray-900 dark:text-white text-base">{{ item.quantity }}</p>
                             </div>
                             <div>
-                                <p class="text-gray-500">Unit Price</p>
-                                <p class="font-semibold text-gray-900 text-base">{{ item.formatted_unit_price }}</p>
+                                <p class="text-gray-500 dark:text-stone-400">Unit Price</p>
+                                <p class="font-semibold text-gray-900 dark:text-white text-base">{{ item.formatted_unit_price }}</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-gray-500">Line Total</p>
-                                <p class="text-lg font-semibold text-gray-900">{{ item.formatted_total }}</p>
+                                <p class="text-gray-500 dark:text-stone-400">Line Total</p>
+                                <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ item.formatted_total }}</p>
                             </div>
                         </div>
                     </div>
@@ -78,16 +78,16 @@
                 </div>
                 {% else %}
                 <div class="text-center py-12">
-                    <p class="text-lg text-gray-600">Your cart is empty. <a href="{% url 'catalog:product-list' %}" class="text-primary-600 hover:text-primary-700">Continue shopping</a></p>
+                    <p class="text-lg text-gray-600 dark:text-stone-300">Your cart is empty. <a href="{% url 'catalog:product-list' %}" class="text-primary-600 hover:text-primary-700">Continue shopping</a></p>
                 </div>
                 {% endif %}
             </div>
 
             {% if cart and cart.coupon %}
-            <div class="bg-white rounded-lg shadow-sm p-6 flex items-center justify-between">
+            <div class="bg-white dark:bg-stone-900 rounded-lg shadow-sm p-6 flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-500">Coupon Applied</p>
-                    <p class="font-semibold text-gray-900">{{ cart.coupon.code }}</p>
+                    <p class="text-sm text-gray-500 dark:text-stone-400">Coupon Applied</p>
+                    <p class="font-semibold text-gray-900 dark:text-white">{{ cart.coupon.code }}</p>
                 </div>
                 <p class="text-green-600 font-semibold">-{{ cart_summary.currency.symbol|default:currency_symbol }}{{ cart_summary.discount_amount }}</p>
             </div>
@@ -96,12 +96,12 @@
 
         <!-- Order Summary -->
         <div class="lg:w-96">
-            <div class="bg-white rounded-lg shadow-sm p-6 sticky top-24">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
+            <div class="bg-white dark:bg-stone-900 rounded-lg shadow-sm p-6 sticky top-24">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Order Summary</h2>
 
                 {% if cart_summary %}
-                <div class="space-y-3 border-b border-gray-200 pb-4">
-                    <div class="flex justify-between text-gray-600">
+                <div class="space-y-3 border-b border-gray-200 dark:border-stone-700 pb-4">
+                    <div class="flex justify-between text-gray-600 dark:text-stone-300">
                         <span>Items ({{ cart_summary.item_count }})</span>
                         <span>{{ cart_summary.formatted_subtotal }}</span>
                     </div>
@@ -111,28 +111,28 @@
                         <span>-{{ cart_summary.formatted_discount }}</span>
                     </div>
                     {% endif %}
-                    <div class="flex justify-between text-gray-600">
+                    <div class="flex justify-between text-gray-600 dark:text-stone-300">
                         <span>Estimated Shipping</span>
                         <span>Calculated at next step</span>
                     </div>
                 </div>
 
-                <div class="flex justify-between text-xl font-bold text-gray-900 mt-4">
+                <div class="flex justify-between text-xl font-bold text-gray-900 dark:text-white mt-4">
                     <span>Total</span>
                     <span>{{ cart_summary.currency.symbol|default:currency_symbol }}{{ cart_summary.total }}</span>
                 </div>
                 {% else %}
-                <p class="text-sm text-gray-500">We could not load your cart summary. Please return to the cart page.</p>
+                <p class="text-sm text-gray-500 dark:text-stone-400">We could not load your cart summary. Please return to the cart page.</p>
                 {% endif %}
 
                 <div class="mt-6 space-y-3">
                     <a href="{% url 'commerce:checkout_shipping' %}" class="block w-full bg-primary-600 text-white text-center py-3 rounded-lg font-medium hover:bg-primary-700 transition-colors">
                         Continue to Shipping
                     </a>
-                    <a href="{% url 'commerce:cart' %}" class="block w-full text-center text-gray-600 hover:text-gray-800">Return to Cart</a>
+                    <a href="{% url 'commerce:cart' %}" class="block w-full text-center text-gray-600 dark:text-stone-300 hover:text-gray-800 dark:text-stone-100">Return to Cart</a>
                 </div>
 
-                <div class="mt-6 flex items-center justify-center text-sm text-gray-500">
+                <div class="mt-6 flex items-center justify-center text-sm text-gray-500 dark:text-stone-400">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                     </svg>
