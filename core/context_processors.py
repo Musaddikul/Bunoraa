@@ -3,6 +3,7 @@ Context processors for templates
 """
 from django.conf import settings
 from django.core.cache import cache
+from decimal import Decimal
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
 
@@ -101,7 +102,7 @@ def site_settings(request):
     cod_fee = 0  # Default
     
     try:
-        from apps.i18n.services import CurrencyService
+        from apps.i18n.services import CurrencyService, CurrencyConversionService
         currency = CurrencyService.get_user_currency(
             user=request.user if request.user.is_authenticated else None,
             request=request
@@ -141,6 +142,30 @@ def site_settings(request):
                 cod_fee = float(cod_gateway.fee_amount)
         except Exception:
             pass
+
+        # Convert monetary settings to user's currency if needed
+        free_shipping_threshold_converted = free_shipping_threshold
+        default_shipping_cost_converted = default_shipping_cost
+        cod_fee_converted = cod_fee
+        if currency_code and currency_code != 'BDT':
+            try:
+                free_shipping_threshold_converted = float(CurrencyConversionService.convert_by_code(
+                    Decimal(str(free_shipping_threshold)), 'BDT', currency_code, round_result=True
+                ))
+            except Exception:
+                free_shipping_threshold_converted = free_shipping_threshold
+            try:
+                default_shipping_cost_converted = float(CurrencyConversionService.convert_by_code(
+                    Decimal(str(default_shipping_cost)), 'BDT', currency_code, round_result=True
+                ))
+            except Exception:
+                default_shipping_cost_converted = default_shipping_cost
+            try:
+                cod_fee_converted = float(CurrencyConversionService.convert_by_code(
+                    Decimal(str(cod_fee)), 'BDT', currency_code, round_result=True
+                ))
+            except Exception:
+                cod_fee_converted = cod_fee
             
     except Exception:
         currency_code = 'BDT'
@@ -152,6 +177,9 @@ def site_settings(request):
         currency_symbol_position = 'before'
         currency_number_system = 'western'
         currency_locale = 'en-US'
+        free_shipping_threshold_converted = free_shipping_threshold
+        default_shipping_cost_converted = default_shipping_cost
+        cod_fee_converted = cod_fee
 
     # Build a canonical URL (strip common tracking params, keep search/page where relevant)
     def build_canonical(req):
@@ -196,8 +224,11 @@ def site_settings(request):
         'currency_symbol_position': currency_symbol_position,
         'currency_number_system': currency_number_system,
         'free_shipping_threshold': free_shipping_threshold,
+        'free_shipping_threshold_converted': free_shipping_threshold_converted,
         'default_shipping_cost': default_shipping_cost,
+        'default_shipping_cost_converted': default_shipping_cost_converted,
         'cod_fee': cod_fee,
+        'cod_fee_converted': cod_fee_converted,
         'tax_rate': cached_settings.get('TAX_RATE', 0),
         'canonical_url': build_canonical(request),
         'meta_robots': compute_meta_robots(request),

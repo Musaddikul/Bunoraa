@@ -412,6 +412,7 @@ class CurrencyConversionResponseSerializer(serializers.Serializer):
 
 # =============================================================================
 # Product Price Conversion Mixin
+# Product Price Conversion Mixin
 # =============================================================================
 
 class PriceConversionMixin:
@@ -455,4 +456,55 @@ class PriceConversionMixin:
             # Log the error but don't fail the serialization
             logger.exception(f"Error converting prices: {e}")
         
+        return data
+
+
+# =============================================================================
+# Generic Currency Conversion Mixin (for non-product serializers)
+# =============================================================================
+
+def convert_currency_fields(data, fields, from_code, request):
+    """Convert numeric fields in a dict to the user's selected currency."""
+    if not request:
+        return data, None
+
+    user_currency = CurrencyService.get_user_currency(request=request)
+    if not user_currency or user_currency.code == from_code:
+        return data, user_currency
+
+    for field in fields:
+        if field in data and data[field] not in (None, ''):
+            try:
+                amount = Decimal(str(data[field]))
+                converted = CurrencyConversionService.convert_by_code(
+                    amount, from_code, user_currency.code, round_result=True
+                )
+                data[field] = str(converted)
+            except Exception:
+                # Keep original value if conversion fails
+                pass
+
+    return data, user_currency
+
+
+class CurrencyConversionMixin:
+    """Reusable serializer mixin for currency conversion."""
+
+    currency_fields = []
+
+    def get_currency_source_code(self, instance, data):
+        return getattr(instance, 'currency', None) or data.get('currency') or 'BDT'
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        from_code = self.get_currency_source_code(instance, data)
+
+        data, user_currency = convert_currency_fields(
+            data, self.currency_fields, from_code, request
+        )
+
+        if user_currency and 'currency' in data:
+            data['currency'] = user_currency.code
+
         return data

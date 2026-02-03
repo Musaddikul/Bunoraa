@@ -61,6 +61,23 @@ class ShippingRateCalculationView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         data = serializer.validated_data
+
+        # Normalize subtotal to default currency for calculations
+        try:
+            from decimal import Decimal
+            from apps.i18n.services import CurrencyService, CurrencyConversionService
+            target_currency = CurrencyService.get_user_currency(request=request)
+            target_code = target_currency.code if target_currency else None
+            default_currency = CurrencyService.get_default_currency()
+            default_code = default_currency.code if default_currency else None
+            subtotal = data.get('subtotal', Decimal('0'))
+            if target_code and default_code and target_code != default_code:
+                subtotal = CurrencyConversionService.convert_by_code(
+                    Decimal(str(subtotal)), target_code, default_code, round_result=False
+                )
+            data['subtotal'] = subtotal
+        except Exception:
+            target_code = None
         
         # Get available methods with rates
         methods = ShippingRateService.get_available_methods(
@@ -70,7 +87,8 @@ class ShippingRateCalculationView(APIView):
             subtotal=data.get('subtotal', 0),
             weight=data.get('weight', 0),
             item_count=data.get('item_count', 1),
-            product_ids=[str(pid) for pid in data.get('product_ids', [])]
+            product_ids=[str(pid) for pid in data.get('product_ids', [])],
+            currency_code=target_code
         )
         
         return Response({

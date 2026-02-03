@@ -1,29 +1,32 @@
 (function() {
   'use strict';
 
+  function toNumber(value, fallback = 0) {
+    const n = parseFloat(value);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
   // Get configuration from DOM or window.BUNORAA_CURRENCY / window.BUNORAA_SHIPPING
   function getConfig() {
     const cartDrawer = document.getElementById('cart-drawer');
     const currencyMeta = window.BUNORAA_CURRENCY || {};
     const shippingMeta = window.BUNORAA_SHIPPING || {};
-    
+
     return {
-      FREE_SHIPPING_THRESHOLD: parseFloat(cartDrawer?.dataset?.freeShippingThreshold) || shippingMeta.free_shipping_threshold || currencyMeta.free_shipping_threshold || 2000,
-      SHIPPING_COSTS: shippingMeta.costs || {
-        dhaka: parseFloat(cartDrawer?.dataset?.shippingDhaka) || 60,
-        chittagong: parseFloat(cartDrawer?.dataset?.shippingChittagong) || 80,
-        other: parseFloat(cartDrawer?.dataset?.shippingOther) || 120
-      },
+      FREE_SHIPPING_THRESHOLD: toNumber(
+        cartDrawer?.dataset?.freeShippingThreshold,
+        toNumber(shippingMeta.free_shipping_threshold, toNumber(currencyMeta.free_shipping_threshold, 2000))
+      ),
       DELIVERY_TIMES: shippingMeta.delivery_times || {
         dhaka: '1-2 days',
         chittagong: '2-3 days',
         other: '3-5 days'
       },
-      CURRENCY_SYMBOL: cartDrawer?.dataset?.currencySymbol || currencyMeta.symbol || '৳',
+      CURRENCY_SYMBOL: cartDrawer?.dataset?.currencySymbol || currencyMeta.symbol || '\u09F3',
       CURRENCY_CODE: cartDrawer?.dataset?.currencyCode || currencyMeta.code || 'BDT',
       CURRENCY_POSITION: cartDrawer?.dataset?.currencyPosition || currencyMeta.symbol_position || 'before',
-      COD_FEE: parseFloat(cartDrawer?.dataset?.codFee) || shippingMeta.cod_fee || 0,
-      TAX_RATE: parseFloat(cartDrawer?.dataset?.taxRate) || 10,
+      COD_FEE: toNumber(cartDrawer?.dataset?.codFee, toNumber(shippingMeta.cod_fee, 0)),
+      TAX_RATE: toNumber(cartDrawer?.dataset?.taxRate, 10),
       USER_AUTHENTICATED: cartDrawer?.dataset?.userAuthenticated === 'true',
       USER_CITY: cartDrawer?.dataset?.userCity || 'Dhaka',
       USER_POSTAL: cartDrawer?.dataset?.userPostal || '1200'
@@ -83,15 +86,65 @@
     return '';
   }
 
-  // Calculate shipping based on location
-  function calculateShipping(subtotal, location = 'dhaka') {
-    const c = cfg();
-    if (subtotal >= c.FREE_SHIPPING_THRESHOLD) {
-      return { cost: 0, isFree: true };
+  const SHIPPING_ADDRESS_MESSAGE_HTML = '<a href="/account/addresses/" class="text-xs font-medium text-amber-600 dark:text-amber-400 underline underline-offset-2 hover:text-amber-700 dark:hover:text-amber-300">Add shipping address to see shipping cost.</a>';
+  let shippingAddressCache = null;
+  let shippingAddressPromise = null;
+  let shippingQuoteCache = { key: null, quote: null };
+
+  function isAuthenticated() {
+    return window.AuthApi?.isAuthenticated && AuthApi.isAuthenticated();
+  }
+
+  function getAddressesFromResponse(response) {
+    if (!response) return [];
+    if (Array.isArray(response)) return response;
+    if (Array.isArray(response.data)) return response.data;
+    if (Array.isArray(response.data?.results)) return response.data.results;
+    if (Array.isArray(response.results)) return response.results;
+    return [];
+  }
+
+  async function getDefaultShippingAddress() {
+    if (!isAuthenticated()) return null;
+    if (shippingAddressCache) return shippingAddressCache;
+    if (!shippingAddressPromise) {
+      shippingAddressPromise = (async () => {
+        try {
+          const resp = await AuthApi.getAddresses();
+          const addresses = getAddressesFromResponse(resp);
+          if (!addresses.length) return null;
+
+          const shippingAddresses = addresses.filter(addr => {
+            const type = String(addr.address_type || '').toLowerCase();
+            return type === 'shipping' || type === 'both';
+          });
+
+          return (
+            shippingAddresses.find(addr => addr.is_default) ||
+            shippingAddresses[0] ||
+            addresses.find(addr => addr.is_default) ||
+            addresses[0] ||
+            null
+          );
+        } catch (err) {
+          return null;
+        }
+      })();
     }
-    return { 
-      cost: c.SHIPPING_COSTS[location] || c.SHIPPING_COSTS.other, 
-      isFree: false 
+
+    shippingAddressCache = await shippingAddressPromise;
+    return shippingAddressCache;
+  }
+
+  function buildShippingPayload(address, subtotal, itemCount, productIds) {
+    return {
+      country: address?.country || 'BD',
+      state: address?.state || address?.city || '',
+      postal_code: address?.postal_code || '',
+      subtotal: subtotal,
+      weight: 0,
+      item_count: itemCount,
+      product_ids: productIds
     };
   }
 
@@ -127,54 +180,60 @@
     return (subtotal * c.TAX_RATE / 100);
   }
 
-  // Fetch dynamic shipping rate from API
-  let cachedShippingRate = null;
-  let shippingFetchPromise = null;
-  
-  async function fetchShippingRate(subtotal, itemCount, productIds = []) {
-    const c = cfg();
-    // Use user's address or default to Dhaka/1200 for guests
-    const city = c.USER_CITY || 'Dhaka';
-    const postalCode = c.USER_POSTAL || '1200';
-    
-    try {
-      const response = await fetch('/api/v1/shipping/calculate/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': window.CSRF_TOKEN || document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
-        },
-        body: JSON.stringify({
-          country: 'BD',
-          state: city,
-          postal_code: postalCode,
-          subtotal: subtotal,
-          weight: 0,
-          item_count: itemCount,
-          product_ids: productIds
-        })
-      });
-      
-      if (!response.ok) throw new Error('Shipping API error');
-      
-      const data = await response.json();
-      if (data.success && data.data?.methods?.length > 0) {
-        // Use the first/cheapest shipping method
-        const cheapest = data.data.methods.reduce((min, m) => 
-          parseFloat(m.rate) < parseFloat(min.rate) ? m : min, data.data.methods[0]);
-        cachedShippingRate = {
-          cost: parseFloat(cheapest.rate),
-          isFree: cheapest.is_free || false,
-          name: cheapest.name
-        };
-        return cachedShippingRate;
-      }
-    } catch (e) {
-      console.warn('[Cart] Shipping API error, using fallback:', e);
+  async function fetchShippingRate(subtotal, itemCount, productIds = [], address) {
+    if (!address) return null;
+
+    const payload = buildShippingPayload(address, subtotal, itemCount, productIds);
+    const cacheKey = [
+      address.id || '',
+      payload.country,
+      payload.state,
+      payload.postal_code,
+      subtotal,
+      itemCount,
+      productIds.join(',')
+    ].join('|');
+
+    if (shippingQuoteCache.key === cacheKey) {
+      return shippingQuoteCache.quote;
     }
-    
-    // Fallback to static calculation
-    return calculateShipping(subtotal);
+
+    try {
+      let response;
+      if (window.ShippingApi?.calculateShipping) {
+        response = await ShippingApi.calculateShipping(payload);
+      } else {
+        const currencyCode = window.BUNORAA_CURRENCY?.code;
+        response = await fetch('/api/v1/shipping/calculate/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': window.CSRF_TOKEN || document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+            ...(currencyCode ? { 'X-User-Currency': currencyCode } : {})
+          },
+          body: JSON.stringify(payload)
+        }).then(res => res.json());
+      }
+
+      const methods = response?.data?.methods || response?.data?.data?.methods || response?.methods || [];
+      if (!Array.isArray(methods) || methods.length === 0) return null;
+
+      const cheapest = methods.reduce((min, m) => 
+        parseFloat(m.rate) < parseFloat(min.rate) ? m : min, methods[0]);
+
+      const cost = toNumber(cheapest.rate, 0);
+      const quote = {
+        cost,
+        isFree: cheapest.is_free || cost <= 0,
+        display: cheapest.rate_display || fmt(cost)
+      };
+
+      shippingQuoteCache = { key: cacheKey, quote };
+      return quote;
+    } catch (e) {
+      console.warn('[Cart] Shipping API error:', e);
+      return null;
+    }
   }
 
   // Update cart summary with shipping and tax
@@ -182,23 +241,28 @@
     const subtotalEl = cartDrawer?.querySelector('[data-cart-subtotal]');
     const shippingEl = cartDrawer?.querySelector('[data-cart-shipping]');
     const taxEl = cartDrawer?.querySelector('[data-cart-tax]');
+    const taxLabelEl = cartDrawer?.querySelector('[data-cart-tax-label]');
     const totalEl = cartDrawer?.querySelector('[data-cart-total]');
     const savingsRow = cartDrawer?.querySelector('[data-cart-savings-row]');
     const savingsEl = cartDrawer?.querySelector('[data-cart-savings]');
     const countEl = cartDrawer?.querySelector('[data-cart-count]');
     
     const items = cart.items || [];
-    const subtotal = cart.summary?.subtotal ?? items.reduce((sum, it) => 
-      sum + Number(it.line_total || it.current_price || 0) * Number(it.quantity || 1), 0);
+    const subtotal = Number(cart.subtotal ?? cart.summary?.subtotal ?? 0) || items.reduce((sum, it) => 
+      sum + Number(it.total || it.line_total || it.unit_price || it.current_price || 0) * Number(it.quantity || 1), 0);
     
     // Calculate savings from original prices
     const totalSavings = items.reduce((sum, it) => {
-      const original = Number(it.original_price || it.current_price || 0);
-      const current = Number(it.current_price || 0);
+      const original = Number(it.price_at_add || it.original_price || it.unit_price || it.current_price || 0);
+      const current = Number(it.unit_price || it.current_price || 0);
       const qty = Number(it.quantity || 1);
       return sum + Math.max(0, (original - current) * qty);
     }, 0);
     
+    if (taxLabelEl) {
+      taxLabelEl.textContent = `Tax (${cfg().TAX_RATE}%)`;
+    }
+
     // Calculate tax
     const tax = calculateTax(subtotal);
     
@@ -206,24 +270,42 @@
     const productIds = items.map(it => it.product?.id || it.product_id).filter(Boolean);
     const itemCount = items.reduce((sum, it) => sum + Number(it.quantity || 1), 0);
     
+    const address = await getDefaultShippingAddress();
+    if (!address) {
+      if (subtotalEl) subtotalEl.textContent = cart.summary?.formatted_subtotal || fmt(subtotal);
+      if (shippingEl) shippingEl.innerHTML = SHIPPING_ADDRESS_MESSAGE_HTML;
+      if (taxEl) taxEl.textContent = fmt(tax);
+      if (totalEl) totalEl.textContent = fmt(subtotal + tax);
+      if (countEl) countEl.textContent = itemCount;
+      updateFreeShippingProgress(cartDrawer, subtotal);
+      return;
+    }
+
     // Show loading state for shipping
     if (shippingEl) shippingEl.textContent = 'Calculating...';
-    
-    // Fetch dynamic shipping (or use cached)
-    let shipping;
+
+    let shipping = null;
     if (items.length === 0) {
-      shipping = { cost: 0, isFree: true };
-    } else if (cachedShippingRate) {
-      shipping = cachedShippingRate;
+      shipping = { cost: 0, isFree: true, display: 'Free' };
     } else {
-      shipping = await fetchShippingRate(subtotal, itemCount, productIds);
+      shipping = await fetchShippingRate(subtotal, itemCount, productIds, address);
     }
-    
+
+    if (!shipping) {
+      if (subtotalEl) subtotalEl.textContent = cart.summary?.formatted_subtotal || fmt(subtotal);
+      if (shippingEl) shippingEl.innerHTML = SHIPPING_ADDRESS_MESSAGE_HTML;
+      if (taxEl) taxEl.textContent = fmt(tax);
+      if (totalEl) totalEl.textContent = fmt(subtotal + tax);
+      if (countEl) countEl.textContent = itemCount;
+      updateFreeShippingProgress(cartDrawer, subtotal);
+      return;
+    }
+
     const total = subtotal + shipping.cost + tax;
-    
+
     // Update elements
     if (subtotalEl) subtotalEl.textContent = cart.summary?.formatted_subtotal || fmt(subtotal);
-    if (shippingEl) shippingEl.textContent = shipping.isFree ? 'FREE' : fmt(shipping.cost);
+    if (shippingEl) shippingEl.textContent = shipping.isFree ? 'FREE' : (shipping.display || fmt(shipping.cost));
     if (taxEl) taxEl.textContent = fmt(tax);
     if (totalEl) totalEl.textContent = fmt(total);
     if (countEl) countEl.textContent = itemCount;
@@ -276,12 +358,12 @@
     const itemHtml = items.map(item => {
       const product = item.product || {};
       const variant = item.variant;
-      const href = product.slug ? `/products/${product.slug}/` : '#';
-      const img = getImageUrl(product);
-      const unit = Number(item.current_price ?? product.price ?? 0);
-      const originalPrice = Number(item.original_price ?? unit);
+      const href = item.product_slug ? `/products/${item.product_slug}/` : (product.slug ? `/products/${product.slug}/` : '#');
+      const img = item.product_image || getImageUrl(product);
+      const unit = Number(item.unit_price ?? item.current_price ?? product.price ?? 0);
+      const originalPrice = Number(item.price_at_add ?? item.original_price ?? unit);
       const qty = Number(item.quantity || 1);
-      const line = Number(item.line_total ?? unit * qty);
+      const line = Number(item.total ?? item.line_total ?? unit * qty);
       const hasDiscount = originalPrice > unit;
       const discountPercent = hasDiscount ? Math.round((1 - unit / originalPrice) * 100) : 0;
       const stockQuantity = item.stock_quantity || product.stock_quantity || 999;
@@ -302,8 +384,8 @@
             <div class="flex-1 min-w-0">
               <div class="flex items-start justify-between gap-2">
                 <div class="flex-1">
-                  <a href="${href}" class="font-semibold text-stone-900 dark:text-white line-clamp-2 hover:text-amber-700 dark:hover:text-amber-400 text-sm">${esc(product.name || 'Product')}</a>
-                  ${variant ? `<p class="text-xs text-stone-500 dark:text-stone-400 mt-0.5">${esc(variant.name || variant.value || '')}</p>` : ''}
+                  <a href="${href}" class="font-semibold text-stone-900 dark:text-white line-clamp-2 hover:text-amber-700 dark:hover:text-amber-400 text-sm">${esc(item.product_name || product.name || 'Product')}</a>
+                  ${variant || item.variant_name ? `<p class="text-xs text-stone-500 dark:text-stone-400 mt-0.5">${esc(variant?.name || variant?.value || item.variant_name || '')}</p>` : ''}
                   ${isLowStock ? `<p class="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Only ${stockQuantity} left</p>` : ''}
                 </div>
                 <div class="flex flex-col gap-1">

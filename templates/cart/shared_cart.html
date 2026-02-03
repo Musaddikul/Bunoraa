@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static currency_tags %}
+
+{% block title %}Shared Cart - {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="bg-gradient-to-b from-amber-50/40 via-white to-white dark:from-stone-950 dark:via-stone-950 dark:to-stone-900">
+    <div class="container mx-auto px-4 py-10">
+        <div class="mb-8">
+            <p class="text-xs uppercase tracking-[0.2em] text-amber-700/80 dark:text-amber-300/80 mb-2">Shared cart</p>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Items in this shared cart</h1>
+            <p class="text-sm text-gray-600 dark:text-gray-300 mt-2">This cart is read-only. Add items to your own cart to purchase.</p>
+        </div>
+
+        {% if cart_summary and cart_summary.items %}
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-4">
+                {% for it in cart_summary.items %}
+                <div class="bg-white/90 dark:bg-gray-900/70 rounded-2xl border border-gray-100/80 dark:border-gray-800 p-4 flex gap-4">
+                    <div class="w-20 h-20 bg-gray-100 dark:bg-stone-800 rounded-lg overflow-hidden flex-shrink-0">
+                        <img src="{{ it.image|default:'/static/images/placeholder.svg' }}" alt="{{ it.product_name }}" class="w-full h-full object-cover" loading="lazy">
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ it.product_name }}</h3>
+                        {% if it.variant_name %}
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ it.variant_name }}</p>
+                        {% endif %}
+                        <div class="mt-3 flex items-center justify-between text-sm">
+                            <span class="text-gray-500 dark:text-gray-400">Qty: {{ it.quantity }}</span>
+                            <span class="font-medium text-gray-900 dark:text-white">{% format_price it.total %}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="lg:col-span-1">
+                <div class="bg-white/95 dark:bg-gray-900/80 rounded-2xl border border-gray-100/80 dark:border-gray-800 p-6 sticky top-24">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Order Summary</h2>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between text-gray-600 dark:text-gray-400">
+                            <span>Subtotal</span>
+                            <span class="font-medium text-gray-900 dark:text-white">{% format_price cart_summary.subtotal %}</span>
+                        </div>
+                        {% if cart_summary.discount_amount and cart_summary.discount_amount != '0' %}
+                        <div class="flex justify-between text-green-600 dark:text-green-400">
+                            <span>Discount</span>
+                            <span>-{% format_price cart_summary.discount_amount %}</span>
+                        </div>
+                        {% endif %}
+                        <div class="flex justify-between text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-3">
+                            <span>Total</span>
+                            <span class="text-base font-bold text-gray-900 dark:text-white">{% format_price cart_summary.total %}</span>
+                        </div>
+                    </div>
+                    {% if cart_summary.coupon_code %}
+                    <p class="text-xs text-green-600 dark:text-green-400 mt-3">Coupon applied: {{ cart_summary.coupon_code }}</p>
+                    {% endif %}
+                    <a href="{% url 'commerce:cart' %}" class="mt-6 inline-flex w-full items-center justify-center px-4 py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold transition-colors">
+                        Go to your cart
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-16">
+            <svg class="w-24 h-24 text-gray-300 dark:text-gray-600 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+            <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">This cart is empty</h2>
+            <p class="text-gray-600 dark:text-gray-300 mb-6">The shared cart has no items right now.</p>
+            <a href="{% url 'catalog:product-list' %}" class="inline-block bg-gradient-to-r from-amber-600 to-amber-700 text-white px-8 py-3 rounded-xl font-semibold hover:from-amber-700 hover:to-amber-800 transition-colors shadow-lg shadow-amber-500/20">
+                Start Shopping
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -612,13 +612,13 @@
             thousand_separator: '{{ currency_thousand_separator|escapejs }}',
             decimal_separator: '{{ currency_decimal_separator|escapejs }}',
             symbol_position: '{{ currency_symbol_position|escapejs }}',
-            free_shipping_threshold: Number('{{ free_shipping_threshold|default:"2000" }}')
+            free_shipping_threshold: Number('{{ free_shipping_threshold_converted|default:"2000" }}')
         };
         // Shipping and payment configuration from server
         window.BUNORAA_SHIPPING = {
-            free_shipping_threshold: Number('{{ free_shipping_threshold|default:"2000" }}'),
-            default_cost: Number('{{ default_shipping_cost|default:"60" }}'),
-            cod_fee: Number('{{ cod_fee|default:"0" }}')
+            free_shipping_threshold: Number('{{ free_shipping_threshold_converted|default:"2000" }}'),
+            default_cost: Number('{{ default_shipping_cost_converted|default:"60" }}'),
+            cod_fee: Number('{{ cod_fee_converted|default:"0" }}')
         };
         // Client-side currency selection is available via the currency selector component; server will persist preference and templates will re-render in chosen currency.
     </script>

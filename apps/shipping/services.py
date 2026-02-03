@@ -72,7 +72,8 @@ class ShippingRateService:
         subtotal: Decimal = Decimal('0'),
         weight: Decimal = Decimal('0'),
         item_count: int = 1,
-        product_ids: Optional[List[str]] = None
+        product_ids: Optional[List[str]] = None,
+        currency_code: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """
         Get available shipping methods with calculated rates.
@@ -110,6 +111,15 @@ class ShippingRateService:
         available_methods = []
         settings = ShippingSettings.get_settings()
         
+        try:
+            from apps.i18n.services import CurrencyService, CurrencyConversionService
+            default_currency = CurrencyService.get_default_currency()
+            target_currency = CurrencyService.get_currency_by_code(currency_code) if currency_code else None
+        except Exception:
+            default_currency = None
+            target_currency = None
+            CurrencyConversionService = None
+
         for rate in rates:
             method = rate.method
             
@@ -134,21 +144,33 @@ class ShippingRateService:
                     if not settings.free_shipping_countries or country in settings.free_shipping_countries:
                         calculated_rate = Decimal('0.00')
             
-            # Prepare currency-aware display
-            rate_currency_obj = getattr(rate, 'currency', None)
+            # Prepare currency-aware display (convert to user's currency if requested)
+            rate_currency_obj = getattr(rate, 'currency', None) or default_currency
+            display_currency = rate_currency_obj
+            display_rate = calculated_rate
+            if target_currency and rate_currency_obj and target_currency.code != rate_currency_obj.code and CurrencyConversionService:
+                try:
+                    display_rate = CurrencyConversionService.convert_by_code(
+                        calculated_rate, rate_currency_obj.code, target_currency.code, round_result=True
+                    )
+                    display_currency = target_currency
+                except Exception:
+                    display_rate = calculated_rate
+                    display_currency = rate_currency_obj
+
             try:
-                if rate_currency_obj:
-                    rate_display = rate_currency_obj.format_amount(calculated_rate) if calculated_rate > 0 else 'Free'
+                if display_currency:
+                    rate_display = display_currency.format_amount(display_rate) if display_rate > 0 else 'Free'
                     currency_meta = {
-                        'code': rate_currency_obj.code,
-                        'symbol': rate_currency_obj.symbol,
-                        'decimal_places': rate_currency_obj.decimal_places,
+                        'code': display_currency.code,
+                        'symbol': display_currency.symbol,
+                        'decimal_places': display_currency.decimal_places,
                     }
                 else:
-                    rate_display = f"${calculated_rate:.2f}" if calculated_rate > 0 else 'Free'
+                    rate_display = f"${display_rate:.2f}" if display_rate > 0 else 'Free'
                     currency_meta = None
             except Exception:
-                rate_display = f"${calculated_rate:.2f}" if calculated_rate > 0 else 'Free'
+                rate_display = f"${display_rate:.2f}" if display_rate > 0 else 'Free'
                 currency_meta = None
 
             available_methods.append({
@@ -161,10 +183,10 @@ class ShippingRateService:
                     'name': method.carrier.name if method.carrier else None,
                     'logo': method.carrier.logo.url if method.carrier and method.carrier.logo else None,
                 } if method.carrier else None,
-                'rate': float(calculated_rate),
+                'rate': float(display_rate),
                 'rate_display': rate_display,
                 'currency': currency_meta,
-                'is_free': calculated_rate == 0,
+                'is_free': display_rate == 0,
                 'delivery_estimate': method.delivery_estimate,
                 'min_days': method.min_delivery_days,
                 'max_days': method.max_delivery_days,

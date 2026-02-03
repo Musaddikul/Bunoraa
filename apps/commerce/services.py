@@ -180,24 +180,21 @@ class CartService:
     @classmethod
     def apply_coupon(cls, cart: Cart, coupon_code: str) -> bool:
         """Apply a coupon to the cart."""
-        from apps.promotions.models import Coupon
-        
-        try:
-            coupon = Coupon.objects.get(code__iexact=coupon_code, is_active=True)
-            
-            # Validate coupon
-            if not coupon.is_valid():
-                raise CartException("This coupon is not valid.")
-            
-            if coupon.minimum_order_value and cart.subtotal < coupon.minimum_order_value:
-                raise CartException(f"Minimum order value of {coupon.minimum_order_value} required.")
-            
-            cart.coupon = coupon
-            cart.save()
-            return True
-            
-        except Coupon.DoesNotExist:
-            raise CartException("Invalid coupon code.")
+        from apps.promotions.services import CouponService
+
+        user = cart.user if cart.user and getattr(cart.user, 'is_authenticated', False) else None
+        coupon, is_valid, message = CouponService.validate_coupon(
+            code=coupon_code,
+            user=user,
+            subtotal=cart.subtotal
+        )
+
+        if not coupon or not is_valid:
+            raise CartException(message or "Invalid coupon code.")
+
+        cart.coupon = coupon
+        cart.save()
+        return True
     
     @classmethod
     def remove_coupon(cls, cart: Cart):
@@ -808,36 +805,30 @@ class EnhancedCartService:
     @classmethod
     def enhanced_apply_coupon(cls, cart: Cart, coupon_code: str) -> Dict[str, Any]:
         """Apply coupon to cart with analytics."""
-        from apps.promotions.models import Coupon
-        
-        try:
-            coupon = Coupon.objects.get(code__iexact=coupon_code, is_active=True)
-            
-            if not coupon.is_valid():
-                cls._record_analytics(cart, 'coupon_fail')
-                return {'success': False, 'error': 'Coupon is not valid'}
-            
-            if coupon.minimum_order_value and cart.subtotal < coupon.minimum_order_value:
-                cls._record_analytics(cart, 'coupon_fail')
-                return {
-                    'success': False, 
-                    'error': f'Minimum order value of ৳{coupon.minimum_order_value} required'
-                }
-            
-            cart.coupon = coupon
-            cart.save()
-            
-            cls._record_analytics(cart, 'coupon_apply')
-            cls._invalidate_cart_cache(cart)
-            
-            return {
-                'success': True,
-                'coupon': coupon.code,
-                'discount': str(cart.discount_amount),
-            }
-        except Coupon.DoesNotExist:
+        from apps.promotions.services import CouponService
+
+        user = cart.user if cart.user and getattr(cart.user, 'is_authenticated', False) else None
+        coupon, is_valid, message = CouponService.validate_coupon(
+            code=coupon_code,
+            user=user,
+            subtotal=cart.subtotal
+        )
+
+        if not coupon or not is_valid:
             cls._record_analytics(cart, 'coupon_fail')
-            return {'success': False, 'error': 'Invalid coupon code'}
+            return {'success': False, 'error': message or 'Invalid coupon code'}
+
+        cart.coupon = coupon
+        cart.save()
+
+        cls._record_analytics(cart, 'coupon_apply')
+        cls._invalidate_cart_cache(cart)
+
+        return {
+            'success': True,
+            'coupon': coupon.code,
+            'discount': str(cart.discount_amount),
+        }
     
     @classmethod
     def create_share_link(

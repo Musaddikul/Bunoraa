@@ -15,6 +15,8 @@ from .serializers import (
     SaleSerializer,
     SaleDetailSerializer,
 )
+from apps.commerce.services import CartService
+from apps.commerce.api.serializers import CartSerializer
 
 
 class CouponViewSet(viewsets.ViewSet):
@@ -23,8 +25,46 @@ class CouponViewSet(viewsets.ViewSet):
     
     Endpoints:
     - POST /api/v1/coupons/validate/ - Validate coupon code
+    - POST /api/v1/coupons/apply/ - Apply coupon to current cart
     """
     permission_classes = [AllowAny]
+
+    def _get_cart(self, request):
+        """Get or create cart for current user/session."""
+        user = request.user if request.user.is_authenticated else None
+        session_key = request.session.session_key
+        if not session_key:
+            request.session.create()
+            session_key = request.session.session_key
+        return CartService.get_or_create_cart(user=user, session_key=session_key)
+
+    def _get_currency_context(self, request):
+        try:
+            from apps.i18n.services import CurrencyService, CurrencyConversionService
+            user_currency = CurrencyService.get_user_currency(request=request)
+            default_currency = CurrencyService.get_default_currency()
+            return user_currency, default_currency, CurrencyConversionService
+        except Exception:
+            return None, None, None
+
+    def _format_minimum_order_message(self, coupon, user_currency, default_currency, conversion_service, message):
+        try:
+            from decimal import Decimal
+            if coupon and coupon.minimum_order_amount:
+                display_amount = coupon.minimum_order_amount
+                display_currency = user_currency or default_currency
+                if user_currency and default_currency and user_currency.code != default_currency.code and conversion_service:
+                    display_amount = conversion_service.convert_by_code(
+                        Decimal(str(coupon.minimum_order_amount)),
+                        default_currency.code,
+                        user_currency.code,
+                        round_result=True
+                    )
+                if display_currency:
+                    return f"Minimum order amount is {display_currency.format_amount(display_amount)}"
+        except Exception:
+            pass
+        return message
     
     @action(detail=False, methods=['post'], url_path='validate')
     def validate(self, request):
@@ -40,6 +80,17 @@ class CouponViewSet(viewsets.ViewSet):
         
         code = serializer.validated_data['code']
         subtotal = serializer.validated_data.get('subtotal', 0)
+
+        # Normalize subtotal to default currency for validation
+        user_currency, default_currency, conversion_service = self._get_currency_context(request)
+        try:
+            if user_currency and default_currency and user_currency.code != default_currency.code and conversion_service:
+                from decimal import Decimal
+                subtotal = conversion_service.convert_by_code(
+                    Decimal(str(subtotal)), user_currency.code, default_currency.code, round_result=False
+                )
+        except Exception:
+            pass
         
         user = request.user if request.user.is_authenticated else None
         
@@ -52,6 +103,12 @@ class CouponViewSet(viewsets.ViewSet):
         discount = None
         if coupon and is_valid:
             discount = str(coupon.calculate_discount(subtotal))
+
+        # Replace minimum order message with user-currency formatted value
+        if coupon and not is_valid:
+            message = self._format_minimum_order_message(
+                coupon, user_currency, default_currency, conversion_service, message
+            )
         
         return Response({
             'success': is_valid,
@@ -61,6 +118,65 @@ class CouponViewSet(viewsets.ViewSet):
                 'coupon': CouponSerializer(coupon).data if coupon else None,
                 'discount': discount
             }
+        })
+
+    @action(detail=False, methods=['post'], url_path='apply')
+    def apply(self, request):
+        """Apply coupon code to the current cart."""
+        serializer = CouponValidateSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response({
+                'success': False,
+                'message': 'Invalid data',
+                'data': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        code = serializer.validated_data['code']
+
+        cart = self._get_cart(request)
+        if not cart or not cart.items.exists():
+            return Response({
+                'success': False,
+                'message': 'Your cart is empty.',
+                'data': None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        user_currency, default_currency, conversion_service = self._get_currency_context(request)
+        user = request.user if request.user.is_authenticated else None
+
+        coupon, is_valid, message = CouponService.validate_coupon(
+            code=code,
+            user=user,
+            subtotal=cart.subtotal
+        )
+
+        if not is_valid:
+            message = self._format_minimum_order_message(
+                coupon, user_currency, default_currency, conversion_service, message
+            )
+            return Response({
+                'success': False,
+                'message': message,
+                'data': {
+                    'is_valid': False,
+                    'coupon': CouponSerializer(coupon).data if coupon else None
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            CartService.apply_coupon(cart, code)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': str(e),
+                'data': None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            'success': True,
+            'message': 'Coupon applied',
+            'cart': CartSerializer(cart, context={'request': request}).data
         })
 
 

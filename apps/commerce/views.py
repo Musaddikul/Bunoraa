@@ -18,7 +18,7 @@ from .models import (
     Cart, CartItem, Wishlist, WishlistItem, WishlistShare,
     CheckoutSession
 )
-from .services import CartService, WishlistService, CheckoutService
+from .services import CartService, WishlistService, CheckoutService, EnhancedCartService
 
 
 # =============================================================================
@@ -41,6 +41,26 @@ class CartView(TemplateView):
         context['cart_items'] = cart.items.select_related('product', 'variant').all() if cart else []
         context['cart_summary'] = CartService.get_cart_summary(cart) if cart else None
         
+        return context
+
+
+class SharedCartView(TemplateView):
+    """Shared cart view (read-only)."""
+    template_name = 'cart/shared_cart.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        token = kwargs.get('token')
+        password = self.request.GET.get('password')
+        cart = EnhancedCartService.get_shared_cart(token, password=password)
+
+        if not cart:
+            raise Http404("Shared cart not found or expired")
+
+        context['cart'] = cart
+        context['cart_items'] = cart.items.select_related('product', 'variant').all()
+        context['cart_summary'] = CartService.get_cart_summary(cart)
         return context
 
 
@@ -413,7 +433,7 @@ class SharedWishlistView(TemplateView):
 
 class CheckoutView(TemplateView):
     """Main checkout page."""
-    template_name = 'checkout/checkout.html'
+    template_name = 'checkout/information.html'
     
     def get(self, request, *args, **kwargs):
         user = request.user if request.user.is_authenticated else None

@@ -10,6 +10,7 @@ app_name = 'commerce'
 # Cart URLs
 cart_patterns = [
     path('', views.CartView.as_view(), name='cart'),
+    path('shared/<str:token>/', views.SharedCartView.as_view(), name='shared_cart'),
     path('add/', views.CartAddView.as_view(), name='cart_add'),
     path('update/', views.CartUpdateView.as_view(), name='cart_update'),
     path('remove/', views.CartRemoveView.as_view(), name='cart_remove'),

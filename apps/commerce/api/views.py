@@ -6,21 +6,22 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
-
+from django.urls import reverse
 from core.pagination import StandardResultsSetPagination
 from ..models import (
     Cart, CartItem, Wishlist, WishlistItem, WishlistShare,
     CheckoutSession
 )
-from ..services import CartService, WishlistService, CheckoutService
+from ..services import CartService, WishlistService, CheckoutService, EnhancedCartService
 from .serializers import (
     CartSerializer, CartItemSerializer, AddToCartSerializer, UpdateCartItemSerializer,
-    ApplyCouponSerializer,
+    ApplyCouponSerializer, LockPricesSerializer, ShareCartSerializer,
     WishlistSerializer, WishlistItemSerializer, AddToWishlistSerializer,
     WishlistShareSerializer, CreateWishlistShareSerializer,
     CheckoutSessionSerializer, CheckoutShippingInfoSerializer,
     CheckoutShippingMethodSerializer, CheckoutPaymentMethodSerializer
 )
+from apps.i18n.api.serializers import convert_currency_fields
 
 
 # =============================================================================
@@ -102,7 +103,12 @@ class CartViewSet(viewsets.ViewSet):
         except Product.DoesNotExist:
             return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                'success': False,
+                'message': str(e),
+                'errors': None,
+                'data': None
+            }, status=status.HTTP_400_BAD_REQUEST)
     
     @action(detail=False, methods=['post'], url_path='update/(?P<item_id>[^/.]+)')
     def update_item(self, request, item_id=None):
@@ -158,7 +164,13 @@ class CartViewSet(viewsets.ViewSet):
     def apply_coupon(self, request):
         """Apply coupon to cart."""
         serializer = ApplyCouponSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            return Response({
+                'success': False,
+                'message': 'Invalid coupon code.',
+                'errors': serializer.errors,
+                'data': None
+            }, status=status.HTTP_400_BAD_REQUEST)
         
         try:
             cart = self._get_cart(request)
@@ -172,6 +184,86 @@ class CartViewSet(viewsets.ViewSet):
             
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['post'], url_path='validate')
+    def validate_cart(self, request):
+        """Validate cart items and totals."""
+        cart = self._get_cart(request)
+        if not cart or not cart.items.exists():
+            return Response({
+                'success': False,
+                'message': 'Cart is empty.',
+                'data': None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        validation = CartService.validate_cart(cart)
+        return Response({
+            'success': True,
+            'message': 'Cart validation completed',
+            'data': validation
+        })
+
+    @action(detail=False, methods=['post'], url_path='lock-prices')
+    def lock_prices(self, request):
+        """Lock prices for all cart items."""
+        serializer = LockPricesSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        cart = self._get_cart(request)
+        if not cart or not cart.items.exists():
+            return Response({
+                'success': False,
+                'message': 'Cart is empty.',
+                'data': None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        duration = serializer.validated_data.get('duration_hours')
+        locked_count = CartService.lock_all_prices(cart, duration_hours=duration)
+
+        return Response({
+            'success': True,
+            'message': f'Locked prices for {locked_count} item(s)',
+            'data': {
+                'locked_count': locked_count,
+                'cart': CartSerializer(cart, context={'request': request}).data
+            }
+        })
+
+    @action(detail=False, methods=['post'], url_path='share')
+    def share(self, request):
+        """Create a share link for the current cart."""
+        serializer = ShareCartSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        cart = self._get_cart(request)
+        if not cart or not cart.items.exists():
+            return Response({
+                'success': False,
+                'message': 'Cart is empty.',
+                'data': None
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        share = EnhancedCartService.create_share_link(
+            cart=cart,
+            name=serializer.validated_data.get('name', ''),
+            permission=serializer.validated_data.get('permission'),
+            expires_days=serializer.validated_data.get('expires_days'),
+            password=serializer.validated_data.get('password') or None,
+            created_by=request.user if request.user.is_authenticated else None
+        )
+
+        share_url = request.build_absolute_uri(
+            reverse('commerce:shared_cart', kwargs={'token': share.share_token})
+        )
+
+        return Response({
+            'success': True,
+            'message': 'Share link created',
+            'data': {
+                'share_url': share_url,
+                'share_token': share.share_token
+            }
+        })
     
     @action(detail=False, methods=['post'])
     def remove_coupon(self, request):
@@ -190,12 +282,28 @@ class CartViewSet(viewsets.ViewSet):
         """Get cart summary."""
         user = request.user if request.user.is_authenticated else None
         session_key = request.session.session_key
-        
+
         cart = CartService.get_cart(user=user, session_key=session_key)
-        
+
         if cart:
-            return Response(CartService.get_cart_summary(cart))
-        
+            summary = CartService.get_cart_summary(cart)
+            from_code = getattr(cart, 'currency', None) or 'BDT'
+
+            summary, user_currency = convert_currency_fields(
+                summary, ['subtotal', 'discount_amount', 'total'], from_code, request
+            )
+
+            if isinstance(summary.get('items'), list):
+                for item in summary['items']:
+                    convert_currency_fields(
+                        item, ['unit_price', 'total', 'price_at_add'], from_code, request
+                    )
+
+            if user_currency and 'currency' in summary:
+                summary['currency'] = user_currency.code
+
+            return Response(summary)
+
         return Response({
             'items': [],
             'item_count': 0,

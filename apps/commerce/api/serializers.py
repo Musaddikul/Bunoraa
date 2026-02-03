@@ -4,9 +4,11 @@ Commerce API Serializers
 from rest_framework import serializers
 from decimal import Decimal
 
+from apps.i18n.api.serializers import CurrencyConversionMixin
+
 from ..models import (
     Cart, CartItem, Wishlist, WishlistItem, WishlistShare,
-    CheckoutSession
+    CheckoutSession, SharedCart
 )
 
 
@@ -14,7 +16,7 @@ from ..models import (
 # Cart Serializers
 # =============================================================================
 
-class CartItemSerializer(serializers.ModelSerializer):
+class CartItemSerializer(CurrencyConversionMixin, serializers.ModelSerializer):
     """Serializer for cart items."""
     
     product_id = serializers.UUIDField(source='product.id', read_only=True)
@@ -35,6 +37,11 @@ class CartItemSerializer(serializers.ModelSerializer):
             'price_at_add', 'in_stock', 'gift_wrap', 'gift_message', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
+
+    currency_fields = ['unit_price', 'total', 'price_at_add']
+
+    def get_currency_source_code(self, instance, data):
+        return getattr(instance.cart, 'currency', None) or data.get('currency') or 'BDT'
     
     def get_product_image(self, obj):
         image = obj.product.images.filter(is_primary=True).first() or obj.product.images.first()
@@ -52,7 +59,7 @@ class CartItemSerializer(serializers.ModelSerializer):
         return obj.product.is_in_stock()
 
 
-class CartSerializer(serializers.ModelSerializer):
+class CartSerializer(CurrencyConversionMixin, serializers.ModelSerializer):
     """Serializer for shopping cart."""
     
     items = CartItemSerializer(many=True, read_only=True)
@@ -69,6 +76,8 @@ class CartSerializer(serializers.ModelSerializer):
             'coupon_code', 'currency', 'updated_at'
         ]
         read_only_fields = ['id', 'updated_at']
+
+    currency_fields = ['subtotal', 'discount_amount', 'total']
 
 
 class AddToCartSerializer(serializers.Serializer):
@@ -89,6 +98,23 @@ class ApplyCouponSerializer(serializers.Serializer):
     """Serializer for applying coupon."""
     
     coupon_code = serializers.CharField(max_length=50)
+
+
+class LockPricesSerializer(serializers.Serializer):
+    """Serializer for price lock requests."""
+    duration_hours = serializers.IntegerField(min_value=1, max_value=168, required=False)
+
+
+class ShareCartSerializer(serializers.Serializer):
+    """Serializer for cart share requests."""
+    name = serializers.CharField(max_length=200, required=False, allow_blank=True)
+    permission = serializers.ChoiceField(
+        choices=SharedCart.PERMISSION_CHOICES,
+        required=False,
+        default=SharedCart.PERMISSION_VIEW
+    )
+    expires_days = serializers.IntegerField(min_value=1, max_value=365, required=False, default=7)
+    password = serializers.CharField(max_length=128, required=False, allow_blank=True)
 
 
 # =============================================================================

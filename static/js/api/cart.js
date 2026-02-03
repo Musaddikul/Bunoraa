@@ -7,6 +7,7 @@ const CartApi = (function() {
     'use strict';
 
     const CART_PATH = '/commerce/cart/';
+    const PROMOTIONS_PATH = '/promotions/';
 
     async function getCart() {
         const response = await ApiClient.get(CART_PATH);
@@ -81,15 +82,20 @@ const CartApi = (function() {
         return response;
     }
 
-    async function applyCoupon(code) {
-        // Use POST on the apply_coupon endpoint: POST /api/v1/commerce/cart/apply_coupon/
-        const response = await ApiClient.post(`${CART_PATH}apply_coupon/`, { coupon_code: code });
-        
+    async function applyCoupon(code, options = {}) {
+        const subtotal = options.subtotal;
+        const payload = { code };
+        if (subtotal !== undefined && subtotal !== null) {
+            payload.subtotal = subtotal;
+        }
+
+        const response = await ApiClient.post('/promotions/coupons/apply/', payload);
+
         if (response.success) {
             window.dispatchEvent(new CustomEvent('cart:coupon-applied', { detail: response.data }));
             window.dispatchEvent(new CustomEvent('cart:updated', { detail: response.data?.cart }));
         }
-        
+
         return response;
     }
 
@@ -107,6 +113,20 @@ const CartApi = (function() {
 
     async function validate() {
         return ApiClient.get(`${CART_PATH}summary/`);
+    }
+
+    async function validateCart() {
+        return ApiClient.post(`${CART_PATH}validate/`);
+    }
+
+    async function lockPrices(durationHours = null) {
+        const payload = {};
+        if (durationHours) payload.duration_hours = durationHours;
+        return ApiClient.post(`${CART_PATH}lock-prices/`, payload);
+    }
+
+    async function shareCart(options = {}) {
+        return ApiClient.post(`${CART_PATH}share/`, options);
     }
 
     async function merge() {
@@ -133,6 +153,9 @@ const CartApi = (function() {
         applyCoupon,
         removeCoupon,
         validate,
+        validateCart,
+        lockPrices,
+        shareCart,
         merge,
         updateBadge
     };
