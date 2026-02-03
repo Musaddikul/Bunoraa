@@ -22,32 +22,32 @@
                 </div>
                 
                 <!-- Filters -->
-                <div class="p-4 border-b border-gray-200 flex flex-wrap gap-2">
+                <div class="p-4 border-b border-gray-200 dark:border-stone-700 flex flex-wrap gap-2">
                     <a href="{% url 'orders:list' %}" data-filter-status="" 
                        class="px-4 py-2 rounded-full text-sm {% if not status %}bg-primary-600 text-white{% else %}bg-gray-100 dark:bg-stone-700 dark:text-stone-200 text-gray-700 hover:bg-gray-200 dark:hover:bg-stone-600{% endif %}">
                         All
                     </a>
                     <a href="{% url 'orders:list' %}?status=pending" data-filter-status="pending" 
-                       class="px-4 py-2 rounded-full text-sm {% if status == 'pending' %}bg-primary-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                       class="px-4 py-2 rounded-full text-sm {% if status == 'pending' %}bg-primary-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-stone-700 dark:text-stone-200 dark:hover:bg-stone-600{% endif %}">
                         Pending
                     </a>
                     <a href="{% url 'orders:list' %}?status=processing" data-filter-status="processing" 
-                       class="px-4 py-2 rounded-full text-sm {% if status == 'processing' %}bg-primary-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                       class="px-4 py-2 rounded-full text-sm {% if status == 'processing' %}bg-primary-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-stone-700 dark:text-stone-200 dark:hover:bg-stone-600{% endif %}">
                         Processing
                     </a>
                     <a href="{% url 'orders:list' %}?status=shipped" data-filter-status="shipped" 
-                       class="px-4 py-2 rounded-full text-sm {% if status == 'shipped' %}bg-primary-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                       class="px-4 py-2 rounded-full text-sm {% if status == 'shipped' %}bg-primary-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-stone-700 dark:text-stone-200 dark:hover:bg-stone-600{% endif %}">
                         Shipped
                     </a>
                     <a href="{% url 'orders:list' %}?status=delivered" data-filter-status="delivered" 
-                       class="px-4 py-2 rounded-full text-sm {% if status == 'delivered' %}bg-primary-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                       class="px-4 py-2 rounded-full text-sm {% if status == 'delivered' %}bg-primary-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-stone-700 dark:text-stone-200 dark:hover:bg-stone-600{% endif %}">
                         Delivered
                     </a>
                 </div>
                 
                 <!-- Orders List -->
                 {% if orders %}
-                <div class="divide-y divide-gray-200">
+                <div class="divide-y divide-gray-200 dark:divide-stone-700">
                     {% for order in orders %}
                     <div class="p-6 bg-white dark:bg-stone-800 dark:border dark:border-stone-700 rounded-lg hover:bg-gray-50 dark:hover:bg-stone-700 transition-colors">
                         <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
@@ -57,22 +57,22 @@
                                         Order #{{ order.order_number }}
                                     </a>
                                     <span class="inline-block px-2 py-1 text-xs rounded-full
-                                        {% if order.status == 'pending' %}bg-yellow-100 text-yellow-800
-                                        {% elif order.status == 'processing' %}bg-blue-100 text-blue-800
-                                        {% elif order.status == 'shipped' %}bg-purple-100 text-purple-800
-                                        {% elif order.status == 'delivered' %}bg-green-100 text-green-800
-                                        {% elif order.status == 'cancelled' %}bg-red-100 text-red-800
-                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {% if order.status == 'pending' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-200
+                                        {% elif order.status == 'processing' %}bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200
+                                        {% elif order.status == 'shipped' %}bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200
+                                        {% elif order.status == 'delivered' %}bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200
+                                        {% elif order.status == 'cancelled' %}bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200
+                                        {% else %}bg-gray-100 text-gray-800 dark:bg-stone-700 dark:text-stone-200{% endif %}">
                                         {{ order.get_status_display }}
                                     </span>
                                 </div>
-                                <p class="text-sm text-gray-500 mt-1">
+                                <p class="text-sm text-gray-500 dark:text-stone-400 mt-1">
                                     Placed on {{ order.created_at|date:"F j, Y" }} at {{ order.created_at|time:"g:i A" }}
                                 </p>
                             </div>
                             <div class="mt-2 md:mt-0 text-right">
-                                <p class="font-semibold text-gray-900">{{ order.formatted_total }}</p>
-                                <p class="text-sm text-gray-500">{{ order.items.count }} item{{ order.items.count|pluralize }}</p>
+                                <p class="font-semibold text-gray-900 dark:text-white">{{ order.formatted_total }}</p>
+                                <p class="text-sm text-gray-500 dark:text-stone-400">{{ order.items.count }} item{{ order.items.count|pluralize }}</p>
                             </div>
                         </div>
                         
@@ -86,8 +86,8 @@
                             </div>
                             {% endfor %}
                             {% if order.items.count > 4 %}
-                            <div class="flex-shrink-0 w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-                                <span class="text-sm text-gray-500">+{{ order.items.count|add:"-4" }}</span>
+                            <div class="flex-shrink-0 w-16 h-16 bg-gray-100 dark:bg-stone-700 rounded-lg flex items-center justify-center">
+                                <span class="text-sm text-gray-500 dark:text-stone-300">+{{ order.items.count|add:"-4" }}</span>
                             </div>
                             {% endif %}
                         </div>
@@ -100,19 +100,19 @@
                             </a>
                             {% if order.status == 'delivered' %}
                             <a href="{% url 'orders:invoice' order.order_number %}" 
-                               class="text-sm text-gray-600 hover:text-gray-700" target="_blank">
+                               class="text-sm text-gray-600 dark:text-stone-300 hover:text-gray-700 dark:hover:text-white" target="_blank">
                                 Download Invoice
                             </a>
                             {% if not order.is_reviewed %}
                             <a href="{% url 'reviews:create' order.order_number %}" 
-                               class="text-sm text-gray-600 hover:text-gray-700">
+                               class="text-sm text-gray-600 dark:text-stone-300 hover:text-gray-700 dark:hover:text-white">
                                 Write a Review
                             </a>
                             {% endif %}
                             {% endif %}
                             {% if order.status == 'shipped' and order.tracking_number %}
                             <a href="{{ order.tracking_url }}" target="_blank"
-                               class="text-sm text-gray-600 hover:text-gray-700">
+                               class="text-sm text-gray-600 dark:text-stone-300 hover:text-gray-700 dark:hover:text-white">
                                 Track Package
                             </a>
                             {% endif %}
@@ -129,12 +129,12 @@
                 
                 <!-- Pagination -->
                 {% if orders.has_other_pages %}
-                <div class="p-6 border-t border-gray-200">
+                <div class="p-6 border-t border-gray-200 dark:border-stone-700">
                     <nav class="flex justify-center">
                         <div class="flex items-center space-x-2">
                             {% if orders.has_previous %}
                             <a href="?page={{ orders.previous_page_number }}{% if status %}&status={{ status }}{% endif %}" 
-                               class="px-3 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
+                               class="px-3 py-2 border border-gray-300 dark:border-stone-700 rounded-lg text-gray-600 dark:text-stone-300 hover:bg-gray-50 dark:hover:bg-stone-800">
                                 Previous
                             </a>
                             {% endif %}
@@ -144,7 +144,7 @@
                             <span class="px-4 py-2 bg-primary-600 text-white rounded-lg">{{ num }}</span>
                             {% elif num > orders.number|add:'-3' and num < orders.number|add:'3' %}
                             <a href="?page={{ num }}{% if status %}&status={{ status }}{% endif %}" 
-                               class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
+                               class="px-4 py-2 border border-gray-300 dark:border-stone-700 rounded-lg text-gray-600 dark:text-stone-300 hover:bg-gray-50 dark:hover:bg-stone-800">
                                 {{ num }}
                             </a>
                             {% endif %}
@@ -152,7 +152,7 @@
                             
                             {% if orders.has_next %}
                             <a href="?page={{ orders.next_page_number }}{% if status %}&status={{ status }}{% endif %}" 
-                               class="px-3 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
+                               class="px-3 py-2 border border-gray-300 dark:border-stone-700 rounded-lg text-gray-600 dark:text-stone-300 hover:bg-gray-50 dark:hover:bg-stone-800">
                                 Next
                             </a>
                             {% endif %}
@@ -164,11 +164,11 @@
                 {% else %}
                 <!-- Empty State -->
                 <div class="p-12 text-center">
-                    <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-16 h-16 text-gray-300 dark:text-stone-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
                     </svg>
-                    <h2 class="text-xl font-medium text-gray-900 mb-2">No orders yet</h2>
-                    <p class="text-gray-600 mb-6">When you place an order, it will appear here.</p>
+                    <h2 class="text-xl font-medium text-gray-900 dark:text-white mb-2">No orders yet</h2>
+                    <p class="text-gray-600 dark:text-stone-300 mb-6">When you place an order, it will appear here.</p>
                     <a href="{% url 'catalog:product-list' %}" 
                        class="inline-block bg-primary-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors">
                         Start Shopping
@@ -188,8 +188,8 @@
         <form id="cancel-form" method="POST">
             {% csrf_token %}
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Reason for cancellation</label>
-                <select name="cancel_reason" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                <label class="block text-sm font-medium text-gray-700 dark:text-stone-300 mb-1">Reason for cancellation</label>
+                <select name="cancel_reason" required class="w-full px-4 py-2 border border-gray-300 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 rounded-lg focus:ring-primary-500 focus:border-primary-500">
                     <option value="">Select a reason</option>
                     <option value="changed_mind">Changed my mind</option>
                     <option value="found_better_price">Found better price elsewhere</option>
@@ -199,7 +199,7 @@
                 </select>
             </div>
             <div class="flex justify-end space-x-3">
-                <button type="button" onclick="closeCancelModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">Keep Order</button>
+                <button type="button" onclick="closeCancelModal()" class="px-4 py-2 text-gray-600 dark:text-stone-300 hover:text-gray-800 dark:hover:text-white">Keep Order</button>
                 <button type="submit" name="cancel_order" value="1" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Cancel Order</button>
             </div>
         </form>

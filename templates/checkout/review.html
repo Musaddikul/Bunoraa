@@ -5,6 +5,7 @@
 {% block title %}Review Order - Checkout - {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
+{% with checkout_session as checkout %}
 <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
         
         <!-- Progress Steps -->
@@ -323,6 +324,7 @@
         </div>
     </div>
 </div>
+{% endwith %}
 {% endblock %}
 
 {% block extra_js %}

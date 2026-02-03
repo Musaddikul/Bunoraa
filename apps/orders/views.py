@@ -43,7 +43,7 @@ class OrderListView(LoginRequiredMixin, ListView):
 
         # Compute formatted totals in the checkout/display currency when available.
         # Recompute totals from order items and convert shipping/tax using the CheckoutSession snapshot
-        from apps.checkout.models import CheckoutSession
+        from apps.commerce.models import CheckoutSession
         from apps.i18n.services import CurrencyService, CurrencyConversionService
         from decimal import Decimal
 
@@ -128,7 +128,7 @@ class OrderDetailView(LoginRequiredMixin, DetailView):
         context['page_title'] = f'Order {self.object.order_number}'
 
         # Try to find associated checkout session so we can show amounts in the checkout currency
-        from apps.checkout.models import CheckoutSession
+        from apps.commerce.models import CheckoutSession
         from decimal import Decimal
         from apps.i18n.services import CurrencyService, CurrencyConversionService
 
@@ -284,7 +284,7 @@ class OrderInvoiceView(LoginRequiredMixin, TemplateView):
             # Attempt to show amounts in order display currency if available
             checkout_session = None
             try:
-                from apps.checkout.models import CheckoutSession
+                from apps.commerce.models import CheckoutSession
                 checkout_session = CheckoutSession.objects.filter(order=self.order).select_related('shipping_rate').first()
             except Exception:
                 checkout_session = None
