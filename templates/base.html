@@ -115,19 +115,25 @@
     }
     </script>
 
-    <!-- Preload main stylesheet to give browser an early hint, then load non-blocking -->
+    <!-- Preload critical resources -->
     <link rel="preload" href="{% static 'css/styles.css' %}" as="style" onload="this.rel='stylesheet'">
+    <link rel="preload" href="{% static 'js/app.bundle.js' %}" as="script">
+    {% if SITE_LOGO %}
+    {# Image preloads intentionally disabled: all images are lazy-loaded. #}
+    {% endif %}
     <noscript><link rel="stylesheet" href="{% static 'css/styles.css' %}"></noscript>
+    <link rel="stylesheet" href="{% static 'css/ux-overrides.css' %}">
 
-    {# Per-page resource preloads (fonts, LCP image). Pages should override this block when they know the LCP asset. #}
+    {# Per-page resource preloads (fonts/scripts only). Do not preload images. #}
     {% block preloads %}{% endblock %}
 
     {% block extra_head %}{% endblock %}
+</head>
+<body{% block body_attrs %}{% endblock %}>
 
-    
-    
+
     <!-- Skip to content -->
-    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-amber-700 text-white px-4 py-2 rounded-lg z-50 dark:bg-amber-500 dark:text-stone-900">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-amber-700 text-white px-4 py-2 rounded-lg z-50 dark:bg-amber-500 dark:text-stone-900" aria-label="Skip to main content">
         Skip to content
     </a>
 
@@ -156,8 +162,8 @@
                 <div class="flex items-center gap-1 z-10">
                     <a href="{% url 'home' %}" class="inline-flex items-center gap-2" aria-label="Go to homepage">
                         {% if SITE_LOGO %}
-                        <img src="{{ SITE_LOGO }}" alt="{{ SITE_NAME }}" class="h-5 md:h-9 lg:h-10 w-auto dark:hidden" loading="eager" decoding="async" fetchpriority="high" width="140" height="36" style="height:28px;width:auto;min-width:90px;">
-                        <img src="{{ SITE_LOGO_DARK|default:SITE_LOGO }}" alt="{{ SITE_NAME }}" class="h-5 md:h-9 lg:h-10 w-auto hidden dark:block" loading="eager" decoding="async" fetchpriority="high" width="140" height="36" style="height:28px;width:auto;min-width:90px;">
+                        <img src="{{ SITE_LOGO }}" alt="{{ SITE_NAME }}" class="h-5 md:h-9 lg:h-10 w-auto dark:hidden" loading="lazy" decoding="async" width="140" height="36" style="height:28px;width:auto;min-width:90px;">
+                        <img src="{{ SITE_LOGO_DARK|default:SITE_LOGO }}" alt="{{ SITE_NAME }}" class="h-5 md:h-9 lg:h-10 w-auto hidden dark:block" loading="lazy" decoding="async" width="140" height="36" style="height:28px;width:auto;min-width:90px;">
                         {% else %}
                         <span class="w-7 h-7 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-white font-semibold flex items-center justify-center shadow-inner shadow-amber-900/30">{{ SITE_NAME|slice:":1" }}</span>
                         {% endif %}
@@ -167,20 +173,24 @@
 
                 <!-- Left-aligned compact Search Bar -->
                 <div class="hidden lg:flex items-center ml-4 w-44 max-w-xs z-0">
-                    <form action="{% url 'catalog:search' %}" method="GET" class="w-full relative group" id="search-form">
+                    <form action="{% url 'catalog:search' %}" method="GET" class="w-full relative group" id="search-form" role="search">
                         <div class="relative">
-                            <svg width="20" height="20" style="width:20px;height:20px;" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 dark:text-stone-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                            <input 
-                                type="search" 
-                                name="q" 
-                                placeholder="Search..." 
+                            <label for="search-input" class="sr-only">Search products</label>
+                            <svg width="20" height="20" style="width:20px;height:20px;" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 dark:text-stone-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            <input
+                                type="search"
+                                name="q"
+                                placeholder="Search..."
                                 class="w-full pl-8 pr-2 py-2 rounded-xl bg-stone-100 border border-stone-200 focus:bg-white focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition-all duration-200 text-sm text-stone-700 placeholder-stone-400 dark:bg-stone-800 dark:focus:bg-stone-700 dark:text-stone-200 dark:placeholder-stone-500 dark:focus:border-amber-500 dark:focus:ring-amber-900/30"
                                 autocomplete="off"
                                 id="search-input"
+                                aria-label="Search products"
+                                aria-describedby="search-help"
                             >
                         </div>
+                        <div id="search-help" class="sr-only">Type to search for products, categories, or brands</div>
                         <!-- Search Suggestions -->
-                        <div id="search-suggestions" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-stone-200 overflow-hidden z-50 dark:bg-stone-800 dark:border-stone-700">
+                        <div id="search-suggestions" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-stone-200 overflow-hidden z-50 dark:bg-stone-800 dark:border-stone-700" role="listbox" aria-label="Search suggestions">
                             <!-- Populated via JS -->
                         </div>
                     </form>
@@ -396,49 +406,49 @@
     <nav id="mobile-bottom-nav" class="fixed bottom-0 left-0 right-0 bg-white dark:bg-stone-900 border-t border-stone-200 dark:border-stone-800 z-40 lg:hidden safe-area-bottom transform transition-transform duration-300" role="navigation" aria-label="Mobile navigation">
         <div class="grid grid-cols-5 h-16">
             <!-- Home -->
-            <a href="{% url 'home' %}" class="mobile-nav-item flex flex-col items-center justify-center gap-1 text-stone-500 dark:text-stone-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors {% if request.path == '/' %}text-amber-600 dark:text-amber-400{% endif %}" data-nav="home">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <a href="{% url 'home' %}" class="mobile-nav-item flex flex-col items-center justify-center gap-1 text-stone-500 dark:text-stone-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors {% if request.path == '/' %}text-amber-600 dark:text-amber-400{% endif %}" data-nav="home" aria-current="{% if request.path == '/' %}page{% endif %}">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                 </svg>
                 <span class="text-xs font-medium">Home</span>
             </a>
-            
+
             <!-- Categories -->
-            <a href="{% url 'catalog:product-list' %}" class="mobile-nav-item flex flex-col items-center justify-center gap-1 text-stone-500 dark:text-stone-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors {% if 'products' in request.path or 'categories' in request.path %}text-amber-600 dark:text-amber-400{% endif %}" data-nav="shop">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <a href="{% url 'catalog:product-list' %}" class="mobile-nav-item flex flex-col items-center justify-center gap-1 text-stone-500 dark:text-stone-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors {% if 'products' in request.path or 'categories' in request.path %}text-amber-600 dark:text-amber-400{% endif %}" data-nav="shop" aria-current="{% if 'products' in request.path or 'categories' in request.path %}page{% endif %}">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
                 </svg>
                 <span class="text-xs font-medium">Shop</span>
             </a>
-            
+
             <!-- Cart (center - larger) -->
-            <button id="mobile-cart-btn" class="mobile-nav-item relative flex flex-col items-center justify-center gap-1 text-stone-500 dark:text-stone-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors" data-nav="cart">
+            <button id="mobile-cart-btn" class="mobile-nav-item relative flex flex-col items-center justify-center gap-1 text-stone-500 dark:text-stone-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors" data-nav="cart" aria-label="Open cart">
                 <div class="relative">
-                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                     </svg>
-                    <span id="mobile-cart-count" class="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 text-white text-xs font-bold rounded-full flex items-center justify-center hidden">0</span>
+                    <span id="mobile-cart-count" class="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 text-white text-xs font-bold rounded-full flex items-center justify-center hidden" aria-label="Cart items count">0</span>
                 </div>
                 <span class="text-xs font-medium">Cart</span>
             </button>
-            
+
             <!-- Wishlist -->
-            <a href="{% url 'commerce:wishlist' %}" class="mobile-nav-item relative flex flex-col items-center justify-center gap-1 text-stone-500 dark:text-stone-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors {% if 'wishlist' in request.path %}text-amber-600 dark:text-amber-400{% endif %}" data-nav="wishlist">
+            <a href="{% url 'commerce:wishlist' %}" class="mobile-nav-item relative flex flex-col items-center justify-center gap-1 text-stone-500 dark:text-stone-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors {% if 'wishlist' in request.path %}text-amber-600 dark:text-amber-400{% endif %}" data-nav="wishlist" aria-current="{% if 'wishlist' in request.path %}page{% endif %}">
                 <div class="relative">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                     </svg>
-                    <span id="mobile-wishlist-count" class="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center hidden">0</span>
+                    <span id="mobile-wishlist-count" class="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center hidden" aria-label="Wishlist items count">0</span>
                 </div>
                 <span class="text-xs font-medium">Wishlist</span>
             </a>
-            
+
             <!-- Account -->
-            <a href="{% if request.user.is_authenticated %}{% url 'accounts:profile' %}{% else %}{% url 'accounts:login' %}{% endif %}" class="mobile-nav-item flex flex-col items-center justify-center gap-1 text-stone-500 dark:text-stone-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors {% if 'accounts' in request.path or 'orders' in request.path %}text-amber-600 dark:text-amber-400{% endif %}" data-nav="account">
+            <a href="{% if request.user.is_authenticated %}{% url 'accounts:profile' %}{% else %}{% url 'accounts:login' %}{% endif %}" class="mobile-nav-item flex flex-col items-center justify-center gap-1 text-stone-500 dark:text-stone-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors {% if 'accounts' in request.path or 'orders' in request.path %}text-amber-600 dark:text-amber-400{% endif %}" data-nav="account" aria-current="{% if 'accounts' in request.path or 'orders' in request.path %}page{% endif %}">
                 {% if request.user.is_authenticated and request.user.avatar %}
-                <img src="{{ request.user.avatar.url }}" alt="Account" class="w-6 h-6 rounded-full object-cover ring-2 ring-amber-400/50">
+                <img src="{{ request.user.avatar.url }}" alt="Account" class="w-6 h-6 rounded-full object-cover ring-2 ring-amber-400/50" aria-hidden="true">
                 {% else %}
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                 </svg>
                 {% endif %}
@@ -620,6 +630,7 @@
             default_cost: Number('{{ default_shipping_cost_converted|default:"60" }}'),
             cod_fee: Number('{{ cod_fee_converted|default:"0" }}')
         };
+        window.BUNORAA_STATIC_URL = '{% static "" %}';
         // Client-side currency selection is available via the currency selector component; server will persist preference and templates will re-render in chosen currency.
     </script>
 
@@ -644,10 +655,7 @@
     <script src="{% static 'js/utils/debounce.js' %}"></script>
     <script src="{% static 'js/utils/storage.js' %}"></script>
     <script src="{% static 'js/utils/authGuard.js' %}"></script>
-    
-    <!-- ML/AI Features -->
-    <script src="{% static 'js/ml-tracking.js' %}"></script>
-    <script src="{% static 'js/ml-recommendations.js' %}"></script>
+    <script src="{% static 'js/utils/lazy-assets.js' %}" defer></script>
     
     <!-- Theme Toggle Handler -->
     <script>

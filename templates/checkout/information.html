@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block page_id %}checkout{% endblock %}
-{% block title %}Contact Information - Checkout - {{ SITE_NAME }}{% endblock %}
+{% block title %}Contact Information - Checkout | {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
 {% with checkout_session as checkout %}
@@ -96,7 +96,7 @@
                         
                         {% if user.is_authenticated and saved_addresses %}
                         <!-- Saved Addresses -->
-                        <div class="mb-6">
+                        <div class="mb-6" id="saved-addresses">
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Select a saved address</label>
                             <div class="grid md:grid-cols-2 gap-4">
                                 {% for address in saved_addresses %}
@@ -301,83 +301,75 @@
             <div class="lg:w-96">
                 <button id="order-summary-toggle" aria-expanded="false" class="w-full md:hidden mb-4 inline-flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-stone-700">
                     <span class="font-medium">Order Summary</span>
-                    <span class="text-sm text-gray-500 dark:text-gray-400">{{ cart_items|length }} items</span>
+                    <span class="text-sm text-gray-500 dark:text-gray-400" data-order-items-count>{{ cart_items|length }} items</span>
                     <svg class="w-5 h-5 text-gray-500 dark:text-stone-400 transform transition-transform" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg>
                 </button>
                 <div id="order-summary-block" class="hidden md:block bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 lg:sticky lg:top-24">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center justify-between">
                         <span>Order Summary</span>
-                        <span class="text-sm font-normal text-gray-500 dark:text-gray-400">{{ cart_items|length }} items</span>
+                        <span class="text-sm font-normal text-gray-500 dark:text-gray-400" data-order-items-count>{{ cart_items|length }} items</span>
                     </h2>
                     
-                    <!-- Cart Items (use converted summary items) -->
-                    <div class="space-y-4 max-h-80 overflow-y-auto scrollbar-thin pr-2">
-                        {% for it in cart_summary.items %}
-                        <div class="flex items-start space-x-4 py-3 {% if not forloop.last %}border-b border-gray-100 dark:border-gray-700{% endif %}">
-                            <div class="relative flex-shrink-0">
-                                <img src="{{ it.image|default:'/static/images/placeholder.svg' }}" loading="lazy" decoding="async"
-                                     alt="{{ it.product_name }}"
-                                     class="w-16 h-16 object-cover rounded-lg">
-                                <span class="absolute -top-2 -right-2 w-5 h-5 bg-gray-600 text-white text-xs rounded-full flex items-center justify-center font-medium">
-                                    {{ it.quantity }}
-                                </span>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ it.product_name }}</p>
-                                {% if it.variant_name %}
-                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ it.variant_name }}</p>
-                                {% endif %}
-                                {% if it.original_total %}
-                                <div class="flex items-center gap-2 mt-1">
-                                    <span class="text-sm font-medium text-primary-600">{{ cart_summary.currency.symbol|default:currency_symbol }}{{ it.total }}</span>
-                                    <span class="text-xs text-gray-400 dark:text-stone-500 line-through">{{ cart_summary.currency.symbol|default:currency_symbol }}{{ it.original_total|default:'' }}</span>
+                    <div id="order-summary" data-tax-rate="{{ cart_summary.tax_rate|default:tax_rate|default:0 }}">
+                        <div data-order-items>
+                            <!-- Cart Items (use converted summary items) -->
+                            <div class="space-y-4 max-h-80 overflow-y-auto scrollbar-thin pr-2">
+                                {% for it in cart_summary.items %}
+                                <div class="flex items-start space-x-4 py-3 {% if not forloop.last %}border-b border-gray-100 dark:border-gray-700{% endif %}">
+                                    <div class="relative flex-shrink-0">
+                                        <img src="{{ it.image|default:'/static/images/placeholder.svg' }}" loading="lazy" decoding="async"
+                                             alt="{{ it.product_name }}"
+                                             class="w-16 h-16 object-cover rounded-lg">
+                                        <span class="absolute -top-2 -right-2 w-5 h-5 bg-gray-600 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                                            {{ it.quantity }}
+                                        </span>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ it.product_name }}</p>
+                                        {% if it.variant_name %}
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ it.variant_name }}</p>
+                                        {% endif %}
+                                        {% if it.original_total %}
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <span class="text-sm font-medium text-primary-600">{{ it.formatted_total|default:it.total }}</span>
+                                            <span class="text-xs text-gray-400 dark:text-stone-500 line-through">{{ cart_summary.currency.symbol|default:currency_symbol }}{{ it.original_total|default:'' }}</span>
+                                        </div>
+                                        {% else %}
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white mt-1">{{ it.formatted_total|default:it.total }}</p>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                                {% else %}
-                                <p class="text-sm font-medium text-gray-900 dark:text-white mt-1">{{ cart_summary.currency.symbol|default:currency_symbol }}{{ it.total }}</p>
-                                {% endif %}
+                                {% empty %}
+                                <p class="text-gray-500 dark:text-gray-400 text-center py-4">Your cart is empty</p>
+                                {% endfor %}
                             </div>
                         </div>
-                        {% empty %}
-                        <p class="text-gray-500 dark:text-gray-400 text-center py-4">Your cart is empty</p>
-                        {% endfor %}
-                    </div>
-                    
-                    <!-- Coupon Code -->
-                    <div class="border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
-                        <div class="flex space-x-2">
-                            <input type="text" id="coupon-code" placeholder="Coupon code" 
-                                   value="{{ checkout.coupon_code|default:'' }}"
-                                   class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
-                            <button type="button" id="apply-coupon-btn" 
-                                    class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 font-medium text-sm transition">
-                                Apply
-                            </button>
+                        
+                        <!-- Coupon Code -->
+                        <div class="border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
+                            <div id="coupon-form" class="flex space-x-2 {% if cart_summary.coupon_code %}hidden{% endif %}">
+                                <input type="text" id="coupon-code" placeholder="Coupon code" 
+                                       value="{{ checkout.coupon_code|default:'' }}"
+                                       class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                                <button type="button" id="apply-coupon-btn" 
+                                        class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 font-medium text-sm transition">
+                                    Apply
+                                </button>
+                            </div>
+                            <div id="coupon-applied" class="{% if not cart_summary.coupon_code %}hidden{% endif %}">
+                                <div class="flex items-center justify-between bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-3 py-2 rounded-lg text-sm">
+                                    <span>Coupon Applied: <span id="coupon-name">{{ cart_summary.coupon_code }}</span></span>
+                                    <button type="button" id="remove-coupon-btn" class="text-green-700 dark:text-green-300 hover:text-green-900 dark:hover:text-green-100">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <p id="coupon-message" class="text-sm mt-2 hidden"></p>
                         </div>
-                        <p id="coupon-message" class="text-sm mt-2 hidden"></p>
-                    </div>
-                    
-                    <!-- Totals -->
-                    <div class="space-y-3 border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
-                        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                            <span>Subtotal</span>
-                            <span id="subtotal">{{ cart_summary.formatted_subtotal }}</span>
-                        </div>
-                        <div id="discount-row" class="flex justify-between text-sm text-green-600 {% if not cart_summary.discount or cart_summary.discount == 0 %}hidden{% endif %}">
-                            <span>Discount</span>
-                            <span id="discount-amount">-{{ cart_summary.formatted_discount }}</span>
-                        </div>
-                        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                            <span>Shipping</span>
-                            <span id="shipping-cost">{{ cart_summary.formatted_shipping }}</span>
-                        </div>
-                        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                            <span>Tax</span>
-                            <span id="tax-amount">{{ cart_summary.formatted_tax }}</span>
-                        </div>
-                        <div class="flex justify-between text-lg font-bold text-gray-900 dark:text-white border-t border-gray-200 dark:border-gray-700 pt-3">
-                            <span>Total</span>
-                            <span id="order-total">{{ cart_summary.formatted_total }}</span>
-                        </div>
+                        
+                        {% include 'checkout/includes/order_summary.html' %}
                     </div>
                     
                     <!-- Trust Badges -->
@@ -417,27 +409,38 @@ document.addEventListener('DOMContentLoaded', function() {
     const newAddressForm = document.getElementById('new-address-form');
     const formFields = ['full_name', 'address_line1', 'address_line2', 'city', 'state', 'postal_code', 'country'];
     
+    function applySavedAddress(input) {
+        if (!input) return;
+        if (input.value === 'new') {
+            newAddressForm.classList.remove('hidden');
+            formFields.forEach(field => {
+                const el = document.getElementById(field);
+                if (el) el.value = '';
+            });
+        } else {
+            newAddressForm.classList.add('hidden');
+            // Populate fields from selected address data attributes
+            document.getElementById('full_name').value = input.dataset.fullName || '';
+            document.getElementById('address_line1').value = input.dataset.addressLine1 || '';
+            document.getElementById('address_line2').value = input.dataset.addressLine2 || '';
+            document.getElementById('city').value = input.dataset.city || '';
+            document.getElementById('state').value = input.dataset.state || '';
+            document.getElementById('postal_code').value = input.dataset.postalCode || '';
+            document.getElementById('country').value = input.dataset.country || '';
+        }
+    }
+
     savedAddressInputs.forEach(input => {
         input.addEventListener('change', function() {
-            if (this.value === 'new') {
-                newAddressForm.classList.remove('hidden');
-                formFields.forEach(field => {
-                    const el = document.getElementById(field);
-                    if (el) el.value = '';
-                });
-            } else {
-                newAddressForm.classList.add('hidden');
-                // Populate fields from selected address data attributes
-                document.getElementById('full_name').value = this.dataset.fullName || '';
-                document.getElementById('address_line1').value = this.dataset.addressLine1 || '';
-                document.getElementById('address_line2').value = this.dataset.addressLine2 || '';
-                document.getElementById('city').value = this.dataset.city || '';
-                document.getElementById('state').value = this.dataset.state || '';
-                document.getElementById('postal_code').value = this.dataset.postalCode || '';
-                document.getElementById('country').value = this.dataset.country || '';
-            }
+            applySavedAddress(this);
         });
     });
+
+    // Populate default saved address on load (if any)
+    const checkedSaved = document.querySelector('input[name="saved_address"]:checked');
+    if (checkedSaved) {
+        applySavedAddress(checkedSaved);
+    }
     
     // Gift options toggle
     window.toggleGiftOptions = function() {
@@ -468,14 +471,114 @@ document.addEventListener('DOMContentLoaded', function() {
         giftMessageCount.textContent = giftMessage.value.length;
     }
     
-    // Apply coupon
+    // Gift wrapping cost update
+    const giftWrapCheckbox = document.getElementById('gift_wrap');
+    const giftWrapRow = document.getElementById('gift-wrap-row');
+    const giftWrapCostEl = document.getElementById('gift-wrap-cost');
+    const giftWrapCost = parseFloat(giftWrapCostEl?.dataset.price || 0);
+    
+    if (giftWrapCheckbox && giftWrapRow) {
+        // Show/hide gift wrap row based on checkbox
+        function updateGiftWrapVisibility() {
+            if (giftWrapCheckbox.checked) {
+                giftWrapRow.style.display = 'flex';
+            } else {
+                giftWrapRow.style.display = 'none';
+            }
+        }
+        
+        // Initialize on page load
+        updateGiftWrapVisibility();
+        
+        // Listen for checkbox changes
+        giftWrapCheckbox.addEventListener('change', function() {
+            updateGiftWrapVisibility();
+            updateOrderSummary();
+        });
+    }
+    
+    function updateOrderSummary() {
+        const subtotal = parseFloat(document.getElementById('subtotal')?.dataset.price || 0);
+        const discount = parseFloat(document.getElementById('discount-amount')?.dataset.price || 0);
+        const shipping = parseFloat(document.getElementById('shipping-cost')?.dataset.price || 0);
+        const taxRate = parseFloat(document.querySelector('[data-tax-rate]')?.dataset.taxRate || 0);
+        const giftWrap = (giftWrapCheckbox?.checked ? giftWrapCost : 0);
+        
+        const taxable = Math.max(0, subtotal - discount);
+        const tax = taxRate > 0 ? (taxable * taxRate / 100) : 0;
+        const total = taxable + shipping + giftWrap + tax;
+        
+        const totalEl = document.getElementById('order-total');
+        if (totalEl) {
+            totalEl.textContent = Templates.formatPrice(total);
+            totalEl.dataset.price = total;
+        }
+    }
+    
+    // Apply/remove coupon (Promotions API)
     const couponInput = document.getElementById('coupon-code');
+    const couponForm = document.getElementById('coupon-form');
     const applyBtn = document.getElementById('apply-coupon-btn');
     const couponMessage = document.getElementById('coupon-message');
+    const appliedBlock = document.getElementById('coupon-applied');
+    const couponName = document.getElementById('coupon-name');
+    const removeBtn = document.getElementById('remove-coupon-btn');
+    const taxRate = parseFloat('{{ cart_summary.tax_rate|default:tax_rate }}') || 0;
+    const shippingCost = parseFloat('{{ cart_summary.shipping_cost|default:0 }}') || 0;
+    
+    function showCouponMessage(message, type) {
+        if (!couponMessage) return;
+        couponMessage.textContent = message;
+        couponMessage.classList.remove('hidden', 'text-green-600', 'text-red-600');
+        couponMessage.classList.add(type === 'success' ? 'text-green-600' : 'text-red-600');
+    }
+
+    function toggleCouponApplied(code) {
+        if (couponName) couponName.textContent = code || '';
+        if (couponForm) couponForm.classList.toggle('hidden', !!code);
+        if (appliedBlock) appliedBlock.classList.toggle('hidden', !code);
+    }
+
+    function updateOrderSummaryFromCart(cart) {
+        if (!cart) return;
+        const subtotal = parseFloat(cart.subtotal || 0) || 0;
+        const discount = parseFloat(cart.discount_amount || 0) || 0;
+        const giftWrap = (giftWrapCheckbox?.checked ? giftWrapCost : 0);
+        const taxable = Math.max(0, subtotal - discount);
+        const tax = taxRate > 0 ? (taxable * taxRate / 100) : 0;
+        const total = taxable + shippingCost + giftWrap + tax;
+
+        const subtotalEl = document.getElementById('subtotal');
+        const discountRow = document.getElementById('discount-row');
+        const discountEl = document.getElementById('discount-amount');
+        const giftWrapRow = document.getElementById('gift-wrap-row');
+        const taxEl = document.getElementById('tax-amount');
+        const totalEl = document.getElementById('order-total');
+
+        if (subtotalEl) subtotalEl.textContent = Templates.formatPrice(subtotal);
+        if (discountRow && discountEl) {
+            if (discount > 0) {
+                discountRow.classList.remove('hidden');
+                discountEl.textContent = '-' + Templates.formatPrice(discount);
+            } else {
+                discountRow.classList.add('hidden');
+            }
+        }
+        // Preserve gift wrap row visibility
+        if (giftWrapRow && giftWrapCheckbox) {
+            if (giftWrapCheckbox.checked) {
+                giftWrapRow.style.display = 'flex';
+            } else {
+                giftWrapRow.style.display = 'none';
+            }
+        }
+        if (taxEl) taxEl.textContent = Templates.formatPrice(tax);
+        if (totalEl) totalEl.textContent = Templates.formatPrice(total);
+    }
     
     if (applyBtn) {
         applyBtn.addEventListener('click', async function() {
-            const code = couponInput.value.trim();
+            const code = couponInput?.value.trim();
             if (!code) {
                 showCouponMessage('Please enter a coupon code', 'error');
                 return;
@@ -485,46 +588,63 @@ document.addEventListener('DOMContentLoaded', function() {
             applyBtn.textContent = 'Applying...';
             
             try {
-                const response = await fetch('{% url "checkout:apply_coupon" %}', {
+                const response = await fetch('/api/v1/promotions/coupons/apply/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': '{{ csrf_token }}'
                     },
-                    body: JSON.stringify({ coupon_code: code })
+                    body: JSON.stringify({ code })
                 });
                 
                 const data = await response.json();
+                console.log('Coupon apply response:', { status: response.status, ok: response.ok, data });
                 
-                if (data.success) {
-                    showCouponMessage(data.message, 'success');
-                    updateOrderSummary(data);
+                if (response.ok && data.success) {
+                    showCouponMessage(data.message || 'Coupon applied', 'success');
+                    const appliedCode = data.cart?.coupon_code || code;
+                    toggleCouponApplied(appliedCode);
+                    updateOrderSummaryFromCart(data.cart);
                 } else {
-                    showCouponMessage(data.message, 'error');
+                    const errorMessage = data.message || data.error || 'Failed to apply coupon';
+                    console.error('Coupon apply error:', { response, data, errorMessage });
+                    showCouponMessage(errorMessage, 'error');
                 }
             } catch (error) {
-                showCouponMessage('Failed to apply coupon', 'error');
+                console.error('Coupon apply request failed:', error);
+                showCouponMessage('Failed to apply coupon (network error)', 'error');
             } finally {
                 applyBtn.disabled = false;
                 applyBtn.textContent = 'Apply';
             }
         });
     }
-    
-    function showCouponMessage(message, type) {
-        couponMessage.textContent = message;
-        couponMessage.classList.remove('hidden', 'text-green-600', 'text-red-600');
-        couponMessage.classList.add(type === 'success' ? 'text-green-600' : 'text-red-600');
-    }
-    
-    function updateOrderSummary(data) {
-        if (data.discount && data.discount > 0) {
-            document.getElementById('discount-row').classList.remove('hidden');
-            document.getElementById('discount-amount').textContent = '-' + Templates.formatPrice(data.discount);
-        }
-        if (data.total) {
-            document.getElementById('order-total').textContent = Templates.formatPrice(data.total);
-        }
+
+    if (removeBtn) {
+        removeBtn.addEventListener('click', async function() {
+            removeBtn.disabled = true;
+            try {
+                const response = await fetch('/api/v1/commerce/cart/remove_coupon/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    showCouponMessage('Coupon removed', 'success');
+                    toggleCouponApplied('');
+                    updateOrderSummaryFromCart(data.cart);
+                } else {
+                    showCouponMessage(data.message || 'Failed to remove coupon', 'error');
+                }
+            } catch (error) {
+                showCouponMessage('Failed to remove coupon', 'error');
+            } finally {
+                removeBtn.disabled = false;
+            }
+        });
     }
     
     // Form submission handling

@@ -99,6 +99,16 @@ const CartApi = (function() {
         return response;
     }
 
+    async function updateGiftOptions(options = {}) {
+        const response = await ApiClient.post(`${CART_PATH}gift/`, options);
+
+        if (response.success) {
+            window.dispatchEvent(new CustomEvent('cart:gift-updated', { detail: response.data }));
+        }
+
+        return response;
+    }
+
     async function removeCoupon() {
         // Use POST on the remove_coupon endpoint: POST /api/v1/commerce/cart/remove_coupon/
         const response = await ApiClient.post(`${CART_PATH}remove_coupon/`);
@@ -152,6 +162,7 @@ const CartApi = (function() {
         clearCart,
         applyCoupon,
         removeCoupon,
+        updateGiftOptions,
         validate,
         validateCart,
         lockPrices,

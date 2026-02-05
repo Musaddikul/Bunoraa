@@ -3,8 +3,10 @@ Payments API serializers
 """
 from rest_framework import serializers
 from django.conf import settings
+from decimal import Decimal
 
 from ..models import Payment, PaymentMethod, Refund, PaymentGateway, PaymentLink, BNPLProvider, RecurringCharge
+from apps.i18n.services import CurrencyService, CurrencyConversionService
 
 
 class PaymentGatewaySerializer(serializers.ModelSerializer):
@@ -12,12 +14,13 @@ class PaymentGatewaySerializer(serializers.ModelSerializer):
     icon_url = serializers.SerializerMethodField()
     public_key = serializers.SerializerMethodField()
     requires_client = serializers.SerializerMethodField()
+    fee_amount_converted = serializers.SerializerMethodField()
     
     class Meta:
         model = PaymentGateway
         fields = [
             'code', 'name', 'description', 'icon_url', 'icon_class',
-            'color', 'fee_type', 'fee_amount', 'fee_text', 'instructions',
+            'color', 'fee_type', 'fee_amount', 'fee_amount_converted', 'fee_text', 'instructions',
             'public_key', 'requires_client'
         ]
 
@@ -38,6 +41,26 @@ class PaymentGatewaySerializer(serializers.ModelSerializer):
     def get_requires_client(self, obj):
         # Indicate whether the gateway requires client-side JS (e.g., Stripe)
         return obj.code in (PaymentGateway.CODE_STRIPE,)
+
+    def get_fee_amount_converted(self, obj):
+        """Convert gateway fee to user's currency for frontend display."""
+        try:
+            request = self.context.get('request')
+            user = request.user if request and hasattr(request, 'user') and request.user.is_authenticated else None
+            target = CurrencyService.get_user_currency(user=user, request=request)
+            base = CurrencyService.get_default_currency()
+            amount = Decimal(str(obj.fee_amount or 0))
+            if target and base and base.code != target.code:
+                converted = CurrencyConversionService.convert_by_code(
+                    amount, base.code, target.code, round_result=True
+                )
+                return float(converted)
+            return float(amount)
+        except Exception:
+            try:
+                return float(obj.fee_amount or 0)
+            except Exception:
+                return 0.0
     
     def get_icon_url(self, obj):
         if obj.icon:

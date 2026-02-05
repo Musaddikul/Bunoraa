@@ -131,14 +131,6 @@
                                             </svg>
                                             Save
                                         </button>
-                                        <button class="gift-wrap-btn text-gray-500 dark:text-gray-400 hover:text-pink-600 dark:hover:text-pink-400 flex items-center"
-                                                data-item-id="{{ it.id }}"
-                                                data-gift-wrap="{{ it.gift_wrap|yesno:'true,false' }}">
-                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8h18m-1 0l-1.2 12.2A2 2 0 0116.8 22H7.2a2 2 0 01-2-1.8L4 8m8-5a2.5 2.5 0 012.5 2.5V8m-5 0V5.5A2.5 2.5 0 018.5 3M3 8h18"></path>
-                                            </svg>
-                                            Gift
-                                        </button>
                                         <button class="remove-item-btn text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 flex items-center" data-item-id="{{ it.id }}">
                                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -146,13 +138,6 @@
                                             Remove
                                         </button>
                                     </div>
-                                    
-                                    <!-- Gift Wrap Display -->
-                                    {% if it.gift_wrap %}
-                                    <div class="mt-2 text-xs text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-900/30 rounded p-2">
-                                        Gift wrapped {% if it.gift_message %}- "{{ it.gift_message|truncatechars:50 }}"{% endif %}
-                                    </div>
-                                    {% endif %}
                                 </div>
                             </div>
                             
@@ -263,6 +248,35 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Gift Options -->
+                    <div class="mb-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Gift options</h3>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="gift-order"
+                                   class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
+                                   {% if gift_state.is_gift %}checked{% endif %}>
+                            <span class="text-sm text-gray-700 dark:text-gray-300">This order is a gift</span>
+                        </label>
+                        <div id="gift-details" class="{% if not gift_state.is_gift %}hidden{% endif %} mt-3 space-y-3 pl-6">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Gift message (optional)</label>
+                                <textarea id="gift-message" maxlength="200" rows="3"
+                                          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-primary-500 focus:border-primary-500"
+                                          placeholder="Add a personal message (max 200 characters)">{{ gift_state.gift_message|default:'' }}</textarea>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1"><span id="gift-message-count">0</span>/200 characters</p>
+                            </div>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="gift-wrap"
+                                       class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
+                                       {% if gift_state.gift_wrap and gift_wrap_enabled %}checked{% endif %}
+                                       {% if not gift_wrap_enabled %}disabled{% endif %}>
+                                <span class="text-sm text-gray-700 dark:text-gray-300">
+                                    Add {{ gift_wrap_label }}{% if gift_wrap_enabled %} (+{{ formatted_gift_wrap }}){% else %} (Unavailable){% endif %}
+                                </span>
+                            </label>
+                        </div>
+                    </div>
                     
                     <!-- Totals -->
                     <div class="space-y-3 border-t border-gray-200 dark:border-gray-700 pt-4">
@@ -282,9 +296,13 @@
                             <span>Shipping (<span id="shipping-location">Address</span>)</span>
                             <span id="shipping"><a href="{% url 'accounts:addresses' %}" class="text-xs font-medium text-amber-600 dark:text-amber-400 underline underline-offset-2 hover:text-amber-700 dark:hover:text-amber-300">Add shipping address to see shipping cost.</a></span>
                         </div>
+                        <div id="gift-wrap-row" class="flex justify-between text-gray-600 dark:text-gray-400 {% if not gift_state.gift_wrap or not gift_wrap_enabled %}hidden{% endif %}">
+                            <span>{{ gift_wrap_label }}</span>
+                            <span id="gift-wrap-cost" data-price="{{ gift_state.gift_wrap_cost|default:'0' }}">+{{ gift_state.formatted_gift_wrap_cost|default:formatted_gift_wrap }}</span>
+                        </div>
                         <div id="cod-fee-row" class="flex justify-between text-gray-600 dark:text-gray-400 hidden">
                             <span>COD Fee</span>
-                            <span id="cod-fee">{{ currency_symbol }}{{ cod_fee_converted|floatformat:0 }}</span>
+                            <span id="cod-fee">{% price cod_fee request.currency %}</span>
                         </div>
                         <div class="flex justify-between text-gray-600 dark:text-gray-400">
                             <span>VAT ({{ tax_rate|default:0 }}%)</span>
@@ -321,7 +339,7 @@
                                 <svg class="w-6 h-6 text-gray-600 dark:text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
                                 </svg>
-                                <span class="text-sm text-gray-700 dark:text-gray-300">Cash on Delivery{% if cod_fee_converted %} (+{{ currency_symbol }}{{ cod_fee_converted|floatformat:0 }}){% endif %}</span>
+                                <span class="text-sm text-gray-700 dark:text-gray-300">Cash on Delivery{% if cod_fee %} (+{% price cod_fee request.currency %}){% endif %}</span>
                             </label>
                             <label class="flex items-center justify-start gap-3 p-3 border border-gray-300/80 dark:border-gray-600 rounded-xl cursor-pointer hover:bg-amber-50/50 dark:hover:bg-gray-800 transition-colors payment-method-option">
                                 <input type="radio" name="payment_preview" value="card" class="text-primary-600 focus:ring-primary-500">
@@ -429,7 +447,16 @@
         checkoutUrl: '{% if user.is_authenticated %}{% url "commerce:checkout" %}{% else %}{% url "accounts:login" %}?next={% url "commerce:checkout" %}{% endif %}',
         productsUrl: '{% url "catalog:product-list" %}',
         freeShippingThreshold: {{ free_shipping_threshold_converted|default:0 }},
-        taxRate: {{ tax_rate|default:0 }}
+        taxRate: {{ tax_rate|default:0 }},
+        gift: {
+            is_gift: {% if gift_state.is_gift %}true{% else %}false{% endif %},
+            gift_message: '{{ gift_state.gift_message|default:''|escapejs }}',
+            gift_wrap: {% if gift_state.gift_wrap %}true{% else %}false{% endif %},
+            gift_wrap_cost: {{ gift_state.gift_wrap_cost|default:'0' }},
+            gift_wrap_amount: {{ gift_wrap_amount|default:'0' }},
+            gift_wrap_label: '{{ gift_wrap_label|default:"Gift Wrap"|escapejs }}',
+            gift_wrap_enabled: {% if gift_wrap_enabled %}true{% else %}false{% endif %}
+        }
     };
 </script>
 {% endblock %}

@@ -13,12 +13,280 @@ from django.views.decorators.http import require_POST, require_GET
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.utils import timezone
+from decimal import Decimal
 
 from .models import (
     Cart, CartItem, Wishlist, WishlistItem, WishlistShare,
-    CheckoutSession
+    CheckoutSession, CartSettings
 )
 from .services import CartService, WishlistService, CheckoutService, EnhancedCartService
+from apps.i18n.api.serializers import convert_currency_fields
+from apps.i18n.services import CurrencyService, CurrencyConversionService, GeoService
+from apps.accounts.services import AddressService
+from apps.shipping.services import ShippingRateService, ShippingZoneService
+from apps.shipping.models import ShippingRate
+from apps.payments.models import PaymentGateway
+
+
+def normalize_checkout_country(checkout_session):
+    """Ensure checkout session uses ISO country code and return normalized code."""
+    if not checkout_session:
+        return None
+
+    normalized = CheckoutService.normalize_country_code(checkout_session.shipping_country)
+    if normalized and normalized != checkout_session.shipping_country:
+        checkout_session.shipping_country = normalized
+        checkout_session.save(update_fields=['shipping_country'])
+    return normalized or checkout_session.shipping_country
+
+
+def build_checkout_cart_summary(request, cart, checkout_session):
+    """Build cart summary with currency conversion and formatted values."""
+    if not cart:
+        return {
+            'items': [],
+            'item_count': 0,
+            'subtotal': '0',
+            'discount_amount': '0',
+            'total': '0',
+            'formatted_subtotal': '',
+            'formatted_discount': '',
+            'formatted_shipping': '',
+            'formatted_tax': '',
+            'formatted_total': '',
+            'currency': None,
+        }
+
+    summary = CartService.get_cart_summary(cart)
+    from_code = getattr(cart, 'currency', None) or 'BDT'
+
+    user_currency = CurrencyService.get_user_currency(request=request)
+
+    if isinstance(summary.get('items'), list):
+        for item in summary['items']:
+            convert_currency_fields(
+                item, ['unit_price', 'total', 'price_at_add'], from_code, request
+            )
+
+    currency = user_currency or CurrencyService.get_currency_by_code(from_code) or CurrencyService.get_default_currency()
+    
+    if currency:
+        summary['currency'] = currency
+        summary['currency_code'] = currency.code
+        summary['currency_symbol'] = getattr(currency, 'native_symbol', None) or currency.symbol
+
+        base_subtotal = Decimal(str(cart.subtotal or 0))
+        base_discount = Decimal(str(cart.discount_amount or 0))
+        base_shipping = Decimal(str(getattr(checkout_session, 'shipping_cost', 0) or 0))
+        base_gift_wrap = Decimal(str(getattr(checkout_session, 'gift_wrap_cost', 0) or 0))
+
+        try:
+            from apps.pages.models import SiteSettings
+            tax_rate = Decimal(str(SiteSettings.get_settings().tax_rate or 0))
+        except Exception:
+            tax_rate = Decimal('0')
+
+        taxable_amount = base_subtotal - base_discount
+        if taxable_amount < 0:
+            taxable_amount = Decimal('0')
+
+        base_tax = (taxable_amount * tax_rate / Decimal('100')) if tax_rate else Decimal('0')
+        base_total = taxable_amount + base_shipping + base_gift_wrap + base_tax
+
+        def convert_amount(amount: Decimal) -> Decimal:
+            if currency and currency.code != from_code:
+                return CurrencyConversionService.convert_by_code(
+                    amount, from_code, currency.code, round_result=True
+                )
+            return amount
+
+        display_subtotal = convert_amount(base_subtotal)
+        display_discount = convert_amount(base_discount)
+        display_shipping = convert_amount(base_shipping)
+        display_gift_wrap = convert_amount(base_gift_wrap)
+        display_tax = convert_amount(base_tax)
+        display_total = convert_amount(base_total)
+
+        summary['subtotal'] = str(display_subtotal)
+        summary['discount_amount'] = str(display_discount)
+        summary['discount'] = summary['discount_amount']
+        summary['shipping_cost'] = str(display_shipping)
+        summary['gift_wrap_cost'] = str(display_gift_wrap)
+        summary['tax_amount'] = str(display_tax)
+        summary['total'] = str(display_total)
+        summary['tax_rate'] = str(tax_rate)
+
+        summary['formatted_subtotal'] = currency.format_amount(display_subtotal)
+        summary['formatted_discount'] = currency.format_amount(display_discount)
+        summary['formatted_shipping'] = currency.format_amount(display_shipping)
+        summary['formatted_gift_wrap'] = currency.format_amount(display_gift_wrap)
+        summary['formatted_tax'] = currency.format_amount(display_tax)
+        summary['formatted_total'] = currency.format_amount(display_total)
+
+        for item in summary.get('items', []):
+            try:
+                item_unit = Decimal(str(item.get('unit_price') or '0'))
+                item_total = Decimal(str(item.get('total') or '0'))
+                item['formatted_unit_price'] = currency.format_amount(item_unit)
+                item['formatted_total'] = currency.format_amount(item_total)
+            except Exception:
+                pass
+
+    return summary
+
+
+def sync_checkout_snapshot(request, cart, checkout_session):
+    """Persist currency/tax snapshot from the checkout summary onto the session."""
+    if not cart or not checkout_session:
+        return None
+
+    summary = build_checkout_cart_summary(request, cart, checkout_session)
+
+    try:
+        checkout_session.tax_rate = Decimal(str(summary.get('tax_rate') or 0))
+        checkout_session.tax_amount = Decimal(str(summary.get('tax_amount') or 0))
+    except Exception:
+        checkout_session.tax_rate = Decimal('0')
+        checkout_session.tax_amount = Decimal('0')
+
+    try:
+        checkout_session.subtotal = Decimal(str(summary.get('subtotal') or 0))
+        checkout_session.discount_amount = Decimal(str(summary.get('discount_amount') or 0))
+        checkout_session.shipping_cost = Decimal(str(summary.get('shipping_cost') or 0))
+        checkout_session.total = Decimal(str(summary.get('total') or 0))
+    except Exception:
+        checkout_session.subtotal = Decimal('0')
+        checkout_session.discount_amount = Decimal('0')
+        checkout_session.shipping_cost = Decimal('0')
+        checkout_session.total = Decimal('0')
+
+    currency_code = summary.get('currency_code')
+    if currency_code:
+        checkout_session.currency = currency_code
+
+        try:
+            base_currency = CurrencyService.get_default_currency()
+            if base_currency and base_currency.code != currency_code:
+                checkout_session.exchange_rate = CurrencyConversionService.convert_by_code(
+                    Decimal('1'), base_currency.code, currency_code, round_result=False
+                )
+            else:
+                checkout_session.exchange_rate = Decimal('1')
+        except Exception:
+            checkout_session.exchange_rate = Decimal('1')
+
+    # Payment fee snapshot (use selected gateway)
+    payment_fee_amount = Decimal('0')
+    payment_fee_label = ''
+    if getattr(checkout_session, 'payment_method', None):
+        gateway = PaymentGateway.objects.filter(
+            code=checkout_session.payment_method,
+            is_active=True
+        ).first()
+        if gateway:
+            try:
+                base_total = get_checkout_base_total(cart, checkout_session)
+                base_fee = Decimal(str(gateway.calculate_fee(base_total) or 0))
+            except Exception:
+                base_fee = Decimal('0')
+
+            payment_fee_label = gateway.name or gateway.code
+            payment_fee_amount = base_fee
+
+            try:
+                base_currency = CurrencyService.get_default_currency()
+                if currency_code and base_currency and base_currency.code != currency_code:
+                    payment_fee_amount = CurrencyConversionService.convert_by_code(
+                        base_fee, base_currency.code, currency_code, round_result=True
+                    )
+            except Exception:
+                payment_fee_amount = base_fee
+
+    checkout_session.payment_fee_amount = payment_fee_amount
+    checkout_session.payment_fee_label = payment_fee_label
+
+    checkout_session.save(update_fields=[
+        'tax_rate',
+        'tax_amount',
+        'subtotal',
+        'discount_amount',
+        'shipping_cost',
+        'total',
+        'currency',
+        'exchange_rate',
+        'payment_fee_amount',
+        'payment_fee_label',
+    ])
+    return summary
+
+
+def get_checkout_base_total(cart, checkout_session) -> Decimal:
+    """Calculate checkout total in base currency (before conversion)."""
+    if not cart:
+        return Decimal('0')
+
+    base_subtotal = Decimal(str(cart.subtotal or 0))
+    base_discount = Decimal(str(cart.discount_amount or 0))
+    base_shipping = Decimal(str(getattr(checkout_session, 'shipping_cost', 0) or 0))
+
+    try:
+        from apps.pages.models import SiteSettings
+        tax_rate = Decimal(str(SiteSettings.get_settings().tax_rate or 0))
+    except Exception:
+        tax_rate = Decimal('0')
+
+    taxable_amount = base_subtotal - base_discount
+    if taxable_amount < 0:
+        taxable_amount = Decimal('0')
+
+    base_tax = (taxable_amount * tax_rate / Decimal('100')) if tax_rate else Decimal('0')
+    return taxable_amount + base_shipping + base_tax
+
+
+def get_payment_fee_context(cart, checkout_session, request=None, payment_gateways=None):
+    """Return payment fee info for the selected gateway (base currency)."""
+    gateway = None
+    fee_amount = Decimal('0')
+
+    if checkout_session and getattr(checkout_session, 'payment_method', None):
+        gateway = PaymentGateway.objects.filter(
+            code=checkout_session.payment_method,
+            is_active=True
+        ).first()
+
+    if not gateway and payment_gateways:
+        try:
+            gateway = payment_gateways[0] if len(payment_gateways) > 0 else None
+        except Exception:
+            gateway = None
+
+    if gateway:
+        try:
+            base_total = get_checkout_base_total(cart, checkout_session)
+            fee_amount = Decimal(str(gateway.calculate_fee(base_total) or 0))
+        except Exception:
+            fee_amount = Decimal('0')
+
+    # Convert to user's currency for data attributes/JS usage
+    fee_amount_converted = fee_amount
+    try:
+        target_currency = CurrencyService.get_user_currency(
+            user=request.user if request and getattr(request, 'user', None) and request.user.is_authenticated else None,
+            request=request
+        )
+        base_currency = CurrencyService.get_default_currency()
+        if target_currency and base_currency and base_currency.code != target_currency.code:
+            fee_amount_converted = CurrencyConversionService.convert_by_code(
+                fee_amount, base_currency.code, target_currency.code, round_result=True
+            )
+    except Exception:
+        fee_amount_converted = fee_amount
+
+    return {
+        'payment_fee_amount': fee_amount,
+        'payment_fee_amount_converted': fee_amount_converted,
+        'payment_fee_gateway': gateway,
+    }
 
 
 # =============================================================================
@@ -40,6 +308,70 @@ class CartView(TemplateView):
         context['cart'] = cart
         context['cart_items'] = cart.items.select_related('product', 'variant').all() if cart else []
         context['cart_summary'] = CartService.get_cart_summary(cart) if cart else None
+
+        gift_state = {
+            'is_gift': False,
+            'gift_message': '',
+            'gift_wrap': False,
+            'gift_wrap_cost': '0',
+            'formatted_gift_wrap_cost': '',
+            'gift_wrap_amount': '0',
+        }
+        gift_wrap_enabled = False
+        gift_wrap_label = 'Gift Wrap'
+        gift_wrap_amount = Decimal('0')
+        formatted_gift_wrap = ''
+
+        if cart:
+            try:
+                settings = CartSettings.get_settings()
+                gift_wrap_enabled = bool(settings.gift_wrap_enabled)
+                gift_wrap_label = settings.gift_wrap_label or gift_wrap_label
+                gift_wrap_amount = Decimal(str(settings.gift_wrap_amount or 0))
+            except Exception:
+                gift_wrap_enabled = False
+
+            checkout_session = CheckoutService.get_active_session(
+                cart=cart,
+                user=user,
+                session_key=session_key
+            )
+
+            if checkout_session:
+                gift_state['is_gift'] = bool(checkout_session.is_gift)
+                gift_state['gift_message'] = checkout_session.gift_message or ''
+                gift_state['gift_wrap'] = bool(checkout_session.gift_wrap) if gift_wrap_enabled else False
+
+            from_code = getattr(cart, 'currency', None) or 'BDT'
+            target_currency = CurrencyService.get_user_currency(request=self.request) or CurrencyService.get_default_currency()
+
+            display_gift_wrap_amount = gift_wrap_amount
+            if target_currency and target_currency.code != from_code:
+                try:
+                    display_gift_wrap_amount = CurrencyConversionService.convert_by_code(
+                        gift_wrap_amount, from_code, target_currency.code, round_result=True
+                    )
+                except Exception:
+                    display_gift_wrap_amount = gift_wrap_amount
+
+            formatted_gift_wrap = (
+                target_currency.format_amount(display_gift_wrap_amount) if target_currency else str(display_gift_wrap_amount)
+            )
+
+            gift_wrap_cost = display_gift_wrap_amount if (gift_state['gift_wrap'] and gift_wrap_enabled) else Decimal('0')
+            formatted_gift_wrap_cost = (
+                target_currency.format_amount(gift_wrap_cost) if target_currency else str(gift_wrap_cost)
+            )
+
+            gift_state['gift_wrap_cost'] = str(gift_wrap_cost)
+            gift_state['formatted_gift_wrap_cost'] = formatted_gift_wrap_cost
+            gift_state['gift_wrap_amount'] = str(display_gift_wrap_amount)
+
+        context['gift_state'] = gift_state
+        context['gift_wrap_enabled'] = gift_wrap_enabled
+        context['gift_wrap_label'] = gift_wrap_label
+        context['gift_wrap_amount'] = gift_state.get('gift_wrap_amount', '0')
+        context['formatted_gift_wrap'] = formatted_gift_wrap
         
         return context
 
@@ -460,12 +792,20 @@ class CheckoutView(TemplateView):
             session_key=session_key,
             request=self.request
         )
+        normalize_checkout_country(checkout_session)
         
         context['cart'] = cart
         context['cart_items'] = cart.items.select_related('product', 'variant').all()
+        context['cart_summary'] = build_checkout_cart_summary(self.request, cart, checkout_session)
         context['checkout_session'] = checkout_session
+        context['checkout'] = checkout_session
         context['shipping_methods'] = self._get_shipping_methods()
         context['payment_methods'] = self._get_payment_methods()
+        if user:
+            context['saved_addresses'] = AddressService.get_user_addresses(user)
+        else:
+            context['saved_addresses'] = []
+        context['countries'] = GeoService.get_all_countries()
         
         return context
     
@@ -498,7 +838,10 @@ class CheckoutUpdateInfoView(View):
         cart = CartService.get_cart(user=user, session_key=session_key)
         
         if not cart:
-            return JsonResponse({'success': False, 'message': 'Cart not found'}, status=404)
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': 'Cart not found'}, status=404)
+            messages.error(request, 'Cart not found')
+            return redirect('commerce:cart')
         
         checkout_session = CheckoutService.get_or_create_session(
             cart=cart,
@@ -506,30 +849,168 @@ class CheckoutUpdateInfoView(View):
             session_key=session_key
         )
         
+        full_name = (request.POST.get('full_name') or '').strip()
+        first_name = (request.POST.get('first_name') or '').strip()
+        last_name = (request.POST.get('last_name') or '').strip()
+
+        if full_name and (not first_name or not last_name):
+            parts = [p for p in full_name.split(' ') if p]
+            if not first_name and parts:
+                first_name = parts[0]
+            if not last_name and len(parts) > 1:
+                last_name = ' '.join(parts[1:])
+
+        if not first_name and user:
+            first_name = user.first_name or ''
+        if not last_name and user:
+            last_name = user.last_name or ''
+
+        country_value = (request.POST.get('country') or '').strip() or 'BD'
+
         data = {
-            'email': request.POST.get('email'),
-            'shipping_first_name': request.POST.get('first_name'),
-            'shipping_last_name': request.POST.get('last_name'),
-            'shipping_phone': request.POST.get('phone'),
-            'shipping_address_line_1': request.POST.get('address_line_1'),
-            'shipping_address_line_2': request.POST.get('address_line_2', ''),
-            'shipping_city': request.POST.get('city'),
-            'shipping_state': request.POST.get('state', ''),
-            'shipping_postal_code': request.POST.get('postal_code'),
-            'shipping_country': request.POST.get('country', 'BD'),
+            'email': (request.POST.get('email') or '').strip(),
+            'shipping_first_name': first_name or '',
+            'shipping_last_name': last_name or '',
+            'shipping_email': (request.POST.get('email') or '').strip(),
+            'shipping_phone': (request.POST.get('phone') or '').strip(),
+            'shipping_address_line_1': request.POST.get('address_line_1') or request.POST.get('address_line1') or '',
+            'shipping_address_line_2': request.POST.get('address_line_2') or request.POST.get('address_line2') or '',
+            'shipping_city': (request.POST.get('city') or '').strip(),
+            'shipping_state': (request.POST.get('state') or '').strip(),
+            'shipping_postal_code': (request.POST.get('postal_code') or '').strip(),
+            'shipping_country': country_value,
         }
-        
-        CheckoutService.update_shipping_info(checkout_session, data)
-        
+
+        required_fields = [
+            'email',
+            'shipping_first_name',
+            'shipping_address_line_1',
+            'shipping_city',
+            'shipping_postal_code',
+            'shipping_country',
+        ]
+        missing = [field for field in required_fields if not data.get(field)]
+        if missing:
+            errors = {field: 'This field is required.' for field in missing}
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Please fill in all required fields.',
+                    'errors': errors,
+                }, status=400)
+            messages.error(request, 'Please fill in all required fields.')
+            return redirect('commerce:checkout')
+
+        # Gift options
+        is_gift = str(request.POST.get('is_gift', '')).lower() in {'1', 'true', 'on', 'yes'}
+        gift_message = (request.POST.get('gift_message') or '').strip() if is_gift else ''
+        gift_wrap = str(request.POST.get('gift_wrap', '')).lower() in {'1', 'true', 'on', 'yes'}
+        gift_wrap_cost = Decimal('0')
+        try:
+            from .models import CartSettings
+            settings = CartSettings.get_settings()
+            if gift_wrap and settings.gift_wrap_enabled:
+                gift_wrap_cost = Decimal(str(settings.gift_wrap_amount or 0))
+        except Exception:
+            gift_wrap_cost = Decimal('0')
+
+        try:
+            CheckoutService.update_shipping_info(checkout_session, data)
+            checkout_session.is_gift = is_gift
+            checkout_session.gift_message = gift_message
+            checkout_session.gift_wrap = gift_wrap
+            checkout_session.gift_wrap_cost = gift_wrap_cost
+            checkout_session.save(update_fields=[
+                'is_gift',
+                'gift_message',
+                'gift_wrap',
+                'gift_wrap_cost',
+            ])
+            sync_checkout_snapshot(request, cart, checkout_session)
+        except Exception as exc:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': str(exc)}, status=400)
+            messages.error(request, str(exc))
+            return redirect('commerce:checkout')
+
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'success': True, 'message': 'Information saved'})
-        
-        return redirect('commerce:checkout')
+            return JsonResponse({
+                'success': True,
+                'message': 'Information saved',
+                'redirect_url': reverse('commerce:checkout_shipping')
+            })
+
+        return redirect('commerce:checkout_shipping')
 
 
 class CheckoutSelectShippingView(View):
     """Select shipping method."""
     
+    def get(self, request):
+        user = request.user if request.user.is_authenticated else None
+        session_key = request.session.session_key
+
+        cart = CartService.get_cart(user=user, session_key=session_key)
+        if not cart or not cart.items.exists():
+            messages.warning(request, 'Your cart is empty')
+            return redirect('commerce:cart')
+
+        checkout_session = CheckoutService.get_or_create_session(
+            cart=cart,
+            user=user,
+            session_key=session_key,
+            request=request
+        )
+        normalize_checkout_country(checkout_session)
+
+        cart_summary = build_checkout_cart_summary(request, cart, checkout_session)
+
+        country_code = normalize_checkout_country(checkout_session) or 'BD'
+        state = (checkout_session.shipping_state or '').strip()
+        city = (checkout_session.shipping_city or '').strip()
+        postal_code = (checkout_session.shipping_postal_code or '').strip()
+
+        shipping_methods = ShippingRateService.get_available_methods(
+            country=country_code,
+            state=state or None,
+            city=city or None,
+            postal_code=postal_code or None,
+            subtotal=Decimal(str(cart.subtotal or 0)),
+            item_count=cart.item_count,
+            product_ids=[str(it.product_id) for it in cart.items.all()],
+            currency_code=cart_summary.get('currency_code') or cart.currency
+        )
+
+        shipping_options = []
+        for method in shipping_methods:
+            carrier_name = method.get('carrier', {}).get('name') if isinstance(method.get('carrier'), dict) else None
+            shipping_options.append({
+                'id': method.get('id'),
+                'rate_id': method.get('rate_id'),
+                'name': method.get('name'),
+                'cost': method.get('rate'),
+                'formatted_cost': method.get('rate_display'),
+                'is_free': method.get('is_free'),
+                'delivery_estimate': method.get('delivery_estimate'),
+                'zone': None,
+                'carrier': carrier_name,
+            })
+
+        country_obj = GeoService.get_country_by_code(country_code) if country_code else None
+
+        context = {
+            'cart': cart,
+            'cart_items': cart.items.select_related('product', 'variant').all(),
+            'cart_summary': cart_summary,
+            'checkout_summary': cart_summary,
+            'checkout_session': checkout_session,
+            'checkout': checkout_session,
+            'shipping_options': shipping_options,
+            'shipping_country_name': country_obj.name if country_obj else None,
+        }
+
+        return render(request, 'checkout/shipping.html', context)
+
     def post(self, request):
         user = request.user if request.user.is_authenticated else None
         session_key = request.session.session_key
@@ -537,31 +1018,203 @@ class CheckoutSelectShippingView(View):
         cart = CartService.get_cart(user=user, session_key=session_key)
         
         if not cart:
-            return JsonResponse({'success': False, 'message': 'Cart not found'}, status=404)
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': 'Cart not found'}, status=404)
+            messages.error(request, 'Cart not found')
+            return redirect('commerce:cart')
         
         checkout_session = CheckoutService.get_or_create_session(
             cart=cart,
             user=user,
             session_key=session_key
         )
+
+        # Preserve gift wrap settings from checkout form
+        gift_wrap = str(request.POST.get('gift_wrap', '')).lower() in {'1', 'true', 'on', 'yes'}
+        is_gift = str(request.POST.get('is_gift', '')).lower() in {'1', 'true', 'on', 'yes'}
+        gift_message = (request.POST.get('gift_message') or '').strip() if is_gift else ''
         
-        method = request.POST.get('shipping_method')
-        CheckoutService.select_shipping_method(checkout_session, method)
-        
+        if gift_wrap or gift_message or is_gift:
+            gift_wrap_cost = Decimal('0')
+            try:
+                from .models import CartSettings
+                settings = CartSettings.get_settings()
+                if gift_wrap and settings.gift_wrap_enabled:
+                    gift_wrap_cost = Decimal(str(settings.gift_wrap_amount or 0))
+            except Exception:
+                gift_wrap_cost = Decimal('0')
+            
+            checkout_session.gift_wrap = gift_wrap
+            checkout_session.gift_wrap_cost = gift_wrap_cost
+            checkout_session.is_gift = is_gift
+            checkout_session.gift_message = gift_message
+            checkout_session.save(update_fields=['gift_wrap', 'gift_wrap_cost', 'is_gift', 'gift_message'])
+
+        shipping_type = (request.POST.get('shipping_type') or 'delivery').strip()
+        if shipping_type == 'pickup':
+            pickup_location_id = request.POST.get('pickup_location')
+            if pickup_location_id:
+                try:
+                    from apps.contacts.models import StoreLocation
+                    location = StoreLocation.objects.filter(pk=pickup_location_id).first()
+                    if location:
+                        checkout_session.pickup_location = location
+                except Exception:
+                    pass
+
+            checkout_session.shipping_rate = None
+            CheckoutService.select_shipping_method(checkout_session, CheckoutSession.SHIPPING_PICKUP)
+            sync_checkout_snapshot(request, cart, checkout_session)
+
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Pickup selected',
+                    'shipping_cost': str(checkout_session.shipping_cost),
+                    'total': str(checkout_session.total),
+                    'redirect_url': reverse('commerce:checkout_payment')
+                })
+
+            return redirect('commerce:checkout_payment')
+
+        rate_id = request.POST.get('shipping_rate_id') or request.POST.get('shipping_method')
+        if not rate_id:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': 'Please select a shipping method.'}, status=400)
+            messages.error(request, 'Please select a shipping method.')
+            return redirect('commerce:checkout_shipping')
+
+        rate = None
+        try:
+            rate = ShippingRate.objects.select_related('method').get(pk=rate_id)
+        except (ShippingRate.DoesNotExist, ValueError, TypeError):
+            rate = None
+
+        country_code = normalize_checkout_country(checkout_session) or 'BD'
+        state = (checkout_session.shipping_state or '').strip() or None
+        city = (checkout_session.shipping_city or '').strip() or None
+        postal_code = (checkout_session.shipping_postal_code or '').strip() or None
+
+        if not rate:
+            zone = ShippingZoneService.find_zone_for_location(country_code, state, postal_code, city=city)
+            if zone:
+                rate = ShippingRate.objects.select_related('method').filter(
+                    zone=zone,
+                    method_id=rate_id,
+                    is_active=True,
+                    method__is_active=True
+                ).first()
+
+            if not rate and zone:
+                rate = ShippingRate.objects.select_related('method').filter(
+                    zone=zone,
+                    method__code=rate_id,
+                    is_active=True,
+                    method__is_active=True
+                ).first()
+
+        if not rate:
+            message = 'Invalid shipping rate. Please update your address and try again.'
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': message}, status=400)
+            messages.error(request, message)
+            return redirect('commerce:checkout_shipping')
+
+        method = rate.method.code or rate.method.name or checkout_session.shipping_method
+        CheckoutService.select_shipping_method(checkout_session, method, shipping_rate=rate)
+        sync_checkout_snapshot(request, cart, checkout_session)
+
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({
                 'success': True,
                 'message': 'Shipping method selected',
                 'shipping_cost': str(checkout_session.shipping_cost),
                 'total': str(checkout_session.total),
+                'redirect_url': reverse('commerce:checkout_payment')
             })
-        
-        return redirect('commerce:checkout')
+
+        return redirect('commerce:checkout_payment')
 
 
 class CheckoutSelectPaymentView(View):
     """Select payment method."""
     
+    def get(self, request):
+        user = request.user if request.user.is_authenticated else None
+        session_key = request.session.session_key
+
+        cart = CartService.get_cart(user=user, session_key=session_key)
+        if not cart or not cart.items.exists():
+            messages.warning(request, 'Your cart is empty')
+            return redirect('commerce:cart')
+
+        checkout_session = CheckoutService.get_or_create_session(
+            cart=cart,
+            user=user,
+            session_key=session_key,
+            request=request
+        )
+        normalize_checkout_country(checkout_session)
+
+        cart_summary = build_checkout_cart_summary(request, cart, checkout_session)
+        country_code = normalize_checkout_country(checkout_session)
+        country_obj = GeoService.get_country_by_code(country_code) if country_code else None
+        countries = GeoService.get_all_countries()
+        country_names = {c.code: c.name for c in countries} if countries else {}
+
+        currency_code = cart_summary.get('currency_code') or getattr(cart, 'currency', None)
+        amount = None
+        try:
+            amount = Decimal(str(cart_summary.get('total') or cart.total or 0))
+        except Exception:
+            amount = None
+
+        payment_gateways = PaymentGateway.get_active_gateways(
+            currency=currency_code,
+            country=country_code,
+            amount=amount
+        )
+        base_currency = CurrencyService.get_default_currency()
+        target_currency = CurrencyService.get_user_currency(request=request)
+        base_total = get_checkout_base_total(cart, checkout_session)
+
+        for gateway in payment_gateways:
+            try:
+                base_fee = Decimal(str(gateway.calculate_fee(base_total) or 0))
+                if target_currency and base_currency and base_currency.code != target_currency.code:
+                    gateway.fee_amount_converted = CurrencyConversionService.convert_by_code(
+                        base_fee, base_currency.code, target_currency.code, round_result=True
+                    )
+                else:
+                    gateway.fee_amount_converted = base_fee
+            except Exception:
+                gateway.fee_amount_converted = Decimal('0')
+
+        payment_fee_ctx = get_payment_fee_context(
+            cart,
+            checkout_session,
+            request=request,
+            payment_gateways=payment_gateways
+        )
+
+        context = {
+            'cart': cart,
+            'cart_items': cart.items.select_related('product', 'variant').all(),
+            'cart_summary': cart_summary,
+            'checkout_summary': cart_summary,
+            'checkout_session': checkout_session,
+            'checkout': checkout_session,
+            'shipping_country_name': country_obj.name if country_obj else None,
+            'shipping_country_code': country_code,
+            'stripe_publishable_key': getattr(settings, 'STRIPE_PUBLIC_KEY', ''),
+            'countries': countries,
+            'country_names': country_names,
+            'payment_gateways': payment_gateways,
+            **payment_fee_ctx,
+        }
+
+        return render(request, 'checkout/payment.html', context)
+
     def post(self, request):
         user = request.user if request.user.is_authenticated else None
         session_key = request.session.session_key
@@ -569,7 +1222,10 @@ class CheckoutSelectPaymentView(View):
         cart = CartService.get_cart(user=user, session_key=session_key)
         
         if not cart:
-            return JsonResponse({'success': False, 'message': 'Cart not found'}, status=404)
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': 'Cart not found'}, status=404)
+            messages.error(request, 'Cart not found')
+            return redirect('commerce:cart')
         
         checkout_session = CheckoutService.get_or_create_session(
             cart=cart,
@@ -578,12 +1234,73 @@ class CheckoutSelectPaymentView(View):
         )
         
         method = request.POST.get('payment_method')
+        if not method:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': 'Please select a payment method.'}, status=400)
+            messages.error(request, 'Please select a payment method.')
+            return redirect('commerce:checkout_payment')
+
         CheckoutService.select_payment_method(checkout_session, method)
+        sync_checkout_snapshot(request, cart, checkout_session)
         
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'success': True, 'message': 'Payment method selected'})
+            return JsonResponse({
+                'success': True,
+                'message': 'Payment method selected',
+                'redirect_url': reverse('commerce:checkout_review')
+            })
         
-        return redirect('commerce:checkout')
+        return redirect('commerce:checkout_review')
+
+
+class CheckoutReviewView(TemplateView):
+    """Review order page."""
+    template_name = 'checkout/review.html'
+
+    def get(self, request, *args, **kwargs):
+        user = request.user if request.user.is_authenticated else None
+        session_key = request.session.session_key
+
+        cart = CartService.get_cart(user=user, session_key=session_key)
+        if not cart or not cart.items.exists():
+            messages.warning(request, 'Your cart is empty')
+            return redirect('commerce:cart')
+
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        user = self.request.user if self.request.user.is_authenticated else None
+        session_key = self.request.session.session_key
+
+        cart = CartService.get_cart(user=user, session_key=session_key)
+        checkout_session = CheckoutService.get_or_create_session(
+            cart=cart,
+            user=user,
+            session_key=session_key,
+            request=self.request
+        )
+        normalize_checkout_country(checkout_session)
+
+        cart_summary = build_checkout_cart_summary(self.request, cart, checkout_session)
+        shipping_country = GeoService.get_country_by_code(checkout_session.shipping_country) if checkout_session.shipping_country else None
+        billing_country = GeoService.get_country_by_code(checkout_session.billing_country) if getattr(checkout_session, 'billing_country', None) else None
+        payment_fee_ctx = get_payment_fee_context(cart, checkout_session, request=self.request)
+
+        context.update({
+            'cart': cart,
+            'cart_items': cart.items.select_related('product', 'variant').all(),
+            'cart_summary': cart_summary,
+            'checkout_summary': cart_summary,
+            'checkout_session': checkout_session,
+            'checkout': checkout_session,
+            'shipping_country_name': shipping_country.name if shipping_country else None,
+            'billing_country_name': billing_country.name if billing_country else None,
+            **payment_fee_ctx,
+        })
+
+        return context
 
 
 class CheckoutCompleteView(View):
@@ -596,6 +1313,8 @@ class CheckoutCompleteView(View):
         cart = CartService.get_cart(user=user, session_key=session_key)
         
         if not cart:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': 'Cart not found'}, status=404)
             messages.error(request, 'Cart not found')
             return redirect('commerce:cart')
         
@@ -606,14 +1325,24 @@ class CheckoutCompleteView(View):
         )
         
         try:
+            sync_checkout_snapshot(request, cart, checkout_session)
             order = CheckoutService.complete_checkout(checkout_session)
-            
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Order placed successfully',
+                    'order_number': order.order_number,
+                    'redirect_url': reverse('commerce:order_confirmation', kwargs={'order_number': order.order_number})
+                })
+
             messages.success(request, f'Order placed successfully! Order number: {order.order_number}')
             return redirect('commerce:order_confirmation', order_number=order.order_number)
             
         except Exception as e:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': str(e)}, status=400)
             messages.error(request, str(e))
-            return redirect('commerce:checkout')
+            return redirect('commerce:checkout_review')
 
 
 class OrderConfirmationView(TemplateView):
@@ -634,7 +1363,67 @@ class OrderConfirmationView(TemplateView):
             raise Http404("Order not found")
         
         context['order'] = order
-        context['order_items'] = order.items.all()
+        order_items = order.items.all()
+        context['order_items'] = order_items
+
+        # Currency-aware totals for confirmation page (use order snapshot currency)
+        try:
+            target_currency = CurrencyService.get_currency_by_code(getattr(order, 'currency', None)) if getattr(order, 'currency', None) else CurrencyService.get_default_currency()
+        except Exception:
+            target_currency = CurrencyService.get_default_currency()
+
+        def to_decimal(value):
+            try:
+                return Decimal(str(value or 0))
+            except Exception:
+                return Decimal('0')
+
+        base_subtotal = to_decimal(order.subtotal)
+        base_discount = to_decimal(order.discount)
+        base_shipping = to_decimal(order.shipping_cost)
+        base_tax = to_decimal(order.tax)
+        base_gift_wrap = to_decimal(getattr(order, 'gift_wrap_cost', 0))
+
+        base_total = base_subtotal - base_discount + base_shipping + base_tax + base_gift_wrap
+
+        display_subtotal = base_subtotal
+        display_discount = base_discount
+        display_shipping = base_shipping
+        display_gift_wrap = base_gift_wrap
+        display_tax = base_tax
+        display_total = display_subtotal - display_discount + display_shipping + display_tax + display_gift_wrap
+
+        if target_currency:
+            context['formatted_subtotal'] = target_currency.format_amount(display_subtotal)
+            context['formatted_discount'] = target_currency.format_amount(display_discount)
+            context['formatted_shipping'] = target_currency.format_amount(display_shipping)
+            context['formatted_tax'] = target_currency.format_amount(display_tax)
+            context['formatted_total'] = target_currency.format_amount(display_total)
+            context['currency_symbol_local'] = getattr(target_currency, 'symbol', None) or getattr(target_currency, 'native_symbol', None) or ''
+            context['currency_code_local'] = target_currency.code
+        else:
+            context['formatted_subtotal'] = str(display_subtotal)
+            context['formatted_discount'] = str(display_discount)
+            context['formatted_shipping'] = str(display_shipping)
+            context['formatted_tax'] = str(display_tax)
+            context['formatted_total'] = str(display_total)
+            context['currency_symbol_local'] = ''
+            context['currency_code_local'] = ''
+
+        context['display_shipping'] = display_shipping
+
+        # Attach formatted item prices for templates
+        for item in order_items:
+            unit_price = to_decimal(item.unit_price)
+            line_total = to_decimal(item.line_total)
+            display_unit = unit_price
+            display_line = line_total
+            try:
+                item.formatted_unit_price = target_currency.format_amount(display_unit) if target_currency else str(display_unit)
+                item.formatted_line_total = target_currency.format_amount(display_line) if target_currency else str(display_line)
+            except Exception:
+                item.formatted_unit_price = str(display_unit)
+                item.formatted_line_total = str(display_line)
         
         return context
 

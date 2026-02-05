@@ -8,18 +8,30 @@
 
 .category-tree-widget-container ul {
     list-style-type: none;
-    padding-left: 0; /* Remove padding, will be handled by JS */
+    padding-left: 0;
+    margin: 0;
 }
 
 .category-tree-widget-container li {
     padding: 2px 0;
 }
 
+.category-tree-widget-container .node-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
 .category-tree-widget-container .category-node .label {
     cursor: pointer;
     padding: 3px 5px;
     border-radius: 3px;
-    display: inline-block; /* Needed for padding to work correctly */
+    display: inline-block;
+    flex: 1;
+    min-width: 0;
 }
 
 .category-tree-widget-container .category-node .label:hover {
@@ -27,32 +39,43 @@
 }
 
 .category-tree-widget-container .category-node .label.selected {
-    background-color: #4CAF50;
-    color: white;
-    font-weight: bold;
+    background-color: #2563eb;
+    color: #fff;
+    font-weight: 600;
 }
 
 .category-tree-widget-container .category-node .toggle {
     cursor: pointer;
-    display: inline-block;
-    width: 15px;
-    text-align: center;
-    margin-right: 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    color: #6b7280;
 }
 
 .category-tree-widget-container .category-node .toggle::before {
-    content: '+'; /* Collapsed */
-    font-weight: bold;
+    content: "\25B8";
+    font-weight: 700;
+    line-height: 1;
 }
 
-.category-tree-widget-container .category-node.expanded > .toggle::before {
-    content: '−'; /* Expanded */
+.category-tree-widget-container .category-node .toggle.spacer {
+    cursor: default;
 }
 
-.category-tree-widget-container .category-node > ul {
+.category-tree-widget-container .category-node.expanded > .node-row > .toggle::before {
+    content: "\25BE";
+}
+
+.category-tree-widget-container .children {
     display: none;
+    margin-left: 16px;
 }
 
-.category-tree-widget-container .category-node.expanded > ul {
+.category-tree-widget-container .category-node.expanded > .children {
     display: block;
 }

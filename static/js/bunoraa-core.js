@@ -191,6 +191,8 @@
             if (this.initialized) return;
             this.initialized = true;
 
+            this.ensureLazyImages();
+
             if ('IntersectionObserver' in window) {
                 // Main lazy load observer with default threshold
                 this.observer = new IntersectionObserver(
@@ -226,6 +228,12 @@
                 // Fallback for older browsers
                 this.loadAllImages();
             }
+        },
+
+        ensureLazyImages(root = document) {
+            root.querySelectorAll('img').forEach(img => {
+                img.loading = 'lazy';
+            });
         },
 
         observeElements() {
@@ -286,6 +294,7 @@
                 mutations.forEach((mutation) => {
                     mutation.addedNodes.forEach((node) => {
                         if (node.nodeType === Node.ELEMENT_NODE) {
+                            this.ensureLazyImages(node);
                             // Check if node itself needs lazy loading
                             if (node.matches && (
                                 node.matches('img[data-src]') ||
@@ -391,32 +400,27 @@
 
             img.classList.add('loading');
 
-            // Preload image
-            const preloader = new Image();
-            
             // Set priority hints for above-the-fold images
             if (priority && 'fetchPriority' in HTMLImageElement.prototype) {
                 img.fetchPriority = 'high';
             }
 
-            preloader.onload = () => {
-                img.src = src;
-                if (srcset) img.srcset = srcset;
+            img.onload = () => {
                 img.classList.remove('loading');
                 img.classList.add('loaded');
                 img.removeAttribute('data-src');
                 img.removeAttribute('data-srcset');
-                
-                // Dispatch event for any listeners
                 img.dispatchEvent(new CustomEvent('lazyloaded', { bubbles: true }));
             };
-            preloader.onerror = () => {
+            img.onerror = () => {
                 img.classList.remove('loading');
                 img.classList.add('error');
                 img.style.visibility = 'hidden';
                 console.warn('Failed to load image:', src);
             };
-            preloader.src = src;
+
+            img.src = src;
+            if (srcset) img.srcset = srcset;
         },
 
         loadIframe(iframe) {
@@ -436,14 +440,9 @@
             const bg = el.dataset.bg;
             if (!bg) return;
 
-            // Preload background image
-            const preloader = new Image();
-            preloader.onload = () => {
-                el.style.backgroundImage = `url(${bg})`;
-                el.classList.add('bg-loaded');
-                el.removeAttribute('data-bg');
-            };
-            preloader.src = bg;
+            el.style.backgroundImage = `url(${bg})`;
+            el.classList.add('bg-loaded');
+            el.removeAttribute('data-bg');
         },
 
         async loadComponent(el) {

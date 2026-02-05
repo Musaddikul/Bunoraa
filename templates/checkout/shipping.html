@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block page_id %}checkout{% endblock %}
-{% block title %}Shipping Method - Checkout - {{ SITE_NAME }}{% endblock %}
+{% block title %}Shipping Method - Checkout | {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
 {% with checkout_session as checkout %}
@@ -50,7 +50,7 @@
                                 <span class="text-sm text-gray-500 dark:text-gray-400 w-20">Contact</span>
                                 <span class="text-sm text-gray-900 dark:text-white">{{ checkout.email|default:checkout.shipping_email }}</span>
                             </div>
-                            <a href="{% url 'commerce:checkout_info' %}" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Change</a>
+                            <a href="{% url 'commerce:checkout' %}" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Change</a>
                         </div>
                         
                         <!-- Ship to -->
@@ -63,7 +63,7 @@
                                     {{ shipping_country_name|default:checkout.shipping_country }}
                                 </span>
                             </div>
-                            <a href="{% url 'commerce:checkout_info' %}" class="text-sm text-primary-600 hover:text-primary-700 font-medium flex-shrink-0 ml-4">Change</a>
+                            <a href="{% url 'commerce:checkout' %}" class="text-sm text-primary-600 hover:text-primary-700 font-medium flex-shrink-0 ml-4">Change</a>
                         </div>
                     </div>
                 </div>
@@ -79,6 +79,11 @@
                     
                     <form id="shipping-form" method="POST" action="{% url 'commerce:checkout_shipping' %}">
                         {% csrf_token %}
+                        
+                        <!-- Preserve checkout session data -->
+                        <input type="hidden" name="gift_wrap" value="{% if checkout.gift_wrap %}on{% endif %}">
+                        <input type="hidden" name="is_gift" value="{% if checkout.is_gift %}on{% endif %}">
+                        <input type="hidden" name="gift_message" value="{{ checkout.gift_message|escapejs }}">
                         
                         <!-- Shipping Type Tabs -->
                         <div class="flex border-b border-gray-200 dark:border-gray-700 mb-6">
@@ -106,14 +111,15 @@
                         <!-- Delivery Options -->
                         <div id="delivery-options" class="space-y-3">
                             {% for method in shipping_options %}
+                            {% with rate_id=method.rate_id|default:method.id %}
                             <div class="relative">
-                                <input type="radio" name="shipping_rate_id" value="{{ method.id }}" id="shipping-{{ method.id }}"
-                                       class="peer sr-only" {% if checkout.shipping_rate and method.id|stringformat:"s" == checkout.shipping_rate.id|stringformat:"s" %}checked{% elif forloop.first and not checkout.shipping_rate %}checked{% endif %}
+                                <input type="radio" name="shipping_rate_id" value="{{ rate_id }}" id="shipping-{{ rate_id }}"
+                                       class="peer sr-only" {% if checkout.shipping_rate and rate_id|stringformat:"s" == checkout.shipping_rate.id|stringformat:"s" %}checked{% elif forloop.first and not checkout.shipping_rate %}checked{% endif %}
                                        data-price="{{ method.cost }}"
                                        data-estimate="{{ method.delivery_estimate }}"
                                        data-currency="{{ checkout_summary.currency.code|default:cart_summary.currency.code|default:currency_code }}">
 
-                                <label for="shipping-{{ method.id }}" 
+                                <label for="shipping-{{ rate_id }}" 
                                        class="flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all peer-checked:border-primary-600 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 hover:border-gray-400 dark:hover:border-gray-500 border-gray-200 dark:border-gray-700">
                                     <div class="flex items-center">
                                         <div class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mr-4">
@@ -159,6 +165,7 @@
                                     </svg>
                                 </div>
                             </div>
+                            {% endwith %}
                             {% empty %}
                             <div class="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl">
                                 <svg class="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,7 +178,7 @@
                                 <p class="text-sm text-gray-400 dark:text-gray-500">
                                     Please check your address or contact support for assistance.
                                 </p>
-                                <a href="{% url 'commerce:checkout_info' %}" class="inline-flex items-center mt-4 text-primary-600 hover:text-primary-700 font-medium">
+                                <a href="{% url 'commerce:checkout' %}" class="inline-flex items-center mt-4 text-primary-600 hover:text-primary-700 font-medium">
                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                                     </svg>
@@ -227,7 +234,7 @@
                         
                         <!-- Navigation -->
                         <div class="mt-8 flex flex-col md:flex-row justify-between items-center gap-3">
-                            <a href="{% url 'commerce:checkout_info' %}" class="w-full md:w-auto text-center md:text-left flex items-center text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition">
+                            <a href="{% url 'commerce:checkout' %}" class="w-full md:w-auto text-center md:text-left flex items-center text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                                 </svg>
@@ -256,70 +263,42 @@
             <div class="lg:w-96">
                 <button id="order-summary-toggle" aria-expanded="false" class="w-full md:hidden mb-4 inline-flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-stone-700">
                     <span class="font-medium">Order Summary</span>
-                    <span class="text-sm text-gray-500 dark:text-gray-400">{{ cart_items|length }} items</span>
+                    <span class="text-sm text-gray-500 dark:text-gray-400" data-order-items-count>{{ cart_items|length }} items</span>
                     <svg class="w-5 h-5 text-gray-500 dark:text-stone-400 transform transition-transform" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg>
                 </button>
                 <div id="order-summary-block" class="hidden md:block bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 lg:sticky lg:top-24">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center justify-between">
                         <span>Order Summary</span>
-                        <span class="text-sm font-normal text-gray-500 dark:text-gray-400">{{ cart_items|length }} items</span>
+                        <span class="text-sm font-normal text-gray-500 dark:text-gray-400" data-order-items-count>{{ cart_items|length }} items</span>
                     </h2>
                     
-                    <!-- Cart Items (use converted summary items for consistent currency) -->
-                    <div class="space-y-4 max-h-64 overflow-y-auto scrollbar-thin pr-2">
-                        {% for it in cart_summary.items %}
-                        <div class="flex items-center space-x-4">
-                            <div class="relative flex-shrink-0">
-                                <img src="{{ it.image|default:'/static/images/placeholder.svg' }}" loading="lazy" decoding="async"
-                                     alt="{{ it.product_name }}"
-                                     class="w-16 h-16 object-cover rounded-lg">
-                                <span class="absolute -top-2 -right-2 w-5 h-5 bg-gray-600 text-white text-xs rounded-full flex items-center justify-center font-medium">
-                                    {{ it.quantity }}
-                                </span>
+                    <div id="order-summary" data-tax-rate="{{ tax_rate|default:0 }}">
+                        <div data-order-items>
+                            <!-- Cart Items (use converted summary items for consistent currency) -->
+                            <div class="space-y-4 max-h-64 overflow-y-auto scrollbar-thin pr-2">
+                                {% for it in cart_summary.items %}
+                                <div class="flex items-center space-x-4">
+                                    <div class="relative flex-shrink-0">
+                                        <img src="{{ it.image|default:'/static/images/placeholder.svg' }}" loading="lazy" decoding="async"
+                                             alt="{{ it.product_name }}"
+                                             class="w-16 h-16 object-cover rounded-lg">
+                                        <span class="absolute -top-2 -right-2 w-5 h-5 bg-gray-600 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                                            {{ it.quantity }}
+                                        </span>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ it.product_name }}</p>
+                                        {% if it.variant_name %}
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ it.variant_name }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ it.formatted_total }}</p>
+                                </div>
+                                {% endfor %}
                             </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ it.product_name }}</p>
-                                {% if it.variant_name %}
-                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ it.variant_name }}</p>
-                                {% endif %}
-                            </div>
-                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ it.formatted_total }}</p>
                         </div>
-                        {% endfor %}
-                    </div>
-                    
-                    <!-- Totals -->
-                    <div class="space-y-3 border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
-                        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                            <span>Subtotal</span>
-                            <span id="subtotal">{{ cart_summary.formatted_subtotal }}</span>
-                        </div>
-                        {% if cart_summary.discount_amount and cart_summary.discount_amount != '0' %}
-                        <div class="flex justify-between text-sm text-green-600">
-                            <span>Discount</span>
-                            <span id="discount">-{{ cart_summary.formatted_discount }}</span>
-                        </div>
-                        {% endif %}
-                        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                            <span>Shipping</span>
-                            <span id="shipping-cost" class="font-medium text-gray-900 dark:text-white">
-                                {% if checkout and checkout.shipping_cost is not None %}
-                                    {{ checkout_summary.formatted_shipping|default:cart_summary.formatted_shipping }}
-                                {% else %}
-                                    --
-                                {% endif %}
-                            </span>
-                        </div>
-                        {% if tax_rate > 0 %}
-                        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                            <span>Tax ({{ tax_rate }}%)</span>
-                            <span id="tax-amount">{{ checkout_summary.formatted_tax|default:cart_summary.formatted_tax }}</span>
-                        </div>
-                        {% endif %}
-                        <div class="flex justify-between text-lg font-bold text-gray-900 dark:text-white border-t border-gray-200 dark:border-gray-700 pt-3">
-                            <span>Total</span>
-                            <span id="order-total">{{ checkout_summary.formatted_total|default:cart_summary.formatted_total }}</span>
-                        </div>
+                        
+                        {% include 'checkout/includes/order_summary.html' %}
                     </div>
                     
                     <!-- Estimated Delivery -->

@@ -769,6 +769,10 @@ class CheckoutSession(models.Model):
         (PAYMENT_BANK, 'Bank Transfer'),
     ]
     payment_method = models.CharField(max_length=20, choices=PAYMENT_CHOICES, default=PAYMENT_COD)
+
+    # Payment fee snapshot
+    payment_fee_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    payment_fee_label = models.CharField(max_length=100, blank=True)
     
     # Payment gateway references
     stripe_payment_intent_id = models.CharField(max_length=255, blank=True)
@@ -887,6 +891,40 @@ class CheckoutSession(models.Model):
             + self.gift_wrap_cost
         )
         self.save(update_fields=['subtotal', 'discount_amount', 'total'])
+
+    def get_shipping_address_dict(self):
+        """Return shipping address data as a dict."""
+        return {
+            'first_name': self.shipping_first_name or '',
+            'last_name': self.shipping_last_name or '',
+            'address_line_1': self.shipping_address_line_1 or '',
+            'address_line_2': self.shipping_address_line_2 or '',
+            'city': self.shipping_city or '',
+            'state': self.shipping_state or '',
+            'postal_code': self.shipping_postal_code or '',
+            'country': self.shipping_country or '',
+        }
+
+    def get_billing_address_dict(self):
+        """Return billing address data as a dict (falls back to shipping if needed)."""
+        if self.billing_same_as_shipping:
+            return self.get_shipping_address_dict()
+
+        data = {
+            'first_name': self.billing_first_name or '',
+            'last_name': self.billing_last_name or '',
+            'address_line_1': self.billing_address_line_1 or '',
+            'address_line_2': self.billing_address_line_2 or '',
+            'city': self.billing_city or '',
+            'state': self.billing_state or '',
+            'postal_code': self.billing_postal_code or '',
+            'country': self.billing_country or '',
+        }
+
+        if not data['first_name'] or not data['address_line_1'] or not data['city'] or not data['postal_code'] or not data['country']:
+            return self.get_shipping_address_dict()
+
+        return data
 
 
 class CheckoutEvent(models.Model):

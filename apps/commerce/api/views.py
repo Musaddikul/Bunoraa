@@ -7,21 +7,24 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from decimal import Decimal
 from core.pagination import StandardResultsSetPagination
 from ..models import (
     Cart, CartItem, Wishlist, WishlistItem, WishlistShare,
-    CheckoutSession
+    CheckoutSession, CartSettings
 )
 from ..services import CartService, WishlistService, CheckoutService, EnhancedCartService
 from .serializers import (
     CartSerializer, CartItemSerializer, AddToCartSerializer, UpdateCartItemSerializer,
     ApplyCouponSerializer, LockPricesSerializer, ShareCartSerializer,
+    CartGiftOptionsSerializer,
     WishlistSerializer, WishlistItemSerializer, AddToWishlistSerializer,
     WishlistShareSerializer, CreateWishlistShareSerializer,
     CheckoutSessionSerializer, CheckoutShippingInfoSerializer,
     CheckoutShippingMethodSerializer, CheckoutPaymentMethodSerializer
 )
 from apps.i18n.api.serializers import convert_currency_fields
+from apps.i18n.services import CurrencyService, CurrencyConversionService
 
 
 # =============================================================================
@@ -184,6 +187,111 @@ class CartViewSet(viewsets.ViewSet):
             
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['post'], url_path='gift')
+    def gift(self, request):
+        """Update cart-level gift options."""
+        serializer = CartGiftOptionsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        cart = self._get_cart(request)
+        if not cart or not cart.items.exists():
+            return Response({'error': 'Cart is empty'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user if request.user.is_authenticated else None
+        session_key = request.session.session_key
+
+        checkout_session = CheckoutService.get_or_create_session(
+            cart=cart,
+            user=user,
+            session_key=session_key,
+            request=request
+        )
+
+        is_gift = serializer.validated_data.get('is_gift', False)
+        gift_message = (serializer.validated_data.get('gift_message') or '').strip()
+        gift_wrap = serializer.validated_data.get('gift_wrap', False)
+
+        if not is_gift:
+            gift_message = ''
+            gift_wrap = False
+
+        gift_wrap_cost = Decimal('0')
+        gift_wrap_amount = Decimal('0')
+        gift_wrap_label = 'Gift Wrap'
+        gift_wrap_enabled = False
+
+        try:
+            settings = CartSettings.get_settings()
+            gift_wrap_enabled = bool(settings.gift_wrap_enabled)
+            gift_wrap_label = settings.gift_wrap_label or gift_wrap_label
+            gift_wrap_amount = Decimal(str(settings.gift_wrap_amount or 0))
+            if not gift_wrap_enabled:
+                gift_wrap = False
+            if gift_wrap and gift_wrap_enabled:
+                gift_wrap_cost = gift_wrap_amount
+        except Exception:
+            gift_wrap = False
+            gift_wrap_cost = Decimal('0')
+
+        checkout_session.is_gift = is_gift
+        checkout_session.gift_message = gift_message
+        checkout_session.gift_wrap = gift_wrap
+        checkout_session.gift_wrap_cost = gift_wrap_cost
+        checkout_session.save(update_fields=[
+            'is_gift',
+            'gift_message',
+            'gift_wrap',
+            'gift_wrap_cost',
+        ])
+
+        # Keep snapshot totals in sync if available
+        try:
+            from apps.commerce.views import sync_checkout_snapshot
+            sync_checkout_snapshot(request, cart, checkout_session)
+        except Exception:
+            pass
+
+        from_code = getattr(cart, 'currency', None) or 'BDT'
+        target_currency = CurrencyService.get_user_currency(request=request) or CurrencyService.get_default_currency()
+
+        display_gift_wrap_amount = gift_wrap_amount
+        display_gift_wrap_cost = gift_wrap_cost
+
+        if target_currency and target_currency.code != from_code:
+            try:
+                display_gift_wrap_amount = CurrencyConversionService.convert_by_code(
+                    gift_wrap_amount, from_code, target_currency.code, round_result=True
+                )
+                display_gift_wrap_cost = CurrencyConversionService.convert_by_code(
+                    gift_wrap_cost, from_code, target_currency.code, round_result=True
+                )
+            except Exception:
+                display_gift_wrap_amount = gift_wrap_amount
+                display_gift_wrap_cost = gift_wrap_cost
+
+        formatted_gift_wrap_amount = (
+            target_currency.format_amount(display_gift_wrap_amount) if target_currency else str(display_gift_wrap_amount)
+        )
+        formatted_gift_wrap_cost = (
+            target_currency.format_amount(display_gift_wrap_cost) if target_currency else str(display_gift_wrap_cost)
+        )
+
+        return Response({
+            'success': True,
+            'message': 'Gift options updated',
+            'gift_state': {
+                'is_gift': is_gift,
+                'gift_message': gift_message,
+                'gift_wrap': gift_wrap,
+                'gift_wrap_cost': str(display_gift_wrap_cost),
+            },
+            'gift_wrap_amount': str(display_gift_wrap_amount),
+            'formatted_gift_wrap_amount': formatted_gift_wrap_amount,
+            'formatted_gift_wrap_cost': formatted_gift_wrap_cost,
+            'gift_wrap_label': gift_wrap_label,
+            'gift_wrap_enabled': gift_wrap_enabled,
+        })
 
     @action(detail=False, methods=['post'], url_path='validate')
     def validate_cart(self, request):
@@ -601,6 +709,13 @@ class CheckoutViewSet(viewsets.ViewSet):
             checkout_session,
             serializer.validated_data['payment_method']
         )
+
+        # Sync fee/currency snapshot for payment selection
+        try:
+            from apps.commerce.views import sync_checkout_snapshot
+            sync_checkout_snapshot(request, checkout_session.cart, checkout_session)
+        except Exception:
+            pass
         
         return Response({
             'success': True,

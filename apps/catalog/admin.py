@@ -291,6 +291,16 @@ class ProductAdmin(EnhancedModelAdmin, BulkActivateMixin, BulkFeaturedMixin):
         }),
     )
 
+    class Media:
+        css = {
+            "all": ("css/admin/category_tree_widget.css",),
+        }
+        js = (
+            "admin/js/vendor/jquery/jquery.min.js",
+            "admin/js/jquery.init.js",
+            "js/admin/category_tree_widget.js",
+        )
+
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
             'primary_category', 'shipping_material'

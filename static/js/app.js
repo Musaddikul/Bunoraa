@@ -16,10 +16,11 @@ const App = (function() {
 
     async function loadPageController(page) {
         try {
-            const mod = await import(`./pages/${page}.js`);
+            // Dynamic import with error handling and caching
+            const mod = await import(/* webpackChunkName: "page-[request]" */ `./pages/${page}.js`);
             return mod.default || mod;
         } catch (e) {
-            // no controller for this page
+            console.warn(`Page controller for ${page} not found:`, e);
             return null;
         }
     }

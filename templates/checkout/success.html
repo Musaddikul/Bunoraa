@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Order Confirmed - {{ SITE_NAME }}{% endblock %}
+{% block title %}Order Confirmed | {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -82,7 +82,7 @@
             <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
                 <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Items Ordered</h3>
                 <div class="space-y-3">
-                    {% for item in order.items.all %}
+                    {% for item in order_items %}
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
                             <img src="{{ item.product_image|default:'/static/images/placeholder.svg' }}" loading="lazy" decoding="async" 
@@ -90,10 +90,15 @@
                                  class="w-12 h-12 object-cover rounded bg-gray-100 dark:bg-gray-700">
                             <div class="ml-3">
                                 <p class="text-sm font-medium text-gray-900 dark:text-white">{{ item.product_name }}</p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Qty: {{ item.quantity }} · {{ currency_symbol_local }}{{ item.unit_price }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    Qty: {{ item.quantity }} ·
+                                    {{ item.formatted_unit_price|default:item.unit_price }}
+                                </p>
                             </div>
                         </div>
-                        <p class="text-sm font-medium text-gray-900 dark:text-white">{{ currency_symbol_local }}{{ item.line_total }}</p>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                            {{ item.formatted_line_total|default:item.line_total }}
+                        </p>
                     </div>
                     {% endfor %}
                 </div>
@@ -122,25 +127,31 @@
             <div class="border-t border-gray-200 dark:border-gray-700 mt-4 pt-4 space-y-2">
                 <div class="flex justify-between text-sm">
                     <span class="text-gray-600 dark:text-gray-400">Subtotal</span>
-                    <span class="text-gray-900 dark:text-white">{{ formatted_subtotal }}</span>
+                    <span class="text-gray-900 dark:text-white">{{ formatted_subtotal|default:"-" }}</span>
                 </div>
                 {% if order.discount > 0 %}
                 <div class="flex justify-between text-sm text-green-600 dark:text-green-400">
                     <span>Discount</span>
-                    <span>-{{ formatted_discount }}</span>
+                    <span>-{{ formatted_discount|default:"0.00" }}</span>
                 </div>
                 {% endif %}
                 <div class="flex justify-between text-sm">
                     <span class="text-gray-600 dark:text-gray-400">Shipping</span>
-                    <span class="text-gray-900 dark:text-white">{% if display_shipping|floatformat:2 == '0.00' %}Free{% else %}{{ formatted_shipping }}{% endif %}</span>
+                    <span class="text-gray-900 dark:text-white">
+                        {% if display_shipping|floatformat:2 == '0.00' %}
+                            Free
+                        {% else %}
+                            {{ formatted_shipping|default:"-" }}
+                        {% endif %}
+                    </span>
                 </div>
                 <div class="flex justify-between text-sm">
                     <span class="text-gray-600 dark:text-gray-400">Tax</span>
-                    <span class="text-gray-900 dark:text-white">{{ formatted_tax }}</span>
+                    <span class="text-gray-900 dark:text-white">{{ formatted_tax|default:"-" }}</span>
                 </div>
                 <div class="flex justify-between font-semibold text-lg border-t border-gray-200 dark:border-gray-700 pt-2">
                     <span class="text-gray-900 dark:text-white">Total</span>
-                    <span class="text-primary-600 dark:text-primary-400">{{ formatted_total }}</span>
+                    <span class="text-primary-600 dark:text-primary-400">{{ formatted_total|default:"-" }}</span>
                 </div>
             </div>
 

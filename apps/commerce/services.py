@@ -350,6 +350,30 @@ class CheckoutService:
     }
     
     COD_FEE = Decimal('20.00')
+
+    @staticmethod
+    def normalize_country_code(value: str) -> str:
+        """Normalize country input to ISO alpha-2 code when possible."""
+        code = (value or '').strip()
+        if not code:
+            return ''
+        if len(code) == 2 and code.isalpha():
+            return code.upper()
+
+        try:
+            from apps.i18n.models import Country
+            country = (
+                Country.objects.filter(code__iexact=code).first()
+                or Country.objects.filter(code_alpha3__iexact=code).first()
+                or Country.objects.filter(name__iexact=code).first()
+                or Country.objects.filter(native_name__iexact=code).first()
+            )
+            if country:
+                return country.code
+        except Exception:
+            pass
+
+        return code
     
     @classmethod
     def get_or_create_session(cls, cart: Cart, user=None, session_key=None, request=None) -> CheckoutSession:
@@ -404,6 +428,30 @@ class CheckoutService:
         })
         
         return checkout_session
+
+    @classmethod
+    def get_active_session(cls, cart: Cart, user=None, session_key=None) -> Optional[CheckoutSession]:
+        """Get active checkout session without creating a new one."""
+        if not cart:
+            return None
+
+        active_steps = [
+            CheckoutSession.STEP_CART,
+            CheckoutSession.STEP_INFORMATION,
+            CheckoutSession.STEP_SHIPPING,
+            CheckoutSession.STEP_PAYMENT,
+            CheckoutSession.STEP_REVIEW,
+        ]
+
+        filters = {'cart': cart, 'current_step__in': active_steps}
+
+        if user:
+            filters['user'] = user
+        else:
+            filters['session_key'] = session_key
+            filters['user__isnull'] = True
+
+        return CheckoutSession.objects.filter(**filters).first()
     
     @classmethod
     def _prefill_from_user(cls, checkout_session: CheckoutSession, user):
@@ -428,7 +476,7 @@ class CheckoutService:
                 checkout_session.shipping_city = default_address.city
                 checkout_session.shipping_state = default_address.state or ''
                 checkout_session.shipping_postal_code = default_address.postal_code
-                checkout_session.shipping_country = default_address.country
+                checkout_session.shipping_country = cls.normalize_country_code(default_address.country)
                 checkout_session.saved_shipping_address = default_address
         except Exception:
             pass
@@ -479,7 +527,10 @@ class CheckoutService:
         
         for field in shipping_fields:
             if field in data:
-                setattr(checkout_session, field, data[field])
+                if field == 'shipping_country':
+                    setattr(checkout_session, field, cls.normalize_country_code(data[field]))
+                else:
+                    setattr(checkout_session, field, data[field])
         
         if data.get('email'):
             checkout_session.email = data['email']
@@ -499,7 +550,17 @@ class CheckoutService:
         
         if shipping_rate:
             checkout_session.shipping_rate = shipping_rate
-            checkout_session.shipping_cost = shipping_rate.rate
+            try:
+                cart = checkout_session.cart
+                subtotal = Decimal(str(cart.subtotal or 0)) if cart else Decimal('0')
+                item_count = cart.item_count if cart else 1
+                checkout_session.shipping_cost = shipping_rate.calculate_rate(
+                    subtotal=subtotal,
+                    weight=Decimal('0'),
+                    item_count=item_count
+                )
+            except Exception:
+                checkout_session.shipping_cost = getattr(shipping_rate, 'base_rate', Decimal('0.00'))
         else:
             checkout_session.shipping_cost = cls.DEFAULT_SHIPPING_COSTS.get(method, Decimal('60.00'))
         
@@ -526,7 +587,6 @@ class CheckoutService:
         
         return checkout_session
     
-    @classmethod
     @classmethod
     @transaction.atomic
     def complete_checkout(cls, checkout_session: CheckoutSession):

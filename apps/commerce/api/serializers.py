@@ -67,7 +67,7 @@ class CartSerializer(CurrencyConversionMixin, serializers.ModelSerializer):
     subtotal = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
     discount_amount = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
     total = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
-    coupon_code = serializers.CharField(source='coupon.code', read_only=True, allow_null=True)
+    coupon_code = serializers.SerializerMethodField()
     
     class Meta:
         model = Cart
@@ -78,6 +78,12 @@ class CartSerializer(CurrencyConversionMixin, serializers.ModelSerializer):
         read_only_fields = ['id', 'updated_at']
 
     currency_fields = ['subtotal', 'discount_amount', 'total']
+    
+    def get_coupon_code(self, obj):
+        """Get coupon code, handling cases where coupon might be None."""
+        if obj.coupon:
+            return obj.coupon.code
+        return None
 
 
 class AddToCartSerializer(serializers.Serializer):
@@ -92,6 +98,16 @@ class UpdateCartItemSerializer(serializers.Serializer):
     """Serializer for updating cart item."""
     
     quantity = serializers.IntegerField(min_value=0)
+    gift_wrap = serializers.BooleanField(required=False)
+    gift_message = serializers.CharField(required=False, allow_blank=True, max_length=500)
+
+
+class CartGiftOptionsSerializer(serializers.Serializer):
+    """Serializer for cart-level gift options."""
+
+    is_gift = serializers.BooleanField(required=False, default=False)
+    gift_message = serializers.CharField(required=False, allow_blank=True, max_length=200)
+    gift_wrap = serializers.BooleanField(required=False, default=False)
 
 
 class ApplyCouponSerializer(serializers.Serializer):

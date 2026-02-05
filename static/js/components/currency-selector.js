@@ -106,6 +106,10 @@ export async function initCurrencySelector(selector) {
         // currencies cache for this root
         let currencies = [];
 
+        function shouldAutoReload() {
+            return !document.getElementById('djDebug');
+        }
+
         async function fetchCurrencies(retries = 2, attempt = 0) {
             // show inline loading indicator
             list.innerHTML = '';
@@ -310,7 +314,9 @@ export async function initCurrencySelector(selector) {
                                     window.BUNORAA_CURRENCY = window.BUNORAA_CURRENCY || {};
                                     window.BUNORAA_CURRENCY.code = code;
                                     document.dispatchEvent(new CustomEvent('currency:changed', { detail: { code } }));
-                                    setTimeout(() => location.reload(), 250);
+                                    if (shouldAutoReload()) {
+                                        setTimeout(() => location.reload(), 250);
+                                    }
                                     return { success: true, message: 'Currency updated', source: 'server' };
                                 }
                             }
@@ -343,7 +349,9 @@ export async function initCurrencySelector(selector) {
                         window.BUNORAA_CURRENCY.code = code;
                         document.dispatchEvent(new CustomEvent('currency:changed', { detail: { code } }));
                         await showListMessage('Currency set locally for this session. If you are logged in and this persists, please try logging out and in again.', 'error');
-                        setTimeout(() => location.reload(), 350);
+                        if (shouldAutoReload()) {
+                            setTimeout(() => location.reload(), 350);
+                        }
                         return { success: true, message: 'Currency saved locally', source: 'local' };
                     } catch (e) {
                         // error logging removed
@@ -354,7 +362,9 @@ export async function initCurrencySelector(selector) {
                         window.BUNORAA_CURRENCY.code = code;
                         document.dispatchEvent(new CustomEvent('currency:changed', { detail: { code } }));
                         await showListMessage('Currency set locally for this session. If you are logged in and this persists, please try logging out and in again.', 'error');
-                        setTimeout(() => location.reload(), 350);
+                        if (shouldAutoReload()) {
+                            setTimeout(() => location.reload(), 350);
+                        }
                         return { success: true, message: 'Currency saved locally', source: 'local' };
                     }
                 }
@@ -378,7 +388,9 @@ export async function initCurrencySelector(selector) {
                     window.BUNORAA_CURRENCY.code = code;
                     document.dispatchEvent(new CustomEvent('currency:changed', { detail: { code } }));
                     // Give short delay then reload so server-rendered templates re-render with new currency (keeps existing behavior)
-                    setTimeout(() => location.reload(), 250);
+                    if (shouldAutoReload()) {
+                        setTimeout(() => location.reload(), 250);
+                    }
                     return { success: true, message: 'Currency updated', source: 'server' };
                 } else {
                     await showListMessage('Could not set currency. See console for details.', 'error');

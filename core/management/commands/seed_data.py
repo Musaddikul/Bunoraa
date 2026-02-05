@@ -44,28 +44,29 @@ class Command(BaseCommand):
         self.products = []
         self.artisans = []
 
-        self.create_users()
-        self.create_categories()
-        self.create_brands()
-        self.create_products(options['products'])
-        self.create_promotions()
+        # self.create_users()
+        # self.create_categories()
+        # self.create_brands()
+        # self.create_products(options['products'])
+        # self.create_promotions()
         self.create_pages()
         self.create_reviews()
 
         # Seed new features
+        call_command('seed_categories')
+        call_command('seed_tags')
+        call_command('seed_catalog_data')
         call_command('seed_artisans_data') 
-        call_command('seed_catalog_data') 
         call_command('seed_contacts_data')
         call_command('seed_referral_data')
-        call_command('seed_notification_data')
+        call_command('seed_notifications_data')
         call_command('seed_chat_data')
-        
-        # Seed additional data (currencies, shipping, payments, locations)
-        self.seed_currencies()
-        self.seed_localization()
-        self.seed_shipping_settings()
-        self.seed_shipping()
-        self.seed_payment_gateways()
+        call_command('seed_email_service')
+        call_command('seed_currencies')
+        call_command('seed_bangladesh_locations')
+        call_command('seed_shipping_settings')
+        call_command('seed_bangladesh_shipping')
+        call_command('seed_payment_gateways')
 
         self.stdout.write(self.style.SUCCESS('\nDatabase seeding completed successfully!'))
 
@@ -233,57 +234,6 @@ class Command(BaseCommand):
 
         self.stdout.write(f'  Created {review_count} reviews')
 
-    def seed_localization(self):
-        """Seed Bangladesh location data."""
-        self.stdout.write('Seeding Bangladesh locations...')
-        from django.core.management import call_command
-        try:
-            call_command('seed_bangladesh_locations')
-        except Exception as e:
-            self.stdout.write(self.style.WARNING(f'  Could not seed locations: {e}'))
 
-    def seed_currencies(self):
-        """Seed currencies, i18n settings, and exchange rates."""
-        self.stdout.write('Seeding currencies and exchange rates...')
-        from django.core.management import call_command
-        try:
-            # First seed I18n settings
-            call_command('seed_i18n_settings')
-            # Add common currencies
-            call_command('add_currency', '--add-common')
-            # Then try to fetch rates from available providers
-            try:
-                call_command('update_exchange_rates', '--all')
-            except Exception:
-                # Fallback to manual rates if all providers fail
-                call_command('seed_exchange_rates')
-        except Exception as e:
-            self.stdout.write(self.style.WARNING(f'  Could not seed currencies: {e}'))
 
-    def seed_shipping_settings(self):
-        """Seed shipping settings."""
-        self.stdout.write('Seeding shipping settings...')
-        from django.core.management import call_command
-        try:
-            call_command('seed_shipping_settings')
-        except Exception as e:
-            self.stdout.write(self.style.WARNING(f'  Could not seed shipping settings: {e}'))
-
-    def seed_shipping(self):
-        """Seed shipping zones and rates."""
-        self.stdout.write('Seeding shipping data...')
-        from django.core.management import call_command
-        try:
-            call_command('seed_bangladesh_shipping')
-        except Exception as e:
-            self.stdout.write(self.style.WARNING(f'  Could not seed shipping: {e}'))
-
-    def seed_payment_gateways(self):
-        """Seed payment gateways."""
-        self.stdout.write('Seeding payment gateways...')
-        from django.core.management import call_command
-        try:
-            call_command('seed_payment_gateways')
-        except Exception as e:
-            self.stdout.write(self.style.WARNING(f'  Could not seed payment gateways: {e}'))
 

@@ -163,11 +163,23 @@ class CurrencyService:
     @staticmethod
     def get_default_currency() -> Optional[Currency]:
         """Get default currency."""
-        cache_key = 'i18n_default_currency'
+        cache_key = 'i18n_default_currency_v2'
         currency = cache.get(cache_key)
         
         if currency is None:
-            currency = Currency.objects.filter(is_default=True).first()
+            currency = None
+            try:
+                settings = I18nSettings.get_settings()
+                if settings.default_currency and settings.default_currency.is_active:
+                    currency = settings.default_currency
+            except Exception:
+                currency = None
+
+            if not currency:
+                currency = Currency.objects.filter(code='BDT', is_active=True).first()
+
+            if not currency:
+                currency = Currency.objects.filter(is_default=True).first()
             if not currency:
                 currency = Currency.objects.filter(is_active=True).first()
             if currency:
@@ -219,13 +231,20 @@ class CurrencyService:
                 curr = CurrencyService.get_currency_by_code(curr_code)
                 if curr:
                     return curr
-        
-        # Priority 5: Geo-location
+
+        # Priority 5: Geo-location (only if allowed by settings)
+        try:
+            settings = I18nSettings.get_settings()
+            if not settings.auto_detect_currency:
+                return None
+        except Exception:
+            pass
+
         currency = CurrencyService._detect_from_geo(request)
         if currency:
             return currency
-        
-        return CurrencyService.get_default_currency()
+
+        return None
     
     @staticmethod
     def _detect_from_geo(request) -> Optional[Currency]:
@@ -281,8 +300,9 @@ class CurrencyService:
         if request:
             detected = CurrencyService.detect_currency(request)
             logger.debug(f"[Currency] Detected from request: {detected.code if detected else None}")
-            return detected
-        
+            if detected:
+                return detected
+
         return CurrencyService.get_default_currency()
     
     @staticmethod
@@ -1136,11 +1156,32 @@ class TranslationService:
 
 class UserPreferenceService:
     """Service for user locale preferences."""
+
+    @staticmethod
+    def _clear_missing_refs(pref: UserLocalePreference) -> List[str]:
+        """Clear invalid FK references on the preference to avoid FK constraint errors."""
+        cleared = []
+        if pref.language_id and not Language.objects.filter(id=pref.language_id).exists():
+            pref.language = None
+            cleared.append('language')
+        if pref.currency_id and not Currency.objects.filter(id=pref.currency_id).exists():
+            pref.currency = None
+            cleared.append('currency')
+        if pref.timezone_id and not Timezone.objects.filter(id=pref.timezone_id).exists():
+            pref.timezone = None
+            cleared.append('timezone')
+        if pref.country_id and not Country.objects.filter(id=pref.country_id).exists():
+            pref.country = None
+            cleared.append('country')
+        return cleared
     
     @staticmethod
     def get_or_create_preference(user) -> UserLocalePreference:
         """Get or create locale preference for user."""
         pref, _ = UserLocalePreference.objects.get_or_create(user=user)
+        cleared = UserPreferenceService._clear_missing_refs(pref)
+        if cleared:
+            pref.save(update_fields=cleared)
         return pref
     
     @staticmethod
@@ -1150,6 +1191,7 @@ class UserPreferenceService:
         logger = logging.getLogger('bunoraa.i18n')
         
         pref = UserPreferenceService.get_or_create_preference(user)
+        UserPreferenceService._clear_missing_refs(pref)
         logger.debug(f"[Preference] Updating for user {user.id} with: {kwargs}")
         
         if 'language_code' in kwargs:
@@ -1157,8 +1199,11 @@ class UserPreferenceService:
         
         if 'currency_code' in kwargs:
             currency = CurrencyService.get_currency_by_code(kwargs['currency_code'])
-            logger.debug(f"[Preference] Setting currency to: {currency.code if currency else None}")
-            pref.currency = currency
+            if currency:
+                logger.debug(f"[Preference] Setting currency to: {currency.code}")
+                pref.currency = currency
+            else:
+                logger.warning(f"[Preference] Currency code not found: {kwargs['currency_code']}")
         
         if 'timezone_name' in kwargs:
             pref.timezone = TimezoneService.get_timezone_by_name(kwargs['timezone_name'])

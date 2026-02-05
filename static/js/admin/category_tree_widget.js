@@ -7,18 +7,25 @@
         const sourceList = $('#category-tree-source');
         const displayContainer = $('#category-tree-display');
         const hiddenInput = $('input[name="primary_category"]');
-        const INDENTATION_UNIT = 20; // 20px for a 4-space equivalent indent
 
         let categories = {};
         let roots = [];
 
+        function normalizeId(value) {
+            return String(value || '').trim().toLowerCase();
+        }
+
         sourceList.find('li').each(function() {
             const el = $(this);
-            categories[el.data('id')] = {
-                id: el.data('id'),
-                parentId: el.data('parent-id'),
+            const id = normalizeId(el.attr('data-id'));
+            if (!id) {
+                return;
+            }
+            const parentId = normalizeId(el.attr('data-parent-id'));
+            categories[id] = {
+                id: id,
+                parentId: parentId,
                 name: el.text(),
-                depth: el.data('depth'),
                 children: []
             };
         });
@@ -32,24 +39,23 @@
             }
         }
 
-        function buildTreeHtml(nodes) {
-            let html = '<ul class="space-y-1">';
+        function buildTreeHtml(nodes, isRoot) {
+            let html = '<ul class="' + (isRoot ? 'category-tree' : 'children') + '">';
             nodes.forEach(function(node) {
-                const paddingLeft = node.depth * INDENTATION_UNIT;
                 html += '<li class="category-node" data-id="' + node.id + '">';
-                html += '<div class="flex items-center">';
+                html += '<div class="node-row">';
+                html += '<span class="label">' + node.name + '</span>';
 
                 if (node.children.length > 0) {
-                    html += '<span class="toggle w-6 text-center cursor-pointer font-bold text-gray-500">[+]</span>';
+                    html += '<button type="button" class="toggle" aria-expanded="false" aria-label="Toggle subcategories"></button>';
                 } else {
-                    html += '<span class="w-6"></span>'; // Spacer
+                    html += '<span class="toggle spacer" aria-hidden="true"></span>';
                 }
 
-                html += '<span class="label flex-grow p-1 rounded-md cursor-pointer hover:bg-gray-100" style="padding-left: ' + paddingLeft + 'px;">' + node.name + '</span>';
                 html += '</div>';
 
                 if (node.children.length > 0) {
-                    html += '<div class="children hidden pl-6">' + buildTreeHtml(node.children) + '</div>';
+                    html += buildTreeHtml(node.children, false);
                 }
                 html += '</li>';
             });
@@ -57,36 +63,51 @@
             return html;
         }
 
-        displayContainer.html(buildTreeHtml(roots));
+        displayContainer.html(buildTreeHtml(roots, true));
 
-        const initialValue = hiddenInput.val();
+        function selectLabel(label) {
+            displayContainer.find('.label.selected').removeClass('selected');
+            label.addClass('selected');
+        }
+
+        const initialValue = normalizeId(hiddenInput.val());
         if (initialValue) {
-            const selectedLabel = displayContainer.find('.category-node[data-id="' + initialValue + '"] > .flex > .label');
+            const selectedLabel = displayContainer.find('.category-node[data-id="' + initialValue + '"] > .node-row > .label');
             if (selectedLabel.length) {
-                selectedLabel.addClass('bg-blue-500 text-white');
-                selectedLabel.closest('.category-node').find('> .children').removeClass('hidden');
-                selectedLabel.closest('.category-node').find('> .flex > .toggle').text('[-]');
+                selectLabel(selectedLabel);
+                selectedLabel.parents('.category-node').addClass('expanded');
+                selectedLabel.parents('.category-node').find('> .node-row > .toggle').attr('aria-expanded', 'true');
             }
+        }
+
+        function toggleNode(node, toggleButton) {
+            if (node.find('> ul.children').length === 0) {
+                return;
+            }
+            const isExpanded = node.toggleClass('expanded').hasClass('expanded');
+            toggleButton.attr('aria-expanded', isExpanded ? 'true' : 'false');
         }
 
         displayContainer.on('click', '.toggle', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            const toggle = $(this);
-            const children = toggle.closest('.category-node').find('> .children');
-            children.toggleClass('hidden');
-            toggle.text(children.hasClass('hidden') ? '[+]' : '[-]');
+            const node = $(this).closest('.category-node');
+            toggleNode(node, $(this));
         });
 
-        displayContainer.on('click', '.label', function(e) {
+        displayContainer.on('click', '.node-row', function(e) {
             e.preventDefault();
-            e.stopPropagation();
-            const label = $(this);
+            const row = $(this);
+            const label = row.find('.label');
             const nodeId = label.closest('.category-node').data('id');
 
-            displayContainer.find('.label.bg-blue-500').removeClass('bg-blue-500 text-white');
-            label.addClass('bg-blue-500 text-white');
+            selectLabel(label);
             hiddenInput.val(nodeId);
+
+            const toggleButton = row.find('.toggle').first();
+            if (toggleButton.length && !toggleButton.hasClass('spacer')) {
+                toggleNode(row.closest('.category-node'), toggleButton);
+            }
         });
     });
 })(django.jQuery);

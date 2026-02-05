@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static currency_tags %}
 
 {% block page_id %}checkout{% endblock %}
-{% block title %}Payment - Checkout - {{ SITE_NAME }}{% endblock %}
+{% block title %}Payment - Checkout | {{ SITE_NAME }}{% endblock %}
 
 {% block extra_head %}
 {% for g in payment_gateways %}
@@ -62,7 +62,7 @@
                                 <span class="text-sm text-gray-500 dark:text-gray-400 w-20">Contact</span>
                                 <span class="text-sm text-gray-900 dark:text-white">{{ checkout.email|default:checkout.shipping_email }}</span>
                             </div>
-                            <a href="{% url 'commerce:checkout_info' %}" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Change</a>
+                            <a href="{% url 'commerce:checkout' %}" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Change</a>
                         </div>
                         
                         <!-- Ship to -->
@@ -74,7 +74,7 @@
                                     {{ checkout.shipping_city }}, {{ checkout.shipping_state }} {{ checkout.shipping_postal_code }}
                                 </span>
                             </div>
-                            <a href="{% url 'commerce:checkout_info' %}" class="text-sm text-primary-600 hover:text-primary-700 font-medium flex-shrink-0 ml-4">Change</a>
+                            <a href="{% url 'commerce:checkout' %}" class="text-sm text-primary-600 hover:text-primary-700 font-medium flex-shrink-0 ml-4">Change</a>
                         </div>
                         
                         <!-- Shipping Method -->
@@ -108,10 +108,14 @@
                                 {% for gateway in payment_gateways %}
                                 <div class="relative payment-option transform transition-all duration-300 hover:scale-[1.01]" 
                                      data-gateway="{{ gateway.code }}" style="animation: slideIn 0.3s ease-out both; animation-delay: {{ forloop.counter0 }}00ms;">
-                                    <input type="radio" name="payment_method" value="{{ gateway.code }}" 
-                                           id="payment-{{ gateway.code }}"
-                                           class="peer sr-only" 
-                                           {% if checkout.payment_method == gateway.code %}checked{% elif forloop.first and not checkout.payment_method %}checked{% endif %}>
+                                     <input type="radio" name="payment_method" value="{{ gateway.code }}"
+                                             id="payment-{{ gateway.code }}"
+                                             class="peer sr-only"
+                                             data-fee-type="{{ gateway.fee_type|default:'none' }}"
+                                             data-fee-amount="{{ gateway.fee_amount_converted|default:gateway.fee_amount|default:'0' }}"
+                                             data-fee-percent="{{ gateway.fee_amount|default:'0' }}"
+                                             data-fee-name="{{ gateway.name }}"
+                                             {% if checkout.payment_method == gateway.code %}checked{% elif forloop.first and not checkout.payment_method %}checked{% endif %}>
                                     <label for="payment-{{ gateway.code }}" 
                                            class="flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all duration-300 
                                                   peer-checked:border-primary-600 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 
@@ -141,7 +145,11 @@
                                             <div>
                                                 <p class="font-medium text-gray-900 dark:text-white">{{ gateway.name }}</p>
                                                 <p class="text-sm text-gray-500 dark:text-gray-400">{{ gateway.description }}</p>
-                                                {% if gateway.fee_text %}
+                                                {% if gateway.fee_type == 'flat' and gateway.fee_amount %}
+                                                <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">{% price gateway.fee_amount request.currency %} extra fee</p>
+                                                {% elif gateway.fee_type == 'percent' and gateway.fee_amount %}
+                                                <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">{{ gateway.fee_amount }}% fee</p>
+                                                {% elif gateway.fee_text %}
                                                 <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">{{ gateway.fee_text }}</p>
                                                 {% endif %}
                                                 {% if gateway.instructions %}
@@ -370,61 +378,75 @@
             <div class="lg:w-96">
                 <button id="order-summary-toggle" aria-expanded="false" class="w-full md:hidden mb-4 inline-flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-stone-700">
                     <span class="font-medium">Order Summary</span>
-                    <span class="text-sm text-gray-500 dark:text-gray-400">{{ cart_items|length }} items</span>
+                    <span class="text-sm text-gray-500 dark:text-gray-400" data-order-items-count>{{ cart_items|length }} items</span>
                     <svg class="w-5 h-5 text-gray-500 dark:text-stone-400 transform transition-transform" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg>
                 </button>
                 <div id="order-summary-block" class="hidden md:block bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 lg:sticky lg:top-24">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center justify-between">
                         <span>Order Summary</span>
-                        <span class="text-sm font-normal text-gray-500 dark:text-gray-400">{{ cart_items|length }} items</span>
+                        <span class="text-sm font-normal text-gray-500 dark:text-gray-400" data-order-items-count>{{ cart_items|length }} items</span>
                     </h2>
                     
-                    <!-- Cart Items (use converted checkout summary items) -->
-                    <div class="space-y-4 max-h-64 overflow-y-auto scrollbar-thin pr-2">
-                        {% for it in checkout_summary.items %}
-                        <div class="flex items-center space-x-4">
-                            <div class="relative flex-shrink-0">
-                                <img src="{{ it.image|default:'/static/images/placeholder.svg' }}" loading="lazy" decoding="async"
-                                     alt="{{ it.product_name }}"
-                                     class="w-16 h-16 object-cover rounded-lg">
-                                <span class="absolute -top-2 -right-2 w-5 h-5 bg-gray-600 text-white text-xs rounded-full flex items-center justify-center font-medium">
-                                    {{ it.quantity }}
-                                </span>
+                      <div id="order-summary"
+                           data-tax-rate="{{ checkout_summary.tax_rate|default:tax_rate|default:0 }}"
+                           data-payment-fee="{{ payment_fee_amount_converted|default:'' }}"
+                           data-payment-fee-label="{% if payment_fee_gateway %}{{ payment_fee_gateway.name }}{% endif %}">
+                        <div data-order-items>
+                            <!-- Cart Items (use converted checkout summary items) -->
+                            <div class="space-y-4 max-h-64 overflow-y-auto scrollbar-thin pr-2">
+                                {% for it in checkout_summary.items %}
+                                <div class="flex items-center space-x-4">
+                                    <div class="relative flex-shrink-0">
+                                        <img src="{{ it.image|default:'/static/images/placeholder.svg' }}" loading="lazy" decoding="async"
+                                             alt="{{ it.product_name }}"
+                                             class="w-16 h-16 object-cover rounded-lg">
+                                        <span class="absolute -top-2 -right-2 w-5 h-5 bg-gray-600 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                                            {{ it.quantity }}
+                                        </span>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ it.product_name }}</p>
+                                        {% if it.variant_name %}
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ it.variant_name }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ it.formatted_total }}</p>
+                                </div>
+                                {% endfor %}
                             </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ it.product_name }}</p>
-                                {% if it.variant_name %}
-                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ it.variant_name }}</p>
+                        </div>
+                        
+                        <div data-order-totals>
+                            <!-- Totals -->
+                            <div class="space-y-3 border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
+                                <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                                    <span>Subtotal</span>
+                                    <span id="subtotal" data-price="{{ checkout_summary.subtotal|default:cart_summary.subtotal|default:0 }}">{{ checkout_summary.formatted_subtotal }}</span>
+                                </div>
+                                {% if checkout_summary.discount and checkout_summary.discount != 0 %}
+                                <div id="discount-row" class="flex justify-between text-sm text-green-600">
+                                    <span>Discount</span>
+                                    <span id="discount-amount" data-price="{{ checkout_summary.discount_amount|default:cart_summary.discount_amount|default:0 }}">-{{ checkout_summary.formatted_discount }}</span>
+                                    <span id="discount" class="hidden" data-price="{{ checkout_summary.discount_amount|default:cart_summary.discount_amount|default:0 }}">-{{ checkout_summary.formatted_discount }}</span>
+                                </div>
                                 {% endif %}
+                                  <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                                      <span>Shipping ({{ checkout.get_shipping_method_display }})</span>
+                                      <span id="shipping-cost" data-price="{{ checkout_summary.shipping_cost|default:checkout.shipping_cost|default:'' }}">{{ checkout_summary.formatted_shipping }}</span>
+                                  </div>
+                                  <div id="payment-fee-row" class="flex justify-between text-sm text-gray-600 dark:text-gray-400 {% if not payment_fee_amount or payment_fee_amount <= 0 %}hidden{% endif %}">
+                                      <span id="payment-fee-label">Extra payment fee{% if payment_fee_gateway %} ({{ payment_fee_gateway.name }}){% endif %}</span>
+                                      <span id="payment-fee-amount">{% if payment_fee_amount and payment_fee_amount > 0 %}{% price payment_fee_amount request.currency %}{% else %}{% price 0 request.currency %}{% endif %}</span>
+                                  </div>
+                                  <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                                      <span>Tax</span>
+                                      <span id="tax-amount" data-price="{{ checkout_summary.tax_amount|default:cart_summary.tax_amount|default:0 }}">{{ checkout_summary.formatted_tax }}</span>
+                                  </div>
+                                <div class="flex justify-between text-lg font-bold text-gray-900 dark:text-white border-t border-gray-200 dark:border-gray-700 pt-3">
+                                    <span>Total</span>
+                                    <span id="order-total" data-price="{{ checkout_summary.total|default:cart_summary.total|default:0 }}">{{ checkout_summary.formatted_total }}</span>
+                                </div>
                             </div>
-                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ it.formatted_total }}</p>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    
-                    <!-- Totals -->
-                    <div class="space-y-3 border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
-                        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                            <span>Subtotal</span>
-                            <span>{{ checkout_summary.formatted_subtotal }}</span>
-                        </div>
-                        {% if checkout_summary.discount and checkout_summary.discount != 0 %}
-                        <div class="flex justify-between text-sm text-green-600">
-                            <span>Discount</span>
-                            <span>-{{ checkout_summary.formatted_discount }}</span>
-                        </div>
-                        {% endif %}
-                        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                            <span>Shipping ({{ checkout.get_shipping_method_display }})</span>
-                            <span>{{ checkout_summary.formatted_shipping }}</span>
-                        </div>
-                        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                            <span>Tax</span>
-                            <span>{{ checkout_summary.formatted_tax }}</span>
-                        </div>
-                        <div class="flex justify-between text-lg font-bold text-gray-900 dark:text-white border-t border-gray-200 dark:border-gray-700 pt-3">
-                            <span>Total</span>
-                            <span>{{ checkout_summary.formatted_total }}</span>
                         </div>
                     </div>
                     
@@ -496,14 +518,14 @@
 {% block extra_js %}
 {{ country_names|json_script:"country-names-data" }}
 <div id="shipping-data" style="display:none"
-     data-first-name="{{ checkout.shipping_first_name|default:''|escapejs }}"
-     data-last-name="{{ checkout.shipping_last_name|default:''|escapejs }}"
-     data-address-line-1="{{ checkout.shipping_address_line_1|default:''|escapejs }}"
-     data-address-line-2="{{ checkout.shipping_address_line_2|default:''|escapejs }}"
-     data-city="{{ checkout.shipping_city|default:''|escapejs }}"
-     data-state="{{ checkout.shipping_state|default:''|escapejs }}"
-     data-postal-code="{{ checkout.shipping_postal_code|default:''|escapejs }}"
-     data-country-code="{{ shipping_country_code|default:checkout.shipping_country|default:''|escapejs }}"></div>
+     data-first-name="{{ checkout_session.shipping_first_name|default:''|escapejs }}"
+     data-last-name="{{ checkout_session.shipping_last_name|default:''|escapejs }}"
+     data-address-line-1="{{ checkout_session.shipping_address_line_1|default:''|escapejs }}"
+     data-address-line-2="{{ checkout_session.shipping_address_line_2|default:''|escapejs }}"
+     data-city="{{ checkout_session.shipping_city|default:''|escapejs }}"
+     data-state="{{ checkout_session.shipping_state|default:''|escapejs }}"
+     data-postal-code="{{ checkout_session.shipping_postal_code|default:''|escapejs }}"
+     data-country-code="{{ shipping_country_code|default:checkout_session.shipping_country|default:''|escapejs }}"></div>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Configuration from backend
@@ -576,35 +598,46 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize Stripe
     // ========================================
     let stripe, cardElement;
+    const stripeKey = '{{ stripe_publishable_key|default:"" }}';
     try {
-        stripe = Stripe('{{ stripe_publishable_key|default:"pk_test_dummy" }}');
-        const elements = stripe.elements();
+        if (stripeKey) {
+            stripe = Stripe(stripeKey);
+        }
+        if (stripe) {
+            const elements = stripe.elements();
         
-        const isDarkMode = document.documentElement.classList.contains('dark');
-        cardElement = elements.create('card', {
-            style: {
-                base: {
-                    fontSize: '16px',
-                    color: isDarkMode ? '#f9fafb' : '#374151',
-                    fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-                    '::placeholder': {
-                        color: isDarkMode ? '#6b7280' : '#9CA3AF',
+            const isDarkMode = document.documentElement.classList.contains('dark');
+            cardElement = elements.create('card', {
+                style: {
+                    base: {
+                        fontSize: '16px',
+                        color: isDarkMode ? '#f9fafb' : '#374151',
+                        fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+                        '::placeholder': {
+                            color: isDarkMode ? '#6b7280' : '#9CA3AF',
+                        },
+                        iconColor: isDarkMode ? '#f9fafb' : '#374151',
                     },
-                    iconColor: isDarkMode ? '#f9fafb' : '#374151',
+                    invalid: {
+                        color: '#EF4444',
+                        iconColor: '#EF4444',
+                    },
                 },
-                invalid: {
-                    color: '#EF4444',
-                    iconColor: '#EF4444',
-                },
-            },
-        });
-        cardElement.mount('#card-element');
-        
-        cardElement.on('change', function(event) {
-            const displayError = document.getElementById('card-errors');
-            displayError.textContent = event.error ? event.error.message : '';
-            displayError.classList.toggle('animate-shake', !!event.error);
-        });
+            });
+            cardElement.mount('#card-element');
+            
+            cardElement.on('change', function(event) {
+                const displayError = document.getElementById('card-errors');
+                displayError.textContent = event.error ? event.error.message : '';
+                displayError.classList.toggle('animate-shake', !!event.error);
+            });
+        } else {
+            const stripeOption = document.querySelector('input[name=\"payment_method\"][value=\"stripe\"]');
+            if (stripeOption) {
+                stripeOption.disabled = true;
+                stripeOption.closest('.payment-option')?.classList.add('opacity-60', 'pointer-events-none');
+            }
+        }
     } catch (e) {
     }
 
@@ -676,7 +709,7 @@ document.addEventListener('DOMContentLoaded', function() {
             'city': CONFIG.shippingData.city,
             'state': CONFIG.shippingData.state,
             'postal_code': CONFIG.shippingData.postalCode,
-            'country': CONFIG.shippingData.country
+            'country': CONFIG.shippingData.countryCode || CONFIG.shippingData.country || ''
         };
         
         fields.forEach(field => {
@@ -700,6 +733,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 billingForm.classList.remove('hidden');
                 billingForm.style.animation = 'slideDown 0.4s ease-out forwards';
+                syncBillingFromShipping();
             }
         });
     }
@@ -817,16 +851,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.open(session.payment_redirect_url, '_blank');
                     Utils.showToast('Payment started. Complete the payment in the provider window.', 'info');
                     // Redirect to review where backend will verify completion
-                    window.location.href = '{% url "checkout:review" %}';
+                    window.location.href = '{% url "commerce:checkout_review" %}';
                     return;
                 }
 
                 // If payment is ready already, proceed to review, else still proceed to review and let backend handle pending mobile payments
                 if (session && session.payment_ready) {
-                    window.location.href = '{% url "checkout:review" %}';
+                    window.location.href = '{% url "commerce:checkout_review" %}';
                 } else {
                     Utils.showToast('Payment method saved. Please follow instructions to complete the payment with your provider.', 'info');
-                    window.location.href = '{% url "checkout:review" %}';
+                    window.location.href = '{% url "commerce:checkout_review" %}';
                 }
             } catch (err) {
                 // If anything goes wrong, fallback to server-side form submit to preserve behavior

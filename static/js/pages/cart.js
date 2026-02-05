@@ -9,6 +9,7 @@ const CartPage = (function() {
     let cart = null;
     let savedForLater = [];
     let abandonedCartTimer = null;
+    let giftState = null;
     const ABANDONED_CART_DELAY = 60000; // 1 minute for demo (use 30min in production)
     const BOUND_ATTR = 'data-bound';
 
@@ -27,6 +28,44 @@ const CartPage = (function() {
     function formatCartPrice(value) {
         const amount = parseAmount(value);
         return Templates.formatPrice(amount);
+    }
+
+    function getInitialGiftState() {
+        const gift = window.BUNORAA_CART?.gift || {};
+        const giftWrapEnabled = gift.gift_wrap_enabled !== false;
+        const giftWrapAmount = parseAmount(gift.gift_wrap_amount ?? gift.gift_wrap_cost ?? 0);
+        const isGift = !!gift.is_gift;
+        const giftWrap = isGift && giftWrapEnabled && !!gift.gift_wrap;
+        const giftWrapCost = giftWrap ? parseAmount(gift.gift_wrap_cost ?? giftWrapAmount) : 0;
+
+        return {
+            is_gift: isGift,
+            gift_message: gift.gift_message || '',
+            gift_wrap: giftWrap,
+            gift_wrap_cost: giftWrapCost,
+            gift_wrap_amount: giftWrapAmount,
+            gift_wrap_label: gift.gift_wrap_label || 'Gift Wrap',
+            gift_wrap_enabled: giftWrapEnabled
+        };
+    }
+
+    function applyGiftState(nextState = {}) {
+        giftState = { ...(giftState || getInitialGiftState()), ...nextState };
+
+        if (!giftState.is_gift) {
+            giftState.gift_message = '';
+            giftState.gift_wrap = false;
+            giftState.gift_wrap_cost = 0;
+        }
+
+        if (!giftState.gift_wrap_enabled) {
+            giftState.gift_wrap = false;
+            giftState.gift_wrap_cost = 0;
+        }
+
+        if (giftState.gift_wrap && giftState.gift_wrap_cost <= 0) {
+            giftState.gift_wrap_cost = parseAmount(giftState.gift_wrap_amount);
+        }
     }
 
     function hasValue(value) {
@@ -199,16 +238,30 @@ const CartPage = (function() {
         const shippingEl = document.getElementById('shipping');
         const taxEl = document.getElementById('tax');
         const totalEl = document.getElementById('total');
+        const giftWrapRow = document.getElementById('gift-wrap-row');
+        const giftWrapCostEl = document.getElementById('gift-wrap-cost');
 
         const taxableAmount = Math.max(0, subtotalValue - discountValue);
         const tax = calculateTax(taxableAmount);
+        const giftWrapCost = giftState?.gift_wrap ? parseAmount(giftState.gift_wrap_cost) : 0;
 
         if (taxEl) taxEl.textContent = formatCartPrice(tax);
+        if (giftWrapRow && giftWrapCostEl) {
+            if (giftState?.gift_wrap) {
+                giftWrapRow.classList.remove('hidden');
+                giftWrapCostEl.textContent = `+${formatCartPrice(giftWrapCost)}`;
+                giftWrapCostEl.dataset.price = giftWrapCost;
+            } else {
+                giftWrapRow.classList.add('hidden');
+                giftWrapCostEl.textContent = `+${formatCartPrice(0)}`;
+                giftWrapCostEl.dataset.price = 0;
+            }
+        }
 
         const address = await getDefaultShippingAddress();
         if (!address) {
             if (shippingEl) shippingEl.innerHTML = SHIPPING_ADDRESS_MESSAGE_HTML;
-            if (totalEl) totalEl.textContent = formatCartPrice(taxableAmount + tax);
+            if (totalEl) totalEl.textContent = formatCartPrice(taxableAmount + tax + giftWrapCost);
             updateShippingLocationLabel(null);
             return;
         }
@@ -218,18 +271,20 @@ const CartPage = (function() {
 
         if (!quote) {
             if (shippingEl) shippingEl.innerHTML = SHIPPING_ADDRESS_MESSAGE_HTML;
-            if (totalEl) totalEl.textContent = formatCartPrice(taxableAmount + tax);
+            if (totalEl) totalEl.textContent = formatCartPrice(taxableAmount + tax + giftWrapCost);
             updateShippingLocationLabel(address);
             return;
         }
 
         if (shippingEl) shippingEl.textContent = quote.isFree ? 'Free' : quote.display;
-        if (totalEl) totalEl.textContent = formatCartPrice(taxableAmount + tax + quote.cost);
+        if (totalEl) totalEl.textContent = formatCartPrice(taxableAmount + tax + giftWrapCost + quote.cost);
 
         updateShippingLocationLabel(address);
     }
 
     async function init() {
+        giftState = getInitialGiftState();
+        applyGiftState(giftState);
         await loadCart();
         initCartActionButtons();
         initCouponForm();
@@ -433,7 +488,7 @@ const CartPage = (function() {
         initAbandonedCartRecovery();
         initFreeShippingProgress();
         initRecommendedProducts();
-        initCartNoteSaver();
+        initGiftOptions();
     }
 
     // ============================================
@@ -778,31 +833,132 @@ const CartPage = (function() {
     }
 
     // ============================================
-    // ENHANCED FEATURE: Cart Note/Gift Message
+    // ENHANCED FEATURE: Gift Options
     // ============================================
-    function initCartNoteSaver() {
-        const noteInput = document.getElementById('cart-note');
+    function initGiftOptions() {
         const giftCheckbox = document.getElementById('gift-order');
-        
-        if (noteInput) {
-            // Load saved note
-            const savedNote = localStorage.getItem('cartNote') || '';
-            noteInput.value = savedNote;
+        const giftDetails = document.getElementById('gift-details');
+        const giftMessage = document.getElementById('gift-message');
+        const giftMessageCount = document.getElementById('gift-message-count');
+        const giftWrapCheckbox = document.getElementById('gift-wrap');
 
-            // Save on change
-            noteInput.addEventListener('input', debounce(() => {
-                localStorage.setItem('cartNote', noteInput.value);
-            }, 500));
-        }
+        if (!giftCheckbox || giftCheckbox.getAttribute(BOUND_ATTR) === 'true') return;
+        giftCheckbox.setAttribute(BOUND_ATTR, 'true');
 
-        if (giftCheckbox) {
-            const isGift = localStorage.getItem('isGiftOrder') === 'true';
-            giftCheckbox.checked = isGift;
-            
-            giftCheckbox.addEventListener('change', () => {
-                localStorage.setItem('isGiftOrder', giftCheckbox.checked);
-            });
-        }
+        const updateMessageCount = () => {
+            if (giftMessage && giftMessageCount) {
+                giftMessageCount.textContent = String(giftMessage.value.length);
+            }
+        };
+
+        const renderGiftState = () => {
+            if (!giftState) {
+                giftState = getInitialGiftState();
+            }
+
+            giftCheckbox.checked = !!giftState.is_gift;
+            if (giftDetails) {
+                giftDetails.classList.toggle('hidden', !giftState.is_gift);
+            }
+
+            if (giftMessage) {
+                giftMessage.value = giftState.gift_message || '';
+            }
+
+            if (giftWrapCheckbox) {
+                giftWrapCheckbox.checked = !!giftState.gift_wrap;
+                giftWrapCheckbox.disabled = !giftState.gift_wrap_enabled || !giftState.is_gift;
+            }
+
+            updateMessageCount();
+        };
+
+        const persistGiftOptions = debounce(async () => {
+            try {
+                const payload = {
+                    is_gift: !!giftState?.is_gift,
+                    gift_message: giftState?.gift_message || '',
+                    gift_wrap: !!giftState?.gift_wrap
+                };
+
+                const response = await CartApi.updateGiftOptions(payload);
+                if (response?.success === false) {
+                    throw new Error(response.message || 'Failed to update gift options.');
+                }
+                const data = response?.data || response;
+                const state = data?.gift_state;
+
+                if (state) {
+                    applyGiftState({
+                        is_gift: state.is_gift,
+                        gift_message: state.gift_message || '',
+                        gift_wrap: state.gift_wrap,
+                        gift_wrap_cost: parseAmount(state.gift_wrap_cost)
+                    });
+                }
+
+                if (data?.gift_wrap_amount !== undefined) {
+                    giftState.gift_wrap_amount = parseAmount(data.gift_wrap_amount);
+                }
+                if (data?.gift_wrap_label) {
+                    giftState.gift_wrap_label = data.gift_wrap_label;
+                }
+                if (data?.gift_wrap_enabled !== undefined) {
+                    giftState.gift_wrap_enabled = !!data.gift_wrap_enabled;
+                }
+
+                renderGiftState();
+
+                const summary = cart?.summary || {};
+                const subtotalValue = parseAmount(summary.subtotal ?? cart?.subtotal ?? 0);
+                const discountValue = parseAmount(summary.discount_amount ?? cart?.discount_amount ?? 0);
+                void updateOrderSummaryTotals(subtotalValue, discountValue, cart);
+            } catch (error) {
+                Toast.error(resolveErrorMessage(error, 'Failed to update gift options.'));
+            }
+        }, 400);
+
+        giftCheckbox.addEventListener('change', () => {
+            applyGiftState({ is_gift: giftCheckbox.checked });
+
+            if (!giftCheckbox.checked) {
+                applyGiftState({ gift_message: '', gift_wrap: false, gift_wrap_cost: 0 });
+            }
+
+            renderGiftState();
+
+            const summary = cart?.summary || {};
+            const subtotalValue = parseAmount(summary.subtotal ?? cart?.subtotal ?? 0);
+            const discountValue = parseAmount(summary.discount_amount ?? cart?.discount_amount ?? 0);
+            void updateOrderSummaryTotals(subtotalValue, discountValue, cart);
+
+            persistGiftOptions();
+        });
+
+        giftMessage?.addEventListener('input', () => {
+            if (!giftState?.is_gift) return;
+            applyGiftState({ gift_message: giftMessage.value.slice(0, 200) });
+            updateMessageCount();
+            persistGiftOptions();
+        });
+
+        giftWrapCheckbox?.addEventListener('change', () => {
+            if (!giftState?.is_gift || !giftState?.gift_wrap_enabled) {
+                giftWrapCheckbox.checked = false;
+                return;
+            }
+
+            applyGiftState({ gift_wrap: giftWrapCheckbox.checked });
+
+            const summary = cart?.summary || {};
+            const subtotalValue = parseAmount(summary.subtotal ?? cart?.subtotal ?? 0);
+            const discountValue = parseAmount(summary.discount_amount ?? cart?.discount_amount ?? 0);
+            void updateOrderSummaryTotals(subtotalValue, discountValue, cart);
+
+            persistGiftOptions();
+        });
+
+        renderGiftState();
     }
 
     function debounce(func, wait) {
@@ -962,7 +1118,8 @@ const CartPage = (function() {
         const discountValue = parseAmount(summary.discount_amount ?? cartData?.discount_amount);
         const taxableAmount = Math.max(0, subtotalValue - discountValue);
         const taxValue = calculateTax(taxableAmount);
-        const totalValue = taxableAmount + taxValue;
+        const giftWrapCost = giftState?.gift_wrap ? parseAmount(giftState.gift_wrap_cost) : 0;
+        const totalValue = taxableAmount + taxValue + giftWrapCost;
         const taxRate = getTaxRate();
         const couponCode = cartData?.coupon?.code || cartData?.coupon_code || '';
 
@@ -1041,6 +1198,10 @@ const CartPage = (function() {
                                 <span class="text-gray-600 dark:text-stone-400">Shipping</span>
                                 <span id="shipping" class="font-medium text-gray-900 dark:text-white">Calculating...</span>
                             </div>
+                            <div id="gift-wrap-row" class="flex justify-between ${giftState?.gift_wrap ? '' : 'hidden'}">
+                                <span class="text-gray-600 dark:text-stone-400">${Templates.escapeHtml(giftState?.gift_wrap_label || 'Gift Wrap')}</span>
+                                <span id="gift-wrap-cost" class="font-medium text-gray-900 dark:text-white" data-price="${giftWrapCost}">+${formatCartPrice(giftWrapCost)}</span>
+                            </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600 dark:text-stone-400">VAT (${taxRate}%)</span>
                                 <span id="tax" class="font-medium text-gray-900 dark:text-white">${formatCartPrice(taxValue)}</span>
@@ -1082,19 +1243,29 @@ const CartPage = (function() {
                                 </form>
                             `}
                         </div>
-                        
-                        <!-- Cart Note / Gift Message -->
-                        <div class="mt-4">
+
+                        <!-- Gift Options -->
+                        <div class="mt-6 pt-6 border-t border-gray-200 dark:border-stone-600">
+                            <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Gift options</h4>
                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="gift-order" class="rounded border-gray-300 dark:border-stone-600 text-primary-600 dark:text-amber-500 focus:ring-primary-500 dark:focus:ring-amber-500">
-                                <span class="text-sm text-gray-700 dark:text-stone-300">This is a gift</span>
+                                <input type="checkbox" id="gift-order" class="rounded border-gray-300 dark:border-stone-600 text-primary-600 dark:text-amber-500 focus:ring-primary-500 dark:focus:ring-amber-500" ${giftState?.is_gift ? 'checked' : ''}>
+                                <span class="text-sm text-gray-700 dark:text-stone-300">This order is a gift</span>
                             </label>
-                            <textarea 
-                                id="cart-note" 
-                                placeholder="Add a note or gift message..." 
-                                class="mt-2 w-full px-3 py-2 border border-gray-300 dark:border-stone-600 dark:bg-stone-700 dark:text-white rounded-lg text-sm focus:ring-primary-500 dark:focus:ring-amber-500 focus:border-primary-500 dark:focus:border-amber-500"
-                                rows="2"
-                            ></textarea>
+                            <div id="gift-details" class="${giftState?.is_gift ? '' : 'hidden'} mt-3 space-y-3 pl-6">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 dark:text-stone-400 mb-1">Gift message (optional)</label>
+                                    <textarea id="gift-message" maxlength="200" rows="3"
+                                              class="w-full px-3 py-2 border border-gray-300 dark:border-stone-600 dark:bg-stone-700 dark:text-white rounded-lg text-sm focus:ring-primary-500 dark:focus:ring-amber-500 focus:border-primary-500 dark:focus:border-amber-500"
+                                              placeholder="Add a personal message (max 200 characters)">${Templates.escapeHtml(giftState?.gift_message || '')}</textarea>
+                                    <p class="text-xs text-gray-500 dark:text-stone-400 mt-1"><span id="gift-message-count">0</span>/200 characters</p>
+                                </div>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="gift-wrap"
+                                           class="rounded border-gray-300 dark:border-stone-600 text-primary-600 dark:text-amber-500 focus:ring-primary-500 dark:focus:ring-amber-500"
+                                           ${giftState?.gift_wrap ? 'checked' : ''} ${giftState?.gift_wrap_enabled ? '' : 'disabled'}>
+                                    <span class="text-sm text-gray-700 dark:text-stone-300">Add ${Templates.escapeHtml(giftState?.gift_wrap_label || 'Gift Wrap')}${giftState?.gift_wrap_enabled ? ` (+${formatCartPrice(giftState?.gift_wrap_amount || giftWrapCost)})` : ' (Unavailable)'}</span>
+                                </label>
+                            </div>
                         </div>
 
                         <!-- Checkout Button -->

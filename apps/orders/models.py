@@ -126,6 +126,14 @@ class Order(models.Model):
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text='Discount amount applied')
     tax = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text='Tax amount applied')
     total = models.DecimalField(max_digits=10, decimal_places=2, help_text='Order total in BDT')
+
+    # Currency snapshot
+    currency = models.CharField(max_length=3, default='BDT')
+    exchange_rate = models.DecimalField(max_digits=10, decimal_places=6, default=1)
+
+    # Payment fee snapshot
+    payment_fee_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    payment_fee_label = models.CharField(max_length=100, blank=True)
     
     # Coupon
     coupon = models.ForeignKey(

@@ -1,0 +1,40 @@
+{% load humanize %}{% load i18n %}{% load currency_tags %}
+<!-- Order Summary Partial -->
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Order Summary</h3>
+    
+    <div data-order-totals>
+        <!-- Totals -->
+        <div class="space-y-3 border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
+            <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                <span>Subtotal</span>
+                <span id="subtotal" data-price="{{ cart_summary.subtotal|default:0 }}">{{ cart_summary.formatted_subtotal }}</span>
+            </div>
+            <div id="discount-row" class="flex justify-between text-sm text-green-600 {% if not cart_summary.discount_amount or cart_summary.discount_amount == '0' or cart_summary.discount_amount == '0.00' %}hidden{% endif %}">
+                <span>Discount</span>
+                <span id="discount-amount" data-price="{{ cart_summary.discount_amount|default:0 }}">-{{ cart_summary.formatted_discount }}</span>
+                <span id="discount" class="hidden" data-price="{{ cart_summary.discount_amount|default:0 }}"></span>
+            </div>
+            <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                <span>Shipping</span>
+                <span id="shipping-cost" data-price="{{ cart_summary.shipping_cost|default:'' }}">{{ cart_summary.formatted_shipping }}</span>
+            </div>
+            <div id="gift-wrap-row" class="flex justify-between text-sm text-gray-600 dark:text-gray-400" style="display: {% if checkout.gift_wrap %}flex{% else %}none{% endif %};">
+                <span>Gift Wrapping</span>
+                <span id="gift-wrap-cost" data-price="{{ cart_summary.gift_wrap_cost|default:0 }}">+{{ cart_summary.formatted_gift_wrap }}</span>
+            </div>
+            <div id="payment-fee-row" class="flex justify-between text-sm text-gray-600 dark:text-gray-400 {% if not payment_fee_amount or payment_fee_amount <= 0 %}hidden{% endif %}">
+                <span id="payment-fee-label">Extra payment fee{% if payment_fee_gateway %} ({{ payment_fee_gateway.name }}){% endif %}</span>
+                <span id="payment-fee-amount">{% if payment_fee_amount and payment_fee_amount > 0 %}{% price payment_fee_amount request.currency %}{% else %}{% price 0 request.currency %}{% endif %}</span>
+            </div>
+            <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                <span>Tax ({{ cart_summary.tax_rate|default:tax_rate }}%)</span>
+                <span id="tax-amount" data-price="{{ cart_summary.tax_amount|default:0 }}">{{ cart_summary.formatted_tax }}</span>
+            </div>
+            <div class="flex justify-between text-lg font-bold text-gray-900 dark:text-white border-t border-gray-200 dark:border-gray-700 pt-3">
+                <span>Total</span>
+                <span id="order-total" data-price="{{ cart_summary.total|default:0 }}">{{ cart_summary.formatted_total }}</span>
+            </div>
+        </div>
+    </div>
+</div>

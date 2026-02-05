@@ -37,14 +37,15 @@ class ShippingZoneService:
         cls,
         country: str,
         state: Optional[str] = None,
-        postal_code: Optional[str] = None
+        postal_code: Optional[str] = None,
+        city: Optional[str] = None
     ) -> Optional[ShippingZone]:
         """Find the best matching zone for a location."""
         zones = cls.get_active_zones()
         
         # Check each zone by priority
         for zone in zones:
-            if zone.matches_location(country, state, postal_code):
+            if zone.matches_location(country=country, state=state, city=city, postal_code=postal_code):
                 return zone
         
         # Return default zone if exists
@@ -69,6 +70,7 @@ class ShippingRateService:
         country: str,
         state: Optional[str] = None,
         postal_code: Optional[str] = None,
+        city: Optional[str] = None,
         subtotal: Decimal = Decimal('0'),
         weight: Decimal = Decimal('0'),
         item_count: int = 1,
@@ -81,7 +83,7 @@ class ShippingRateService:
         Returns list of dicts with method details and calculated rates.
         """
         # Find zone
-        zone = ShippingZoneService.find_zone_for_location(country, state, postal_code)
+        zone = ShippingZoneService.find_zone_for_location(country, state, postal_code, city=city)
         if not zone:
             return []
         
@@ -175,6 +177,8 @@ class ShippingRateService:
 
             available_methods.append({
                 'id': str(method.id),
+                'method_id': str(method.id),
+                'rate_id': str(rate.id),
                 'code': method.code,
                 'name': method.name,
                 'description': method.description,

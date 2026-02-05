@@ -15,7 +15,7 @@ cart_patterns = [
     path('update/', views.CartUpdateView.as_view(), name='cart_update'),
     path('remove/', views.CartRemoveView.as_view(), name='cart_remove'),
     path('clear/', views.CartClearView.as_view(), name='cart_clear'),
-    path('coupon/apply/', views.CartApplyCouponView.as_view(), name='cart_apply_coupon'),
+    path('coupon/apply/', views.CartApplyCouponView.as_view(), name='apply_coupon'),
     path('coupon/remove/', views.CartRemoveCouponView.as_view(), name='cart_remove_coupon'),
     path('count/', views.CartCountView.as_view(), name='cart_count'),
 ]
@@ -39,6 +39,7 @@ checkout_patterns = [
     path('info/', views.CheckoutUpdateInfoView.as_view(), name='checkout_info'),
     path('shipping/', views.CheckoutSelectShippingView.as_view(), name='checkout_shipping'),
     path('payment/', views.CheckoutSelectPaymentView.as_view(), name='checkout_payment'),
+    path('review/', views.CheckoutReviewView.as_view(), name='checkout_review'),
     path('complete/', views.CheckoutCompleteView.as_view(), name='checkout_complete'),
     path('confirmation/<str:order_number>/', views.OrderConfirmationView.as_view(), name='order_confirmation'),
 ]

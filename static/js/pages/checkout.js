@@ -16,6 +16,74 @@ const CheckoutPage = (async function() {
         notes: ''
     };
     let currentStep = 1;
+    let cartLoadFailed = false;
+    let cartLoadError = null;
+    const toNumber = (value, fallback = 0) => {
+        if (value === null || value === undefined || value === '') return fallback;
+        const num = Number(value);
+        return Number.isFinite(num) ? num : fallback;
+    };
+
+    function getPaymentFeeMeta() {
+        const selected = document.querySelector('input[name="payment_method"]:checked');
+        if (selected) {
+            return {
+                type: selected.dataset.feeType || 'none',
+                amount: toNumber(selected.dataset.feeAmount, 0),
+                percent: toNumber(selected.dataset.feePercent, 0),
+                name: selected.dataset.feeName || ''
+            };
+        }
+
+        const summary = document.getElementById('order-summary');
+        if (summary) {
+            const feeAmount = toNumber(summary.dataset.paymentFee, 0);
+            return {
+                type: feeAmount > 0 ? 'flat' : 'none',
+                amount: feeAmount,
+                percent: 0,
+                name: summary.dataset.paymentFeeLabel || ''
+            };
+        }
+
+        return { type: 'none', amount: 0, percent: 0, name: '' };
+    }
+
+    function computePaymentFee(total, meta) {
+        if (!meta) return 0;
+        if (meta.type === 'flat') return toNumber(meta.amount, 0);
+        if (meta.type === 'percent') return Math.max(0, total * (toNumber(meta.percent, 0) / 100));
+        return 0;
+    }
+
+    function updatePaymentFeeRow(totalValue = null) {
+        const row = document.getElementById('payment-fee-row');
+        const amountEl = document.getElementById('payment-fee-amount');
+        const labelEl = document.getElementById('payment-fee-label');
+        if (!row || !amountEl) return;
+
+        const totalEl = document.getElementById('order-total');
+        const total = totalValue !== null ? totalValue : toNumber(totalEl?.dataset?.price ?? totalEl?.textContent, 0);
+        const meta = getPaymentFeeMeta();
+        const feeAmount = computePaymentFee(total, meta);
+
+        if (!feeAmount || feeAmount <= 0) {
+            row.classList.add('hidden');
+            return;
+        }
+
+        row.classList.remove('hidden');
+        amountEl.textContent = Templates.formatPrice(feeAmount);
+        if (labelEl) {
+            labelEl.textContent = meta?.name ? `Extra payment fee (${meta.name})` : 'Extra payment fee';
+        }
+
+        const summary = document.getElementById('order-summary');
+        if (summary) {
+            summary.dataset.paymentFee = feeAmount;
+            summary.dataset.paymentFeeLabel = meta?.name || '';
+        }
+    }
 
     async function init() {
         if (!AuthApi.isAuthenticated()) {
@@ -28,10 +96,10 @@ const CheckoutPage = (async function() {
         }
 
         await loadCart();
+        if (cartLoadFailed) return;
         
         if (!cart || !cart.items || cart.items.length === 0) {
             Toast.warning('Your cart is empty.');
-            window.location.href = '/cart/';
             return;
         }
 
@@ -39,16 +107,142 @@ const CheckoutPage = (async function() {
         initStepNavigation();
         initFormValidation();
         initOrderSummaryToggle();
+        initStepForms();
     }
 
     async function loadCart() {
         try {
             const response = await CartApi.getCart();
+            if (!response || response.success === false) {
+                throw { message: response?.message || 'Failed to load cart', data: response?.data };
+            }
             cart = response.data;
             renderOrderSummary();
+            cartLoadFailed = false;
+            cartLoadError = null;
         } catch (error) {
             console.error('Failed to load cart:', error);
-            Toast.error('Failed to load cart.');
+            cartLoadFailed = true;
+            cartLoadError = error;
+            Toast.error(resolveErrorMessage(error, 'Failed to load cart.'));
+        }
+    }
+
+    function resolveErrorMessage(error, fallback) {
+        const generic = [
+            'request failed.',
+            'request failed',
+            'invalid response format',
+            'invalid request format'
+        ];
+
+        const isGeneric = (msg) => {
+            if (!msg) return true;
+            const normalized = String(msg).trim().toLowerCase();
+            return generic.includes(normalized);
+        };
+
+        const pickFromErrors = (errObj) => {
+            if (!errObj) return null;
+            if (typeof errObj === 'string') return errObj;
+            if (Array.isArray(errObj)) return errObj[0];
+            if (typeof errObj === 'object') {
+                const values = Object.values(errObj);
+                const flattened = values.flat ? values.flat() : values.reduce((acc, val) => acc.concat(val), []);
+                const first = flattened[0] ?? values[0];
+                if (typeof first === 'string') return first;
+                if (first && typeof first === 'object') {
+                    return pickFromErrors(first);
+                }
+            }
+            return null;
+        };
+
+        const candidates = [];
+        if (error?.message) candidates.push(error.message);
+        if (error?.data?.message) candidates.push(error.data.message);
+        if (error?.data?.detail) candidates.push(error.data.detail);
+        if (error?.data && typeof error.data === 'string') candidates.push(error.data);
+        if (error?.errors) candidates.push(pickFromErrors(error.errors));
+        if (error?.data && typeof error.data === 'object') candidates.push(pickFromErrors(error.data));
+
+        const best = candidates.find(msg => msg && !isGeneric(msg));
+        return best || fallback;
+    }
+
+    function getSubmitUi(form) {
+        if (!form) return {};
+        const button = form.querySelector('button[type="submit"]');
+        const textEl = form.querySelector('#btn-text') || form.querySelector('#button-text');
+        const spinnerEl = form.querySelector('#btn-spinner') || form.querySelector('#spinner');
+        const arrowEl = form.querySelector('#arrow-icon');
+        const defaultText = textEl ? textEl.textContent : button ? button.textContent : '';
+        return { button, textEl, spinnerEl, arrowEl, defaultText };
+    }
+
+    function setSubmitLoading(ui, loading, loadingText = 'Processing...') {
+        if (!ui) return;
+        if (ui.button) ui.button.disabled = loading;
+        if (ui.textEl) ui.textEl.textContent = loading ? loadingText : ui.defaultText;
+        if (ui.spinnerEl) ui.spinnerEl.classList.toggle('hidden', !loading);
+        if (ui.arrowEl) ui.arrowEl.classList.toggle('hidden', loading);
+    }
+
+    async function submitCheckoutForm(form, options = {}) {
+        if (!form || form.dataset.submitting === 'true') return;
+        if (cartLoadFailed) {
+            Toast.error(resolveErrorMessage(cartLoadError, 'Failed to load cart.'));
+            return;
+        }
+
+        const validate = options.validate;
+        if (typeof validate === 'function') {
+            const isValid = await validate();
+            if (!isValid) return;
+        }
+
+        const ui = getSubmitUi(form);
+        setSubmitLoading(ui, true, options.loadingText || 'Processing...');
+        form.dataset.submitting = 'true';
+
+        try {
+            const response = await fetch(form.action || window.location.href, {
+                method: (form.method || 'POST').toUpperCase(),
+                body: new FormData(form),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin'
+            });
+
+            let data = null;
+            try {
+                data = await response.json();
+            } catch (e) {
+                data = null;
+            }
+
+            if (!response.ok || (data && data.success === false)) {
+                throw { message: data?.message || response.statusText || 'Request failed.', data };
+            }
+
+            const redirectUrl = data?.redirect_url || options.redirectUrl;
+            if (redirectUrl) {
+                window.location.href = redirectUrl;
+                return;
+            }
+
+            if (typeof options.onSuccess === 'function') {
+                options.onSuccess(data);
+            }
+        } catch (error) {
+            Toast.error(resolveErrorMessage(error, options.errorMessage || 'Request failed.'));
+            if (typeof options.onError === 'function') {
+                options.onError(error);
+            }
+        } finally {
+            form.dataset.submitting = 'false';
+            setSubmitLoading(ui, false, options.loadingText || 'Processing...');
         }
     }
 
@@ -56,64 +250,153 @@ const CheckoutPage = (async function() {
         const container = document.getElementById('order-summary');
         if (!container || !cart) return;
 
-        container.innerHTML = `
-            <div class="bg-gray-50 rounded-xl p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Order Summary</h3>
-                
-                <!-- Cart Items -->
-                <div class="space-y-3 max-h-64 overflow-y-auto mb-4">
-                    ${cart.items.map(item => `
-                        <div class="flex gap-3">
-                            <div class="flex-shrink-0 w-16 h-16 bg-gray-200 rounded-lg overflow-hidden">
-                                ${item.product?.image ? `
-                                <img src="${item.product.image}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none'">
-                                ` : `
-                                <div class="w-full h-full flex items-center justify-center text-gray-400">
+        const items = Array.isArray(cart.items) ? cart.items : [];
+        const itemCount = Number(cart.item_count ?? items.length ?? 0);
+        const countText = `${itemCount} item${itemCount === 1 ? '' : 's'}`;
+
+        document.querySelectorAll('[data-order-items-count]').forEach(el => {
+            el.textContent = countText;
+        });
+
+        const safeNumber = (value) => {
+            const num = Number(value);
+            return Number.isFinite(num) ? num : 0;
+        };
+
+        const getTaxRate = () => {
+            const el = document.getElementById('tax-rate-data') || document.querySelector('[data-tax-rate]');
+            if (!el) return 0;
+            const raw = el.dataset?.taxRate ?? el.textContent ?? '';
+            const val = parseFloat(raw);
+            return Number.isFinite(val) ? val : 0;
+        };
+
+        const escape = (val) => Templates.escapeHtml(String(val ?? ''));
+
+        const renderItems = () => {
+            if (!items.length) {
+                return `<p class="text-gray-500 dark:text-gray-400 text-center py-4">Your cart is empty</p>`;
+            }
+
+            return items.map((item, idx) => {
+                const productName = item.product?.name || item.product_name || item.name || 'Item';
+                const productImage = item.product?.image || item.product_image || item.image || null;
+                const variantName = item.variant?.name || item.variant?.value || item.variant_name || '';
+                const quantity = safeNumber(item.quantity || 0);
+                const unitPrice = safeNumber(item.price ?? item.unit_price ?? item.unitPrice ?? item.price_at_add ?? 0);
+                const lineTotal = safeNumber(item.total ?? (unitPrice * quantity));
+                const borderClass = idx !== items.length - 1 ? 'border-b border-gray-100 dark:border-gray-700' : '';
+
+                return `
+                    <div class="flex items-start space-x-4 py-3 ${borderClass}">
+                        <div class="relative flex-shrink-0">
+                            ${productImage ? `
+                                <img src="${productImage}" alt="${escape(productName)}" class="w-16 h-16 object-cover rounded-lg" loading="lazy" decoding="async" onerror="this.style.display='none'">
+                            ` : `
+                                <div class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center text-gray-400">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                     </svg>
-                                </div>`}
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <h4 class="text-sm font-medium text-gray-900 truncate">${Templates.escapeHtml(item.product?.name)}</h4>
-                                ${item.variant ? `<p class="text-xs text-gray-500">${Templates.escapeHtml(item.variant.name || item.variant.value)}</p>` : ''}
-                                <div class="flex justify-between mt-1">
-                                    <span class="text-xs text-gray-500">Qty: ${item.quantity}</span>
-                                    <span class="text-sm font-medium">${Templates.formatPrice(item.price * item.quantity)}</span>
                                 </div>
-                            </div>
+                            `}
+                            <span class="absolute -top-2 -right-2 w-5 h-5 bg-gray-600 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                                ${quantity}
+                            </span>
                         </div>
-                    `).join('')}
-                </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 dark:text-white truncate">${escape(productName)}</p>
+                            ${variantName ? `<p class="text-xs text-gray-500 dark:text-gray-400">${escape(variantName)}</p>` : ''}
+                        </div>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">${Templates.formatPrice(lineTotal)}</p>
+                    </div>
+                `;
+            }).join('');
+        };
 
-                <div class="border-t border-gray-200 pt-4 space-y-2 text-sm">
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Subtotal</span>
-                        <span class="font-medium">${Templates.formatPrice(cart.subtotal || 0)}</span>
-                    </div>
-                    ${cart.discount_amount ? `
-                        <div class="flex justify-between text-green-600">
-                            <span>Discount</span>
-                            <span>-${Templates.formatPrice(cart.discount_amount)}</span>
-                        </div>
-                    ` : ''}
-                    <div class="flex justify-between" id="shipping-cost-row">
-                        <span class="text-gray-600">Shipping</span>
-                        <span class="font-medium" id="shipping-cost">Calculated next</span>
-                    </div>
-                    ${cart.tax_amount ? `
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Tax</span>
-                            <span class="font-medium">${Templates.formatPrice(cart.tax_amount)}</span>
-                        </div>
-                    ` : ''}
-                    <div class="flex justify-between pt-2 border-t border-gray-200">
-                        <span class="text-base font-semibold text-gray-900">Total</span>
-                        <span class="text-base font-bold text-gray-900" id="order-total">${Templates.formatPrice(cart.total || 0)}</span>
-                    </div>
+        const subtotal = safeNumber(cart.subtotal);
+        const discount = safeNumber(cart.discount_amount);
+        const baseTotal = cart.total !== undefined && cart.total !== null
+            ? safeNumber(cart.total)
+            : Math.max(0, subtotal - discount);
+
+        const shippingEl = container.querySelector('#shipping-cost') || document.getElementById('shipping-cost');
+        const existingShippingRaw = shippingEl?.dataset?.price;
+        const existingShipping = existingShippingRaw !== undefined && existingShippingRaw !== '' ? safeNumber(existingShippingRaw) : null;
+        const shippingCost = cart.shipping_cost !== undefined && cart.shipping_cost !== null
+            ? safeNumber(cart.shipping_cost)
+            : existingShipping;
+
+        const taxRate = getTaxRate();
+        const taxEl = container.querySelector('#tax-amount') || document.getElementById('tax-amount');
+        const existingTaxRaw = taxEl?.dataset?.price;
+        const existingTax = existingTaxRaw !== undefined && existingTaxRaw !== '' ? safeNumber(existingTaxRaw) : null;
+        const taxAmount = cart.tax_amount !== undefined && cart.tax_amount !== null
+            ? safeNumber(cart.tax_amount)
+            : (existingTax !== null ? existingTax : (taxRate > 0 ? (baseTotal * taxRate / 100) : 0));
+
+        const hasShipping = shippingCost !== null && !Number.isNaN(shippingCost);
+        const total = baseTotal + (hasShipping ? shippingCost : 0) + (taxAmount || 0);
+        const feeMeta = getPaymentFeeMeta();
+        const paymentFee = computePaymentFee(total, feeMeta);
+        if (container) {
+            container.dataset.paymentFee = paymentFee;
+            if (feeMeta?.name) container.dataset.paymentFeeLabel = feeMeta.name;
+        }
+
+        const itemsHtml = `
+            <div class="space-y-4 max-h-80 overflow-y-auto scrollbar-thin pr-2">
+                ${renderItems()}
+            </div>
+        `;
+
+        const feeRowHtml = `
+            <div id="payment-fee-row" class="flex justify-between text-sm text-gray-600 dark:text-gray-400 ${paymentFee > 0 ? '' : 'hidden'}">
+                <span id="payment-fee-label">Extra payment fee${feeMeta?.name ? ` (${escape(feeMeta.name)})` : ''}</span>
+                <span id="payment-fee-amount">${Templates.formatPrice(paymentFee)}</span>
+            </div>
+        `;
+
+        const totalsHtml = `
+            <div class="space-y-3 border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
+                <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                    <span>Subtotal</span>
+                    <span id="subtotal" data-price="${subtotal}">${Templates.formatPrice(subtotal)}</span>
+                </div>
+                <div id="discount-row" class="flex justify-between text-sm text-green-600 ${discount > 0 ? '' : 'hidden'}">
+                    <span>Discount</span>
+                    <span id="discount-amount" data-price="${discount}">-${Templates.formatPrice(discount)}</span>
+                    <span id="discount" class="hidden" data-price="${discount}">-${Templates.formatPrice(discount)}</span>
+                </div>
+                <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                    <span>Shipping</span>
+                    <span id="shipping-cost" data-price="${hasShipping ? shippingCost : ''}" class="font-medium text-gray-900 dark:text-white">
+                        ${hasShipping ? (shippingCost > 0 ? Templates.formatPrice(shippingCost) : 'Free') : 'Calculated next'}
+                    </span>
+                </div>
+                ${feeRowHtml}
+                <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 ${taxRate > 0 || taxAmount > 0 ? '' : 'hidden'}">
+                    <span>Tax${taxRate > 0 ? ` (${taxRate}%)` : ''}</span>
+                    <span id="tax-amount" data-price="${taxAmount}">${Templates.formatPrice(taxAmount)}</span>
+                </div>
+                <div class="flex justify-between text-lg font-bold text-gray-900 dark:text-white border-t border-gray-200 dark:border-gray-700 pt-3">
+                    <span>Total</span>
+                    <span id="order-total" data-price="${total}">${Templates.formatPrice(total)}</span>
                 </div>
             </div>
         `;
+
+        const itemsTarget = container.querySelector('[data-order-items]');
+        const totalsTarget = container.querySelector('[data-order-totals]');
+
+        if (itemsTarget || totalsTarget) {
+            if (itemsTarget) itemsTarget.innerHTML = itemsHtml;
+            if (totalsTarget) totalsTarget.innerHTML = totalsHtml;
+            updatePaymentFeeRow(total);
+            return;
+        }
+
+        container.innerHTML = itemsHtml + totalsHtml;
+        updatePaymentFeeRow(total);
     }
 
     async function loadUserAddresses() {
@@ -124,8 +407,10 @@ const CheckoutPage = (async function() {
             const addresses = response.data || [];
 
             const shippingContainer = document.getElementById('saved-addresses');
+            const shouldRender = shippingContainer && (shippingContainer.dataset.jsRender === 'true' || shippingContainer.children.length === 0);
             if (shippingContainer && addresses.length > 0) {
-                shippingContainer.innerHTML = `
+                if (shouldRender) {
+                    shippingContainer.innerHTML = `
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Saved Addresses</label>
                         <div class="space-y-2">
@@ -149,6 +434,7 @@ const CheckoutPage = (async function() {
                         </div>
                     </div>
                 `;
+                }
 
                 bindAddressSelection();
             }
@@ -235,7 +521,8 @@ const CheckoutPage = (async function() {
     function clearStepErrors(container) {
         if (!container) return;
         container.querySelectorAll('[data-error-for]').forEach(el => el.remove());
-        container.querySelectorAll('.!border-red-500').forEach(el => el.classList.remove('!border-red-500'));
+        // Use CSS attribute selector to find elements with the !border-red-500 class
+        container.querySelectorAll('[class*="!border-red-500"]').forEach(el => el.classList.remove('!border-red-500'));
     }
 
     function showInlineError(fieldEl, message) {
@@ -414,6 +701,15 @@ const CheckoutPage = (async function() {
     // -----------------------------
     // Payment gateways (dynamic)
     // -----------------------------
+    function updatePaymentContinueState(hasGateways) {
+        const submitButton = document.getElementById('submit-button');
+        const buttonText = document.getElementById('button-text');
+        if (!submitButton || !buttonText) return;
+
+        submitButton.disabled = !hasGateways;
+        buttonText.textContent = hasGateways ? 'Continue to Review' : 'No payment methods available';
+    }
+
     async function fetchAndRenderPaymentGateways() {
         const container = document.getElementById('payment-methods-container');
         if (!container) return;
@@ -439,32 +735,37 @@ const CheckoutPage = (async function() {
                     const remoteCodes = (gateways || []).map(g => g.code);
 
                     // If codes match exactly in order and length, keep server markup and just re-bind handlers.
-                    const same = existingCodes.length === remoteCodes.length && existingCodes.every((c, i) => c === remoteCodes[i]);
-                    if (same) {
-                        initFormValidation(); // ensure event handlers and initial visibility are in place
-                        return;
-                    }
-                } catch (err) {
-                    // Fall back to previous behavior if anything goes wrong
-                    console.warn('Failed to compare existing payment gateways:', err);
+                const same = existingCodes.length === remoteCodes.length && existingCodes.every((c, i) => c === remoteCodes[i]);
+                if (same) {
+                    initFormValidation(); // ensure event handlers and initial visibility are in place
+                    updatePaymentContinueState(existingCodes.length > 0);
+                    return;
                 }
-
-                // If remote returned nothing but server has content, keep server content (avoid replacing with empty state)
-                if (gateways.length === 0) return;
+            } catch (err) {
+                // Fall back to previous behavior if anything goes wrong
+                console.warn('Failed to compare existing payment gateways:', err);
             }
 
-            // If no gateways, show informative block (template also handles this case)
-            if (!gateways || gateways.length === 0) {
-                container.innerHTML = `
+            // If remote returned nothing but server has content, keep server content (avoid replacing with empty state)
+            if (gateways.length === 0) {
+                updatePaymentContinueState(existing.length > 0);
+                return;
+            }
+        }
+
+        // If no gateways, show informative block (template also handles this case)
+        if (!gateways || gateways.length === 0) {
+            container.innerHTML = `
                     <div class="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl">
                         <svg class="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
                         <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No payment methods are configured</h3>
                         <p class="text-gray-500 dark:text-gray-400 mb-2">We don't have any payment providers configured for your currency or location. Please contact support to enable online payments.</p>
                         <p class="text-sm text-gray-400">You can still place an order if Cash on Delivery or Bank Transfer is available from admin.</p>
-                    </div>
-                `;
-                return;
-            }
+                  </div>
+              `;
+            updatePaymentContinueState(false);
+            return;
+        }
 
             // Build radio options into a fragment, add animations and staggered delays to improve perceived performance
             const frag = document.createDocumentFragment();
@@ -483,6 +784,10 @@ const CheckoutPage = (async function() {
                 input.value = g.code;
                 input.id = `payment-${g.code}`;
                 input.className = 'peer sr-only';
+                input.dataset.feeType = g.fee_type || 'none';
+                input.dataset.feeAmount = (g.fee_amount_converted ?? g.fee_amount ?? 0);
+                input.dataset.feePercent = g.fee_amount ?? 0;
+                input.dataset.feeName = g.name || '';
                 if (idx === 0) input.checked = true;
 
                 const label = document.createElement('label');
@@ -520,15 +825,17 @@ const CheckoutPage = (async function() {
                 }
             });
 
-            // Atomically replace existing nodes to reduce flicker
-            container.replaceChildren(frag);
+        // Atomically replace existing nodes to reduce flicker
+        container.replaceChildren(frag);
 
-            // Re-bind form handlers
-            initFormValidation();
+        // Re-bind form handlers
+        initFormValidation();
+        updatePaymentContinueState(gateways.length > 0);
+        updatePaymentFeeRow();
 
-        } catch (error) {
-            console.error('Failed to load payment gateways:', error);
-        }
+    } catch (error) {
+        console.error('Failed to load payment gateways:', error);
+    }
     }
 
     function loadStripeJsIfNeeded(publishableKey) {
@@ -726,8 +1033,9 @@ const CheckoutPage = (async function() {
                     targetForm = document.getElementById(`${code}-form`);
                 }
 
-                targetForm?.classList.remove('hidden');
-            };
+                  targetForm?.classList.remove('hidden');
+                  updatePaymentFeeRow();
+              };
 
             method.addEventListener('change', handler);
 
@@ -748,6 +1056,51 @@ const CheckoutPage = (async function() {
                 e.preventDefault();
                 await placeOrder();
             });
+        }
+    }
+
+    function initStepForms() {
+        const infoForm = document.getElementById('information-form');
+        if (infoForm && infoForm.dataset.ajaxBound !== 'true') {
+            infoForm.dataset.ajaxBound = 'true';
+            infoForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                submitCheckoutForm(infoForm, {
+                    validate: validateShippingAddress,
+                    redirectUrl: '/checkout/shipping/',
+                    loadingText: 'Processing...'
+                });
+            }, true);
+        }
+
+        const shippingForm = document.getElementById('shipping-form');
+        if (shippingForm && shippingForm.dataset.ajaxBound !== 'true') {
+            shippingForm.dataset.ajaxBound = 'true';
+            shippingForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                const shippingType = document.getElementById('shipping-type')?.value || 'delivery';
+                if (shippingType === 'pickup') {
+                    const selectedPickup = document.querySelector('input[name="pickup_location"]:checked');
+                    if (!selectedPickup) {
+                        Toast.error('Please select a pickup location.');
+                        return;
+                    }
+                } else {
+                    const selectedRate = document.querySelector('input[name="shipping_rate_id"]:checked') ||
+                        document.querySelector('input[name="shipping_method"]:checked');
+                    if (!selectedRate) {
+                        Toast.error('Please select a shipping method.');
+                        return;
+                    }
+                }
+
+                submitCheckoutForm(shippingForm, {
+                    redirectUrl: '/checkout/payment/',
+                    loadingText: 'Processing...'
+                });
+            }, true);
         }
     }
 

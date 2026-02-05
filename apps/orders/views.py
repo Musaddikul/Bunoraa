@@ -41,63 +41,22 @@ class OrderListView(LoginRequiredMixin, ListView):
         context['status'] = status_param
         context['current_status'] = status_param
 
-        # Compute formatted totals in the checkout/display currency when available.
-        # Recompute totals from order items and convert shipping/tax using the CheckoutSession snapshot
-        from apps.commerce.models import CheckoutSession
-        from apps.i18n.services import CurrencyService, CurrencyConversionService
+        # Compute formatted totals using the order's snapshot currency (no checkout session fallback)
+        from apps.i18n.services import CurrencyService
         from decimal import Decimal
 
         try:
             orders_page = context.get('orders')
             orders_iter = orders_page.object_list if hasattr(orders_page, 'object_list') else list(orders_page)
-            order_ids = [o.id for o in orders_iter]
-
-            sessions = CheckoutSession.objects.filter(order_id__in=order_ids).select_related('shipping_rate')
-            session_map = {s.order_id: s for s in sessions}
 
             default_currency = CurrencyService.get_default_currency()
 
             for order in orders_iter:
-                cs = session_map.get(order.id)
                 try:
                     # Determine currency to format with
-                    if cs and getattr(cs, 'currency', None):
-                        cur = CurrencyService.get_currency_by_code(cs.currency) or default_currency
-                    else:
-                        cur = default_currency
-
-                    # Recompute items total from order items (safer for historical data)
-                    try:
-                        items_total = sum((Decimal(str(it.unit_price)) * Decimal(it.quantity)) for it in order.items.all())
-                    except Exception:
-                        items_total = order.subtotal or Decimal('0')
-
-                    # Shipping: convert if the shipping_rate has a different currency than display currency
-                    display_shipping = order.shipping_cost or Decimal('0')
-                    try:
-                        if cs and getattr(cs, 'shipping_rate', None):
-                            rate_currency_obj = getattr(cs.shipping_rate, 'currency', None)
-                            if rate_currency_obj and rate_currency_obj.code != getattr(cur, 'code', None):
-                                display_shipping = CurrencyConversionService.convert_by_code(Decimal(str(order.shipping_cost)), rate_currency_obj.code, cur.code)
-                    except Exception:
-                        display_shipping = order.shipping_cost or Decimal('0')
-
-                    # Tax: prefer checkout session snapshot when available
-                    display_tax = order.tax or Decimal('0')
-                    try:
-                        if cs and getattr(cs, 'tax_amount', None) is not None:
-                            display_tax = Decimal(str(cs.tax_amount))
-                    except Exception:
-                        display_tax = order.tax or Decimal('0')
-
-                    # Total recomputed
-                    display_total = (items_total or Decimal('0')) - (order.discount or Decimal('0')) + (display_shipping or Decimal('0')) + (display_tax or Decimal('0')) + (order.gift_wrap_cost or Decimal('0'))
-
-                    # Format
-                    try:
-                        order.formatted_total = cur.format_amount(display_total.quantize(Decimal('0.01')))
-                    except Exception:
-                        order.formatted_total = str(display_total)
+                    cur = CurrencyService.get_currency_by_code(getattr(order, 'currency', None)) or default_currency
+                    display_total = Decimal(str(order.total or 0))
+                    order.formatted_total = cur.format_amount(display_total.quantize(Decimal('0.01')))
                 except Exception:
                     # Fallback to formatting stored total with default currency
                     try:
@@ -127,28 +86,18 @@ class OrderDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context['page_title'] = f'Order {self.object.order_number}'
 
-        # Try to find associated checkout session so we can show amounts in the checkout currency
-        from apps.commerce.models import CheckoutSession
         from decimal import Decimal
-        from apps.i18n.services import CurrencyService, CurrencyConversionService
-
-        checkout_session = CheckoutSession.objects.filter(order=self.object).select_related('cart', 'shipping_rate').first()
+        from apps.i18n.services import CurrencyService
         currency_symbol_local = None
         currency_code_local = None
         try:
-            if checkout_session and getattr(checkout_session, 'cart', None):
-                currency_obj = CurrencyService.get_currency_by_code(checkout_session.currency) if getattr(checkout_session, 'currency', None) else None
-                if currency_obj:
-                    currency_symbol_local = getattr(currency_obj, 'symbol', None)
-                    currency_code_local = getattr(currency_obj, 'code', None)
+            currency_obj = CurrencyService.get_currency_by_code(getattr(self.object, 'currency', None))
+            if currency_obj:
+                currency_symbol_local = getattr(currency_obj, 'symbol', None)
+                currency_code_local = getattr(currency_obj, 'code', None)
         except Exception:
-            try:
-                default_cur = CurrencyService.get_default_currency()
-                currency_symbol_local = getattr(default_cur, 'symbol', None)
-                currency_code_local = getattr(default_cur, 'code', None)
-            except Exception:
-                currency_symbol_local = None
-                currency_code_local = None
+            currency_symbol_local = None
+            currency_code_local = None
 
         # Determine checkout/display currency
         try:
@@ -179,26 +128,9 @@ class OrderDetailView(LoginRequiredMixin, DetailView):
         if 'billing_country_name' not in context:
             context['billing_country_name'] = getattr(self.object, 'billing_country', '')
 
-        # Determine display shipping (convert using checkout session's shipping_rate currency if present)
-        display_shipping = self.object.shipping_cost
-        try:
-            if checkout_session and getattr(checkout_session, 'shipping_rate', None):
-                rate_currency_obj = getattr(checkout_session.shipping_rate, 'currency', None)
-                if rate_currency_obj and checkout_currency and rate_currency_obj.code != checkout_currency.code:
-                    try:
-                        display_shipping = CurrencyConversionService.convert_by_code(self.object.shipping_cost, rate_currency_obj.code, checkout_currency.code)
-                    except Exception:
-                        display_shipping = self.object.shipping_cost
-        except Exception:
-            display_shipping = self.object.shipping_cost
-
-        # Tax: prefer checkout session snapshot if present
-        display_tax = self.object.tax
-        try:
-            if checkout_session and getattr(checkout_session, 'tax_amount', None) is not None:
-                display_tax = Decimal(str(checkout_session.tax_amount))
-        except Exception:
-            display_tax = self.object.tax
+        # Determine display shipping/tax from order snapshot
+        display_shipping = self.object.shipping_cost or Decimal('0')
+        display_tax = self.object.tax or Decimal('0')
 
         # Compute display total
         display_total = (items_total or Decimal('0')) - (self.object.discount or Decimal('0')) + (display_shipping or Decimal('0')) + (display_tax or Decimal('0')) + (self.object.gift_wrap_cost or Decimal('0'))
@@ -213,6 +145,15 @@ class OrderDetailView(LoginRequiredMixin, DetailView):
         context['formatted_shipping'] = formatted_shipping
         context['formatted_tax'] = formatted_tax
         context['formatted_total'] = formatted_total
+
+        # Attach formatted item prices for templates
+        for item in self.object.items.all():
+            try:
+                item.formatted_unit_price = checkout_currency.format_amount(Decimal(str(item.unit_price or 0)))
+                item.formatted_line_total = checkout_currency.format_amount(Decimal(str(item.line_total or 0)))
+            except Exception:
+                item.formatted_unit_price = str(item.unit_price)
+                item.formatted_line_total = str(item.line_total)
 
         return context
     

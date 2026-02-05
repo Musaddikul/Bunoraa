@@ -1,6 +1,7 @@
 """
 Promotions API views
 """
+import logging
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -8,6 +9,8 @@ from rest_framework.permissions import AllowAny
 
 from ..models import Coupon, Banner, Sale
 from ..services import CouponService, BannerService, SaleService
+
+logger = logging.getLogger(__name__)
 from .serializers import (
     CouponSerializer,
     CouponValidateSerializer,
@@ -24,8 +27,8 @@ class CouponViewSet(viewsets.ViewSet):
     ViewSet for coupon operations.
     
     Endpoints:
-    - POST /api/v1/coupons/validate/ - Validate coupon code
-    - POST /api/v1/coupons/apply/ - Apply coupon to current cart
+    - POST /api/v1/promotions/coupons/validate/ - Validate coupon code
+    - POST /api/v1/promotions/coupons/apply/ - Apply coupon to current cart
     """
     permission_classes = [AllowAny]
 
@@ -166,7 +169,9 @@ class CouponViewSet(viewsets.ViewSet):
 
         try:
             CartService.apply_coupon(cart, code)
+            cart.refresh_from_db()  # Refresh cart to ensure coupon is loaded
         except Exception as e:
+            logger.error(f"Error applying coupon {code} to cart: {str(e)}", exc_info=True)
             return Response({
                 'success': False,
                 'message': str(e),

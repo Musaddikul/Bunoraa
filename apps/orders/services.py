@@ -27,12 +27,12 @@ class OrderService:
         from apps.commerce.services import CartService
         
         cart = checkout_session.cart
-        # Determine checkout currency object (fallback to default)
+        # Determine checkout currency object
         from apps.i18n.services import CurrencyService, CurrencyConversionService
         checkout_currency = None
-        try:
-            checkout_currency = CurrencyService.get_currency_by_code(checkout_session.currency) if getattr(checkout_session, 'currency', None) else CurrencyService.get_default_currency()
-        except Exception:
+        if getattr(checkout_session, 'currency', None):
+            checkout_currency = CurrencyService.get_currency_by_code(checkout_session.currency)
+        if not checkout_currency:
             checkout_currency = CurrencyService.get_default_currency()
 
         # We'll compute converted unit prices per cart item to ensure order totals are in checkout currency
@@ -40,26 +40,16 @@ class OrderService:
         item_price_map = {}
         item_image_map = {}
 
+        cart_currency_code = getattr(cart, 'currency', None)
         for cart_item in cart.items.select_related('product', 'variant').all():
-            # Determine item's source currency
-            try:
-                from_currency_obj = cart_item.product.get_currency() if hasattr(cart_item.product, 'get_currency') else CurrencyService.get_default_currency()
-                from_code = from_currency_obj.code if from_currency_obj else None
-            except Exception:
-                from_code = None
-
             unit_price_source = Decimal(str(cart_item.price_at_add))
 
-            # Convert unit price into checkout currency if needed
-            if from_code and checkout_currency and from_code != checkout_currency.code:
-                try:
-                    converted = CurrencyConversionService.convert_by_code(unit_price_source, from_code, checkout_currency.code)
-                except Exception:
-                    converted = unit_price_source
-            else:
-                converted = unit_price_source
+            converted = unit_price_source
+            if cart_currency_code and checkout_currency and cart_currency_code != checkout_currency.code:
+                converted = CurrencyConversionService.convert_by_code(
+                    unit_price_source, cart_currency_code, checkout_currency.code
+                )
 
-            # Quantize converted unit price
             converted = Decimal(str(converted)).quantize(Decimal('0.01'))
 
             item_price_map[str(cart_item.id)] = converted
@@ -80,51 +70,13 @@ class OrderService:
 
             item_image_map[str(cart_item.id)] = primary_img
 
-        # Use subtotal from converted item totals
-        subtotal = subtotal_acc.quantize(Decimal('0.01'))
-
-        # Use discount from checkout session (coupon-based) or from cart (ensure discount is in checkout currency)
-        discount = checkout_session.discount_amount or Decimal('0')
-        try:
-            if discount and checkout_currency and getattr(checkout_session, 'discount_currency', None) and checkout_session.discount_currency != checkout_currency.code:
-                # If discount stored in a different currency convert it
-                discount = CurrencyConversionService.convert_by_code(discount, checkout_session.discount_currency, checkout_currency.code)
-        except Exception:
-            pass
-
-        # Shipping cost from checkout session - convert if shipping rate had a different currency
-        shipping = checkout_session.shipping_cost or Decimal('0')
-        try:
-            if getattr(checkout_session, 'shipping_rate', None):
-                rate_currency_obj = getattr(checkout_session.shipping_rate, 'currency', None)
-                if rate_currency_obj and checkout_currency and rate_currency_obj.code != checkout_currency.code:
-                    shipping = CurrencyConversionService.convert_by_code(Decimal(str(checkout_session.shipping_cost)), rate_currency_obj.code, checkout_currency.code)
-        except Exception:
-            shipping = Decimal(str(checkout_session.shipping_cost or '0'))
-
-        # Gift wrap cost (assume stored in checkout currency)
-        gift_wrap_cost = checkout_session.gift_wrap_cost or Decimal('0')
-        
-        # Tax calculation: prefer the checkout session's computed tax_amount if present (snapshot of checkout page)
-        tax = None
-        try:
-            if getattr(checkout_session, 'tax_amount', None) is not None:
-                tax = Decimal(str(checkout_session.tax_amount))
-            else:
-                tax_rate = checkout_session.tax_rate or Decimal('0')
-                taxable_amount = subtotal - discount + gift_wrap_cost
-                tax = (taxable_amount * tax_rate / 100).quantize(Decimal('0.01'))
-        except Exception:
-            # Fallback to computed tax
-            try:
-                tax_rate = checkout_session.tax_rate or Decimal('0')
-                taxable_amount = subtotal - discount + gift_wrap_cost
-                tax = (taxable_amount * tax_rate / 100).quantize(Decimal('0.01'))
-            except Exception:
-                tax = Decimal('0.00')
-
-        # Total
-        total = subtotal - discount + shipping + tax + gift_wrap_cost
+        # Pass-through amounts from checkout snapshot
+        subtotal = Decimal(str(checkout_session.subtotal or 0))
+        discount = Decimal(str(checkout_session.discount_amount or 0))
+        shipping = Decimal(str(checkout_session.shipping_cost or 0))
+        gift_wrap_cost = Decimal(str(checkout_session.gift_wrap_cost or 0))
+        tax = Decimal(str(checkout_session.tax_amount or 0))
+        total = Decimal(str(checkout_session.total or 0))
         
         # Create order
         order = Order.objects.create(
@@ -164,6 +116,14 @@ class OrderService:
             discount=discount,
             tax=tax,
             total=total,
+
+            # Currency snapshot
+            currency=getattr(checkout_session, 'currency', None) or 'BDT',
+            exchange_rate=getattr(checkout_session, 'exchange_rate', None) or Decimal('1'),
+
+            # Payment fee snapshot
+            payment_fee_amount=getattr(checkout_session, 'payment_fee_amount', None) or Decimal('0'),
+            payment_fee_label=getattr(checkout_session, 'payment_fee_label', '') or '',
             
             # Coupon - use checkout session coupon if available, fallback to cart
             coupon=checkout_session.coupon or cart.coupon,

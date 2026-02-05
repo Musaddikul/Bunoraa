@@ -4,6 +4,7 @@ Payments models
 import logging
 import uuid
 from django.db import models
+from django.core.validators import FileExtensionValidator
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,12 @@ class PaymentGateway(models.Model):
     # Display settings
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=255, blank=True)
-    icon = models.ImageField(upload_to='payment-icons/', blank=True, null=True)
+    icon = models.FileField(
+        upload_to='payment-icons/',
+        blank=True,
+        null=True,
+        validators=[FileExtensionValidator(['svg', 'png', 'jpg', 'jpeg', 'webp', 'gif'])]
+    )
     icon_class = models.CharField(max_length=50, blank=True, help_text="CSS class for icon (e.g., 'card', 'bkash')")
     color = models.CharField(max_length=20, default='gray', help_text="Color theme: blue, pink, orange, green, gray")
     
@@ -146,6 +152,14 @@ class PaymentGateway(models.Model):
                 return False
         
         return True
+
+    @property
+    def icon_url(self):
+        """Return a safe URL for the gateway icon (if any)."""
+        try:
+            return self.icon.url if self.icon else None
+        except Exception:
+            return None
     
     def calculate_fee(self, amount):
         """Calculate the fee for a given amount."""

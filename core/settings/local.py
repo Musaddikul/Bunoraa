@@ -10,6 +10,7 @@ from .base import *
 # =============================================================================
 DEBUG = True
 ENVIRONMENT = 'development'
+FORCE_DEFAULT_CURRENCY = False  # Allow explicit user selection; fallback to default when unset
 
 # Secret key for development only
 if not os.environ.get('SECRET_KEY'):

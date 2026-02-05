@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static currency_tags %}
 
 {% block page_id %}checkout{% endblock %}
-{% block title %}Review Order - Checkout - {{ SITE_NAME }}{% endblock %}
+{% block title %}Review Order - Checkout | {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
 {% with checkout_session as checkout %}
@@ -58,7 +58,7 @@
                             <span class="text-sm text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">Contact</span>
                             <span class="text-sm text-gray-900 dark:text-white">{{ checkout.email|default:checkout.shipping_email }}</span>
                         </div>
-                        <a href="{% url 'commerce:checkout_info' %}" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Change</a>
+                        <a href="{% url 'commerce:checkout' %}" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Change</a>
                     </div>
                     
                     <!-- Ship to -->
@@ -76,7 +76,7 @@
                                 <p class="text-gray-500 dark:text-gray-400 mt-1">{{ checkout.shipping_phone }}</p>
                             </div>
                         </div>
-                        <a href="{% url 'commerce:checkout_info' %}" class="text-sm text-primary-600 hover:text-primary-700 font-medium flex-shrink-0 ml-4">Change</a>
+                        <a href="{% url 'commerce:checkout' %}" class="text-sm text-primary-600 hover:text-primary-700 font-medium flex-shrink-0 ml-4">Change</a>
                     </div>
                     
                     <!-- Shipping Method -->
@@ -86,7 +86,7 @@
                             <div class="text-sm">
                                 <span class="text-gray-900 dark:text-white font-medium">{{ checkout.get_shipping_method_display }}</span>
                                 <span class="text-gray-500 dark:text-gray-400">
-                                    · {% if checkout.shipping_cost == 0 %}Free{% else %}{{ cart_summary.currency.symbol|default:currency_symbol }}{{ checkout.shipping_cost }}{% endif %}
+                                    - {% if checkout.shipping_cost == 0 %}Free{% else %}{{ checkout_summary.formatted_shipping|default:cart_summary.formatted_shipping }}{% endif %}
                                 </span>
                             </div>
                         </div>
@@ -217,23 +217,28 @@
             
             <button id="order-summary-toggle" aria-expanded="false" class="w-full md:hidden mb-4 inline-flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-stone-700">
                 <span class="font-medium">Order Summary</span>
-                <span class="text-sm text-gray-500 dark:text-gray-400">{{ cart_items|length }} items</span>
+                <span class="text-sm text-gray-500 dark:text-gray-400" data-order-items-count>{{ cart_items|length }} items</span>
                 <svg class="w-5 h-5 text-gray-500 dark:text-stone-400 transform transition-transform" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg>
             </button>
             <div id="order-summary-block" class="hidden md:block bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
                 <h2 class="font-semibold text-gray-900 dark:text-white mb-4">Order Summary</h2>
-                <div class="space-y-3">
-                    <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                        <span>Subtotal ({{ cart_items|length }} items)</span>
-                        <span class="text-gray-900 dark:text-white">{{ cart_summary.formatted_subtotal }}</span>
-                    </div>
+                <div id="order-summary"
+                     data-tax-rate="{{ checkout_summary.tax_rate|default:tax_rate|default:0 }}"
+                     data-payment-fee="{{ payment_fee_amount_converted|default:'' }}"
+                     data-payment-fee-label="{% if payment_fee_gateway %}{{ payment_fee_gateway.name }}{% endif %}">
+                    <div data-order-totals class="space-y-3">
+                        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                            <span>Subtotal (<span data-order-items-count>{{ cart_items|length }} items</span>)</span>
+                            <span class="text-gray-900 dark:text-white" id="subtotal" data-price="{{ cart_summary.subtotal|default:0 }}">{{ cart_summary.formatted_subtotal }}</span>
+                        </div>
                     {% if cart.discount > 0 %}
-                    <div class="flex justify-between text-sm text-green-600">
+                    <div id="discount-row" class="flex justify-between text-sm text-green-600">
                         <span>
                             Discount
                             {% if checkout.coupon_code %}<span class="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded ml-2">{{ checkout.coupon_code }}</span>{% endif %}
                         </span>
-                        <span>-{{ cart_summary.formatted_discount }}</span>
+                        <span id="discount-amount" data-price="{{ cart_summary.discount_amount|default:0 }}">-{{ cart_summary.formatted_discount }}</span>
+                        <span id="discount" class="hidden" data-price="{{ cart_summary.discount_amount|default:0 }}">-{{ cart_summary.formatted_discount }}</span>
                     </div>
                     {% endif %}
                     {% if checkout.gift_wrap %}
@@ -244,16 +249,21 @@
                     {% endif %}
                     <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                         <span>Shipping</span>
-                        <span class="text-gray-900 dark:text-white">{% if checkout.shipping_cost == 0 %}Free{% else %}{{ checkout_summary.formatted_shipping|default:cart_summary.formatted_shipping }}{% endif %}</span>
+                        <span class="text-gray-900 dark:text-white" id="shipping-cost" data-price="{{ checkout_summary.shipping_cost|default:cart_summary.shipping_cost|default:'' }}">{% if checkout.shipping_cost == 0 %}Free{% else %}{{ checkout_summary.formatted_shipping|default:cart_summary.formatted_shipping }}{% endif %}</span>
+                    </div>
+                    <div id="payment-fee-row" class="flex justify-between text-sm text-gray-600 dark:text-gray-400 {% if not payment_fee_amount or payment_fee_amount <= 0 %}hidden{% endif %}">
+                        <span id="payment-fee-label">Extra payment fee{% if payment_fee_gateway %} ({{ payment_fee_gateway.name }}){% endif %}</span>
+                        <span class="text-gray-900 dark:text-white" id="payment-fee-amount">{% if payment_fee_amount and payment_fee_amount > 0 %}{% price payment_fee_amount request.currency %}{% else %}{% price 0 request.currency %}{% endif %}</span>
                     </div>
                     <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                         <span>Tax</span>
-                        <span class="text-gray-900 dark:text-white">{{ checkout_summary.formatted_tax|default:cart_summary.formatted_tax }}</span>
+                        <span class="text-gray-900 dark:text-white" id="tax-amount" data-price="{{ checkout_summary.tax_amount|default:cart_summary.tax_amount|default:0 }}">{{ checkout_summary.formatted_tax|default:cart_summary.formatted_tax }}</span>
                     </div>
                     <div class="flex justify-between text-xl font-bold text-gray-900 dark:text-white border-t border-gray-200 dark:border-gray-700 pt-3">
                         <span>Total</span>
-                        <span class="text-primary-600">{{ checkout_summary.formatted_total|default:cart_summary.formatted_total }}</span>
+                        <span class="text-primary-600" id="order-total" data-price="{{ checkout_summary.total|default:cart_summary.total|default:0 }}">{{ checkout_summary.formatted_total|default:cart_summary.formatted_total }}</span>
                     </div>
+                </div>
                 </div>
             </div>
             
@@ -313,13 +323,6 @@
                     </svg>
                     Secure 256-bit SSL Encrypted Payment
                 </div>
-                <div class="flex items-center justify-center flex-wrap gap-4">
-                    <img src="{% static 'images/payments/visa.svg' %}" alt="Visa" class="h-8" loading="lazy" decoding="async">
-                    <img src="{% static 'images/payments/mastercard.svg' %}" alt="Mastercard" class="h-8" loading="lazy" decoding="async">
-                    <img src="{% static 'images/payments/amex.svg' %}" alt="Amex" class="h-8" loading="lazy" decoding="async">
-                    <img src="{% static 'images/payments/bkash.svg' %}" alt="bKash" class="h-8" loading="lazy" decoding="async" onerror="this.style.display='none'">
-                    <img src="{% static 'images/payments/nagad.svg' %}" alt="Nagad" class="h-8" onerror="this.style.display='none'">
-                </div>
             </div>
         </div>
     </div>
@@ -334,17 +337,108 @@ document.addEventListener('DOMContentLoaded', function() {
     const btn = document.getElementById('place-order-btn');
     const btnText = document.getElementById('btn-text');
     const btnSpinner = document.getElementById('btn-spinner');
-    
-    form.addEventListener('submit', function(e) {
-        // Prevent double submission
-        if (btn.disabled) {
-            e.preventDefault();
-            return;
+
+    function getCsrfToken() {
+        return document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || '';
+    }
+
+    function resolveErrorMessage(error, fallback) {
+        const generic = [
+            'request failed.',
+            'request failed',
+            'invalid response format',
+            'invalid request format'
+        ];
+
+        const isGeneric = (msg) => {
+            if (!msg) return true;
+            const normalized = String(msg).trim().toLowerCase();
+            return generic.includes(normalized);
+        };
+
+        const pickFromErrors = (errObj) => {
+            if (!errObj) return null;
+            if (typeof errObj === 'string') return errObj;
+            if (Array.isArray(errObj)) return errObj[0];
+            if (typeof errObj === 'object') {
+                const values = Object.values(errObj);
+                const flattened = values.flat ? values.flat() : values.reduce((acc, val) => acc.concat(val), []);
+                const first = flattened[0] ?? values[0];
+                if (typeof first === 'string') return first;
+                if (first && typeof first === 'object') return pickFromErrors(first);
+            }
+            return null;
+        };
+
+        const candidates = [];
+        if (error?.message) candidates.push(error.message);
+        if (error?.data?.message) candidates.push(error.data.message);
+        if (error?.data?.detail) candidates.push(error.data.detail);
+        if (error?.data && typeof error.data === 'string') candidates.push(error.data);
+        if (error?.errors) candidates.push(pickFromErrors(error.errors));
+        if (error?.data && typeof error.data === 'object') candidates.push(pickFromErrors(error.data));
+
+        const best = candidates.find(msg => msg && !isGeneric(msg));
+        return best || fallback;
+    }
+
+    function setLoading(isLoading) {
+        if (!btn) return;
+        btn.disabled = isLoading;
+        if (btnText) btnText.textContent = isLoading ? 'Processing Order...' : btnText.dataset.originalText || btnText.textContent;
+        btnSpinner?.classList.toggle('hidden', !isLoading);
+    }
+
+    if (btnText && !btnText.dataset.originalText) {
+        btnText.dataset.originalText = btnText.textContent;
+    }
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        if (btn?.disabled) return;
+        setLoading(true);
+
+        try {
+            const payload = new FormData(form);
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken(),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: payload
+            });
+
+            let data = null;
+            try {
+                data = await response.json();
+            } catch (err) {
+                data = null;
+            }
+
+            if (!response.ok || !data?.success) {
+                const err = { message: data?.message || `HTTP ${response.status}`, data };
+                throw err;
+            }
+
+            const redirectUrl = data.redirect_url || data.data?.redirect_url;
+            if (redirectUrl) {
+                window.location.href = redirectUrl;
+                return;
+            }
+
+            if (data.order_number) {
+                window.location.href = `{% url 'commerce:order_confirmation' order_number='__ORDER__' %}`.replace('__ORDER__', data.order_number);
+                return;
+            }
+
+            Toast.success(data.message || 'Order placed successfully.');
+        } catch (error) {
+            Toast.error(resolveErrorMessage(error, 'Failed to place order.'));
+        } finally {
+            setLoading(false);
         }
-        
-        btn.disabled = true;
-        btnText.textContent = 'Processing Order...';
-        btnSpinner.classList.remove('hidden');
     });
 });
 </script>
