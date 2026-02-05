@@ -109,13 +109,22 @@
                         <input type="hidden" name="shipping_type" id="shipping-type" value="delivery">
                         
                         <!-- Delivery Options -->
-                        <div id="delivery-options" class="space-y-3">
+                        <div id="delivery-options"
+                             class="space-y-3"
+                             data-country="{{ checkout.shipping_country|default:checkout_session.shipping_country|default:'' }}"
+                             data-state="{{ checkout.shipping_state|default:checkout_session.shipping_state|default:'' }}"
+                             data-city="{{ checkout.shipping_city|default:checkout_session.shipping_city|default:'' }}"
+                             data-postal="{{ checkout.shipping_postal_code|default:checkout_session.shipping_postal_code|default:'' }}"
+                             data-subtotal="{{ cart_summary.subtotal|default:0 }}"
+                             data-item-count="{{ cart.item_count|default:cart_items|length }}"
+                             data-product-ids='[{% for it in cart_items %}"{{ it.product_id }}"{% if not forloop.last %},{% endif %}{% endfor %}]'>
                             {% for method in shipping_options %}
                             {% with rate_id=method.rate_id|default:method.id %}
                             <div class="relative">
                                 <input type="radio" name="shipping_rate_id" value="{{ rate_id }}" id="shipping-{{ rate_id }}"
                                        class="peer sr-only" {% if checkout.shipping_rate and rate_id|stringformat:"s" == checkout.shipping_rate.id|stringformat:"s" %}checked{% elif forloop.first and not checkout.shipping_rate %}checked{% endif %}
                                        data-price="{{ method.cost }}"
+                                       data-display="{% if method.is_free %}Free{% else %}{{ method.formatted_cost }}{% endif %}"
                                        data-estimate="{{ method.delivery_estimate }}"
                                        data-currency="{{ checkout_summary.currency.code|default:cart_summary.currency.code|default:currency_code }}">
 
@@ -272,7 +281,10 @@
                         <span class="text-sm font-normal text-gray-500 dark:text-gray-400" data-order-items-count>{{ cart_items|length }} items</span>
                     </h2>
                     
-                    <div id="order-summary" data-tax-rate="{{ tax_rate|default:0 }}">
+                    <div id="order-summary"
+                         data-tax-rate="{{ tax_rate|default:0 }}"
+                         data-gift-wrap-cost="{{ cart_summary.gift_wrap_cost|default:0 }}"
+                         data-gift-wrap-amount="{{ cart_summary.gift_wrap_amount|default:0 }}">
                         <div data-order-items>
                             <!-- Cart Items (use converted summary items for consistent currency) -->
                             <div class="space-y-4 max-h-64 overflow-y-auto scrollbar-thin pr-2">
@@ -323,80 +335,116 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Switch between delivery and pickup
-    window.switchShippingType = function(type) {
-        const deliveryTab = document.getElementById('delivery-tab');
-        const pickupTab = document.getElementById('pickup-tab');
-        const deliveryOptions = document.getElementById('delivery-options');
-        const pickupOptions = document.getElementById('pickup-options');
-        const shippingTypeInput = document.getElementById('shipping-type');
-        
-        if (type === 'delivery') {
-            deliveryTab.classList.add('border-primary-600', 'text-primary-600');
-            deliveryTab.classList.remove('border-transparent', 'text-gray-500 dark:text-stone-400');
-            if (pickupTab) {
-                pickupTab.classList.remove('border-primary-600', 'text-primary-600');
-                pickupTab.classList.add('border-transparent', 'text-gray-500 dark:text-stone-400');
-            }
-            deliveryOptions.classList.remove('hidden');
-            if (pickupOptions) pickupOptions.classList.add('hidden');
-            shippingTypeInput.value = 'delivery';
-        } else {
-            if (pickupTab) {
-                pickupTab.classList.add('border-primary-600', 'text-primary-600');
-                pickupTab.classList.remove('border-transparent', 'text-gray-500 dark:text-stone-400');
-            }
-            deliveryTab.classList.remove('border-primary-600', 'text-primary-600');
-            deliveryTab.classList.add('border-transparent', 'text-gray-500 dark:text-stone-400');
-            deliveryOptions.classList.add('hidden');
-            if (pickupOptions) pickupOptions.classList.remove('hidden');
-            shippingTypeInput.value = 'pickup';
-            
-            // Update shipping cost display
-            document.getElementById('shipping-cost').textContent = 'Free';
+    const SHIPPING_STORAGE_KEY = 'checkout:shipping';
+    const SHIPPING_CACHE_TTL = 1000 * 60 * 60 * 24 * 7;
+
+    const deliveryOptions = document.getElementById('delivery-options');
+    const pickupOptions = document.getElementById('pickup-options');
+    let currentAddressKey = '';
+
+    const escapeHtml = (val) => {
+        if (window.Templates && typeof Templates.escapeHtml === 'function') {
+            return Templates.escapeHtml(String(val ?? ''));
         }
-        
-        updateOrderTotal();
+        return String(val ?? '');
     };
-    
-    // Update shipping cost when method changes
-    const shippingInputs = document.querySelectorAll('input[name="shipping_rate_id"]');
-    shippingInputs.forEach(input => {
-        input.addEventListener('change', function() {
-            const price = parseFloat(this.dataset.price);
-            const rateId = this.value;
-            const estimate = this.dataset.estimate;
-            const shippingEl = document.getElementById('shipping-cost');
-            const sourceCurrency = shippingEl?.dataset?.currency || null;
 
-            // Format using the currency the server provided (avoid double conversion)
-            shippingEl.textContent = price === 0 ? 'Free' : Templates.formatPrice(price, sourceCurrency);
-
-            // Update delivery estimate
-            if (estimate) {
-                document.getElementById('estimated-delivery').textContent = estimate;
-            }
-
-            updateOrderTotal();
-        });
-
-        // Initialize with selected option
-        if (input.checked) {
-            const price = parseFloat(input.dataset.price);
-            const estimate = input.dataset.estimate;
-            const shippingEl = document.getElementById('shipping-cost');
-            const sourceCurrency = shippingEl?.dataset?.currency || null;
-
-            if (!isNaN(price)) {
-                shippingEl.textContent = price === 0 ? 'Free' : Templates.formatPrice(price, sourceCurrency);
-            }
-
-            if (estimate) {
-                document.getElementById('estimated-delivery').textContent = estimate;
-            }
+    function safeParseJson(raw, fallback = null) {
+        if (!raw) return fallback;
+        try {
+            return JSON.parse(raw);
+        } catch (err) {
+            return fallback;
         }
-    });
-    
+    }
+
+    function readStoredShipping() {
+        try {
+            const raw = localStorage.getItem(SHIPPING_STORAGE_KEY);
+            if (!raw) return null;
+            const data = JSON.parse(raw);
+            if (!data || typeof data !== 'object') return null;
+            if (data.ts && Date.now() - data.ts > SHIPPING_CACHE_TTL) return null;
+            if (data.cost !== undefined && data.cost !== null) {
+                const cost = Number(data.cost);
+                if (!Number.isFinite(cost)) return null;
+                data.cost = cost;
+            }
+            return data;
+        } catch (err) {
+            return null;
+        }
+    }
+
+    function persistShippingSelection({ type = 'delivery', rateId = null, cost = 0, display = '', currency = null, addressKey = null }) {
+        try {
+            localStorage.setItem(SHIPPING_STORAGE_KEY, JSON.stringify({
+                type,
+                rateId,
+                cost: Number(cost) || 0,
+                display: display || '',
+                currency: currency || null,
+                addressKey: addressKey || null,
+                ts: Date.now()
+            }));
+        } catch (err) {}
+    }
+
+    function buildAddressKey(meta) {
+        if (!meta) return '';
+        return [meta.country, meta.state, meta.city, meta.postal]
+            .map(val => String(val || '').trim().toLowerCase())
+            .join('|');
+    }
+
+    function getDeliveryMeta() {
+        if (!deliveryOptions) return null;
+        const data = deliveryOptions.dataset || {};
+        const productIds = safeParseJson(data.productIds, []);
+        return {
+            country: data.country || '',
+            state: data.state || '',
+            city: data.city || '',
+            postal: data.postal || '',
+            subtotal: parseFloat(data.subtotal || 0) || 0,
+            itemCount: parseInt(data.itemCount || 1, 10) || 1,
+            productIds: Array.isArray(productIds) ? productIds.filter(Boolean) : []
+        };
+    }
+
+    function setShippingRow(cost, display, currency) {
+        const shippingEl = document.getElementById('shipping-cost');
+        if (!shippingEl) return;
+
+        if (cost === null || cost === undefined || cost === '') {
+            shippingEl.dataset.price = '';
+            shippingEl.textContent = 'Calculated next';
+            return;
+        }
+
+        const numeric = Number(cost);
+        if (!Number.isFinite(numeric)) {
+            shippingEl.dataset.price = '';
+            shippingEl.textContent = 'Calculated next';
+            return;
+        }
+
+        shippingEl.dataset.price = String(numeric);
+        if (currency) shippingEl.dataset.currency = currency;
+
+        const text = display && String(display).trim()
+            ? String(display)
+            : (numeric === 0 ? 'Free' : Templates.formatPrice(numeric, currency || null));
+        shippingEl.textContent = text;
+    }
+
+    function updateEstimatedDelivery(estimate) {
+        const el = document.getElementById('estimated-delivery');
+        if (el && estimate) {
+            el.textContent = estimate;
+        }
+    }
+
     function updateOrderTotal() {
         // Read numeric values from DOM to avoid mixing server/rendered formats with client conversions
         const subtotalEl = document.getElementById('subtotal');
@@ -407,37 +455,347 @@ document.addEventListener('DOMContentLoaded', function() {
         const subtotal = parseFloat(subtotalEl?.dataset?.price) || parseFloat('{{ cart_summary.subtotal|default:0 }}');
         const discount = parseFloat(discountEl?.dataset?.price) || parseFloat('{{ cart_summary.discount_amount|default:0 }}');
         const taxRate = parseFloat('{{ tax_rate|default:0 }}');
-
-        let shipping = 0;
-        let shippingCurrency = shippingEl?.dataset?.currency || (subtotalEl?.dataset?.currency) || null;
         const shippingType = document.getElementById('shipping-type').value;
 
+        let shipping = parseFloat(shippingEl?.dataset?.price || 0) || 0;
         if (shippingType === 'delivery') {
             const selectedShipping = document.querySelector('input[name="shipping_rate_id"]:checked');
             if (selectedShipping) {
                 shipping = parseFloat(selectedShipping.dataset.price) || 0;
-                // Prefer the selected shipping option's currency if available
-                shippingCurrency = selectedShipping.dataset.currency || shippingCurrency;
             }
+        } else {
+            shipping = 0;
         }
 
         const taxableAmount = subtotal - discount;
         const tax = taxRate > 0 ? (taxableAmount * taxRate / 100) : 0;
         const total = taxableAmount + shipping + tax;
 
-        // Use the currency that server provided for subtotal (so we avoid double conversion)
         const sourceCurrency = subtotalEl?.dataset?.currency || null;
-        document.getElementById('order-total').textContent = Templates.formatPrice(total, sourceCurrency);
+        const totalEl = document.getElementById('order-total');
+        if (totalEl) {
+            totalEl.textContent = Templates.formatPrice(total, sourceCurrency);
+            totalEl.dataset.price = total;
+        }
 
         if (taxEl) {
             taxEl.textContent = Templates.formatPrice(tax, sourceCurrency);
-        }
-
-        // Ensure shipping display remains consistent (e.g., 'Free' or formatted)
-        if (shippingEl) {
-            shippingEl.textContent = shipping === 0 ? 'Free' : Templates.formatPrice(shipping, shippingCurrency || sourceCurrency);
+            taxEl.dataset.price = tax;
         }
     }
+
+    function syncFromCheckedInput({ addressKey, persist = true } = {}) {
+        const checked = document.querySelector('input[name="shipping_rate_id"]:checked');
+        if (!checked) return false;
+
+        const price = parseFloat(checked.dataset.price) || 0;
+        const display = checked.dataset.display || '';
+        const currency = checked.dataset.currency || null;
+
+        setShippingRow(price, display, currency);
+        updateEstimatedDelivery(checked.dataset.estimate);
+
+        if (persist) {
+            persistShippingSelection({
+                type: 'delivery',
+                rateId: checked.value,
+                cost: price,
+                display: display || (price === 0 ? 'Free' : ''),
+                currency,
+                addressKey
+            });
+        }
+
+        updateOrderTotal();
+        return true;
+    }
+
+    function applyStoredSelection(stored, addressKey) {
+        if (!stored) return false;
+
+        if (stored.type === 'pickup') {
+            if (typeof window.switchShippingType === 'function') {
+                window.switchShippingType('pickup', { persist: false });
+            }
+            setShippingRow(0, stored.display || 'Free', stored.currency || null);
+            updateOrderTotal();
+            return true;
+        }
+
+        const inputs = document.querySelectorAll('input[name="shipping_rate_id"]');
+        const match = Array.from(inputs).find(input => String(input.value) === String(stored.rateId));
+        if (!match) return false;
+
+        match.checked = true;
+        const display = stored.display || match.dataset.display || '';
+        const currency = stored.currency || match.dataset.currency || null;
+
+        setShippingRow(stored.cost, display, currency);
+        updateEstimatedDelivery(match.dataset.estimate);
+
+        persistShippingSelection({
+            type: 'delivery',
+            rateId: match.value,
+            cost: stored.cost,
+            display: display || (stored.cost === 0 ? 'Free' : ''),
+            currency,
+            addressKey
+        });
+
+        updateOrderTotal();
+        return true;
+    }
+
+    function applyTopFiveVisibility(container) {
+        if (!container) return;
+        const inputs = container.querySelectorAll('input[name="shipping_rate_id"]');
+        const maxVisible = 5;
+        let hasHidden = false;
+
+        inputs.forEach((input, idx) => {
+            const wrapper = input.closest('.relative');
+            if (!wrapper) return;
+            if (idx >= maxVisible) {
+                wrapper.classList.add('hidden', 'shipping-method-hidden');
+                hasHidden = true;
+            } else {
+                wrapper.classList.remove('hidden', 'shipping-method-hidden');
+            }
+        });
+
+        const existingToggle = container.querySelector('[data-shipping-toggle]');
+        if (hasHidden && !existingToggle) {
+            const toggle = document.createElement('button');
+            toggle.type = 'button';
+            toggle.className = 'mt-3 text-sm text-primary-600 hover:text-primary-700 font-medium';
+            toggle.textContent = 'Show all shipping methods';
+            toggle.dataset.shippingToggle = 'true';
+            toggle.addEventListener('click', () => {
+                const hidden = container.querySelectorAll('.shipping-method-hidden');
+                const expanded = toggle.dataset.expanded === 'true';
+                hidden.forEach(el => el.classList.toggle('hidden', expanded));
+                toggle.dataset.expanded = expanded ? 'false' : 'true';
+                toggle.textContent = expanded ? 'Show all shipping methods' : 'Show top 5 only';
+            });
+            container.appendChild(toggle);
+        } else if (!hasHidden && existingToggle) {
+            existingToggle.remove();
+        }
+    }
+
+    function bindShippingInputs(addressKey) {
+        const inputs = document.querySelectorAll('input[name="shipping_rate_id"]');
+        inputs.forEach(input => {
+            if (input.dataset.bound === 'true') return;
+            input.dataset.bound = 'true';
+            input.addEventListener('change', function() {
+                const price = parseFloat(this.dataset.price) || 0;
+                const display = this.dataset.display || '';
+                const currency = this.dataset.currency || null;
+
+                setShippingRow(price, display, currency);
+                updateEstimatedDelivery(this.dataset.estimate);
+
+                persistShippingSelection({
+                    type: 'delivery',
+                    rateId: this.value,
+                    cost: price,
+                    display: display || (price === 0 ? 'Free' : ''),
+                    currency,
+                    addressKey
+                });
+
+                updateOrderTotal();
+            });
+        });
+
+        applyTopFiveVisibility(deliveryOptions);
+        return inputs;
+    }
+
+    async function fetchAndRenderShippingMethods(addressKey, stored) {
+        if (!deliveryOptions) return false;
+
+        const meta = getDeliveryMeta();
+        if (!meta || !meta.country) return false;
+
+        const payload = {
+            country: meta.country,
+            state: meta.state || meta.city || '',
+            postal_code: meta.postal || '',
+            subtotal: meta.subtotal,
+            weight: 0,
+            item_count: meta.itemCount,
+            product_ids: meta.productIds || []
+        };
+
+        try {
+            let response;
+            if (window.ShippingApi && typeof ShippingApi.calculateShipping === 'function') {
+                response = await ShippingApi.calculateShipping(payload);
+            } else {
+                response = await fetch('/api/v1/shipping/calculate/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(payload)
+                }).then(res => res.json());
+            }
+
+            const methods = response?.data?.methods || response?.data?.data?.methods || response?.methods || [];
+            if (!Array.isArray(methods) || methods.length === 0) return false;
+
+            methods.sort((a, b) => Number(a.rate) - Number(b.rate));
+            const top = methods.slice(0, 5);
+
+            deliveryOptions.innerHTML = top.map((method, index) => {
+                const rateId = method.rate_id || method.id;
+                const name = escapeHtml(method.name || 'Shipping');
+                const carrier = method.carrier && method.carrier.name ? ` <span class="text-gray-500 dark:text-gray-400 font-normal">(${escapeHtml(method.carrier.name)})</span>` : '';
+                const estimate = method.delivery_estimate ? `<p class="text-sm text-gray-500 dark:text-gray-400">${escapeHtml(method.delivery_estimate)}</p>` : '';
+                const rateValue = Number(method.rate ?? 0) || 0;
+                const isFree = method.is_free || rateValue <= 0;
+                const display = isFree ? 'Free' : (method.rate_display || Templates.formatPrice(rateValue));
+                const displayAttr = escapeHtml(display);
+                const currencyCode = method.currency && method.currency.code ? method.currency.code : '';
+                const icon = name.toLowerCase().includes('express')
+                    ? `<svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                       </svg>`
+                    : name.toLowerCase().includes('overnight')
+                        ? `<svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                           </svg>`
+                        : `<svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                           </svg>`;
+
+                return `
+                    <div class="relative">
+                        <input type="radio" name="shipping_rate_id" value="${rateId}" id="shipping-${rateId}"
+                               class="peer sr-only" ${index === 0 ? 'checked' : ''}
+                               data-price="${rateValue}"
+                               data-display="${displayAttr}"
+                               data-estimate="${escapeHtml(method.delivery_estimate || '')}"
+                               data-currency="${escapeHtml(currencyCode)}">
+                        <label for="shipping-${rateId}"
+                               class="flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all peer-checked:border-primary-600 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 hover:border-gray-400 dark:hover:border-gray-500 border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mr-4">
+                                    ${icon}
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900 dark:text-white">
+                                        ${name}${carrier}
+                                    </p>
+                                    ${estimate}
+                                </div>
+                            </div>
+                            <span class="font-semibold text-gray-900 dark:text-white ml-4">
+                                ${isFree ? '<span class="text-green-600">Free</span>' : `<span>${displayAttr}</span>`}
+                            </span>
+                        </label>
+                        <div class="absolute top-4 right-4 hidden peer-checked:flex">
+                            <svg class="w-5 h-5 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            bindShippingInputs(addressKey);
+
+            const storedSelection = stored && (!stored.addressKey || stored.addressKey === addressKey) ? stored : null;
+            if (storedSelection && storedSelection.type !== 'pickup' && applyStoredSelection(storedSelection, addressKey)) {
+                return true;
+            }
+
+            const currentType = document.getElementById('shipping-type')?.value || 'delivery';
+            if (currentType === 'delivery') {
+                syncFromCheckedInput({ addressKey, persist: true });
+            }
+            return true;
+        } catch (err) {
+            console.warn('Failed to fetch shipping methods:', err);
+            return false;
+        }
+    }
+
+    // Switch between delivery and pickup
+    window.switchShippingType = function(type, options = {}) {
+        const deliveryTab = document.getElementById('delivery-tab');
+        const pickupTab = document.getElementById('pickup-tab');
+        const shippingTypeInput = document.getElementById('shipping-type');
+        const shouldPersist = options.persist !== false;
+        
+        if (type === 'delivery') {
+            deliveryTab.classList.add('border-primary-600', 'text-primary-600');
+            deliveryTab.classList.remove('border-transparent', 'text-gray-500 dark:text-stone-400');
+            if (pickupTab) {
+                pickupTab.classList.remove('border-primary-600', 'text-primary-600');
+                pickupTab.classList.add('border-transparent', 'text-gray-500 dark:text-stone-400');
+            }
+            deliveryOptions?.classList.remove('hidden');
+            if (pickupOptions) pickupOptions.classList.add('hidden');
+            if (shippingTypeInput) shippingTypeInput.value = 'delivery';
+
+            const synced = syncFromCheckedInput({ addressKey: currentAddressKey, persist: shouldPersist });
+            if (!synced) {
+                setShippingRow(null);
+                updateOrderTotal();
+            }
+        } else {
+            if (pickupTab) {
+                pickupTab.classList.add('border-primary-600', 'text-primary-600');
+                pickupTab.classList.remove('border-transparent', 'text-gray-500 dark:text-stone-400');
+            }
+            deliveryTab.classList.remove('border-primary-600', 'text-primary-600');
+            deliveryTab.classList.add('border-transparent', 'text-gray-500 dark:text-stone-400');
+            deliveryOptions?.classList.add('hidden');
+            if (pickupOptions) pickupOptions.classList.remove('hidden');
+            if (shippingTypeInput) shippingTypeInput.value = 'pickup';
+            
+            setShippingRow(0, 'Free');
+            if (shouldPersist) {
+                persistShippingSelection({
+                    type: 'pickup',
+                    rateId: null,
+                    cost: 0,
+                    display: 'Free',
+                    currency: null,
+                    addressKey: currentAddressKey
+                });
+            }
+            updateOrderTotal();
+        }
+    };
+
+    const deliveryMeta = getDeliveryMeta();
+    currentAddressKey = buildAddressKey(deliveryMeta);
+    const storedShipping = readStoredShipping();
+    const storedMatches = storedShipping && (!storedShipping.addressKey || storedShipping.addressKey === currentAddressKey);
+
+    if (storedShipping && storedShipping.type === 'pickup') {
+        window.switchShippingType('pickup', { persist: false });
+    } else {
+        window.switchShippingType('delivery', { persist: false });
+    }
+
+    bindShippingInputs(currentAddressKey);
+
+    if (storedShipping && storedMatches && storedShipping.type !== 'pickup') {
+        const applied = applyStoredSelection(storedShipping, currentAddressKey);
+        if (!applied) {
+            syncFromCheckedInput({ addressKey: currentAddressKey, persist: true });
+        }
+    } else if (!storedShipping || storedShipping.type !== 'pickup') {
+        syncFromCheckedInput({ addressKey: currentAddressKey, persist: true });
+    }
+
+    fetchAndRenderShippingMethods(currentAddressKey, storedShipping);
     
     // Form submission handling
     const form = document.getElementById('shipping-form');

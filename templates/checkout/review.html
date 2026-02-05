@@ -225,7 +225,9 @@
                 <div id="order-summary"
                      data-tax-rate="{{ checkout_summary.tax_rate|default:tax_rate|default:0 }}"
                      data-payment-fee="{{ payment_fee_amount_converted|default:'' }}"
-                     data-payment-fee-label="{% if payment_fee_gateway %}{{ payment_fee_gateway.name }}{% endif %}">
+                     data-payment-fee-label="{% if payment_fee_gateway %}{{ payment_fee_gateway.name }}{% endif %}"
+                     data-gift-wrap-cost="{{ checkout_summary.gift_wrap_cost|default:cart_summary.gift_wrap_cost|default:0 }}"
+                     data-gift-wrap-amount="{{ checkout_summary.gift_wrap_amount|default:cart_summary.gift_wrap_amount|default:0 }}">
                     <div data-order-totals class="space-y-3">
                         <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                             <span>Subtotal (<span data-order-items-count>{{ cart_items|length }} items</span>)</span>
@@ -244,7 +246,7 @@
                     {% if checkout.gift_wrap %}
                     <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                         <span>Gift Wrapping</span>
-                        <span class="text-gray-900 dark:text-white">{{ cart_summary.formatted_shipping }}</span>
+                        <span class="text-gray-900 dark:text-white">{{ checkout_summary.formatted_gift_wrap|default:cart_summary.formatted_gift_wrap }}</span>
                     </div>
                     {% endif %}
                     <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">

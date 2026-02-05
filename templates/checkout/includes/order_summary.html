@@ -17,9 +17,15 @@
             </div>
             <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                 <span>Shipping</span>
-                <span id="shipping-cost" data-price="{{ cart_summary.shipping_cost|default:'' }}">{{ cart_summary.formatted_shipping }}</span>
+                {% if cart_summary.shipping_selected or cart_summary.shipping_estimate %}
+                <span id="shipping-cost" data-price="{{ cart_summary.shipping_cost|default:0 }}">
+                    {% if cart_summary.shipping_cost|default:0|floatformat:2 == '0.00' %}Free{% else %}{{ cart_summary.formatted_shipping }}{% endif %}
+                </span>
+                {% else %}
+                <span id="shipping-cost" data-price="">Calculated next</span>
+                {% endif %}
             </div>
-            <div id="gift-wrap-row" class="flex justify-between text-sm text-gray-600 dark:text-gray-400" style="display: {% if checkout.gift_wrap %}flex{% else %}none{% endif %};">
+            <div id="gift-wrap-row" class="flex justify-between text-sm text-gray-600 dark:text-gray-400" style="display: {% if checkout.gift_wrap or cart_summary.gift_wrap_cost|default:0|floatformat:2 != '0.00' %}flex{% else %}none{% endif %};">
                 <span>Gift Wrapping</span>
                 <span id="gift-wrap-cost" data-price="{{ cart_summary.gift_wrap_cost|default:0 }}">+{{ cart_summary.formatted_gift_wrap }}</span>
             </div>

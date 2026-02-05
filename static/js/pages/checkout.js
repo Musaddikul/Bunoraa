@@ -23,6 +23,97 @@ const CheckoutPage = (async function() {
         const num = Number(value);
         return Number.isFinite(num) ? num : fallback;
     };
+    const SHIPPING_STORAGE_KEY = 'checkout:shipping';
+    const SHIPPING_CACHE_TTL = 1000 * 60 * 60 * 24 * 7;
+
+    function readStoredShipping() {
+        try {
+            const raw = localStorage.getItem(SHIPPING_STORAGE_KEY);
+            if (!raw) return null;
+            const data = JSON.parse(raw);
+            if (!data || typeof data !== 'object') return null;
+            if (data.ts && Date.now() - data.ts > SHIPPING_CACHE_TTL) return null;
+            if (data.cost !== undefined && data.cost !== null) {
+                const cost = Number(data.cost);
+                if (!Number.isFinite(cost)) return null;
+                data.cost = cost;
+            }
+            return data;
+        } catch (err) {
+            return null;
+        }
+    }
+
+    function getCheckedShippingInput() {
+        return document.querySelector('input[name="shipping_rate_id"]:checked') ||
+            document.querySelector('input[name="shipping_method"]:checked');
+    }
+
+    function resolveShippingCost(container, cartPayload) {
+        const checked = getCheckedShippingInput();
+        if (checked) {
+            const cost = toNumber(checked.dataset.price, NaN);
+            if (Number.isFinite(cost)) {
+                return {
+                    cost,
+                    display: checked.dataset.display || null,
+                    currency: checked.dataset.currency || null,
+                    source: 'checked'
+                };
+            }
+        }
+
+        const stored = readStoredShipping();
+        if (stored && Number.isFinite(Number(stored.cost))) {
+            return {
+                cost: Number(stored.cost),
+                display: stored.display || null,
+                currency: stored.currency || null,
+                source: 'stored'
+            };
+        }
+
+        const shippingEl = container?.querySelector('#shipping-cost') || document.getElementById('shipping-cost');
+        const existingRaw = shippingEl?.dataset?.price;
+        if (existingRaw !== undefined && existingRaw !== '') {
+            const cost = toNumber(existingRaw, NaN);
+            if (Number.isFinite(cost)) {
+                const text = shippingEl?.textContent?.trim() || '';
+                const display = text && text.toLowerCase() !== 'calculated next' ? text : null;
+                return {
+                    cost,
+                    display,
+                    currency: shippingEl?.dataset?.currency || null,
+                    source: 'dom'
+                };
+            }
+        }
+
+        if (cartPayload && cartPayload.shipping_cost !== undefined && cartPayload.shipping_cost !== null) {
+            const cost = toNumber(cartPayload.shipping_cost, NaN);
+            if (Number.isFinite(cost) && cost > 0) {
+                return {
+                    cost,
+                    display: null,
+                    currency: null,
+                    source: 'cart'
+                };
+            }
+        }
+
+        return null;
+    }
+
+    function formatShippingDisplay(info) {
+        if (!info || info.cost === null || Number.isNaN(info.cost)) {
+            return 'Calculated next';
+        }
+        if (info.display && String(info.display).trim() && String(info.display).toLowerCase() !== 'calculated next') {
+            return String(info.display);
+        }
+        if (info.cost <= 0) return 'Free';
+        return Templates.formatPrice(info.cost, info.currency || null);
+    }
 
     function getPaymentFeeMeta() {
         const selected = document.querySelector('input[name="payment_method"]:checked');
@@ -319,12 +410,7 @@ const CheckoutPage = (async function() {
             ? safeNumber(cart.total)
             : Math.max(0, subtotal - discount);
 
-        const shippingEl = container.querySelector('#shipping-cost') || document.getElementById('shipping-cost');
-        const existingShippingRaw = shippingEl?.dataset?.price;
-        const existingShipping = existingShippingRaw !== undefined && existingShippingRaw !== '' ? safeNumber(existingShippingRaw) : null;
-        const shippingCost = cart.shipping_cost !== undefined && cart.shipping_cost !== null
-            ? safeNumber(cart.shipping_cost)
-            : existingShipping;
+        const shippingInfo = resolveShippingCost(container, cart);
 
         const taxRate = getTaxRate();
         const taxEl = container.querySelector('#tax-amount') || document.getElementById('tax-amount');
@@ -334,13 +420,30 @@ const CheckoutPage = (async function() {
             ? safeNumber(cart.tax_amount)
             : (existingTax !== null ? existingTax : (taxRate > 0 ? (baseTotal * taxRate / 100) : 0));
 
-        const hasShipping = shippingCost !== null && !Number.isNaN(shippingCost);
-        const total = baseTotal + (hasShipping ? shippingCost : 0) + (taxAmount || 0);
+        const giftWrapRow = container.querySelector('#gift-wrap-row') || document.getElementById('gift-wrap-row');
+        const giftWrapCostEl = container.querySelector('#gift-wrap-cost') || document.getElementById('gift-wrap-cost');
+        const giftWrapLabel = giftWrapRow?.querySelector('span')?.textContent?.trim() || 'Gift Wrapping';
+        const giftWrapCostRaw = giftWrapCostEl?.dataset?.price ?? giftWrapCostEl?.textContent ?? container.dataset?.giftWrapCost ?? 0;
+        const giftWrapAmount = safeNumber(container.dataset?.giftWrapAmount ?? 0);
+        const giftWrapToggle = document.getElementById('gift_wrap');
+        const giftWrapSelected = !!giftWrapToggle?.checked || (giftWrapRow && giftWrapRow.style.display !== 'none' && !giftWrapRow.classList.contains('hidden'));
+        let giftWrapCost = safeNumber(giftWrapCostRaw);
+        if (giftWrapSelected && giftWrapCost <= 0 && giftWrapAmount > 0) {
+            giftWrapCost = giftWrapAmount;
+        }
+        const giftWrapVisible = giftWrapSelected || giftWrapCost > 0;
+
+        const hasShipping = shippingInfo && shippingInfo.cost !== null && !Number.isNaN(shippingInfo.cost);
+        const total = baseTotal + (hasShipping ? shippingInfo.cost : 0) + (taxAmount || 0) + (giftWrapVisible ? giftWrapCost : 0);
+        const shippingDisplay = hasShipping ? formatShippingDisplay(shippingInfo) : 'Calculated next';
+        const shippingCurrencyAttr = shippingInfo?.currency ? ` data-currency="${escape(shippingInfo.currency)}"` : '';
         const feeMeta = getPaymentFeeMeta();
         const paymentFee = computePaymentFee(total, feeMeta);
         if (container) {
             container.dataset.paymentFee = paymentFee;
             if (feeMeta?.name) container.dataset.paymentFeeLabel = feeMeta.name;
+            container.dataset.giftWrapCost = giftWrapCost;
+            container.dataset.giftWrapAmount = giftWrapAmount;
         }
 
         const itemsHtml = `
@@ -353,6 +456,12 @@ const CheckoutPage = (async function() {
             <div id="payment-fee-row" class="flex justify-between text-sm text-gray-600 dark:text-gray-400 ${paymentFee > 0 ? '' : 'hidden'}">
                 <span id="payment-fee-label">Extra payment fee${feeMeta?.name ? ` (${escape(feeMeta.name)})` : ''}</span>
                 <span id="payment-fee-amount">${Templates.formatPrice(paymentFee)}</span>
+            </div>
+        `;
+        const giftWrapRowHtml = `
+            <div id="gift-wrap-row" class="flex justify-between text-sm text-gray-600 dark:text-gray-400" style="display: ${giftWrapVisible ? 'flex' : 'none'};">
+                <span>${escape(giftWrapLabel)}</span>
+                <span id="gift-wrap-cost" data-price="${giftWrapCost}">+${Templates.formatPrice(giftWrapCost)}</span>
             </div>
         `;
 
@@ -369,10 +478,11 @@ const CheckoutPage = (async function() {
                 </div>
                 <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                     <span>Shipping</span>
-                    <span id="shipping-cost" data-price="${hasShipping ? shippingCost : ''}" class="font-medium text-gray-900 dark:text-white">
-                        ${hasShipping ? (shippingCost > 0 ? Templates.formatPrice(shippingCost) : 'Free') : 'Calculated next'}
+                    <span id="shipping-cost" data-price="${hasShipping ? shippingInfo.cost : ''}"${shippingCurrencyAttr} class="font-medium text-gray-900 dark:text-white">
+                        ${hasShipping ? escape(shippingDisplay) : 'Calculated next'}
                     </span>
                 </div>
+                ${giftWrapRowHtml}
                 ${feeRowHtml}
                 <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 ${taxRate > 0 || taxAmount > 0 ? '' : 'hidden'}">
                     <span>Tax${taxRate > 0 ? ` (${taxRate}%)` : ''}</span>
@@ -680,16 +790,37 @@ const CheckoutPage = (async function() {
 
             const shippingRadios = container.querySelectorAll('input[name="shipping_method"]');
             shippingRadios.forEach((radio, idx) => {
-                // Store price on the radio element without using DOM data-attributes
-                radio.__price = methods[idx] ? methods[idx].price : 0;
+                const method = methods[idx] || {};
+                const price = Number(method.price ?? method.rate ?? 0) || 0;
+                const display = method.price_display || method.rate_display || (price > 0 ? Templates.formatPrice(price) : 'Free');
+                radio.__price = price;
+                radio.dataset.display = display;
+                if (method.currency && method.currency.code) {
+                    radio.dataset.currency = method.currency.code;
+                }
                 radio.addEventListener('change', () => {
-                    updateShippingCost(parseFloat(radio.__price) || 0);
+                    updateShippingCost(parseFloat(radio.__price) || 0, {
+                        rateId: radio.value,
+                        display: radio.dataset.display,
+                        currency: radio.dataset.currency || null,
+                        persist: true,
+                        type: 'delivery'
+                    });
                 });
             });
 
             if (methods.length > 0) {
                 checkoutData.shipping_method = methods[0].id;
-                updateShippingCost(methods[0].price || 0);
+                const first = methods[0] || {};
+                const price = Number(first.price ?? first.rate ?? 0) || 0;
+                const display = first.price_display || first.rate_display || (price > 0 ? Templates.formatPrice(price) : 'Free');
+                updateShippingCost(price, {
+                    rateId: shippingRadios[0]?.value || first.id,
+                    display,
+                    currency: shippingRadios[0]?.dataset?.currency || null,
+                    persist: true,
+                    type: 'delivery'
+                });
             }
         } 
         catch (error) {
@@ -913,17 +1044,37 @@ const CheckoutPage = (async function() {
 
 
 
-    function updateShippingCost(cost) {
+    function updateShippingCost(cost, meta = {}) {
         const shippingCostEl = document.getElementById('shipping-cost');
         const orderTotalEl = document.getElementById('order-total');
+        const numericCost = toNumber(cost, 0);
+        const display = meta.display || (numericCost > 0 ? Templates.formatPrice(numericCost, meta.currency || null) : 'Free');
 
         if (shippingCostEl) {
-            shippingCostEl.textContent = cost > 0 ? Templates.formatPrice(cost) : 'Free';
+            shippingCostEl.textContent = display;
+            shippingCostEl.dataset.price = String(numericCost);
+            if (meta.currency) shippingCostEl.dataset.currency = meta.currency;
+        }
+
+        if (meta.persist) {
+            try {
+                localStorage.setItem(SHIPPING_STORAGE_KEY, JSON.stringify({
+                    type: meta.type || 'delivery',
+                    rateId: meta.rateId || null,
+                    cost: numericCost,
+                    display: display || '',
+                    currency: meta.currency || null,
+                    ts: Date.now()
+                }));
+            } catch (err) {
+                // ignore storage failures
+            }
         }
 
         if (orderTotalEl && cart) {
-            const total = (cart.total || 0) + cost;
+            const total = (cart.total || 0) + numericCost;
             orderTotalEl.textContent = Templates.formatPrice(total);
+            orderTotalEl.dataset.price = total;
         }
     }
 

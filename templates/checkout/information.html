@@ -247,12 +247,12 @@
                         <div id="gift-options-content" class="hidden mt-4 space-y-4">
                             <label class="flex items-center cursor-pointer">
                                 <input type="checkbox" name="is_gift" id="is_gift" 
-                                       {% if checkout.is_gift %}checked{% endif %}
+                                       {% if checkout.is_gift or cart_summary.gift_wrap_cost|default:0|floatformat:2 != '0.00' %}checked{% endif %}
                                        class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500">
                                 <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">This order is a gift</span>
                             </label>
                             
-                            <div id="gift-details" class="{% if not checkout.is_gift %}hidden{% endif %} space-y-4 pl-6">
+                            <div id="gift-details" class="{% if not checkout.is_gift and cart_summary.gift_wrap_cost|default:0|floatformat:2 == '0.00' %}hidden{% endif %} space-y-4 pl-6">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gift Message (optional)</label>
                                     <textarea name="gift_message" id="gift_message" rows="3"
@@ -264,9 +264,9 @@
                                 
                                 <label class="flex items-center cursor-pointer">
                                     <input type="checkbox" name="gift_wrap" id="gift_wrap" 
-                                           {% if checkout.gift_wrap %}checked{% endif %}
+                                           {% if checkout.gift_wrap or cart_summary.gift_wrap_cost|default:0|floatformat:2 != '0.00' %}checked{% endif %}
                                            class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500">
-                                    <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">Add gift wrapping {% if formatted_gift_wrap %}(+{{ formatted_gift_wrap }}){% endif %}</span>
+                                    <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">Add gift wrapping {% if cart_summary.formatted_gift_wrap_amount %}(+{{ cart_summary.formatted_gift_wrap_amount }}){% endif %}</span>
                                 </label>
                             </div>
                         </div>
@@ -310,7 +310,10 @@
                         <span class="text-sm font-normal text-gray-500 dark:text-gray-400" data-order-items-count>{{ cart_items|length }} items</span>
                     </h2>
                     
-                    <div id="order-summary" data-tax-rate="{{ cart_summary.tax_rate|default:tax_rate|default:0 }}">
+                    <div id="order-summary"
+                         data-tax-rate="{{ cart_summary.tax_rate|default:tax_rate|default:0 }}"
+                         data-gift-wrap-cost="{{ cart_summary.gift_wrap_cost|default:0 }}"
+                         data-gift-wrap-amount="{{ cart_summary.gift_wrap_amount|default:0 }}">
                         <div data-order-items>
                             <!-- Cart Items (use converted summary items) -->
                             <div class="space-y-4 max-h-80 overflow-y-auto scrollbar-thin pr-2">
@@ -473,17 +476,44 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Gift wrapping cost update
     const giftWrapCheckbox = document.getElementById('gift_wrap');
-    const giftWrapRow = document.getElementById('gift-wrap-row');
-    const giftWrapCostEl = document.getElementById('gift-wrap-cost');
-    const giftWrapCost = parseFloat(giftWrapCostEl?.dataset.price || 0);
+    function getGiftWrapMeta() {
+        const row = document.getElementById('gift-wrap-row');
+        const costEl = document.getElementById('gift-wrap-cost');
+        const cost = parseFloat(costEl?.dataset.price || 0);
+        const summaryEl = document.getElementById('order-summary');
+        const amount = parseFloat(summaryEl?.dataset.giftWrapAmount || 0);
+        return { row, costEl, cost, amount };
+    }
     
-    if (giftWrapCheckbox && giftWrapRow) {
+    if (giftWrapCheckbox) {
+        const { cost: giftWrapCost, amount: giftWrapAmount } = getGiftWrapMeta();
+        if (giftWrapCost > 0 || giftWrapAmount > 0) {
+            if (!giftWrapCheckbox.checked) {
+                giftWrapCheckbox.checked = true;
+            }
+            if (isGiftCheckbox && !isGiftCheckbox.checked) {
+                isGiftCheckbox.checked = true;
+            }
+            giftDetails?.classList.remove('hidden');
+        }
         // Show/hide gift wrap row based on checkbox
         function updateGiftWrapVisibility() {
+            const { row, costEl, cost, amount } = getGiftWrapMeta();
+            if (!row) return;
+
             if (giftWrapCheckbox.checked) {
-                giftWrapRow.style.display = 'flex';
+                row.style.display = 'flex';
+                const nextCost = (cost > 0 ? cost : amount);
+                if (costEl) {
+                    costEl.dataset.price = String(nextCost || 0);
+                    costEl.textContent = `+${Templates.formatPrice(nextCost || 0)}`;
+                }
             } else {
-                giftWrapRow.style.display = 'none';
+                row.style.display = 'none';
+                if (costEl) {
+                    costEl.dataset.price = '0';
+                    costEl.textContent = `+${Templates.formatPrice(0)}`;
+                }
             }
         }
         
@@ -502,11 +532,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const discount = parseFloat(document.getElementById('discount-amount')?.dataset.price || 0);
         const shipping = parseFloat(document.getElementById('shipping-cost')?.dataset.price || 0);
         const taxRate = parseFloat(document.querySelector('[data-tax-rate]')?.dataset.taxRate || 0);
-        const giftWrap = (giftWrapCheckbox?.checked ? giftWrapCost : 0);
+        const giftMeta = getGiftWrapMeta();
+        const giftWrapCost = giftMeta.cost;
+        const giftWrapAmount = giftMeta.amount;
+        const giftWrapValue = (giftWrapCheckbox?.checked ? (giftWrapCost > 0 ? giftWrapCost : giftWrapAmount) : 0);
         
         const taxable = Math.max(0, subtotal - discount);
         const tax = taxRate > 0 ? (taxable * taxRate / 100) : 0;
-        const total = taxable + shipping + giftWrap + tax;
+        const total = taxable + shipping + giftWrapValue + tax;
         
         const totalEl = document.getElementById('order-total');
         if (totalEl) {
@@ -524,7 +557,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const couponName = document.getElementById('coupon-name');
     const removeBtn = document.getElementById('remove-coupon-btn');
     const taxRate = parseFloat('{{ cart_summary.tax_rate|default:tax_rate }}') || 0;
-    const shippingCost = parseFloat('{{ cart_summary.shipping_cost|default:0 }}') || 0;
+    const getShippingCost = () => parseFloat(document.getElementById('shipping-cost')?.dataset.price || 0);
     
     function showCouponMessage(message, type) {
         if (!couponMessage) return;
@@ -543,15 +576,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!cart) return;
         const subtotal = parseFloat(cart.subtotal || 0) || 0;
         const discount = parseFloat(cart.discount_amount || 0) || 0;
-        const giftWrap = (giftWrapCheckbox?.checked ? giftWrapCost : 0);
+        const giftMeta = getGiftWrapMeta();
+        const giftWrapCost = giftMeta.cost;
+        const giftWrapAmount = giftMeta.amount;
+        const giftWrapValue = (giftWrapCheckbox?.checked ? (giftWrapCost > 0 ? giftWrapCost : giftWrapAmount) : 0);
         const taxable = Math.max(0, subtotal - discount);
         const tax = taxRate > 0 ? (taxable * taxRate / 100) : 0;
-        const total = taxable + shippingCost + giftWrap + tax;
+        const shippingCost = getShippingCost();
+        const total = taxable + shippingCost + giftWrapValue + tax;
 
         const subtotalEl = document.getElementById('subtotal');
         const discountRow = document.getElementById('discount-row');
         const discountEl = document.getElementById('discount-amount');
-        const giftWrapRow = document.getElementById('gift-wrap-row');
         const taxEl = document.getElementById('tax-amount');
         const totalEl = document.getElementById('order-total');
 
@@ -565,11 +601,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         // Preserve gift wrap row visibility
-        if (giftWrapRow && giftWrapCheckbox) {
-            if (giftWrapCheckbox.checked) {
-                giftWrapRow.style.display = 'flex';
+        const { row, costEl, amount } = getGiftWrapMeta();
+        if (row && giftWrapCheckbox) {
+            if (giftWrapCheckbox.checked || giftWrapCost > 0 || amount > 0) {
+                row.style.display = 'flex';
+                if (giftWrapCheckbox.checked && amount > 0 && giftWrapCost <= 0 && costEl) {
+                    costEl.dataset.price = String(amount);
+                    costEl.textContent = `+${Templates.formatPrice(amount)}`;
+                }
             } else {
-                giftWrapRow.style.display = 'none';
+                row.style.display = 'none';
             }
         }
         if (taxEl) taxEl.textContent = Templates.formatPrice(tax);

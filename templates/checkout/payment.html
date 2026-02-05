@@ -390,7 +390,9 @@
                       <div id="order-summary"
                            data-tax-rate="{{ checkout_summary.tax_rate|default:tax_rate|default:0 }}"
                            data-payment-fee="{{ payment_fee_amount_converted|default:'' }}"
-                           data-payment-fee-label="{% if payment_fee_gateway %}{{ payment_fee_gateway.name }}{% endif %}">
+                           data-payment-fee-label="{% if payment_fee_gateway %}{{ payment_fee_gateway.name }}{% endif %}"
+                           data-gift-wrap-cost="{{ checkout_summary.gift_wrap_cost|default:cart_summary.gift_wrap_cost|default:0 }}"
+                           data-gift-wrap-amount="{{ checkout_summary.gift_wrap_amount|default:cart_summary.gift_wrap_amount|default:0 }}">
                         <div data-order-items>
                             <!-- Cart Items (use converted checkout summary items) -->
                             <div class="space-y-4 max-h-64 overflow-y-auto scrollbar-thin pr-2">

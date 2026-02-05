@@ -79,6 +79,44 @@ def build_checkout_cart_summary(request, cart, checkout_session):
         base_discount = Decimal(str(cart.discount_amount or 0))
         base_shipping = Decimal(str(getattr(checkout_session, 'shipping_cost', 0) or 0))
         base_gift_wrap = Decimal(str(getattr(checkout_session, 'gift_wrap_cost', 0) or 0))
+        shipping_estimate = False
+        shipping_selected = False
+
+        if checkout_session:
+            try:
+                if checkout_session.shipping_method == CheckoutSession.SHIPPING_PICKUP:
+                    shipping_selected = True
+                elif getattr(checkout_session, 'shipping_rate', None):
+                    shipping_selected = True
+            except Exception:
+                shipping_selected = False
+
+        if checkout_session and not shipping_selected:
+            try:
+                from .services import EnhancedCartService
+                division = (
+                    (checkout_session.shipping_postal_code or '').strip()
+                    or (checkout_session.shipping_city or '').strip()
+                    or (checkout_session.shipping_state or '').strip()
+                    or (checkout_session.shipping_country or '').strip()
+                    or 'Dhaka'
+                )
+                estimate = EnhancedCartService.calculate_shipping(cart, division=division)
+                base_shipping = Decimal(str(estimate.get('shipping_cost') or 0))
+                shipping_estimate = True
+            except Exception:
+                shipping_estimate = False
+
+        gift_wrap_amount = Decimal('0')
+        gift_wrap_enabled = False
+        gift_wrap_label = 'Gift Wrap'
+        try:
+            settings = CartSettings.get_settings()
+            gift_wrap_enabled = bool(settings.gift_wrap_enabled)
+            gift_wrap_label = settings.gift_wrap_label or gift_wrap_label
+            gift_wrap_amount = Decimal(str(settings.gift_wrap_amount or 0))
+        except Exception:
+            gift_wrap_enabled = False
 
         try:
             from apps.pages.models import SiteSettings
@@ -91,6 +129,8 @@ def build_checkout_cart_summary(request, cart, checkout_session):
             taxable_amount = Decimal('0')
 
         base_tax = (taxable_amount * tax_rate / Decimal('100')) if tax_rate else Decimal('0')
+        if not getattr(checkout_session, 'gift_wrap', False):
+            base_gift_wrap = Decimal('0')
         base_total = taxable_amount + base_shipping + base_gift_wrap + base_tax
 
         def convert_amount(amount: Decimal) -> Decimal:
@@ -104,6 +144,7 @@ def build_checkout_cart_summary(request, cart, checkout_session):
         display_discount = convert_amount(base_discount)
         display_shipping = convert_amount(base_shipping)
         display_gift_wrap = convert_amount(base_gift_wrap)
+        display_gift_wrap_amount = convert_amount(gift_wrap_amount)
         display_tax = convert_amount(base_tax)
         display_total = convert_amount(base_total)
 
@@ -111,7 +152,10 @@ def build_checkout_cart_summary(request, cart, checkout_session):
         summary['discount_amount'] = str(display_discount)
         summary['discount'] = summary['discount_amount']
         summary['shipping_cost'] = str(display_shipping)
+        summary['shipping_estimate'] = shipping_estimate
+        summary['shipping_selected'] = shipping_selected
         summary['gift_wrap_cost'] = str(display_gift_wrap)
+        summary['gift_wrap_amount'] = str(display_gift_wrap_amount)
         summary['tax_amount'] = str(display_tax)
         summary['total'] = str(display_total)
         summary['tax_rate'] = str(tax_rate)
@@ -120,8 +164,11 @@ def build_checkout_cart_summary(request, cart, checkout_session):
         summary['formatted_discount'] = currency.format_amount(display_discount)
         summary['formatted_shipping'] = currency.format_amount(display_shipping)
         summary['formatted_gift_wrap'] = currency.format_amount(display_gift_wrap)
+        summary['formatted_gift_wrap_amount'] = currency.format_amount(display_gift_wrap_amount)
         summary['formatted_tax'] = currency.format_amount(display_tax)
         summary['formatted_total'] = currency.format_amount(display_total)
+        summary['gift_wrap_label'] = gift_wrap_label
+        summary['gift_wrap_enabled'] = gift_wrap_enabled
 
         for item in summary.get('items', []):
             try:
@@ -980,6 +1027,8 @@ class CheckoutSelectShippingView(View):
             product_ids=[str(it.product_id) for it in cart.items.all()],
             currency_code=cart_summary.get('currency_code') or cart.currency
         )
+        if shipping_methods:
+            shipping_methods = shipping_methods[:5]
 
         shipping_options = []
         for method in shipping_methods:
@@ -1383,20 +1432,24 @@ class OrderConfirmationView(TemplateView):
         base_shipping = to_decimal(order.shipping_cost)
         base_tax = to_decimal(order.tax)
         base_gift_wrap = to_decimal(getattr(order, 'gift_wrap_cost', 0))
+        base_payment_fee = to_decimal(getattr(order, 'payment_fee_amount', 0))
 
-        base_total = base_subtotal - base_discount + base_shipping + base_tax + base_gift_wrap
+        base_total = base_subtotal - base_discount + base_shipping + base_tax + base_gift_wrap + base_payment_fee
 
         display_subtotal = base_subtotal
         display_discount = base_discount
         display_shipping = base_shipping
         display_gift_wrap = base_gift_wrap
+        display_payment_fee = base_payment_fee
         display_tax = base_tax
-        display_total = display_subtotal - display_discount + display_shipping + display_tax + display_gift_wrap
+        display_total = display_subtotal - display_discount + display_shipping + display_tax + display_gift_wrap + display_payment_fee
 
         if target_currency:
             context['formatted_subtotal'] = target_currency.format_amount(display_subtotal)
             context['formatted_discount'] = target_currency.format_amount(display_discount)
             context['formatted_shipping'] = target_currency.format_amount(display_shipping)
+            context['formatted_gift_wrap'] = target_currency.format_amount(display_gift_wrap)
+            context['formatted_payment_fee'] = target_currency.format_amount(display_payment_fee)
             context['formatted_tax'] = target_currency.format_amount(display_tax)
             context['formatted_total'] = target_currency.format_amount(display_total)
             context['currency_symbol_local'] = getattr(target_currency, 'symbol', None) or getattr(target_currency, 'native_symbol', None) or ''
@@ -1405,12 +1458,16 @@ class OrderConfirmationView(TemplateView):
             context['formatted_subtotal'] = str(display_subtotal)
             context['formatted_discount'] = str(display_discount)
             context['formatted_shipping'] = str(display_shipping)
+            context['formatted_gift_wrap'] = str(display_gift_wrap)
+            context['formatted_payment_fee'] = str(display_payment_fee)
             context['formatted_tax'] = str(display_tax)
             context['formatted_total'] = str(display_total)
             context['currency_symbol_local'] = ''
             context['currency_code_local'] = ''
 
         context['display_shipping'] = display_shipping
+        context['display_gift_wrap'] = display_gift_wrap
+        context['display_payment_fee'] = display_payment_fee
 
         # Attach formatted item prices for templates
         for item in order_items:

@@ -145,6 +145,20 @@
                         {% endif %}
                     </span>
                 </div>
+                {% if display_gift_wrap|default:0|floatformat:2 != '0.00' %}
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600 dark:text-gray-400">Gift Wrapping</span>
+                    <span class="text-gray-900 dark:text-white">{{ formatted_gift_wrap|default:"-" }}</span>
+                </div>
+                {% endif %}
+                {% if display_payment_fee|default:0|floatformat:2 != '0.00' %}
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600 dark:text-gray-400">
+                        {{ order.payment_fee_label|default:"Extra payment fee" }}
+                    </span>
+                    <span class="text-gray-900 dark:text-white">{{ formatted_payment_fee|default:"-" }}</span>
+                </div>
+                {% endif %}
                 <div class="flex justify-between text-sm">
                     <span class="text-gray-600 dark:text-gray-400">Tax</span>
                     <span class="text-gray-900 dark:text-white">{{ formatted_tax|default:"-" }}</span>
